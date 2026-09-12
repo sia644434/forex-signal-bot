@@ -13,6 +13,36 @@ class HealthCheckError(RuntimeError):
     """Raised when live production health cannot be verified."""
 
 
+def _validate_health_payload(payload: dict) -> dict:
+    application = payload.get("application")
+    if isinstance(application, dict):
+        status = application.get("status")
+        if status != "ok":
+            raise HealthCheckError(
+                f"production application health is not ready: status={status!r}"
+            )
+
+    services = payload.get("services")
+    if isinstance(services, dict):
+        failed_critical = [
+            name
+            for name, health in services.items()
+            if isinstance(health, dict)
+            and health.get("critical")
+            and health.get("status") != "ok"
+        ]
+        if failed_critical:
+            raise HealthCheckError(
+                "critical services are not healthy: " + ", ".join(sorted(failed_critical))
+            )
+
+    status = payload.get("status")
+    if status is not None and status != "ok":
+        raise HealthCheckError(f"production health is not ready: status={status!r}")
+
+    return payload
+
+
 def check_health(base_url: str, *, attempts: int = 3, timeout: float = 10.0) -> dict:
     url = base_url.rstrip("/") + "/health"
     last_error: Exception | None = None
@@ -20,7 +50,7 @@ def check_health(base_url: str, *, attempts: int = 3, timeout: float = 10.0) -> 
     for attempt in range(1, attempts + 1):
         try:
             request = Request(url, headers={"Accept": "application/json"}, method="GET")
-            with urlopen(request, timeout=timeout) as response:  # nosec B310 - URL is operator-supplied
+            with urlopen(request, timeout=timeout) as response:
                 status = int(response.status)
                 body = response.read().decode("utf-8")
             if status < 200 or status >= 300:
@@ -31,7 +61,7 @@ def check_health(base_url: str, *, attempts: int = 3, timeout: float = 10.0) -> 
                 raise HealthCheckError("health endpoint returned invalid JSON") from exc
             if not isinstance(payload, dict):
                 raise HealthCheckError("health endpoint returned a non-object JSON payload")
-            return payload
+            return _validate_health_payload(payload)
         except (HTTPError, URLError, TimeoutError, OSError, HealthCheckError) as exc:
             last_error = exc
             if attempt < attempts:
