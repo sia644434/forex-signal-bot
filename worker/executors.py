@@ -209,14 +209,6 @@ def gru_training(payload: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def multi_agent_analysis(payload: dict[str, Any]) -> dict[str, Any]:
-    analyses = payload.get("analyses", [])
-    if not isinstance(analyses, list):
-        raise ValueError("analyses must be a list")
-    scores = [float(item.get("score", 0.0)) for item in analyses if isinstance(item, dict)]
-    return {"model": "multi_agent_orchestrator", "agents": len(analyses), "aggregate_score": float(np.mean(scores)) if scores else 0.0, "decision": "WAIT" if not scores else ("BUY" if np.mean(scores) > 0 else "SELL")}
-
-
 def register_real_executors(runtime) -> None:
     mapping = {
         "backtest": backtest, "walk_forward": walk_forward, "monte_carlo": monte_carlo,
@@ -228,7 +220,7 @@ def register_real_executors(runtime) -> None:
         "timeseries_training": timeseries_training, "ensemble_training": ensemble_training,
         "deep_learning_training": deep_learning_training, "transformer_training": transformer_training,
         "lstm_training": lstm_training, "gru_training": gru_training,
-        "medium_model_training": medium_model_training, "multi_agent_analysis": multi_agent_analysis,
+        "medium_model_training": medium_model_training,
     }
     for name, handler in mapping.items():
         runtime.register(name, handler)
