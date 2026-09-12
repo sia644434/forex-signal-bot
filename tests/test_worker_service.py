@@ -15,6 +15,8 @@ def test_worker_service_without_transport_is_non_critical_and_controlled():
     assert service.health()["critical"] is False
     assert service.health()["configured"] is False
     assert service.health()["readiness"] == "UNCONFIGURED"
+    assert service.health()["dispatcher"]["queue_configured"] is True
+    assert service.health()["dispatcher"]["queue"]["total"] == 0
 
 
 def test_worker_service_uses_configured_transport(monkeypatch):
@@ -48,6 +50,7 @@ def test_worker_service_uses_configured_transport(monkeypatch):
 
     assert service.health()["configured"] is True
     assert service.health()["readiness"] == "UNKNOWN"
+    assert service.health()["dispatcher"]["queue"]["total"] == 0
 
     result_before_heartbeat = asyncio.run(service.submit(JobRequest("blocked", "backtest")))
     assert result_before_heartbeat.status == "WORKER_OFFLINE"
@@ -69,6 +72,8 @@ def test_worker_service_uses_configured_transport(monkeypatch):
         "timeout": 12,
     }
     assert service.health()["configured"] is True
+    assert service.health()["dispatcher"]["queue"]["completed"] == 1
+    assert service.health()["dispatcher"]["queue"]["total"] == 1
 
 
 def test_worker_service_blocks_dispatch_when_heartbeat_is_stale(monkeypatch):
@@ -101,6 +106,7 @@ def test_worker_service_blocks_dispatch_when_heartbeat_is_stale(monkeypatch):
     assert result.status == "WORKER_OFFLINE"
     assert "STALE" in (result.error or "")
     assert service.health()["readiness"] == "STALE"
+    assert service.health()["dispatcher"]["queue"]["total"] == 0
 
 
 def test_worker_service_blocks_dispatch_when_heartbeat_reports_offline(monkeypatch):
@@ -129,6 +135,7 @@ def test_worker_service_blocks_dispatch_when_heartbeat_reports_offline(monkeypat
     assert result.status == "WORKER_OFFLINE"
     assert "WORKER_OFFLINE" in (result.error or "")
     assert service.health()["readiness"] == "WORKER_OFFLINE"
+    assert service.health()["dispatcher"]["queue"]["total"] == 0
 
 
 def test_worker_service_health_marks_stale_ready_heartbeat(monkeypatch):
