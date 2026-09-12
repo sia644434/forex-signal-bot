@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 import logging
+from typing import Any
 
 from analysis.full_engine import FullAnalysisEngine
 from core.errors import ApplicationError
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_SCAN_SYMBOLS = ("EURUSD", "GBPUSD", "USDJPY", "XAUUSD")
 DEFAULT_TIMEFRAME = "M15"
 DEFAULT_LIMIT = 300
+SCANNER_PROVIDER_MANAGER_KEY = "scanner_provider_manager"
 
 
 @dataclass(frozen=True)
@@ -58,8 +60,43 @@ def _build_provider_manager() -> ProviderManager:
     return ProviderManager(providers=readiness.configured_providers)
 
 
-async def scan_market(symbols=DEFAULT_SCAN_SYMBOLS, timeframe=DEFAULT_TIMEFRAME, limit=DEFAULT_LIMIT):
-    provider_manager = _build_provider_manager()
+def get_scanner_provider_manager(application: Any) -> ProviderManager:
+    """
+    Return the application-scoped scanner ProviderManager.
+
+    Scanner readiness is recalculated on every scan so the active provider
+    set remains explicit and current. The manager itself is retained in
+    Application.bot_data so provider instances, cooldowns, and failure
+    state survive independent Telegram scans without becoming process-global.
+    """
+    bot_data = getattr(application, "bot_data", None)
+    if not isinstance(bot_data, dict):
+        raise TypeError("application must expose a mutable bot_data dictionary.")
+
+    readiness = _provider_readiness()
+    if not readiness.configured_providers:
+        raise ApplicationError("No market-data provider is configured.", {})
+
+    manager = bot_data.get(SCANNER_PROVIDER_MANAGER_KEY)
+    if manager is None:
+        manager = ProviderManager(providers=readiness.configured_providers)
+        bot_data[SCANNER_PROVIDER_MANAGER_KEY] = manager
+        return manager
+
+    if not isinstance(manager, ProviderManager):
+        raise TypeError("application scanner provider manager has an invalid type.")
+
+    manager.set_providers(readiness.configured_providers)
+    return manager
+
+
+async def scan_market(
+    symbols=DEFAULT_SCAN_SYMBOLS,
+    timeframe=DEFAULT_TIMEFRAME,
+    limit=DEFAULT_LIMIT,
+    provider_manager: ProviderManager | None = None,
+):
+    provider_manager = provider_manager or _build_provider_manager()
     market_data = MarketDataService(provider_manager=provider_manager)
     analyzer = FullAnalysisEngine()
 
@@ -133,4 +170,11 @@ def format_scan(results, timeframe, language="fa"):
     return "\n".join(lines)
 
 
-__all__ = ["ScanResult", "ScanReadiness", "scan_market", "format_scan", "DEFAULT_SCAN_SYMBOLS"]
+__all__ = [
+    "ScanResult",
+    "ScanReadiness",
+    "scan_market",
+    "format_scan",
+    "get_scanner_provider_manager",
+    "DEFAULT_SCAN_SYMBOLS",
+]
