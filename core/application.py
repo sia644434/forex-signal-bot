@@ -10,6 +10,7 @@ from core.health_server import HealthServer
 from health import health_check
 
 from services.telegram.service import TelegramService
+from services.worker.service import WorkerProcessingService
 
 
 logger = setup_logger()
@@ -100,6 +101,9 @@ def create_app() -> Application:
 
     app.services.register(
         TelegramService()
+    )
+    app.services.register(
+        WorkerProcessingService.from_settings()
     )
 
     return app
