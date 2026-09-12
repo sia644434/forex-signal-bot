@@ -2,20 +2,20 @@
 
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
-- Current Commit: `ae2a0d4112447626bf0e3a45d69db937b09bb050`
+- Current Commit: `d3bc5157a60032eacf8866a810c1d3edf98edd41`
 - Overall Status: `PRODUCTION_VERIFIED`
 - Current Phase: Phase 2 — Core Architecture
-- Current Task: TASK-028 — next evidence-backed Phase 2 gap selection
+- Current Task: TASK-028 — Minimize Unauthenticated PC Worker Health Information Exposure
 - Last Completed Task: TASK-027 — PC Worker Heartbeat Freshness Contract
 - Removed Task: TASK-016 — Worker Retry and Failure Lifecycle; removed because it was inherited from the previous planning path and is not independently required by the final Forex-only Master Prompt.
 - Known Blockers: None for the verified Railway deployment path; GitHub Connector does not expose a local working tree/runtime.
-- Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Current source-head CI has seven completed push workflow runs for `316391aa4440d8ca2d31a0d11887bfa2482070b4`; the explicitly inspected Production E2E Contract Gate and Production Activation Validation are successful.
-- Broken Tests: None known.
-- CI Status: TASK-027 verification completed at current-head CI level; commit `316391aa4440d8ca2d31a0d11887bfa2482070b4` has seven completed push workflow runs, including successful Production E2E Contract Gate `34709726285` and Production Activation Validation `34709726258`.
-- Deployment Status: The commit `316391aa4440d8ca2d31a0d11887bfa2482070b4` has a successful Railway deployment status. Prior live health and restart/recovery evidence remains valid for the verified deployment path.
-- Architecture Status: Phase 2 active. The PC Worker is restricted to heavy Forex application processing. Durable queue, timeout-aware crash recovery, central queue configuration, application composition, authenticated heartbeat, readiness, observability, and heartbeat freshness are verified. No local coding-agent/Ollama architecture is part of the active Forex worker path.
-- Production Readiness: `VERIFIED` for the observed deployment path. TASK-027 is CI-verified; its Railway status is successful. A fresh manual live smoke is only required again when a later change materially affects runtime health/deployment behavior.
-- Last Checkpoint: `ae2a0d4112447626bf0e3a45d69db937b09bb050` — synchronized engineering state through TASK-027.
+- Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. TASK-028 changes the worker's unauthenticated health response and therefore requires current-head CI before verification is claimed.
+- Broken Tests: None known; current TASK-028 CI is pending.
+- CI Status: TASK-027 verification is complete. TASK-028 implementation commits are pushed; current-head verification is pending.
+- Deployment Status: The previously verified Railway deployment path remains healthy. TASK-028 has not yet been promoted/independently live-verified.
+- Architecture Status: Phase 2 active. The PC Worker is restricted to heavy Forex application processing. Durable queue, timeout-aware crash recovery, central queue configuration, application composition, authenticated heartbeat, readiness, observability, and heartbeat freshness are verified. TASK-028 now minimizes unauthenticated worker health exposure while retaining authenticated detailed heartbeat data. No local coding-agent/Ollama architecture is part of the active Forex worker path.
+- Production Readiness: `VERIFIED` for the previously observed deployment path. TASK-028 is implementation-complete but not yet CI-verified or separately live-verified.
+- Last Checkpoint: `d3bc5157a60032eacf8866a810c1d3edf98edd41` — synchronized engineering state through TASK-028 implementation.
 - Last State Update: 2026-09-12
 
 ## Phase 2 — Core Architecture
@@ -68,8 +68,11 @@ Worker Heartbeat Observability. Worker identity/timestamp observability is expos
 ### TASK-027 — VERIFIED
 PC Worker Heartbeat Freshness Contract. Configurable maximum heartbeat age is enforced dynamically; expired, malformed, or timestamp-missing READY heartbeats become `STALE`. Current-head CI and Railway status are successful.
 
+### TASK-028 — IMPLEMENTED / VERIFICATION PENDING
+Minimize Unauthenticated PC Worker Health Information Exposure. The public `/health` endpoint now returns only `{"status":"READY"}` while detailed worker identity/runtime metadata remains behind authenticated heartbeat transport. Regression coverage was added. Current-head CI is pending.
+
 ## Next Task Selection
-TASK-028 must be selected only after repository evidence identifies a concrete remaining Phase 2 correctness, reliability, security, observability, deployment, or recovery gap. Do not invent a task merely to increment the task number.
+After TASK-028 CI verification, select the next task only from concrete repository evidence. Do not invent a task merely to increment the task number.
 
 ## Repository Mapping Decision
 
