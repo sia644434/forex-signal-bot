@@ -6,7 +6,7 @@ from worker.contracts import JobRequest
 
 
 def test_worker_service_without_transport_is_non_critical_and_controlled():
-    settings = Settings()
+    settings = Settings(worker_queue_database_path=":memory:")
     service = WorkerProcessingService.from_settings(settings)
 
     result = asyncio.run(service.submit(JobRequest("offline", "backtest")))
@@ -21,6 +21,7 @@ def test_worker_service_without_transport_is_non_critical_and_controlled():
 
 def test_worker_service_uses_configured_transport(monkeypatch):
     settings = Settings(
+        worker_queue_database_path=":memory:",
         pc_worker_url="http://worker.example",
         pc_worker_token="secret",
         pc_worker_timeout=12,
@@ -78,6 +79,7 @@ def test_worker_service_uses_configured_transport(monkeypatch):
 
 def test_worker_service_blocks_dispatch_when_heartbeat_is_stale(monkeypatch):
     settings = Settings(
+        worker_queue_database_path=":memory:",
         pc_worker_url="http://worker.example",
         pc_worker_token="secret",
         pc_worker_heartbeat_max_age=60,
@@ -111,6 +113,7 @@ def test_worker_service_blocks_dispatch_when_heartbeat_is_stale(monkeypatch):
 
 def test_worker_service_blocks_dispatch_when_heartbeat_reports_offline(monkeypatch):
     settings = Settings(
+        worker_queue_database_path=":memory:",
         pc_worker_url="http://worker.example",
         pc_worker_token="secret",
         pc_worker_timeout=12,
@@ -140,6 +143,7 @@ def test_worker_service_blocks_dispatch_when_heartbeat_reports_offline(monkeypat
 
 def test_worker_service_health_marks_stale_ready_heartbeat(monkeypatch):
     settings = Settings(
+        worker_queue_database_path=":memory:",
         pc_worker_url="http://worker.example",
         pc_worker_token="secret",
         pc_worker_heartbeat_max_age=60,
@@ -169,6 +173,7 @@ def test_worker_service_health_marks_stale_ready_heartbeat(monkeypatch):
 
 def test_worker_service_health_reflects_offline_heartbeat(monkeypatch):
     settings = Settings(
+        worker_queue_database_path=":memory:",
         pc_worker_url="http://worker.example",
         pc_worker_token="secret",
         pc_worker_timeout=12,
@@ -197,7 +202,7 @@ def test_worker_service_health_reflects_offline_heartbeat(monkeypatch):
 
 
 def test_worker_service_heartbeat_is_controlled_when_unconfigured():
-    service = WorkerProcessingService.from_settings(Settings())
+    service = WorkerProcessingService.from_settings(Settings(worker_queue_database_path=":memory:"))
 
     heartbeat = asyncio.run(service.heartbeat())
 
