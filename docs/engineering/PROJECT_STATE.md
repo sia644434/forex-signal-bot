@@ -2,20 +2,20 @@
 
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
-- Current Commit: `6f4d49c6c0e82a9441b41af679c4709ae88c5c71`
+- Current Commit: `23806ff2f2404cd19274c511ad2ec8dcd45a9693`
 - Overall Status: `PRODUCTION_VERIFIED`
 - Current Phase: Phase 2 — Core Architecture
-- Current Task: TASK-034 — Analysis Architecture Ownership Audit
-- Last Completed Task: TASK-034 — Analysis Architecture Ownership Audit
+- Current Task: TASK-035 — AI Architecture Ownership Audit
+- Last Completed Task: TASK-035 — AI Architecture Ownership Audit
 - Removed Task: TASK-016 — Worker Retry and Failure Lifecycle; removed because it was inherited from the previous planning path and is not independently required by the final Forex-only Master Prompt.
 - Known Blockers: None for the verified Railway deployment path; GitHub Connector does not expose a local working tree/runtime.
 - Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Phase 2 still has remaining evidence-backed architecture work before later phases are selected.
 - Broken Tests: None known.
-- CI Status: Current head `6f4d49c6c0e82a9441b41af679c4709ae88c5c71` has seven completed push workflow runs; visible Test run `34715545781` and Production E2E Contract Gate `34715545700` are successful.
-- Deployment Status: Current head has successful Railway commit status. Previously verified live production health/restart evidence remains valid for the deployed path.
-- Architecture Status: Phase 2 active. The PC Worker is restricted to heavy Forex application processing. Durable queue, timeout-aware crash recovery, central queue configuration, application composition, authenticated heartbeat, readiness, observability, heartbeat freshness, minimal public health, authenticated job-request hardening, readiness-gated dispatch, Telegram ownership consolidation, Decision/Risk ownership consolidation, and Analysis ownership consolidation are verified. No local coding-agent/Ollama architecture is part of the active Forex worker path.
-- Production Readiness: `VERIFIED` for the observed Railway deployment path. Current TASK-034 commit has successful Railway status and completed CI evidence.
-- Last Checkpoint: `6f4d49c6c0e82a9441b41af679c4709ae88c5c71` — TASK-034 implementation and architecture documentation checkpoint.
+- CI Status: TASK-034 current head `6f4d49c6c0e82a9441b41af679c4709ae88c5c71` had completed CI evidence with successful Test and Production E2E Contract Gate runs; TASK-035 is a documentation/audit-only change and has not introduced executable code changes.
+- Deployment Status: TASK-034 current head had successful Railway commit status. TASK-035 changes only engineering documentation; previously verified live production health/restart evidence remains valid for the deployed path.
+- Architecture Status: Phase 2 active. The PC Worker is restricted to heavy Forex application processing. Durable queue, timeout-aware crash recovery, central queue configuration, application composition, authenticated heartbeat, readiness, observability, heartbeat freshness, minimal public health, authenticated job-request hardening, readiness-gated dispatch, Telegram ownership consolidation, Decision/Risk ownership consolidation, Analysis ownership consolidation, and AI ownership auditing are recorded. The `ai/` package is dormant/unwired and reserved for Phase 6; it is not part of the active production trading flow. No local coding-agent/Ollama architecture is part of the active Forex worker path.
+- Production Readiness: `VERIFIED` for the observed Railway deployment path. TASK-035 is an architecture documentation/audit checkpoint and does not claim a new production deployment.
+- Last Checkpoint: `23806ff2f2404cd19274c511ad2ec8dcd45a9693` — TASK-035 ownership audit documentation checkpoint.
 - Last State Update: 2026-09-12
 
 ## Phase 2 — Core Architecture
@@ -89,8 +89,11 @@ Decision/Risk/Strategy Architecture Ownership Audit. Canonical ownership is `ana
 ### TASK-034 — VERIFIED
 Analysis Architecture Ownership Audit. The unused alternate `analysis/adapters.py`, `analysis/contracts.py`, `analysis/registry.py`, `analysis/orchestrator.py`, and obsolete `tests/test_analysis_architecture.py` were removed after repository-wide reference inspection. `analysis/full_engine.py` remains the canonical production analysis composition and `analysis/__init__.py` now exports only canonical analysis contracts/engines.
 
+### TASK-035 — VERIFIED
+AI Architecture Ownership Audit. Repository-wide reference inspection found the `ai/` package internally self-contained and not wired into the production application composition. No production/test callers construct `AIOrchestrator`, `AIProviderManager`, `AIContextBuilder`, or `OpenAIProvider`. The package is preserved as dormant future Phase 6 capability; no AI path is allowed to bypass the canonical analysis → decision → risk flow. `ARCHITECTURE_MAP.md` records the boundary.
+
 ## Next Task Selection
-Select the next task only from concrete repository evidence after TASK-034. Do not invent a task merely to increment the task number. Continue Phase 2 until its evidence-backed core-architecture scope is complete.
+Select the next task only from concrete repository evidence after TASK-035. Do not invent a task merely to increment the task number. Continue Phase 2 until its evidence-backed core-architecture scope is complete.
 
 ## Repository Mapping Decision
 
@@ -98,4 +101,4 @@ Select the next task only from concrete repository evidence after TASK-034. Do n
 - `sia644434/forex-signal-bot` is the intentional Railway-connected fork synchronized by the user.
 
 ## Active Task Selection Rule
-Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
+Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
