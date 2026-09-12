@@ -2,6 +2,7 @@ import asyncio
 import sqlite3
 import time
 
+from config.settings import Settings
 from worker.client import PCWorkerClient
 from worker.contracts import JobRequest
 from worker.dispatcher import WorkerDispatcher
@@ -66,6 +67,17 @@ def test_dispatcher_recovers_expired_jobs_on_initialization(tmp_path):
     assert record.status == "PENDING"
     assert record.claimed_at is None
     recovered_queue.close()
+
+
+def test_dispatcher_from_settings_uses_configured_queue(tmp_path):
+    database = tmp_path / "configured-queue.sqlite3"
+    settings = Settings(worker_queue_database_path=str(database), worker_queue_recovery_grace_seconds=12)
+    dispatcher = WorkerDispatcher.from_settings(settings=settings)
+
+    assert database.exists()
+    result = asyncio.run(dispatcher.submit(JobRequest("offline", "backtest")))
+    assert result.status == "WORKER_OFFLINE"
+    dispatcher._queue.close()
 
 
 def test_dispatcher_records_transport_failure_in_queue():
