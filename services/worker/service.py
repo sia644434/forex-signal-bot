@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 from typing import Any
 
 from config.settings import Settings
@@ -16,12 +17,21 @@ class WorkerProcessingService(BaseService):
     name = "worker_processing"
     critical = False
 
-    def __init__(self, dispatcher: WorkerDispatcher, configured: bool, client: PCWorkerClient | None = None) -> None:
+    def __init__(
+        self,
+        dispatcher: WorkerDispatcher,
+        configured: bool,
+        client: PCWorkerClient | None = None,
+        heartbeat_max_age: int = 120,
+    ) -> None:
         if dispatcher is None:
             raise TypeError("dispatcher cannot be None")
+        if heartbeat_max_age < 1:
+            raise ValueError("heartbeat_max_age must be at least 1 second")
         self.dispatcher = dispatcher
         self.configured = configured
         self._client = client
+        self._heartbeat_max_age = heartbeat_max_age
         self._last_heartbeat: dict[str, Any] | None = None
 
     @classmethod
@@ -49,7 +59,12 @@ class WorkerProcessingService(BaseService):
             settings=resolved,
             submit=submit,
         )
-        return cls(dispatcher=dispatcher, configured=client is not None, client=client)
+        return cls(
+            dispatcher=dispatcher,
+            configured=client is not None,
+            client=client,
+            heartbeat_max_age=resolved.pc_worker_heartbeat_max_age,
+        )
 
     async def submit(self, request: JobRequest) -> JobResult:
         return await self.dispatcher.submit(request)
@@ -72,10 +87,30 @@ class WorkerProcessingService(BaseService):
     def stop(self) -> None:
         return None
 
+    def _heartbeat_readiness(self) -> str:
+        if self._last_heartbeat is None:
+            return "UNKNOWN"
+
+        status = str(self._last_heartbeat.get("status", "UNKNOWN"))
+        if status != "READY":
+            return status
+
+        timestamp = self._last_heartbeat.get("timestamp")
+        if not timestamp:
+            return "STALE"
+
+        try:
+            heartbeat_time = datetime.fromisoformat(str(timestamp))
+            if heartbeat_time.tzinfo is None:
+                heartbeat_time = heartbeat_time.replace(tzinfo=timezone.utc)
+        except (TypeError, ValueError):
+            return "STALE"
+
+        age = (datetime.now(timezone.utc) - heartbeat_time).total_seconds()
+        return "READY" if age <= self._heartbeat_max_age else "STALE"
+
     def health(self) -> dict[str, Any]:
-        readiness = "UNCONFIGURED" if not self.configured else "UNKNOWN"
-        if self._last_heartbeat is not None:
-            readiness = str(self._last_heartbeat.get("status", "UNKNOWN"))
+        readiness = "UNCONFIGURED" if not self.configured else self._heartbeat_readiness()
 
         health: dict[str, Any] = {
             "service": self.name,
