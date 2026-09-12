@@ -2,7 +2,7 @@
 
 ## Baseline
 - Test inventory: VERIFIED from repository tree.
-- Latest verified architecture work: TASK-035.
+- Latest verified architecture work: TASK-036.
 - Result: PASS for the verified CI gates recorded below.
 - Local Execution: NOT_AVAILABLE through the GitHub Connector; no local execution claimed.
 - Coverage: Not measured in this session.
@@ -16,7 +16,7 @@
 
 ## TASK-018 through TASK-023 Verification
 - Queue lifecycle, persistence, crash recovery, dispatcher configuration, application service composition, and heavy-Forex routing boundary were verified through recorded GitHub Actions gates and repository evidence.
-- No speculative Phase 9 heavy-Forex caller was introduced.
+- No speculative Phase 9 heavy-ForeX caller was introduced.
 
 ## TASK-024 through TASK-027 Verification
 - Authenticated heartbeat, worker readiness, heartbeat observability, and configurable heartbeat freshness were implemented and regression-tested.
@@ -34,6 +34,14 @@
 - The preceding TASK-034 head had successful current-head CI evidence and Railway status.
 - No new production deployment or runtime verification is claimed for TASK-035.
 
+## TASK-036 Verification
+- Implementation head: `6174463174d8c6c4ad513896ad7ff96847e85edc`.
+- Production Telegram candle retrieval was consolidated behind `MarketDataService` while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing semantics.
+- The TASK-036 GitHub Actions gates completed successfully.
+- Railway commit status for the implementation head is `success`.
+- No new live-smoke or restart claim is made for TASK-036 solely from source-repository CI/status evidence.
+- Repository-wide inspection after TASK-036 found the dormant `get_latest_oanda_price` surface with no production caller; this is the next evidence-backed audit target and has not yet been removed.
+
 ## CI and Production Evidence
 - Existing production verification remains valid for the previously deployed commit `8bf2a77840b72add70b98f1b3a2187f85763f2`.
 - Production Live Smoke run `34697840749`, job `103564290648`: `completed / success`.
@@ -47,7 +55,7 @@ The previously deployed service returned a healthy readiness contract both befor
 - `services.telegram.critical = true`
 
 ## Verification Status
-Production readiness remains verified for the observed Railway deployment path. TASK-034 remains CI-verified. TASK-035 is an evidence-backed architecture audit/documentation checkpoint with no executable-code changes.
+Production readiness remains verified for the observed Railway deployment path. TASK-036 is CI/deployment-status verified; it does not claim a new live smoke or restart verification.
 
 ## Next Verification
-Select the next evidence-backed Phase 2 architecture task from repository inspection. Do not invent speculative work or reintroduce agent/Ollama/local coding-agent architecture.
+Select the next evidence-backed Phase 2 architecture task from repository inspection. The current target is the dormant direct OANDA price surface (`get_latest_oanda_price`): verify all references, tests, and documentation before deciding on removal. Do not invent speculative work or reintroduce agent/Ollama/local coding-agent architecture.
