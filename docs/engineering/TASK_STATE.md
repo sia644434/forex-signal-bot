@@ -64,19 +64,29 @@ Checkpoint: Verified 2026-09-12.
 Phase: Phase 2 — Core Architecture
 Title: Durable Forex Worker Processing Queue Contract
 Objective: Establish an explicit durable/idempotent processing-queue boundary for heavy Forex worker jobs without introducing agent/coding-agent architecture or coupling queue storage to network transport.
-Implementation Status: TESTING
-Relevant Files:
-- `worker/queue.py`
-- `tests/test_worker_queue.py`
-- `worker/dispatcher.py` (integration remains intentionally separate)
-- `docs/engineering/ARCHITECTURE_MAP.md`
-Implementation:
+Implementation Status: VERIFIED
+Evidence:
 - `5853902a3f511cbfea9c4ba15003ebe543292b45` — added SQLite-backed queue contract.
 - `9f3c7477919c9a0bbb3b648bde72bd2e60949c6e` — cleaned and hardened queue implementation.
 - `bca3aba949b31a5fbb6fb08735ebc366096ef11a` — added queue lifecycle/persistence regression coverage.
 - `9632b55fa6f0196972bb93ca57a13879311a3994` — documented the queue architecture boundary.
-Current queue guarantees: idempotent enqueue by `job_id`, priority ordering, explicit `PENDING/RUNNING/COMPLETED/FAILED/CANCELLED/TIMEOUT` states, terminal-state idempotency, and file-backed persistence across connections.
-Known limitation: this is not yet a production distributed broker; shared storage, dispatcher integration, concurrency/recovery behavior across independent processes, and deployment verification remain to be validated.
+- `98ad8076eba3808a819352949ba6f90c15147887` — integrated the queue with the Forex Worker Dispatcher.
+- Final Integration Gate run `34705244551`, job `103584015549`: success; compile, runtime safety tests, full suite, and production Docker build passed.
+- Security/dependency audit run `34705244541`, job `103584015586`: success.
+Current guarantees: idempotent enqueue by `job_id`, priority ordering, explicit lifecycle states, terminal-state idempotency, file-backed persistence, and dispatcher integration.
+
+## TASK-019
+Phase: Phase 2 — Core Architecture
+Title: Forex Worker Queue Crash-Recovery Contract
+Objective: Detect stale `RUNNING` heavy-Forex jobs after worker/process failure and safely return them to `PENDING` for recovery, without introducing distributed-agent or unrelated task architecture.
+Implementation Status: TESTING
+Relevant Files:
+- `worker/queue.py`
+- `tests/test_worker_queue.py`
+Implementation:
+- `40145b95d9f4732793f1a07b688bc61e85421ca5` — added `claimed_at` tracking and stale-running recovery.
+- `4212c24263eccd2ef4610b4125e9be31153b76a1` — added regression coverage for stale recovery, active-job preservation, and invalid recovery age.
+Recovery semantics: only `RUNNING` jobs with a stale `claimed_at` are returned to `PENDING`; terminal states are untouched; recovery is explicit and age-bounded.
 Test Status: PENDING current-head GitHub Actions verification.
 
 ## Active Task Selection Rule
