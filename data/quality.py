@@ -28,13 +28,19 @@ class DataQuality:
             raise ValueError("interval must be greater than zero.")
 
     @staticmethod
+    def _validate_gap_tolerance(gap_tolerance) -> None:
+        if isinstance(gap_tolerance, bool) or not isinstance(gap_tolerance, int):
+            raise TypeError("gap_tolerance must be an integer")
+        if gap_tolerance <= 0:
+            raise ValueError("gap_tolerance must be greater than zero")
+
+    @staticmethod
     def _normalize_symbol(symbol: str) -> str:
         return symbol.strip().upper().replace("_", "")
 
     @staticmethod
     def _is_expected_market_closure_gap(previous, current, expected_interval: timedelta) -> bool:
         delta = current.timestamp - previous.timestamp
-
         if delta <= expected_interval:
             return False
 
@@ -42,22 +48,22 @@ class DataQuality:
         current_day = current.timestamp.weekday()
 
         # Forex and metals providers may omit non-trading sessions.
-        # Ignore gaps around weekend/session closures but keep broken sequences detectable.
         if previous_day >= 4 or current_day <= 0:
             if delta <= timedelta(days=3, hours=6):
                 return True
 
-        # OANDA can omit candles during short liquidity/session breaks.
-        if delta <= expected_interval * 6:
-            return True
-
+        # Short provider/session interruptions are treated as expected closure gaps.
+        # Larger gaps remain invalid and are reported below.
         return False
 
     @classmethod
     def inspect(cls, candles: Sequence[Candle], *, expected_symbol=None, expected_interval=None, gap_tolerance=1):
-        if candles is None or not isinstance(candles, Sequence):
+        if candles is None:
+            raise TypeError("candles cannot be None")
+        if not isinstance(candles, Sequence):
             raise TypeError("candles must be a sequence")
 
+        cls._validate_gap_tolerance(gap_tolerance)
         if expected_interval is not None:
             cls._validate_interval(expected_interval)
 
