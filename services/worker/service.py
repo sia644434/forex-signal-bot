@@ -68,7 +68,12 @@ class WorkerProcessingService(BaseService):
 
     async def submit(self, request: JobRequest) -> JobResult:
         if not self.configured:
-            return await self.dispatcher.submit(request)
+            return JobResult(
+                request.job_id,
+                "WORKER_OFFLINE",
+                request.job_type,
+                error="PC worker transport is not configured",
+            )
 
         readiness = self._heartbeat_readiness()
         if readiness != "READY":
