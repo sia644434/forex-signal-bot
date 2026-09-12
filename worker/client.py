@@ -28,8 +28,11 @@ class PCWorkerClient:
             method="POST",
             headers={"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(request, timeout=self.timeout) as response:
-            return json.loads(response.read().decode("utf-8"))
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except (urllib.error.URLError, TimeoutError) as exc:
+            return {"status": "WORKER_OFFLINE", "configured": True, "error": str(exc)}
 
     def submit(self, job: JobRequest) -> JobResult:
         body = json.dumps({
