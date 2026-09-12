@@ -13,7 +13,7 @@ async def test_service_uses_canonical_engine_by_default(monkeypatch: pytest.Monk
     engine.get_candles_list.return_value = []
     monkeypatch.setattr(
         "services.market_data.service.MarketDataEngine",
-        lambda: engine,
+        lambda provider_manager=None: engine,
     )
 
     service = MarketDataService()
