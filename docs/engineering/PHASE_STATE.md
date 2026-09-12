@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-034 — Analysis Architecture Ownership Audit
+Active Task: TASK-035 — AI Architecture Ownership Audit
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Phase 2 Scope Before TASK-004
@@ -34,6 +34,7 @@ Evidence: TASK-004 is the first explicitly recorded Phase 2 implementation task 
 - TASK-032 consolidated Telegram ownership under `services/telegram/`.
 - TASK-033 consolidated Decision/Risk ownership under canonical `analysis/` engines.
 - TASK-034 removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture and aligned `analysis/__init__.py` with the canonical analysis engines.
+- TASK-035 audited the `ai/` package and established that it is dormant/unwired, with no production caller; it is reserved for the later Phase 6 AI/ML scope and is not an active trading architecture.
 
 ### TASK-034 — VERIFIED
 Analysis Architecture Ownership Audit.
@@ -42,8 +43,18 @@ Evidence:
 - `analysis.contracts.py` duplicated analysis-context ownership already represented by `models/market.py`.
 - Obsolete `analysis/adapters.py`, `analysis/contracts.py`, `analysis/registry.py`, `analysis/orchestrator.py`, and `tests/test_analysis_architecture.py` were removed.
 - `analysis/__init__.py` was updated to expose only canonical analysis contracts/engines.
-- Current head `6f4d49c6c0e82a9441b41af679c4709ae88c5c71` has seven completed push workflow runs; visible Test run `34715545781` and Production E2E Contract Gate `34715545700` are successful.
-- Railway commit status for the current head is successful.
+- Current head `6f4d49c6c0e82a9441b41af679c4709ae88c5c71` had completed CI evidence and successful Railway status.
+
+### TASK-035 — VERIFIED
+AI Architecture Ownership Audit.
+Evidence:
+- Repository-wide searches found no production or test caller constructing `AIOrchestrator`, `AIProviderManager`, `AIContextBuilder`, or `OpenAIProvider`.
+- `ai/orchestrator.py`, `ai/provider.py`, `ai/context.py`, `ai/prompt_builder.py`, `ai/parser.py`, and `ai/providers/openai_provider.py` form a self-contained future AI pipeline, but no production composition root registers it.
+- `core/application.py` registers only `TelegramService` and `WorkerProcessingService`.
+- AI settings remain referenced by configuration/production-readiness scaffolding, but that does not establish an active trading caller.
+- Decision: preserve the dormant package for Phase 6 rather than deleting it or wiring it into the current Forex decision path. Any future activation requires a dedicated evidence-backed task, explicit callers, failure isolation, security review, and tests.
+- `ARCHITECTURE_MAP.md` records the dormant ownership boundary.
+- TASK-035 changed engineering documentation only; no executable production code was modified.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -56,6 +67,7 @@ Status: PARTIALLY_COMPLETE
 
 ## Phase 6 — AI/ML
 Status: PARTIALLY_COMPLETE
+Evidence: Existing `ai/` scaffolding is dormant/unwired and intentionally not treated as active production functionality. Future activation remains a later-phase task.
 
 ## Phase 7 — PC Worker / Heavy Processing
 Status: PARTIALLY_COMPLETE
@@ -72,7 +84,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green and TASK-034 has completed current-head CI evidence.
+Evidence: Existing CI and production verification gates are green; TASK-035 is an audit/documentation checkpoint with no executable-code changes.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
