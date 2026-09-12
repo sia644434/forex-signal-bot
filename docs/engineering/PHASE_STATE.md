@@ -2,72 +2,61 @@
 
 ## Phase 1 — Baseline Stabilization / Reliability Hardening
 Status: COMPLETE
-Completed Tasks:
-- Repository identity/default branch verified.
-- High-level architecture and subsystem boundaries mapped.
-- Persistent engineering memory established under `docs/engineering/`.
-- Baseline CI failures diagnosed from actual GitHub Actions evidence.
-- Data-quality contract fixes implemented and verified.
-- Telegram scanner sanitization/localization fixes implemented and verified.
-- Remaining scanner `ScanResult` compatibility/status-rendering regressions fixed and verified.
-- Health/readiness contract hardened and verified.
-- Dependency security audit verified green.
-- Production activation/readiness gates verified green.
-- Live production health smoke verified green.
-- Controlled Railway restart/recovery verified successfully, followed by a second successful live health smoke.
-Active Task: Final production audit / security and observability hardening.
-Remaining Tasks:
-- Perform final production audit against concrete repository and live evidence.
-- Continue security and observability hardening based on concrete evidence.
-- Preserve and repeat live production gates for future runtime-affecting changes.
-Blockers:
-- No local working-tree/runtime access through GitHub Connector.
-- Private deployment/runtime credentials remain inaccessible to the connector, but the user-provided Railway restart and GitHub Actions live smoke evidence closed the production verification gap.
-Tests: Configured CI pipeline, production activation gates, live health smoke, and post-restart live health smoke are green.
-CI: Final Integration Gate, Security Audit, Production Activation Gate, Production Live Smoke, and post-restart Production Live Smoke all have successful evidence.
-Production Risks: No known blocker remains for the verified Railway deployment path. Normal application/security risks remain subject to the final production audit.
+Evidence: Baseline contract regressions were fixed and production verification was completed through live health and restart/recovery evidence.
 
 ## Phase 2 — Core Architecture
-Status: NOT_STARTED
+Status: IN_PROGRESS
+Active Task: TASK-004 — Service Lifecycle Contract Hardening
+Objective: Establish explicit, tested contracts for application service registration, startup, rollback, shutdown, and health isolation before broader architecture work.
+Current Scope:
+- `core/service.py`
+- `services/base.py`
+- `tests/test_service_manager_contract.py`
+Evidence so far:
+- `ServiceManager` owns registration, startup/shutdown lifecycle, and service health aggregation.
+- Critical startup failure rolls back already-started services and raises `CriticalServiceError`.
+- Non-critical startup failure continues in degraded mode.
+- Shutdown is reverse-order and isolates individual stop failures.
+- Health failures are isolated and represented as `status=error`.
+- Six focused contract tests were added in commit `2e38e857dbed219c41c8b4339434bb61a372f040`.
+Verification: CI execution pending for the new commit; no local execution claimed.
+Next: verify TASK-004 through GitHub Actions, review results, then checkpoint Phase 2.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
-Evidence: Service-oriented Telegram implementation, scanner/localization contracts, health contract, and tests exist; live Telegram health is verified in the current deployment path.
 
 ## Phase 4 — Market/Data Layer
 Status: PARTIALLY_COMPLETE
-Evidence: Provider abstraction, OANDA/Finnhub/AlphaVantage, fallback, freshness and quality components/tests exist.
 
 ## Phase 5 — Analysis Engine
 Status: PARTIALLY_COMPLETE
-Evidence: Multiple analysis engines, registry/orchestrator, scoring/confidence and tests exist.
 
 ## Phase 6 — AI/ML
 Status: PARTIALLY_COMPLETE
-Evidence: `ai/` provider/orchestrator/parser components and worker local-model tooling exist.
 
 ## Phase 7 — PC Worker / Heavy Processing
 Status: PARTIALLY_COMPLETE
-Evidence: Worker contracts/runtime/executors and local-agent/Ollama tooling plus tests exist.
 
 ## Phase 8 — Trading / Decision Engine
 Status: PARTIALLY_COMPLETE
-Evidence: Decision/risk/strategy/signal-engine components and tests exist; production gate verification for those features remains subject to the final audit.
 
 ## Phase 9 — Backtesting / Simulation
 Status: NOT_STARTED
 
 ## Phase 10 — Security / Production Hardening
 Status: IN_PROGRESS
-Evidence: Dependency security audit is green and production runtime verification is complete; broader application-level security and observability audit remains.
+Evidence: Dependency security audit and production runtime verification are complete; broader security hardening remains a later roadmap phase/task.
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Current configured CI test and integration gates are green; live production smoke and restart/recovery are also verified.
+Evidence: Existing CI and production verification gates are green; current Phase 2 contract tests are pending CI execution.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
-Evidence: Docker/Railway configuration, healthchecks, deployment workflows, live health verification, and restart/recovery evidence are complete for the Railway-connected fork.
+Evidence: Railway live health and restart/recovery verification completed for the intentional Railway-connected fork.
 
 ## Phase 13 — Final Production Audit
-Status: IN_PROGRESS
+Status: NOT_STARTED
+
+## Roadmap Rule
+Work phases sequentially. Completing Phase 1 does not skip directly to Phase 12 or Phase 13. Phase 2 must be completed before Phase 3, and so on, unless an explicit evidence-backed dependency requires a temporary cross-phase check.
