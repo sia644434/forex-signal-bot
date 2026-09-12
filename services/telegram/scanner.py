@@ -92,7 +92,6 @@ async def scan_market(symbols=DEFAULT_SCAN_SYMBOLS, timeframe=DEFAULT_TIMEFRAME,
             )
         except Exception:
             logger.exception("Market scan failed for %s/%s", symbol, timeframe)
-            # Keep internal exception types out of the user-facing result.
             return ScanResult(symbol, "NO_TRADE", 0.0, 0.0, None, "UNKNOWN", "unknown", None, error="scan_failed")
 
     return sorted(await asyncio.gather(*(scan_one(s) for s in symbols)), key=lambda x: (x.error is None, x.confidence, x.score), reverse=True)
@@ -106,7 +105,7 @@ def _status_text(status: str, language: str = "fa") -> str:
         "HOLIDAY": "scan_status_holiday",
         "UNKNOWN": "scan_status_unknown",
     }.get(status)
-    return t(language, key) if key else status
+    return t(language, key) if key else t(language, "scan_status_unknown")
 
 
 def format_scan(results, timeframe, language="fa"):
