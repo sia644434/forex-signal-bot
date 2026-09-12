@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import os
 
+from config.settings import Settings
 from core.logger import setup_logger
 from core.service import ServiceManager
 from core.health_server import HealthServer
@@ -30,9 +30,12 @@ class Application:
     health_server: HealthServer = field(init=False)
 
     def __post_init__(self) -> None:
-        host = os.getenv("HEALTH_HOST", "0.0.0.0")
-        port = int(os.getenv("PORT", "8080"))
-        self.health_server = HealthServer(self.health, host=host, port=port)
+        configuration = Settings.load()
+        self.health_server = HealthServer(
+            self.health,
+            host=configuration.health_host,
+            port=configuration.health_port,
+        )
 
     def health(self) -> dict:
         application_health = health_check()
