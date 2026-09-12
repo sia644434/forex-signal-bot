@@ -39,12 +39,19 @@
 - Commit-level external deployment status is `success` for the Railway-connected deployment.
 - No local execution is claimed.
 
+## TASK-028 — Verification Pending
+- `c092704fc8fb924a16556ef85686021965662264`: public worker `/health` was reduced to the minimal `{"status":"READY"}` liveness response.
+- `8160737a2a13ec066c3eb9e9e48f5adce662b099`: focused regression coverage verifies that the public endpoint does not expose worker runtime metadata.
+- Authenticated `/heartbeat` remains the detailed worker identity/readiness transport.
+- Current-head GitHub Actions verification for TASK-028 has not yet been confirmed.
+- No production verification is claimed for TASK-028.
+
 ## CI and Production Evidence
 - Existing production verification remains valid for the previously deployed commit `8bf2a77840b72add70b98f1b3a2187f85763f2`.
 - Production Live Smoke run `34697840749`, job `103564290648`: `completed / success`.
 - Restart/recovery was performed manually in Railway after the successful live smoke.
 - Post-restart Production Live Smoke run `34698134769`, job `103565063400`: `completed / success`.
-- TASK-027 additionally has a successful Railway deployment status on commit `316391...`.
+- TASK-028 has not been independently promoted or live-verified.
 
 ## Live Contract Evidence
 The previously deployed service returned a healthy readiness contract both before and after restart:
@@ -53,7 +60,7 @@ The previously deployed service returned a healthy readiness contract both befor
 - `services.telegram.critical = true`
 
 ## Verification Status
-Production readiness is verified for the observed Railway deployment path. TASK-027 is CI-verified. Future production changes must repeat live smoke/recovery checks when the change can materially affect runtime health, deployment, or critical services.
+Production readiness is verified for the observed Railway deployment path. TASK-027 is CI-verified. TASK-028 remains implementation-complete but CI verification is pending.
 
 ## Next Verification
-For TASK-028, first identify a concrete evidence-backed Phase 2 gap from repository code/tests/configuration. Do not create speculative work merely to increment the task number. Do not reintroduce TASK-016 or any agent-oriented architecture.
+Verify TASK-028 current-head CI. If green, inspect the authenticated/public worker endpoint boundary and select the next evidence-backed Phase 2 task without inventing speculative work.
