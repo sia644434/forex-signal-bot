@@ -2,7 +2,7 @@
 
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
-- Current Commit: `6174463174d8c6c4ad513896ad7ff96847e85edc`
+- Current Commit: `2b65d94a6f0282f61d541481b335e7fd666b1dea`
 - Overall Status: `PRODUCTION_VERIFIED`
 - Current Phase: Phase 2 — Core Architecture
 - Current Task: TASK-037 — Dormant Direct OANDA Price Surface Audit
@@ -11,11 +11,11 @@
 - Known Blockers: None for the verified Railway deployment path; GitHub Connector does not expose a local working tree/runtime.
 - Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Phase 2 still has remaining evidence-backed architecture work before later phases are selected.
 - Broken Tests: None known for the verified TASK-036 head.
-- CI Status: TASK-036 current head `6174463174d8c6c4ad513896ad7ff96847e85edc` has successful recorded GitHub Actions gates and successful Railway commit status.
-- Deployment Status: TASK-036 current head has successful Railway commit status. No new production deployment is claimed solely from the source-repository checkpoint.
+- CI Status: TASK-036 implementation head `6174463174d8c6c4ad513896ad7ff96847e85edc` has successful completed CI gates and successful Railway commit status. The current main head is documentation-only synchronization after that verified implementation checkpoint.
+- Deployment Status: TASK-036 implementation head has successful Railway commit status. No new production deployment is claimed solely from the documentation synchronization commits.
 - Architecture Status: Phase 2 active. The PC Worker is restricted to heavy Forex application processing. Durable queue, timeout-aware crash recovery, central queue configuration, application composition, authenticated heartbeat, readiness, observability, heartbeat freshness, minimal public health, authenticated job-request hardening, readiness-gated dispatch, Telegram ownership consolidation, Decision/Risk ownership consolidation, Analysis ownership consolidation, AI ownership auditing, and market-data application-boundary consolidation are recorded. The `ai/` package is dormant/unwired and reserved for Phase 6; it is not part of the active production trading flow. No local coding-agent/Ollama architecture is part of the active Forex worker path.
-- Production Readiness: `VERIFIED` for the observed Railway deployment path. TASK-036 is CI/deployment-status verified but does not claim a new live smoke unless separately executed.
-- Last Checkpoint: `6174463174d8c6c4ad513896ad7ff96847e85edc` — TASK-036 market-data ownership consolidation checkpoint.
+- Production Readiness: `VERIFIED` for the observed Railway deployment path. TASK-036 is CI/deployment-status verified but does not claim a new live smoke solely from the source-repository checkpoint.
+- Last Checkpoint: `6174463174d8c6c4ad513896ad7ff96847e85edc` — TASK-036 market-data ownership consolidation implementation checkpoint, followed by documentation synchronization commits.
 - Last State Update: 2026-09-12
 
 ## Phase 2 — Core Architecture
@@ -93,7 +93,7 @@ Analysis Architecture Ownership Audit. The unused alternate `analysis/adapters.p
 AI Architecture Ownership Audit. Repository-wide reference inspection found the `ai/` package internally self-contained and not wired into the production application composition. No production/test callers construct `AIOrchestrator`, `AIProviderManager`, `AIContextBuilder`, or `OpenAIProvider`. The package is preserved as dormant future Phase 6 capability; no AI path is allowed to bypass the canonical analysis → decision → risk flow. `ARCHITECTURE_MAP.md` records the boundary.
 
 ### TASK-036 — VERIFIED
-Market Data Ownership Consolidation. `services/market_data/service.py` is the canonical application-facing market-data facade. Production Telegram callers in signal, tracker, scanner, and callbacks now retrieve candles through `MarketDataService` while preserving `MarketDataEngine` quality/freshness gates. The Scanner may still construct an engine locally only to inject its explicitly selected `ProviderManager`; candle retrieval remains behind the service boundary. Railway commit status for `6174463174d8c6c4ad513896ad7ff96847e85edc` is successful, and the TASK-036 CI gates completed successfully.
+Market Data Ownership Consolidation. `services/market_data/service.py` is the canonical application-facing market-data facade. Production Telegram callers in signal, tracker, scanner, and callbacks now retrieve candles through `MarketDataService` while preserving the canonical `MarketDataEngine` quality/freshness gates. The Scanner may still construct an engine locally only to inject its explicitly selected `ProviderManager`; candle retrieval remains behind the service boundary. Implementation head `6174463174d8c6c4ad513896ad7ff96847e85edc` has successful completed CI gates and successful Railway commit status.
 
 ## Next Task Selection
 TASK-037 is the evidence-backed audit of the dormant direct OANDA price surface (`get_latest_oanda_price`). Repository-wide reference inspection found no production caller. Before removal, verify all repository references/tests/documentation and ensure no canonical market-data behavior is lost. Do not invent a replacement caller or parallel market-data path.
