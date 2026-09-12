@@ -6,8 +6,8 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-007 — Application Startup Rollback Contract Hardening
-Objective: Establish explicit, tested contracts for application startup, shutdown signaling, lifecycle coordination, and partial-startup rollback.
+Active Task: TASK-008 — Application Shutdown Cleanup Guarantee
+Objective: Establish explicit, tested contracts for application startup, shutdown signaling, lifecycle coordination, partial-startup rollback, and cleanup guarantees.
 
 ### Phase 2 Scope Before TASK-004
 Status: UNKNOWN / NOT YET AUDITED
@@ -20,16 +20,21 @@ Completed evidence:
 - TASK-005 Production Readiness `34698909828` / job `103567089616`: success.
 - TASK-005 Dependency Audit `34698909815` / job `103567089540`: success.
 - TASK-005 Final Gate `34698909812` / job `103567089502`: success, including production Docker build.
-- TASK-005 was closed before starting TASK-006.
 - TASK-006 ShutdownManager lifecycle contracts were verified successfully by GitHub Actions for commit `2db7c75fcfc94cf1b44de76c6a279c1c45bc1686`.
 - TASK-006 Test job `103567612517` completed successfully, including lifecycle/persistence tests, full suite, application health, imports, and syntax checks.
+- TASK-007 application startup rollback was verified by GitHub Actions for commit `1028a219875220d71b012c8a500c9647953f5a59`.
+- TASK-007 final-gate `34699115514` / job `103567612470`: success, including full test suite and production Docker build.
+- TASK-007 test `34699115551` / job `103567612517`: success.
+- TASK-007 readiness `34699115528` / job `103567612438`: success.
+- TASK-007 activation-validation `34699115556` / job `103567612531`: success.
+- TASK-007 dependency-audit `34699115544` / job `103567612573`: success.
 
-Current TASK-007 evidence:
-- Commit `33ae66e70402d140c7ebe4437951fab2db4a98d1` adds rollback when `HealthServer.start()` fails after services start.
-- Commit `1028a219875220d71b012c8a500c9647953f5a59` adds regression coverage for the rollback contract.
+Current TASK-008 evidence:
+- Commit `08716e48bb2e3ffcd38e59f027ea3c61ad507615` guarantees service cleanup if `HealthServer.stop()` raises.
+- Commit `7aafd9f08e1a2423befa9d23d89d429b9b059888` adds regression coverage for the shutdown cleanup contract.
 - CI verification is pending.
 - No local execution claimed.
-Next: verify TASK-007 CI completion, inspect failures if any, and only then checkpoint the task.
+Next: verify TASK-008 CI completion, inspect failures if any, and only then checkpoint the task.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -58,7 +63,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green; current Phase 2 startup rollback contract is pending CI verification.
+Evidence: Existing CI and production verification gates are green; current Phase 2 shutdown cleanup contract is pending CI verification.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
