@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -22,6 +23,7 @@ class QueueRecord:
     status: str
     result: dict[str, Any] | None = None
     error: str | None = None
+    claimed_at: float | None = None
 
 
 class WorkerQueue:
@@ -46,11 +48,18 @@ class WorkerQueue:
                 allow_cpu_fallback INTEGER NOT NULL,
                 status TEXT NOT NULL,
                 result TEXT,
-                error TEXT
+                error TEXT,
+                claimed_at REAL
             )
             """
         )
+        self._ensure_column("claimed_at", "REAL")
         self._connection.commit()
+
+    def _ensure_column(self, name: str, definition: str) -> None:
+        columns = {row["name"] for row in self._connection.execute("PRAGMA table_info(worker_jobs)")}
+        if name not in columns:
+            self._connection.execute(f"ALTER TABLE worker_jobs ADD COLUMN {name} {definition}")
 
     def close(self) -> None:
         self._connection.close()
@@ -88,13 +97,30 @@ class WorkerQueue:
         if row is None:
             return None
         cursor = self._connection.execute(
-            "UPDATE worker_jobs SET status = 'RUNNING' WHERE job_id = ? AND status = 'PENDING'",
-            (row["job_id"],),
+            "UPDATE worker_jobs SET status = 'RUNNING', claimed_at = ? WHERE job_id = ? AND status = 'PENDING'",
+            (time.time(), row["job_id"]),
         )
         self._connection.commit()
         if cursor.rowcount != 1:
             return None
         return self.get(row["job_id"])
+
+    def recover_stale_running(self, max_age_seconds: int) -> list[QueueRecord]:
+        if max_age_seconds <= 0:
+            raise ValueError("Recovery age must be greater than zero")
+        cutoff = time.time() - max_age_seconds
+        rows = self._connection.execute(
+            "SELECT job_id FROM worker_jobs WHERE status = 'RUNNING' AND claimed_at IS NOT NULL AND claimed_at <= ?",
+            (cutoff,),
+        ).fetchall()
+        if not rows:
+            return []
+        self._connection.executemany(
+            "UPDATE worker_jobs SET status = 'PENDING', claimed_at = NULL, error = ? WHERE job_id = ? AND status = 'RUNNING'",
+            [("Recovered stale running job", row["job_id"]) for row in rows],
+        )
+        self._connection.commit()
+        return [self.get(row["job_id"]) for row in rows if self.get(row["job_id"]) is not None]
 
     def finish(self, job_id: str, *, result: dict[str, Any] | None = None) -> QueueRecord:
         return self._transition(job_id, "COMPLETED", result=result, error=None)
@@ -122,6 +148,7 @@ class WorkerQueue:
             status=row["status"],
             result=json.loads(row["result"]) if row["result"] else None,
             error=row["error"],
+            claimed_at=row["claimed_at"],
         )
 
     def _transition(
@@ -137,7 +164,7 @@ class WorkerQueue:
         cursor = self._connection.execute(
             """
             UPDATE worker_jobs
-            SET status = ?, result = ?, error = ?
+            SET status = ?, result = ?, error = ?, claimed_at = NULL
             WHERE job_id = ? AND status = 'RUNNING'
             """,
             (status, json.dumps(result, sort_keys=True) if result is not None else None, error, job_id),
