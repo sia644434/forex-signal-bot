@@ -9,6 +9,7 @@ from core.errors import ApplicationError
 from data.factory import ProviderFactory
 from data.market_data import MarketDataEngine
 from data.provider_manager import ProviderManager
+from services.market_data.service import MarketDataService
 from .market_session import evaluate_market_status
 from .i18n import t
 
@@ -60,12 +61,12 @@ def _build_provider_manager() -> ProviderManager:
 
 async def scan_market(symbols=DEFAULT_SCAN_SYMBOLS, timeframe=DEFAULT_TIMEFRAME, limit=DEFAULT_LIMIT):
     provider_manager = _build_provider_manager()
-    engine = MarketDataEngine(provider_manager=provider_manager)
+    market_data = MarketDataService(engine=MarketDataEngine(provider_manager=provider_manager))
     analyzer = FullAnalysisEngine()
 
     async def scan_one(symbol):
         try:
-            candles = await engine.get_candles_list(symbol, timeframe, limit)
+            candles = await market_data.get_candles_list(symbol, timeframe, limit)
             if not candles:
                 raise RuntimeError("empty market data")
 
