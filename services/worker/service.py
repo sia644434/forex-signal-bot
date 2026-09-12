@@ -67,10 +67,22 @@ class WorkerProcessingService(BaseService):
         )
 
     async def submit(self, request: JobRequest) -> JobResult:
+        if not self.configured:
+            return await self.dispatcher.submit(request)
+
+        readiness = self._heartbeat_readiness()
+        if readiness != "READY":
+            return JobResult(
+                request.job_id,
+                "WORKER_OFFLINE",
+                request.job_type,
+                error=f"PC worker is not ready: {readiness}",
+            )
+
         return await self.dispatcher.submit(request)
 
     async def submit_many(self, requests: list[JobRequest]) -> list[JobResult]:
-        return await self.dispatcher.submit_many(requests)
+        return await asyncio.gather(*(self.submit(request) for request in requests))
 
     async def heartbeat(self) -> dict[str, Any]:
         """Verify authenticated PC-worker readiness through the application boundary."""
