@@ -22,6 +22,7 @@ class WorkerProcessingService(BaseService):
         self.dispatcher = dispatcher
         self.configured = configured
         self._client = client
+        self._last_heartbeat: dict[str, Any] | None = None
 
     @classmethod
     def from_settings(cls, settings: Settings | None = None) -> "WorkerProcessingService":
@@ -59,8 +60,11 @@ class WorkerProcessingService(BaseService):
     async def heartbeat(self) -> dict[str, Any]:
         """Verify authenticated PC-worker readiness through the application boundary."""
         if self._client is None:
-            return {"status": "WORKER_OFFLINE", "configured": False}
-        return await asyncio.to_thread(self._client.heartbeat)
+            result = {"status": "WORKER_OFFLINE", "configured": False}
+        else:
+            result = await asyncio.to_thread(self._client.heartbeat)
+        self._last_heartbeat = result
+        return result
 
     def start(self) -> None:
         return None
@@ -69,11 +73,15 @@ class WorkerProcessingService(BaseService):
         return None
 
     def health(self) -> dict[str, Any]:
+        readiness = "UNCONFIGURED" if not self.configured else "UNKNOWN"
+        if self._last_heartbeat is not None:
+            readiness = str(self._last_heartbeat.get("status", "UNKNOWN"))
         return {
             "service": self.name,
             "status": "ok",
             "critical": self.critical,
             "configured": self.configured,
+            "readiness": readiness,
         }
 
 
