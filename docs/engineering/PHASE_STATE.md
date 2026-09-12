@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-038 — Market Data Lower-Level Facade / Alternate Ownership Audit
+Active Task: TASK-044 — Scanner ProviderManager Lifetime and Readiness Boundary Audit
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -22,24 +22,30 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-035 audited the `ai/` package and established that it is dormant/unwired future Phase 6 capability and not an active trading architecture.
 - TASK-036 consolidated production Telegram market-data candle retrieval behind `MarketDataService` while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing.
 - TASK-037 removed the dormant direct OANDA price surface after repository-wide reference inspection found no production caller. CI and Railway status were successful for the verified implementation commit.
+- TASK-038 removed the unused lower-level `DataManager` / `ExplicitProviderManager` compatibility architecture after repository-wide reference inspection.
+- TASK-039 removed unused provider-specific market-data adapter methods while preserving the provider-neutral canonical path.
+- TASK-040 verified ProviderManager lifecycle and retained-injected-provider semantics with regression coverage.
+- TASK-041 verified the MarketDataEngine output surface and retained the DataFrame compatibility contract because focused tests still cover it.
+- TASK-042 hardened the MarketDataService construction boundary so scanner no longer constructs MarketDataEngine directly.
+- TASK-043 established application-scoped MarketDataService lifetime for Telegram signal, callback, and tracker paths so ProviderManager state is preserved across calls.
 
-### TASK-037 — VERIFIED
-Dormant Direct OANDA Price Surface Audit.
+### TASK-043 — VERIFIED
+MarketDataService Lifetime and Application Composition Hardening.
 Evidence:
-- `get_latest_oanda_price` had no production caller.
-- The direct OANDA price method and its now-unused factory dependency were removed.
-- The canonical OANDA candle path remains intact.
-- GitHub Actions run `34719290035` completed successfully for commit `65ea6150fa23895ad5655e59dbc9349945e67f96`.
-- Railway commit status for that commit is `success`.
+- Repeated application-level `MarketDataService()` construction was identified as a state-lifetime reliability risk because it recreates the engine/manager state.
+- Telegram signal, callback, and tracker paths were changed to reuse the application-scoped service.
+- Scanner was intentionally kept separate because its provider-readiness selection is a distinct contract.
+- Regression coverage was added for application-scoped lifetime/state reuse.
+- Production Readiness run `34721145994`, Production Activation Validation run `34721150684`, and Production E2E Contract Gate run `34721147175` all completed successfully for implementation head `abe8e0db1d98e3c7ac3d6ffd09330604463656d9`.
 
-### TASK-038 — IN PROGRESS
-Market Data Lower-Level Facade / Alternate Ownership Audit.
-Objective: Verify whether `DataManager`, `ExplicitProviderManager`, and their compatibility paths are still required now that `MarketDataService` is the canonical application-facing boundary.
-Evidence:
-- `DataManager(` repository search found construction only in tests.
-- `ExplicitProviderManager` is referenced by `DataManager` and focused tests, with no production caller found.
-- `MarketDataService` still supports a lower-level `DataManager` path that production callers do not use.
-Constraint: Do not delete compatibility contracts until repository references, tests, and externally meaningful behavior are fully checked.
+### TASK-044 — IN PROGRESS
+Scanner ProviderManager Lifetime and Readiness Boundary Audit.
+Objective: Determine whether the scanner's per-invocation `ProviderManager` construction is intentional and correct, or whether repeated scans unnecessarily discard provider cache/cooldown/failure state. Preserve runtime provider-readiness semantics and do not introduce shared state until repository evidence justifies it.
+Initial evidence:
+- `scan_market()` currently builds a fresh provider manager on each invocation.
+- `_build_provider_manager()` derives the configured provider list dynamically through `ProviderFactory`.
+- `callbacks.py` directly invokes `scan_market()`, so repeated user scans can create fresh manager state.
+- The audit must inspect all current callers, any scheduler/background lifecycle, provider configuration-change behavior, and existing ProviderManager cooldown/cache tests before implementation.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -69,7 +75,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-037's full test workflow completed successfully.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-043 lifecycle regression, readiness, activation, and E2E contract gates completed successfully.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
