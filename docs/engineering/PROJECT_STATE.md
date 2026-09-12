@@ -3,55 +3,37 @@
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
 - Overall Status: `PRODUCTION_VERIFIED`
-- Current Phase: Phase 13 — Final Production Audit
-- Current Task: Final production audit / security and observability hardening
+- Current Phase: Phase 2 — Core Architecture
+- Current Task: TASK-004 — Service Lifecycle Contract Hardening
 - Last Completed Task: TASK-003 — Establish deployment and runtime verification evidence
-- Next Task: Audit concrete security, observability, dependency, and recovery gaps; fix only evidence-backed issues
-- Known Blockers: None for the verified Railway deployment path; GitHub Connector still does not expose a local working tree or private deployment credentials
-- Known Risks: Production verification evidence applies to the Railway deployment connected to `sia644434/forex-signal-bot`; that repository is the user's intentional fork/live deployment repository and is synchronized from the source repository after changes
-- Broken Tests: None in the latest verified CI runs
-- CI Status: Final Integration Gate, Security Audit, Production Activation Gate, Live Health Smoke, and post-restart Live Health Smoke all completed successfully in their verified runs
-- Deployment Status: Railway live deployment health and restart/recovery have been verified through GitHub Actions evidence
-- Architecture Status: Baseline mapped; data-quality, scanner, health/readiness, and production verification contracts stabilized
-- Production Readiness: `VERIFIED`
-- Last Checkpoint: TASK-003 production verification checkpoint
+- Next Task: Verify lifecycle contracts through GitHub Actions, then continue Phase 2 architecture mapping.
+- Known Blockers: None for the verified Railway deployment path; GitHub Connector does not expose a local working tree/runtime.
+- Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository.
+- Broken Tests: None known; TASK-004 tests are newly added and awaiting CI execution.
+- CI Status: Previous production/integration/security/live verification gates are green; the new TASK-004 commit has not yet produced a workflow result.
+- Deployment Status: Railway live deployment health and restart/recovery remain verified for the previously deployed commit.
+- Architecture Status: Phase 2 active; application composition and ServiceManager lifecycle contracts are the first targeted architecture boundary.
+- Production Readiness: `VERIFIED` for the previously observed deployment path; future runtime-affecting changes must repeat appropriate live gates.
+- Last Checkpoint: Phase 2 TASK-004 implementation checkpoint.
 - Last State Update: 2026-09-12
 
-## Evidence
+## Phase 2 — Core Architecture
 
-TASK-003 production verification was completed against the intentional Railway/live fork `sia644434/forex-signal-bot`.
-- Production Live Smoke run `34697840749`, job `103564290648`: `success`.
-- Live `/health` returned HTTP success with `application.status=ok` and `services.telegram.status=ok`, with Telegram marked critical.
-- Controlled Railway restart/redeploy was performed manually by the user.
-- Post-restart Production Live Smoke run `34698134769`, job `103565063400`: `success`.
-- Post-restart `/health` again returned `application.status=ok` and `services.telegram.status=ok`, with Telegram marked critical.
-- The post-restart job checked out deployed commit `8bf2a77840b72add70b98cbf1a3b2187f85763f2` and completed all verification steps successfully.
-- Production Docker build and integration gates were previously verified green.
-- Dependency Security Audit was previously verified green.
-- Production Activation Gate was previously verified green.
+TASK-004 targets the concrete lifecycle boundary in `core/service.py`: registration uniqueness, startup failure semantics, rollback of already-started services, non-critical degradation, reverse-order shutdown, shutdown-failure isolation, and health-failure isolation.
+
+Implementation:
+- `2e38e857dbed219c41c8b4339434bb61a372f040` — `test: add service manager lifecycle contracts`
+- Added `tests/test_service_manager_contract.py` with six focused contract tests.
+
+Current verification status:
+- Code/test change committed successfully.
+- GitHub Actions execution is pending/not yet evidenced for this commit.
+- No local execution is claimed.
 
 ## Repository Mapping Decision
 
-- `siasoltoon/forex-signal-bot` remains the source repository where source changes are maintained.
-- `sia644434/forex-signal-bot` is an intentional fork connected to Railway and is synchronized by the user after source changes.
-- Therefore, the observed live deployment repository identity is expected and is not considered a production verification blocker.
+- `siasoltoon/forex-signal-bot` remains the source repository.
+- `sia644434/forex-signal-bot` is the intentional Railway-connected fork synchronized by the user.
 
-## Checkpoint
-
-What was done: completed the remaining live production verification gap, including a successful live health smoke, controlled Railway restart/recovery observation, and a second successful live health smoke after recovery. Persistent engineering state has been updated to record the evidence.
-
-Verified commit:
-- `8bf2a77840b72add70b98cbf1a3b2187f85763f2` — `fix: align Telegram health status contract`
-
-Live evidence:
-- Production Live Smoke: run `34697840749`, job `103564290648` — success.
-- Restart/recovery verification followed by Production Live Smoke: run `34698134769`, job `103565063400` — success.
-
-Health contract observed after deployment and recovery:
-- `application.status = ok`
-- `services.telegram.status = ok`
-- `services.telegram.critical = true`
-
-What was tested: GitHub Actions live verification and user-observed Railway restart/recovery; no local runtime execution was claimed.
-
-Next exact action: begin the final production audit, starting with concrete security and observability gaps. Preserve the existing live verification gates for future production changes.
+## Active Task Selection Rule
+Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
