@@ -51,3 +51,11 @@ Chosen Solution: Keep `/health` unauthenticated for simple liveness checks but r
 Reason: This preserves compatibility with simple health probes while applying least-privilege information exposure.
 Consequences: Consumers needing worker identity or detailed readiness must use the authenticated heartbeat contract.
 Affected Components: `worker/server.py`, `tests/test_pc_worker_health_security.py`, worker monitoring/integration consumers.
+
+## ADR-007 — Canonical application-facing market-data boundary
+Date: 2026-09-12
+Problem: Production Telegram callers were directly constructing/using `MarketDataEngine`, creating an application-level ownership leak even though the engine contains important provider routing, data-quality, and freshness gates.
+Chosen Solution: Use `services/market_data/service.py` (`MarketDataService`) as the canonical application-facing market-data facade and route production candle retrieval through it. Preserve `MarketDataEngine` as the quality/freshness execution layer and `ProviderManager` as the provider routing/fallback owner.
+Reason: Consolidates application ownership without bypassing safety-critical market-data validation or provider failover behavior.
+Consequences: Application callers should not directly retrieve candles from `MarketDataEngine`. Scanner may retain explicit `ProviderManager` selection only when necessary for provider-readiness semantics, injecting it into the engine used by the service.
+Affected Components: `services/market_data/service.py`, `services/telegram/handlers/signal.py`, `services/telegram/tracker.py`, `services/telegram/scanner.py`, `services/telegram/handlers/callbacks.py`, market-data architecture documentation.
