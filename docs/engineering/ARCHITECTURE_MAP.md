@@ -24,14 +24,18 @@ TASK-032 audited the previously overlapping Telegram trees. The legacy `bot/`, `
 - `core/application.py`: lifecycle and composition.
 - `core/service.py`: registration, startup/shutdown, health, and degraded-mode handling.
 - `services/base.py`: service contract.
-- `services/market_data/service.py`: market-data application service.
+- `services/market_data/service.py`: canonical market-data application facade; its candle-list path uses `MarketDataEngine` so provider routing, normalization, quality, and freshness remain centralized.
 - `services/worker/service.py`: optional non-critical application boundary for heavy Forex processing; builds the queue-aware `WorkerDispatcher` from central settings and returns controlled `WORKER_OFFLINE` results when PC-worker transport is not configured or not ready.
 
 ## Market Data / Providers
 
 Primary locations: `data/` and `services/market_data/`.
 
-Observed components include `MarketDataProvider` contracts, provider managers/factories, fallback logic, freshness and quality logic, and OANDA/Finnhub/AlphaVantage providers plus provider clients.
+Canonical application flow: `Forex caller → MarketDataService → MarketDataEngine → ProviderManager → provider(s)`. `MarketDataEngine` owns the final candle quality/freshness gates; `ProviderManager` owns provider routing/fallback/retry/cooldown behavior. `DataManager` and explicit-provider helpers remain lower-level data-layer contracts rather than alternate application entry points.
+
+TASK-036 consolidated production Telegram candle retrieval behind `MarketDataService`. `signal.py`, `tracker.py`, `scanner.py`, and `handlers/callbacks.py` no longer call the market-data engine directly for candle retrieval. Scanner may retain an explicitly selected `ProviderManager` for its provider-readiness semantics, but injects it into the engine used by the service; this preserves the single application-facing service boundary without discarding provider-specific selection behavior.
+
+A dormant `get_latest_oanda_price` method remains under audit because repository-wide reference inspection found no production caller. It directly reaches an OANDA client and must not become a parallel application market-data path. Removal or preservation requires an evidence-backed TASK-037 decision.
 
 Important production concerns: provider routing centralization, freshness classification, market state, rate limits, timeout/retry behavior, data contracts, and safe degradation.
 
@@ -113,7 +117,7 @@ Primary boundaries are Telegram input, external market-data providers, the dorma
 
 ## Data Flow — Baseline Hypothesis to Verify
 
-Telegram request → canonical `services/telegram/` handlers/router → application/service layer → market data → analysis → decision → risk → safe result/NO TRADE → Telegram response.
+Telegram request → canonical `services/telegram/` handlers/router → application/service layer → `MarketDataService` → `MarketDataEngine` → analysis → decision → risk → safe result/NO TRADE → Telegram response.
 
 The dormant AI package is not in this production data flow.
 
@@ -135,4 +139,4 @@ Future AI provider failure → bounded degradation without unsafe decisions; AI 
 
 ## Status
 
-The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions were removed. The durable queue, timeout-aware crash recovery, central queue configuration, application composition boundary, worker heartbeat/readiness/freshness, worker security boundaries, and observability contracts are verified. Telegram ownership has been consolidated under `services/telegram/`. TASK-033 removed the evidence-backed dead decision/risk/strategy parallel trees and documented `analysis/decision_engine.py` and `analysis/risk_engine.py` as the canonical production owners. TASK-034 removed the unused alternate analysis architecture. TASK-035 established that the existing `ai/` package is dormant/unwired and reserved for Phase 6 rather than an active production architecture.
+The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions were removed. The durable queue, timeout-aware crash recovery, central queue configuration, application composition boundary, worker heartbeat/readiness/freshness, worker security boundaries, and observability contracts are verified. Telegram ownership has been consolidated under `services/telegram/`. TASK-033 removed the evidence-backed dead decision/risk/strategy parallel trees and documented `analysis/decision_engine.py` and `analysis/risk_engine.py` as the canonical production owners. TASK-034 removed the unused alternate analysis architecture. TASK-035 established that the existing `ai/` package is dormant/unwired and reserved for Phase 6 rather than an active production architecture. TASK-036 consolidated market-data candle retrieval behind `services/market_data/service.py` while preserving engine-level quality/freshness and provider-manager routing semantics.
