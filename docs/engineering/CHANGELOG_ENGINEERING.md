@@ -22,5 +22,14 @@
 - TASK-037: repository-wide inspection found the dormant `get_latest_oanda_price` surface in `data/market_data.py` with no production caller.
 - TASK-037: removed the dormant direct OANDA price surface and its now-unused dependency while preserving the canonical OANDA candle path.
 - TASK-037: implementation commit `65ea6150fa23895ad5655e59dbc9349945e67f96` passed GitHub Actions run `34719290035`; Railway commit status was successful.
-- TASK-038: started an evidence-backed audit of the lower-level `DataManager` / `ExplicitProviderManager` compatibility surface. Repository-wide searches found no production construction/caller; compatibility paths remain under review before any removal.
-- Synchronized engineering state through TASK-038 selection.
+- TASK-038: removed the unused lower-level `DataManager` / `ExplicitProviderManager` compatibility architecture after repository-wide reference inspection and successful CI verification.
+- TASK-039: removed unused provider-specific market-data adapter methods after repository-wide caller inspection.
+- TASK-040: verified ProviderManager lifecycle/state semantics and added regression coverage for injected provider retention and rebinding.
+- TASK-041: verified the MarketDataEngine output/compatibility surface and retained the tested DataFrame contract because repository evidence did not justify removal.
+- TASK-042: hardened the MarketDataService construction boundary so scanner no longer directly constructs MarketDataEngine; focused compatibility coverage and production gates passed.
+- TASK-043: audited Telegram market-data service lifetime and found repeated service construction would discard ProviderManager cache/cooldown/failure state between application calls.
+- TASK-043: changed Telegram signal, callback, and tracker paths to reuse one application-scoped MarketDataService while intentionally keeping scanner provider-readiness composition separate.
+- TASK-043: added application-lifetime/state regression coverage and recorded the decision in ADR-008.
+- TASK-043: implementation head `abe8e0db1d98e3c7ac3d6ffd09330604463656d9` passed Production Readiness run `34721145994`, Production Activation Validation run `34721150684`, and Production E2E Contract Gate run `34721147175`.
+- TASK-044: selected the next evidence-backed Phase 2 audit: scanner `ProviderManager` lifetime and provider-readiness boundary. No implementation is assumed until all `scan_market()` callers, lifecycle/configuration behavior, and ProviderManager state contracts are inspected.
+- Synchronized engineering state through TASK-044 selection.
