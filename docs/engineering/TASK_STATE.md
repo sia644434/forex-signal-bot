@@ -200,12 +200,27 @@ Checkpoint: Verified 2026-09-12.
 ## TASK-041
 Phase: Phase 2 — Core Architecture / Reliability
 Title: MarketDataEngine Output-Surface and Compatibility Audit
-Implementation Status: IN_PROGRESS
-Objective: Audit the remaining DataFrame-returning `MarketDataEngine.get_candles()` surface against the canonical list-returning market-data path, and remove or harden it only where repository evidence justifies the change.
+Implementation Status: VERIFIED
+Test Status: PASS — implementation was an evidence-backed compatibility audit; the existing DataFrame surface remains intentionally retained because focused contract tests cover it and no repository evidence justified removal.
 Evidence:
 - Production `MarketDataService` uses the canonical `get_candles_list()` path.
-- `MarketDataEngine.get_candles()` remains covered by focused contract tests and therefore cannot be treated as dead code solely because no current internal production caller was found.
-- The next step is to determine whether the DataFrame surface is an intentional compatibility API or an unnecessary duplicate boundary, without introducing a replacement path.
+- `MarketDataEngine.get_candles()` remains covered by focused contract tests, so it was not removed merely because no current internal production caller was found.
+- `analysis.market_structure` uses its own internal candle-to-DataFrame conversion and is not a duplicate `MarketDataEngine` ownership path.
+- The compatibility `analysis/candle.py` module resolves to the canonical `data.models.Candle` model rather than maintaining a second candle dataclass.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-042
+Phase: Phase 2 — Core Architecture / Reliability
+Title: Market Data Service Construction Boundary Hardening
+Implementation Status: VERIFIED
+Test Status: PASS — GitHub Actions `Test` run `34720757481`, job `103626042716`, completed successfully; Production Activation Validation run `34720757426` and Production E2E Contract Gate run `34720757376` completed successfully.
+Evidence:
+- `services/telegram/scanner.py` previously constructed `MarketDataEngine` directly, bypassing the application-facing `MarketDataService` boundary.
+- `MarketDataService` now supports explicit `ProviderManager` injection while retaining the existing direct-engine compatibility contract and rejecting simultaneous `engine` and `provider_manager` injection.
+- Scanner now constructs `MarketDataService(provider_manager=provider_manager)` without directly constructing `MarketDataEngine`.
+- Focused tests cover provider-manager construction and mutual-exclusion behavior.
+- A follow-up contract-test compatibility fix was committed as `e2f7f189b84d611e2806bc050ebe347766f77f4a`; all observed Actions gates for that head completed successfully.
+Checkpoint: Verified 2026-09-12.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
