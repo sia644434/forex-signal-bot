@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from data.provider_manager import ProviderManager
 from services.market_data.service import MarketDataService
 
 
@@ -27,3 +28,22 @@ async def test_service_propagates_engine_failure() -> None:
 
     with pytest.raises(RuntimeError, match="engine failure"):
         await service.get_candles_list("EUR_USD", "M15", 10)
+
+
+def test_service_builds_engine_from_provider_manager() -> None:
+    provider_manager = ProviderManager(providers=["oanda"])
+
+    service = MarketDataService(provider_manager=provider_manager)
+
+    assert service.engine.provider_manager is provider_manager
+
+
+def test_service_rejects_engine_and_provider_manager_together() -> None:
+    engine = AsyncMock()
+    provider_manager = ProviderManager(providers=["oanda"])
+
+    with pytest.raises(ValueError, match="cannot be provided together"):
+        MarketDataService(
+            engine=engine,
+            provider_manager=provider_manager,
+        )
