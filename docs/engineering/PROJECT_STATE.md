@@ -2,20 +2,20 @@
 
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
-- Current Commit: `85a6999042b687583268e3bea542d86406e741d6`
+- Current Commit: `ae2a0d4112447626bf0e3a45d69db937b09bb050`
 - Overall Status: `PRODUCTION_VERIFIED`
 - Current Phase: Phase 2 — Core Architecture
-- Current Task: TASK-024 — PC Worker Authenticated Heartbeat Contract
-- Last Completed Task: TASK-023 — Verify and harden the real heavy-Forex workload routing boundary
+- Current Task: TASK-028 — next evidence-backed Phase 2 gap selection
+- Last Completed Task: TASK-027 — PC Worker Heartbeat Freshness Contract
 - Removed Task: TASK-016 — Worker Retry and Failure Lifecycle; removed because it was inherited from the previous planning path and is not independently required by the final Forex-only Master Prompt.
 - Known Blockers: None for the verified Railway deployment path; GitHub Connector does not expose a local working tree/runtime.
-- Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. TASK-024 is CI-pending and has not been marked verified.
-- Broken Tests: None known; the new heartbeat test is awaiting GitHub Actions completion.
-- CI Status: Commit `32ed161e6ae03f41c03de75db56c225d3db10f88` has the seven push workflows running; the Production Readiness run `34706978390` was still `in_progress` at the last check.
-- Deployment Status: Prior Railway live health and restart/recovery remain verified for the previously deployed path. The heartbeat changes have not been independently claimed as live production deployed.
-- Architecture Status: Phase 2 active. The PC Worker is restricted to heavy Forex application processing. The durable queue, timeout-aware crash recovery, central queue configuration, and application composition boundary are verified. TASK-023 confirmed there is currently no real heavy-Forex domain caller to wire because Phase 9 Backtesting / Simulation is not started; no speculative caller was introduced. TASK-024 adds the next concrete worker transport reliability boundary: authenticated readiness heartbeat.
-- Production Readiness: `VERIFIED` for the previously observed deployment path; current TASK-024 changes are CI-pending and not independently live-production-verified.
-- Last Checkpoint: `85a6999042b687583268e3bea542d86406e741d6` — recorded TASK-023 audit completion and TASK-024 heartbeat implementation state.
+- Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Current source-head CI has seven completed push workflow runs for `316391aa4440d8ca2d31a0d11887bfa2482070b4`; the explicitly inspected Production E2E Contract Gate and Production Activation Validation are successful.
+- Broken Tests: None known.
+- CI Status: TASK-027 verification completed at current-head CI level; commit `316391aa4440d8ca2d31a0d11887bfa2482070b4` has seven completed push workflow runs, including successful Production E2E Contract Gate `34709726285` and Production Activation Validation `34709726258`.
+- Deployment Status: The commit `316391aa4440d8ca2d31a0d11887bfa2482070b4` has a successful Railway deployment status. Prior live health and restart/recovery evidence remains valid for the verified deployment path.
+- Architecture Status: Phase 2 active. The PC Worker is restricted to heavy Forex application processing. Durable queue, timeout-aware crash recovery, central queue configuration, application composition, authenticated heartbeat, readiness, observability, and heartbeat freshness are verified. No local coding-agent/Ollama architecture is part of the active Forex worker path.
+- Production Readiness: `VERIFIED` for the observed deployment path. TASK-027 is CI-verified; its Railway status is successful. A fresh manual live smoke is only required again when a later change materially affects runtime health/deployment behavior.
+- Last Checkpoint: `ae2a0d4112447626bf0e3a45d69db937b09bb050` — synchronized engineering state through TASK-027.
 - Last State Update: 2026-09-12
 
 ## Phase 2 — Core Architecture
@@ -39,25 +39,37 @@ Worker Retry and Failure Lifecycle. Removed from the roadmap because it was inhe
 Remove Residual Non-Forex Worker Workload. Final-gate run `34704118418`, job `103580948161`, completed successfully with compile, runtime safety tests, full suite, and production Docker build passing.
 
 ### TASK-018 — VERIFIED
-Durable Forex Worker Processing Queue Contract. SQLite-backed queue, lifecycle states, idempotency, priority ordering, persistence, and dispatcher integration verified by the queue/integration gates.
+Durable Forex Worker Processing Queue Contract. SQLite-backed queue, lifecycle states, idempotency, priority ordering, persistence, and dispatcher integration verified.
 
 ### TASK-019 — VERIFIED
-Forex Worker Queue Crash-Recovery Contract. Stale `RUNNING` recovery and deterministic regression coverage verified on current head.
+Forex Worker Queue Crash-Recovery Contract. Stale `RUNNING` recovery and deterministic regression coverage verified.
 
 ### TASK-020 — VERIFIED
-Activate Forex Worker Queue Crash Recovery. Per-job-timeout-aware recovery is activated at dispatcher initialization and verified by current-head CI.
+Activate Forex Worker Queue Crash Recovery. Per-job-timeout-aware recovery is activated at dispatcher initialization and verified.
 
 ### TASK-021 — VERIFIED
-Forex Worker Queue Persistence Configuration Boundary. Central queue path/recovery-grace configuration and dispatcher construction are verified by current-head CI.
+Forex Worker Queue Persistence Configuration Boundary. Central queue path/recovery-grace configuration and dispatcher construction are verified.
 
 ### TASK-022 — VERIFIED
-Wire Heavy Forex Worker Through the Application Service Boundary. The application composes an optional non-critical worker processing service backed by the queue-aware dispatcher and centrally configured worker transport. Commit `7a96afddaa46aefe9bb5aa990f40522905754572` passed all seven push workflows.
+Wire Heavy Forex Worker Through the Application Service Boundary. Optional non-critical worker processing service is backed by the queue-aware dispatcher and centrally configured worker transport.
 
 ### TASK-023 — VERIFIED
-Verify and harden the real heavy-Forex workload routing boundary. Repository evidence shows worker-owned heavy Forex executors/contracts, but no real Forex domain caller currently submits `JobRequest` through `WorkerProcessingService`. Phase 9 — Backtesting / Simulation is `NOT_STARTED`, so no speculative caller was created. The generic worker boundary is therefore retained for the future real Phase 9 integration.
+Verify and harden the real heavy-Forex workload routing boundary. No real Forex domain caller currently submits heavy jobs because Phase 9 Backtesting / Simulation is not started; no speculative caller was introduced.
 
-### TASK-024 — IN PROGRESS
-PC Worker Authenticated Heartbeat Contract. Added authenticated `POST /heartbeat`, a matching `PCWorkerClient.heartbeat()` method, and regression coverage for valid and invalid authentication. GitHub Actions is still running for the implementation commit and must pass before this task is marked verified.
+### TASK-024 — VERIFIED
+PC Worker Authenticated Heartbeat Contract. Authenticated heartbeat endpoint/client contract and valid/invalid authentication coverage are complete.
+
+### TASK-025 — VERIFIED
+Worker Processing Health/Readiness Contract. Worker readiness states are exposed through the application boundary and covered by regression tests.
+
+### TASK-026 — VERIFIED
+Worker Heartbeat Observability. Worker identity/timestamp observability is exposed through worker processing health.
+
+### TASK-027 — VERIFIED
+PC Worker Heartbeat Freshness Contract. Configurable maximum heartbeat age is enforced dynamically; expired, malformed, or timestamp-missing READY heartbeats become `STALE`. Current-head CI and Railway status are successful.
+
+## Next Task Selection
+TASK-028 must be selected only after repository evidence identifies a concrete remaining Phase 2 correctness, reliability, security, observability, deployment, or recovery gap. Do not invent a task merely to increment the task number.
 
 ## Repository Mapping Decision
 
