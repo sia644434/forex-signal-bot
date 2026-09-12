@@ -22,6 +22,7 @@ def test_worker_service_uses_configured_transport(monkeypatch):
         pc_worker_url="http://worker.example",
         pc_worker_token="secret",
         pc_worker_timeout=12,
+        pc_worker_heartbeat_max_age=120,
     )
     captured = {}
 
@@ -40,7 +41,7 @@ def test_worker_service_uses_configured_transport(monkeypatch):
             })()
 
         def heartbeat(self):
-            return {"status": "READY", "worker_id": "worker-1", "timestamp": "2026-09-12T00:00:00+00:00"}
+            return {"status": "READY", "worker_id": "worker-1", "timestamp": "2099-09-12T00:00:00+00:00"}
 
     monkeypatch.setattr("services.worker.service.PCWorkerClient", FakeClient)
     service = WorkerProcessingService.from_settings(settings)
@@ -57,13 +58,42 @@ def test_worker_service_uses_configured_transport(monkeypatch):
     assert heartbeat["worker_id"] == "worker-1"
     assert service.health()["readiness"] == "READY"
     assert service.health()["worker_id"] == "worker-1"
-    assert service.health()["timestamp"] == "2026-09-12T00:00:00+00:00"
+    assert service.health()["timestamp"] == "2099-09-12T00:00:00+00:00"
     assert captured == {
         "base_url": "http://worker.example",
         "token": "secret",
         "timeout": 12,
     }
     assert service.health()["configured"] is True
+
+
+def test_worker_service_health_marks_stale_ready_heartbeat(monkeypatch):
+    settings = Settings(
+        pc_worker_url="http://worker.example",
+        pc_worker_token="secret",
+        pc_worker_heartbeat_max_age=60,
+    )
+
+    class FakeClient:
+        def __init__(self, base_url, token, timeout):
+            pass
+
+        def heartbeat(self):
+            return {
+                "status": "READY",
+                "worker_id": "worker-1",
+                "timestamp": "2020-01-01T00:00:00+00:00",
+            }
+
+    monkeypatch.setattr("services.worker.service.PCWorkerClient", FakeClient)
+    service = WorkerProcessingService.from_settings(settings)
+
+    asyncio.run(service.heartbeat())
+
+    assert service.health()["status"] == "ok"
+    assert service.health()["critical"] is False
+    assert service.health()["configured"] is True
+    assert service.health()["readiness"] == "STALE"
 
 
 def test_worker_service_health_reflects_offline_heartbeat(monkeypatch):
