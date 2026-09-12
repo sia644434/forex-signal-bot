@@ -1,32 +1,23 @@
 from __future__ import annotations
 
 import logging
-import os
 import signal
 import time
 
+from config.settings import Settings
 from .executors import register_real_executors
-from .handlers import register_agent_handler, register_default_handlers
-from .models.bootstrap import build_coding_agent
+from .handlers import register_default_handlers
 from .runtime import WorkerRuntime
 from .server import WorkerHTTPServer
 
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+settings = Settings.load()
+logging.basicConfig(level=settings.log_level)
 
 
 def main() -> None:
     runtime = WorkerRuntime.create()
     register_default_handlers(runtime)
     register_real_executors(runtime)
-
-    repo_root = os.getenv("AGENT_REPO_ROOT")
-    if repo_root:
-        agent = build_coding_agent(repo_root)
-        if agent.runtime.health():
-            register_agent_handler(runtime, agent)
-            logging.info("Local coding agent enabled using Ollama")
-        else:
-            logging.warning("Ollama unavailable; coding agent handler not enabled")
 
     server = WorkerHTTPServer(runtime)
     server.start()
