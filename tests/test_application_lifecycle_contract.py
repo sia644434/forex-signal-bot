@@ -142,24 +142,34 @@ def test_application_health_preserves_healthy_application_status() -> None:
     assert "critical_failures" not in result["application"]
 
 
-def test_create_app_registers_telegram_service(monkeypatch) -> None:
+def test_create_app_registers_application_services(monkeypatch) -> None:
     import core.application as application_module
 
     class FakeTelegramService:
         name = "telegram"
         critical = True
 
+    class FakeWorkerProcessingService:
+        name = "worker_processing"
+        critical = False
+
+        @classmethod
+        def from_settings(cls):
+            return cls()
+
     class FakeServer:
         def __init__(self, *args, **kwargs) -> None:
             pass
 
     monkeypatch.setattr(application_module, "TelegramService", FakeTelegramService)
+    monkeypatch.setattr(application_module, "WorkerProcessingService", FakeWorkerProcessingService)
     monkeypatch.setattr(application_module, "HealthServer", FakeServer)
 
     app = application_module.create_app()
 
-    assert list(app.services.services) == ["telegram"]
+    assert list(app.services.services) == ["telegram", "worker_processing"]
     assert isinstance(app.services.services["telegram"], FakeTelegramService)
+    assert isinstance(app.services.services["worker_processing"], FakeWorkerProcessingService)
 
 
 def test_app_factory_wrapper_delegates_to_application_factory(monkeypatch) -> None:
