@@ -48,12 +48,14 @@ def test_pc_worker_transport_settings_are_loaded(monkeypatch):
     monkeypatch.setenv("PC_WORKER_URL", "http://192.168.1.3:8765")
     monkeypatch.setenv("PC_WORKER_TOKEN", "worker-secret")
     monkeypatch.setenv("PC_WORKER_TIMEOUT", "45")
+    monkeypatch.setenv("PC_WORKER_HEARTBEAT_MAX_AGE", "90")
 
     settings = Settings.load()
 
     assert settings.pc_worker_url == "http://192.168.1.3:8765"
     assert settings.pc_worker_token == "worker-secret"
     assert settings.pc_worker_timeout == 45
+    assert settings.pc_worker_heartbeat_max_age == 90
 
 
 def test_pc_worker_url_requires_token(monkeypatch):
@@ -77,3 +79,14 @@ def test_pc_worker_timeout_must_be_positive(monkeypatch):
         assert "PC_WORKER_TIMEOUT" in str(exc)
     else:
         raise AssertionError("Expected non-positive PC worker timeout to be rejected")
+
+
+def test_pc_worker_heartbeat_max_age_must_be_positive(monkeypatch):
+    monkeypatch.setenv("PC_WORKER_HEARTBEAT_MAX_AGE", "0")
+
+    try:
+        Settings.load()
+    except ValueError as exc:
+        assert "PC_WORKER_HEARTBEAT_MAX_AGE" in str(exc)
+    else:
+        raise AssertionError("Expected non-positive heartbeat max age to be rejected")
