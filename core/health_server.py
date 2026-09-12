@@ -16,8 +16,9 @@ class _HealthHandler(BaseHTTPRequestHandler):
 
         payload = self.server.health_provider()  # type: ignore[attr-defined]
         body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        status = _http_status_for_health(payload)
 
-        self.send_response(200)
+        self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
@@ -26,6 +27,24 @@ class _HealthHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format: str, *args: object) -> None:
         return
+
+
+def _http_status_for_health(payload: object) -> int:
+    """Map the health contract to an orchestration-friendly HTTP status."""
+    if not isinstance(payload, dict):
+        return 503
+
+    application = payload.get("application")
+    if isinstance(application, dict):
+        status = application.get("status")
+        if status in {"degraded", "error", "unhealthy"}:
+            return 503
+
+    top_level_status = payload.get("status")
+    if top_level_status in {"degraded", "error", "unhealthy"}:
+        return 503
+
+    return 200
 
 
 class HealthServer:
