@@ -1,0 +1,23 @@
+name: Production Live Smoke
+
+on:
+  workflow_dispatch:
+
+jobs:
+  live-health:
+    runs-on: ubuntu-latest
+    env:
+      PRODUCTION_BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify production URL is configured
+        run: |
+          if [ -z "$PRODUCTION_BASE_URL" ]; then
+            echo "PRODUCTION_BASE_URL is not configured; live production verification cannot run."
+            exit 1
+          fi
+      - name: Verify live production health
+        run: python scripts/production_health_check.py
