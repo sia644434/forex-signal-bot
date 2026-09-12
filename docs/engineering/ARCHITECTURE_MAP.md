@@ -13,9 +13,11 @@ The repository is a Python Forex trading-intelligence application with a Telegra
 
 ## Telegram Layer
 
-Primary locations: `services/telegram/`, `bot/`, `telegram_bot/`, and legacy/top-level `handlers/`.
+Canonical production ownership: `services/telegram/`.
 
-The newer service-oriented path includes client, router, state, i18n, scanner, journal, tracker, market-session handling, and command/callback handlers. Multiple Telegram-related trees exist, so consolidation/ownership must be verified before architectural cleanup.
+`core/application.py` registers `TelegramService`; `TelegramService` creates `TelegramClient`; `TelegramClient` imports `services.telegram.router.register_routes`; and the router registers the command/callback handlers under `services/telegram/handlers/`. This is the only Telegram runtime path composed by the production application entry point.
+
+TASK-032 audited the previously overlapping Telegram trees. The legacy `bot/`, `telegram_bot/`, and top-level `handlers/` trees were not referenced by the production composition root or `main.py`; their remaining references were limited to legacy tests/CI imports and to each other. They were removed, and the tests/CI import checks were migrated to the canonical `services/telegram/` path. This establishes a single Telegram ownership boundary and avoids parallel handler registration paths.
 
 ## Application / Service Layer
 
@@ -23,7 +25,7 @@ The newer service-oriented path includes client, router, state, i18n, scanner, j
 - `core/service.py`: registration, startup/shutdown, health, and degraded-mode handling.
 - `services/base.py`: service contract.
 - `services/market_data/service.py`: market-data application service.
-- `services/worker/service.py`: optional non-critical application boundary for heavy Forex processing; builds the queue-aware `WorkerDispatcher` from central settings and returns controlled `WORKER_OFFLINE` results when PC-worker transport is not configured.
+- `services/worker/service.py`: optional non-critical application boundary for heavy Forex processing; builds the queue-aware `WorkerDispatcher` from central settings and returns controlled `WORKER_OFFLINE` results when PC-worker transport is not configured or not ready.
 
 ## Market Data / Providers
 
@@ -66,9 +68,9 @@ The application-facing path is now:
 
 `Forex domain caller → WorkerProcessingService → WorkerDispatcher → durable queue and/or PCWorkerClient → PC Worker`
 
-`WorkerProcessingService` is optional and non-critical. When PC-worker transport is absent, submission fails in a controlled `WORKER_OFFLINE` result instead of blocking application startup.
+`WorkerProcessingService` is optional and non-critical. When PC-worker transport is absent, submission fails in a controlled `WORKER_OFFLINE` result instead of blocking application startup. Configured dispatch is fail-closed unless the authenticated heartbeat is fresh and `READY`.
 
-Required next verification: identify actual heavy-Forex domain call sites and confirm that backtesting, historical-data processing, simulation, batch calculations, and other expensive workloads use this boundary where required by the Master Prompt. Do not assume that exposing the service alone constitutes full workload routing.
+No concrete Phase 9 heavy-Forex domain caller currently exists because Backtesting / Simulation is not started. No speculative caller was introduced.
 
 ## Processing Queue
 
@@ -94,11 +96,11 @@ Railway is an infrastructure target, not a core application architecture depende
 
 ## Testing
 
-`tests/` includes unit/contract/integration-style coverage for providers, freshness, market data, analysis, decision logic, worker, Telegram, lifecycle, and production readiness. Worker workload tests enforce that only supported Forex application workloads are registered. `tests/test_worker_queue.py` covers queue idempotency, priority ordering, lifecycle transitions, terminal-state idempotency, cancellation/timeout, crash recovery, and persistence across connections. `tests/test_worker_service.py` covers the application-facing worker boundary and controlled offline behavior.
+`tests/` includes unit/contract/integration-style coverage for providers, freshness, market data, analysis, decision logic, worker, Telegram, lifecycle, and production readiness. Telegram tests and CI import checks target `services/telegram/`, the canonical production-owned path. Worker workload tests enforce that only supported Forex application workloads are registered. `tests/test_worker_queue.py` covers queue idempotency, priority ordering, lifecycle transitions, terminal-state idempotency, cancellation/timeout, crash recovery, and persistence across connections. `tests/test_worker_service.py` covers the application-facing worker boundary and controlled offline behavior.
 
 ## CI/CD
 
-CI status must always be verified against the relevant commit rather than inferred from documentation. The TASK-022 verification head `7a96afddaa46aefe9bb5aa990f40522905754572` passed Test, Final Integration Gate, Production Readiness, Production Activation Gate, Production Activation Validation, Production E2E Contract Gate, and Security Audit.
+CI status must always be verified against the relevant commit rather than inferred from documentation. The current code-consolidation commit is `b1a7b6e48b710eec70d608daf9a5fe5756348c45`; its seven GitHub Actions checks were triggered and must be allowed to complete before this task is marked verified.
 
 ## Security Boundaries
 
@@ -106,13 +108,13 @@ Primary boundaries are Telegram input, external market-data providers, AI provid
 
 ## Data Flow — Baseline Hypothesis to Verify
 
-Telegram request → Telegram handlers/router → application/service layer → market data → analysis/orchestration → decision/risk → safe result/NO TRADE → Telegram response.
+Telegram request → canonical `services/telegram/` handlers/router → application/service layer → market data → analysis/orchestration → decision/risk → safe result/NO TRADE → Telegram response.
 
 Heavy Forex application workloads should use:
 
 Forex heavy operation → `WorkerProcessingService` → `WorkerDispatcher` → queue/PC Worker → result → calling Forex service.
 
-The concrete domain call sites for this second flow are the next Phase 2 verification target.
+The concrete domain call sites for this second flow are deferred until the corresponding Phase 9 heavy-Forex features exist.
 
 ## Failure Flow — Target
 
@@ -121,9 +123,9 @@ Provider failure → centralized fallback/failover → quality/freshness validat
 Optional analysis failure → isolate failure and preserve valid analyses where safe.
 Risk failure → fail closed.
 Queue/worker timeout/failure → explicit lifecycle state + bounded recovery behavior where required.
-Missing worker transport → controlled `WORKER_OFFLINE` result for optional heavy processing.
+Missing/unready worker transport → controlled `WORKER_OFFLINE` result for optional heavy processing.
 External/AI failure → bounded degradation without unsafe decisions.
 
 ## Status
 
-The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions were removed. The durable queue, timeout-aware crash recovery, central queue configuration, and application composition boundary are verified. The next architectural task is to audit real heavy-Forex domain call sites and harden any missing routing through the worker boundary; no speculative architecture should be added.
+The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions were removed. The durable queue, timeout-aware crash recovery, central queue configuration, application composition boundary, worker heartbeat/readiness/freshness, worker security boundaries, and observability contracts are verified. Telegram ownership has now been consolidated under `services/telegram/`; legacy overlapping Telegram trees were removed after reference/entry-point audit. The next architectural task must be selected from fresh repository evidence after TASK-032 CI verification; no speculative architecture should be added.
