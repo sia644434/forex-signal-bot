@@ -166,13 +166,25 @@ Checkpoint: Verified 2026-09-12.
 ## TASK-038
 Phase: Phase 2 — Core Architecture
 Title: Market Data Lower-Level Facade / Alternate Ownership Audit
+Implementation Status: VERIFIED
+Test Status: PASS — GitHub Actions gates completed successfully for implementation commit `c2b772e1d37c0f06524da42f735b9913888234e4`.
+Evidence:
+- `DataManager(` construction existed only in tests; no production caller was found.
+- `ExplicitProviderManager` had no production caller outside the dormant DataManager path.
+- `data/manager.py`, `data/explicit_provider_manager.py`, and their focused tests were removed.
+- `MarketDataService` was reduced to the canonical `MarketDataEngine` delegation contract.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-039
+Phase: Phase 2 — Core Architecture
+Title: Provider-Specific Market Data Adapter Surface Audit
 Implementation Status: IN_PROGRESS
-Objective: Determine whether the dormant `DataManager` / `ExplicitProviderManager` application path is still required after `MarketDataService` became the canonical application-facing boundary.
-Evidence to date:
-- Repository-wide `DataManager(` search found construction only in tests.
-- `ExplicitProviderManager` is referenced by `DataManager` and its focused tests; no production caller was found.
-- `MarketDataService` still contains compatibility paths for `DataManager`, while production callers use the engine path.
-Constraint: Do not remove the lower-level contracts until all references, tests, and compatibility requirements are verified.
+Objective: Remove provider-named compatibility methods from `MarketDataEngine` when repository evidence shows the canonical provider-neutral `get_candles` contract is the only production path.
+Evidence:
+- `get_finnhub_candles`, `get_oanda_candles`, and `get_alphavantage_intraday` were found only in `data/market_data.py` and focused contract tests; no production caller was found.
+- The canonical path remains provider-neutral: `MarketDataService → MarketDataEngine → ProviderManager`.
+- The provider-specific adapter methods and their focused tests have been removed in commit `044ab88fb83f7f929887fb8823d67a811c67e8a5`.
+Verification: Pending GitHub Actions for `044ab88fb83f7f929887fb8823d67a811c67e8a5`.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
