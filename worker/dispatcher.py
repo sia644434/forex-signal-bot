@@ -4,6 +4,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from config.settings import Settings
 from .contracts import HEAVY_JOB_TYPES, JobRequest, JobResult
 from .queue import WorkerQueue
 
@@ -17,11 +18,29 @@ class WorkerDispatcher:
         self,
         submit: Callable[[JobRequest], Awaitable[JobResult]] | None = None,
         queue: WorkerQueue | None = None,
+        recovery_grace_seconds: int = 30,
     ):
         self._submit = submit
         self._queue = queue
+        if recovery_grace_seconds < 0:
+            raise ValueError("Recovery grace must not be negative")
         if self._queue is not None:
-            self._queue.recover_expired_running()
+            self._queue.recover_expired_running(recovery_grace_seconds)
+
+    @classmethod
+    def from_settings(
+        cls,
+        submit: Callable[[JobRequest], Awaitable[JobResult]] | None = None,
+        settings: Settings | None = None,
+    ) -> "WorkerDispatcher":
+        """Build a queue-backed dispatcher from the central Forex settings boundary."""
+        resolved = settings or Settings.load()
+        queue = WorkerQueue(resolved.worker_queue_database_path)
+        return cls(
+            submit=submit,
+            queue=queue,
+            recovery_grace_seconds=resolved.worker_queue_recovery_grace_seconds,
+        )
 
     async def submit(self, request: JobRequest) -> JobResult:
         if request.job_type not in HEAVY_JOB_TYPES:
