@@ -6,46 +6,32 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: Determine the next evidence-backed Forex architecture gap after TASK-015; first revisit the skipped pre-TASK-004 scope before declaring Phase 2 complete.
+Active Task: TASK-018 — Durable Forex Worker Processing Queue Contract
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Phase 2 Scope Before TASK-004
-Status: UNKNOWN / NOT YET AUDITED
-Rule: This skipped pre-TASK-004 scope is intentionally not marked complete. It must be revisited and verified later before Phase 2 can be declared complete.
+Status: AUDITED
+Evidence: TASK-004 is the first explicitly recorded Phase 2 implementation task after TASK-003. No independent historical pre-TASK-004 task contract was recoverable from persistent engineering state, so no missing historical task is being invented.
 
 ### Completed Evidence
 - TASK-004 through TASK-013 were verified and closed through GitHub Actions and repository checkpoints.
-- TASK-013 centralized application/health/logger configuration boundaries. Head `382d3461f2a95a3135fa074297a5e4c0a99f6c94` has successful combined status.
 - TASK-014 removed the accidental local coding-agent/Ollama worker architecture and verified the application-only worker boundary.
-- TASK-015 hardened worker job lifecycle validation, timeout, cancellation, active-job tracking, and completed-job idempotency. Its test commit `e2833498fce78d34d9e8e4084afef02faab8d284` has successful combined status.
+- TASK-015 hardened worker job lifecycle validation, timeout, cancellation, active-job tracking, and completed-job idempotency.
+- TASK-017 removed the residual `multi_agent_analysis` workload, executor, tests, and documentation references. Final-gate run `34704118418`, job `103580948161`, completed successfully with compile, runtime safety tests, full suite, and production Docker build passing.
 
-### TASK-014 — VERIFIED
-PC Worker Scope and Configuration Boundary Hardening.
+### TASK-018 — TESTING
+Durable Forex Worker Processing Queue Contract.
 
-Evidence:
-- `worker/contracts.py` no longer declares `coding_agent` as a worker workload.
-- `worker/handlers.py` no longer exposes coding-agent registration.
-- `worker/main.py` no longer initializes a local coding agent or Ollama runtime.
-- Legacy local coding-agent/Ollama subsystem and related setup/test artifacts were removed in atomic commit `bb0e9c181fb8f4ec0cc7525b480a341d44cb5468`.
+Evidence implemented:
+- `worker/queue.py` adds a dependency-free SQLite-backed durable queue boundary.
+- Queue states are explicit: `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`, `TIMEOUT`.
+- Enqueue is idempotent by `job_id`.
+- Pending jobs are priority ordered.
+- Terminal transitions are idempotent and persisted.
+- File-backed queue state survives a connection/process boundary.
+- `tests/test_worker_queue.py` covers these contracts.
 
-Checkpoint: Closed 2026-09-12.
-
-### TASK-015 — VERIFIED
-Worker Job Lifecycle Reliability.
-
-Evidence:
-- `worker/runtime.py` validates job IDs and timeouts, prevents duplicate completed execution, tracks active jobs, handles async timeout, and propagates cancellation without caching it as completed.
-- Focused lifecycle tests were added in `tests/test_pc_worker_contracts.py`.
-- Combined GitHub status for `e2833498fce78d34d9e8e4084afef02faab8d284` is `success`.
-
-Checkpoint: Verified 2026-09-12.
-
-### TASK-016 — REMOVED
-Worker Retry and Failure Lifecycle.
-
-Reason: Removed because it was carried forward from the previous planning path and is not independently required by the final Forex-only Master Prompt. No implementation was performed for this task.
-
-Checkpoint: Removed 2026-09-12.
+Known limitation: the queue is not yet claimed as a production distributed broker. Shared storage, transport/dispatcher integration, multi-process recovery semantics, worker authentication/heartbeat, and deployment verification remain future work.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -74,7 +60,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green; focused Phase 2 contract work continues sequentially.
+Evidence: Existing CI and production verification gates are green; current Phase 2 queue contract is awaiting fresh CI verification.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
