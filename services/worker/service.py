@@ -16,11 +16,12 @@ class WorkerProcessingService(BaseService):
     name = "worker_processing"
     critical = False
 
-    def __init__(self, dispatcher: WorkerDispatcher, configured: bool) -> None:
+    def __init__(self, dispatcher: WorkerDispatcher, configured: bool, client: PCWorkerClient | None = None) -> None:
         if dispatcher is None:
             raise TypeError("dispatcher cannot be None")
         self.dispatcher = dispatcher
         self.configured = configured
+        self._client = client
 
     @classmethod
     def from_settings(cls, settings: Settings | None = None) -> "WorkerProcessingService":
@@ -47,13 +48,19 @@ class WorkerProcessingService(BaseService):
             settings=resolved,
             submit=submit,
         )
-        return cls(dispatcher=dispatcher, configured=client is not None)
+        return cls(dispatcher=dispatcher, configured=client is not None, client=client)
 
     async def submit(self, request: JobRequest) -> JobResult:
         return await self.dispatcher.submit(request)
 
     async def submit_many(self, requests: list[JobRequest]) -> list[JobResult]:
         return await self.dispatcher.submit_many(requests)
+
+    async def heartbeat(self) -> dict[str, Any]:
+        """Verify authenticated PC-worker readiness through the application boundary."""
+        if self._client is None:
+            return {"status": "WORKER_OFFLINE", "configured": False}
+        return await asyncio.to_thread(self._client.heartbeat)
 
     def start(self) -> None:
         return None
