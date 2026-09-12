@@ -7,7 +7,7 @@ from ..coach import explain_report
 from ..tracker import list_tracking, stop_tracking
 from ..i18n import t
 from analysis.full_engine import FullAnalysisEngine
-from services.market_data.service import MarketDataService
+from services.market_data.service import get_market_data_service
 from core.errors import ApplicationError
 
 
@@ -54,9 +54,9 @@ def _apply_setting(state, data: str) -> str:
     return "Settings saved"
 
 
-async def _run_signal_report(state):
+async def _run_signal_report(state, market_data):
     symbol = state.settings.get("market_symbol", "EURUSD"); timeframe = state.settings.get("timeframe", "M15")
-    candles = await MarketDataService().get_candles_list(symbol, timeframe, 300)
+    candles = await market_data.get_candles_list(symbol, timeframe, 300)
     if not candles: raise RuntimeError("empty market data")
     return await __import__("asyncio").to_thread(FullAnalysisEngine().analyze, candles)
 
@@ -93,7 +93,7 @@ async def menu_callback_handler(update: Update, context: ContextTypes.DEFAULT_TY
         if not state: return
         await query.edit_message_text("⏳ Building AI coach explanation..." if language == "en" else "⏳ در حال ساخت توضیح مربی...")
         try:
-            report = await _run_signal_report(state); await query.edit_message_text(explain_report(report), parse_mode="HTML", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "retry"), callback_data="coach")], [InlineKeyboardButton(t(language, "back"), callback_data="home")]]))
+            report = await _run_signal_report(state, get_market_data_service(context.application)); await query.edit_message_text(explain_report(report), parse_mode="HTML", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "retry"), callback_data="coach")], [InlineKeyboardButton(t(language, "back"), callback_data="home")]]))
         except Exception:
             await query.edit_message_text("❌ AI Coach could not obtain valid analysis." if language == "en" else "❌ مربی نتوانست تحلیل معتبر دریافت کند.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "back"), callback_data="home")]]))
         return
