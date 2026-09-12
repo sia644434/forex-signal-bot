@@ -83,16 +83,49 @@ Checkpoint: TASK-010 verified and closed 2026-09-12.
 ## TASK-011
 Phase: Phase 2 — Core Architecture
 Title: Application Error Contract Hardening
-Objective: Establish focused contracts for the application error hierarchy, stable error codes/details, and centralized exception logging behavior.
-Implementation Status: IN_PROGRESS
-Test Status: PENDING CI VERIFICATION
+Implementation Status: COMPLETE
+Test Status: PASS via GitHub Actions.
 Implementation:
 - `44aac8eaab94e99bb340500cce473b1350abd183` — `test: add application error contracts`.
 - Added `tests/test_error_contract.py` covering message/details preservation, domain hierarchy/codes, requested log-level routing, and fallback logging.
-Current verification:
-- CI pending.
+Verification:
+- Test and lifecycle/persistence checks: success on the subsequent Phase 2 CI sequence.
 - No local execution claimed.
-Next exact action: verify TASK-011 CI, inspect failures if any, then checkpoint TASK-011 if all required gates are green.
+Checkpoint: TASK-011 verified and closed 2026-09-12.
+
+## TASK-012
+Phase: Phase 2 — Core Architecture
+Title: Configuration Settings Contract Hardening
+Objective: Establish focused contracts for environment parsing, defaults, required values, Settings.load(), runtime validation, and immutability.
+Implementation Status: COMPLETE
+Test Status: PASS via GitHub Actions.
+Implementation:
+- `99f6340aadcbe2d72fba73dd14357d73b1b3c9e0` — `test: add configuration settings contracts`.
+- Added `tests/test_config_settings_contract.py` covering normalization/parsing, defaults/required values, invalid values, Settings.load(), validation, and immutability.
+Verification:
+- Test `34700295179`: success.
+- Production Readiness `34700295198`: success.
+- Production Activation Gate `34700295162`: success.
+- Production Activation Validation `34700295209`: success.
+- Final Integration Gate `34700295220`: success.
+- Production E2E Contract Gate `34700295303`: success.
+- Security Audit `34700295292`: success.
+- Dependency audit also returned success for head `99f6340aadcbe2d72fba73dd14357d73b1b3c9e0`.
+- Combined commit status: success.
+- No local execution claimed.
+Checkpoint: TASK-012 verified and closed 2026-09-12.
+
+## TASK-013
+Phase: Phase 2 — Core Architecture
+Title: Configuration Boundary Consistency Hardening
+Objective: Audit and harden remaining direct environment-variable access at core/application boundaries so configuration ownership is explicit and behavior remains backward-compatible.
+Implementation Status: IN_PROGRESS
+Test Status: PENDING TARGETED INSPECTION / CI
+Evidence:
+- `config.settings` is established as the central configuration source of truth.
+- Repository search still finds direct `os.getenv()` usage in core/application, core/logger, Telegram legacy paths, worker runtime/server, and model bootstrap paths.
+- Not all direct environment access is necessarily a defect; TASK-013 will classify ownership first and change only evidenced boundary inconsistencies.
+Next exact action: inspect the highest-impact core/application and logging configuration consumers, map contracts, then add the smallest focused tests/change justified by evidence.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
