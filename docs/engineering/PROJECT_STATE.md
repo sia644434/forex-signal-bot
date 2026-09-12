@@ -1,33 +1,41 @@
 # Project State
 
 - Project: `siasoltoon/forex-signal-bot`
-- Current Branch: `main` (repository default branch; connector does not expose a separate local working tree)
-- Current Commit: `0cd1b6f476a9ee0e1ec2ae6c91801a0e8d638408`
+- Current Branch: `main`
+- Current Commit: `5573f772477b3bf05fca4cf9e105b64dc054a29b`
 - Overall Status: `IN_PROGRESS`
-- Current Phase: Phase 1 — Repository Audit
-- Current Task: TASK-001 — Establish persistent engineering memory and baseline architecture map
-- Last Completed Task: Repository reconnaissance through GitHub Connector
-- Next Task: Verify baseline behavior and prioritize the highest-risk correctness/reliability gap after persistent state is committed
-- Known Blockers: No local working-tree state is exposed by the GitHub Connector; deployment/runtime verification requiring private environment credentials is not yet established
-- Known Risks: Production readiness is NOT verified; CI currently has at least one reported successful commit status, but this is not equivalent to all production gates passing
-- Broken Tests: Not established in this audit; tests are present but have not been executed locally in this session
-- CI Status: Latest combined commit status reports one successful status context (`lavish-energy - forex-signal-bot`); full workflow/job inventory requires targeted verification
-- Deployment Status: Railway configuration exists; deployment health is not independently verified as production-ready
-- Architecture Status: Baseline mapped at a high level; targeted subsystem verification remains
+- Current Phase: Phase 1 — Repository Audit / Baseline Stabilization
+- Current Task: TASK-002 — Restore failing data-quality and scanner contracts
+- Last Completed Task: Persistent repository memory established; CI failures diagnosed; focused fixes implemented
+- Next Task: Verify TASK-002 through GitHub Actions and continue with the next highest-risk correctness/reliability gap
+- Known Blockers: GitHub Connector does not expose a local working tree; private deployment/runtime credentials are not available for independent production verification
+- Known Risks: Production readiness is NOT verified. Baseline CI run failed with five contract regressions; fixes are committed but not yet CI-verified on the latest commit
+- Broken Tests: Baseline run `34689171483`: 5 failed, 341 passed
+- CI Status: Baseline run failed at full suite; lifecycle tests passed. New commits triggered fresh CI requiring verification.
+- Deployment Status: Railway configuration exists; production health remains unverified
+- Architecture Status: High-level baseline mapped; targeted subsystem verification is active
 - Production Readiness: `NOT_READY / NOT_VERIFIED`
-- Last Checkpoint: Initial baseline audit checkpoint
+- Last Checkpoint: TASK-002 implementation checkpoint
 - Last State Update: 2026-09-12
 
 ## Evidence
 
-The repository default branch is `main`. The latest commit is `0cd1b6f...`, whose message is `test(agent): add local coding agent smoke tests`. The tree contains dedicated `ai`, `analysis`, `config`, `core`, `data`, `risk`, `services`, `signal_engine`, `strategy`, `telegram_bot`, `tests`, and `worker` areas, plus Railway/Docker deployment configuration.
+Baseline CI run `34689171483` installed dependencies successfully and passed `tests/test_lifecycle_features.py` (2/2), then failed the full suite with 5 failures and 341 passes. Failures: two data-gap contract checks, invalid `None` configuration message, scanner exception-name exposure, and scanner localization.
 
-The application entry path is `main.py` → `app.py` → `core.application.create_app()`. The application currently registers `TelegramService` through `ServiceManager`.
-
-The repository contains provider/freshness abstractions and tests for OANDA, Finnhub, AlphaVantage, provider contracts, freshness, market-data services, analysis, decision logic, Telegram, worker contracts/runtime, and production gates.
+TASK-002 changes:
+- `data/quality.py`: explicit `None`/gap-tolerance validation and deterministic large-gap detection.
+- `services/telegram/scanner.py`: internal exception names are no longer exposed; scanner output is localized.
+- `services/telegram/i18n.py`: scanner title/status/field translations added for Persian and English.
 
 ## Checkpoint
 
-What was done: repository identity, branch/default branch, latest commit, tree, dependencies, entrypoints, major architecture areas, tests, workflows, and CI status were inspected; no `docs/engineering/` persistent memory directory exists yet.
+What was done: diagnosed all five failures from the actual GitHub Actions log and implemented focused fixes.
 
-What remains: commit the persistent memory files, then continue with targeted baseline verification rather than rescanning the repository.
+Commits:
+- `6ccb77d` — fix: enforce market data quality contract
+- `7ebb648` — fix: localize and sanitize scanner output
+- `5573f77` — fix: complete scanner localization strings
+
+What was tested: corrections were made directly against the failing assertions from CI evidence. No local execution was claimed because the repository connector does not provide a local test runtime.
+
+Next exact action: inspect the newly triggered CI run for `5573f77`; if green, update TASK/TEST/PHASE state and continue. If red, classify and fix the exact failure rather than rerunning blindly.
