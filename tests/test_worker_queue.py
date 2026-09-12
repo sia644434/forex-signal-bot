@@ -31,6 +31,46 @@ def test_claims_highest_priority_pending_job():
     queue.close()
 
 
+def test_queue_metrics_report_state_counts_without_payloads():
+    queue = WorkerQueue()
+    assert queue.metrics() == {
+        "pending": 0,
+        "running": 0,
+        "completed": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "timeout": 0,
+        "total": 0,
+    }
+
+    queue.enqueue(JobRequest("pending", "backtest"))
+    queue.enqueue(JobRequest("running", "backtest"))
+    queue.claim_next()
+    queue.enqueue(JobRequest("completed", "backtest"))
+    queue.claim_next()
+    queue.finish("completed", result={"secret": "must not be exposed by metrics"})
+    queue.enqueue(JobRequest("failed", "backtest"))
+    queue.claim_next()
+    queue.fail("failed", "provider unavailable")
+    queue.enqueue(JobRequest("cancelled", "backtest"))
+    queue.claim_next()
+    queue.cancel("cancelled")
+    queue.enqueue(JobRequest("timeout", "backtest"))
+    queue.claim_next()
+    queue.timeout("timeout")
+
+    assert queue.metrics() == {
+        "pending": 1,
+        "running": 1,
+        "completed": 1,
+        "failed": 1,
+        "cancelled": 1,
+        "timeout": 1,
+        "total": 6,
+    }
+    queue.close()
+
+
 def test_terminal_states_persist_result_and_error():
     queue = WorkerQueue()
     queue.enqueue(JobRequest("done", "backtest"))
