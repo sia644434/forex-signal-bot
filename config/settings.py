@@ -115,6 +115,7 @@ class Settings:
     pc_worker_url: Optional[str] = None
     pc_worker_token: Optional[str] = None
     pc_worker_timeout: int = 30
+    pc_worker_heartbeat_max_age: int = 120
 
     def __post_init__(self) -> None:
         if not self.app_name.strip():
@@ -149,6 +150,8 @@ class Settings:
             raise ValueError("PC_WORKER_URL is configured but PC_WORKER_TOKEN is missing.")
         if self.pc_worker_timeout < 1:
             raise ValueError("PC_WORKER_TIMEOUT must be at least 1 second.")
+        if self.pc_worker_heartbeat_max_age < 1:
+            raise ValueError("PC_WORKER_HEARTBEAT_MAX_AGE must be at least 1 second.")
         if self.ai_enabled and not self.ai_api_key:
             raise ValueError("AI_ENABLED is true but AI_API_KEY is not configured.")
 
@@ -187,6 +190,7 @@ class Settings:
             pc_worker_url=_get_env("PC_WORKER_URL"),
             pc_worker_token=_get_env("PC_WORKER_TOKEN"),
             pc_worker_timeout=_get_int("PC_WORKER_TIMEOUT", 30),
+            pc_worker_heartbeat_max_age=_get_int("PC_WORKER_HEARTBEAT_MAX_AGE", 120),
         )
 
 
