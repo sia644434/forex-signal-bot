@@ -56,6 +56,8 @@ def test_worker_service_uses_configured_transport(monkeypatch):
     assert heartbeat["status"] == "READY"
     assert heartbeat["worker_id"] == "worker-1"
     assert service.health()["readiness"] == "READY"
+    assert service.health()["worker_id"] == "worker-1"
+    assert service.health()["timestamp"] == "2026-09-12T00:00:00+00:00"
     assert captured == {
         "base_url": "http://worker.example",
         "token": "secret",
