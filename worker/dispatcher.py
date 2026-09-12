@@ -11,11 +11,7 @@ JobHandler = Callable[[dict[str, Any]], Any]
 
 
 class WorkerDispatcher:
-    """Queue-backed dispatcher for heavy Forex worker jobs.
-
-    Queue ownership is explicit: callers inject a WorkerQueue configured for the
-    deployment's persistence boundary. Transport and execution remain separate.
-    """
+    """Queue-backed dispatcher for heavy Forex worker jobs."""
 
     def __init__(
         self,
@@ -24,6 +20,8 @@ class WorkerDispatcher:
     ):
         self._submit = submit
         self._queue = queue
+        if self._queue is not None:
+            self._queue.recover_expired_running()
 
     async def submit(self, request: JobRequest) -> JobResult:
         if request.job_type not in HEAVY_JOB_TYPES:
