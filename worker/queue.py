@@ -105,6 +105,19 @@ class WorkerQueue:
             return None
         return self.get(row["job_id"])
 
+    def metrics(self) -> dict[str, int]:
+        """Return actionable queue counts without exposing job payloads or errors."""
+        counts = {state.lower(): 0 for state in QUEUE_STATES}
+        rows = self._connection.execute(
+            "SELECT status, COUNT(*) AS count FROM worker_jobs GROUP BY status"
+        ).fetchall()
+        for row in rows:
+            status = str(row["status"])
+            if status in QUEUE_STATES:
+                counts[status.lower()] = int(row["count"])
+        counts["total"] = sum(counts[state.lower()] for state in QUEUE_STATES)
+        return counts
+
     def recover_stale_running(self, max_age_seconds: int) -> list[QueueRecord]:
         if max_age_seconds <= 0:
             raise ValueError("Recovery age must be greater than zero")
