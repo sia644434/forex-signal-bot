@@ -68,7 +68,7 @@ Evidence:
 - `5853902a3f511cbfea9c4ba15003ebe543292b45` — added SQLite-backed queue.
 - `9f3c7477919c9a0bbb3b648bde72bd2e60949c6e` — cleanup/hardening.
 - `bca3aba949b31a5fbb6fb08735ebc366096ef11a` — lifecycle/persistence tests.
-- `9632b55fa6f0196972bb93ca57a13879311a3994` — architecture documentation.
+- `9632bbfa6f0196972bb93ca57a13879311a3994` — architecture documentation.
 - `98ad8076eba3808a819352949ba6f90c15147887` — dispatcher integration.
 - Final Integration Gate `34705244551`: success; compile, runtime safety, full suite, and production Docker build passed.
 - Security Audit `34705244541`: success.
@@ -92,7 +92,7 @@ Evidence:
 - `403fa6977af5ab7b4a8577d35f2c0842d7d5592c` — per-job-timeout-aware recovery.
 - `832420b09b3e9b6a3bb9c7c81a7a3d4c0d65c3f4` — dispatcher initialization recovery.
 - `32543940497e989e5da9eabb1760450a80c1dea8` and `01c0cc08c347bf51f9911b144973c5ec2b2171ea` — regression coverage.
-- Current-head CI for `923d586b07cce1941723daa7faf20c330a435423`: all seven push workflows succeeded.
+- Current-head CI for `923d...`: all seven push workflows succeeded.
 Checkpoint: Verified 2026-09-12.
 
 ## TASK-021
@@ -158,8 +158,21 @@ Evidence:
 - `6c2e9d12201ff2459883889fc2aaa4a54c4e5ba5` — readiness dynamically evaluates heartbeat freshness and returns `STALE` for expired/malformed/missing READY timestamps.
 - `d3fc220cc3da3a017b28fcc64ca0b67675ce9026` — freshness/settings regression coverage.
 - `316391aa4440d8ca2d31a0d11887bfa2482070b4` — aligned the unconfigured readiness test contract.
-- Current-head Actions for `316391...` contain seven completed push workflow runs; the Production E2E Contract Gate `34709726285` and Production Activation Validation `34709726258` are explicitly successful. The commit also has a successful Railway deployment status.
+- Current-head Actions for `316391...` contain seven completed push workflow runs; Production E2E Contract Gate `34709726285` and Production Activation Validation `34709726258` are explicitly successful. The commit also has a successful Railway deployment status.
 Checkpoint: Verified 2026-09-12.
+
+## TASK-028
+Phase: Phase 2 — Core Architecture / Security Hardening
+Title: Minimize Unauthenticated PC Worker Health Information Exposure
+Implementation Status: IMPLEMENTED — CI VERIFICATION PENDING
+Objective: Keep the unauthenticated worker liveness endpoint useful for health checks without exposing worker identity, platform, Python version, capabilities, registered jobs, active jobs, or other runtime metadata.
+Evidence:
+- Prior `/health` returned the full `WorkerRuntime.health()` payload without authentication.
+- `c092704fc8fb924a16556ef85686021965662264` changed unauthenticated `/health` to the minimal `{"status":"READY"}` contract.
+- `8160737a2a13ec066c3eb9e9e48f5adce662b099` added regression coverage locking the minimal public contract.
+- Authenticated `/heartbeat` remains the detailed identity/readiness transport.
+Verification: Awaiting current-head GitHub Actions after the implementation commits.
+Checkpoint: Implemented 2026-09-12.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
