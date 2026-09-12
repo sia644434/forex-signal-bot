@@ -91,39 +91,43 @@ async def scan_market(symbols=DEFAULT_SCAN_SYMBOLS, timeframe=DEFAULT_TIMEFRAME,
             )
         except Exception as exc:
             logger.exception("Market scan failed for %s/%s", symbol, timeframe)
-            return ScanResult(symbol, "NO_TRADE", 0.0, 0.0, None, "UNKNOWN", "unknown", None, error=type(exc).__name__)
+            # Keep internal exception types out of the user-facing result.
+            return ScanResult(symbol, "NO_TRADE", 0.0, 0.0, None, "UNKNOWN", "unknown", None, error="scan_failed")
 
     return sorted(await asyncio.gather(*(scan_one(s) for s in symbols)), key=lambda x: (x.error is None, x.confidence, x.score), reverse=True)
 
 
-def _status_text(status: str) -> str:
-    mapping = {
-        "CLOSED": "بسته",
-        "STALE_DATA": "داده قدیمی",
-        "NO_DATA": "بدون داده",
-        "HOLIDAY": "تعطیل",
-        "UNKNOWN": "نامشخص",
-    }
-    return mapping.get(status, status)
+def _status_text(status: str, language: str = "fa") -> str:
+    key = {
+        "CLOSED": "scan_status_closed",
+        "STALE_DATA": "scan_status_stale",
+        "NO_DATA": "scan_status_no_data",
+        "HOLIDAY": "scan_status_holiday",
+        "UNKNOWN": "scan_status_unknown",
+    }.get(status)
+    return t(language, key) if key else status
 
 
 def format_scan(results, timeframe, language="fa"):
-    lines = ["🔎 <b>اسکن بازار — {}</b>".format(timeframe), ""]
+    lines = [t(language, "scan_title", timeframe=timeframe), ""]
 
     for item in results:
         if item.error:
-            lines.append(f"• <b>{item.symbol}</b> → ⛔ خطا در دریافت داده")
+            lines.append(f"• <b>{item.symbol}</b> → {t(language, 'scan_unavailable')}")
             continue
 
         if item.market_status != "OPEN":
-            extra = f" | آخرین کندل: {item.last_candle_time}" if item.last_candle_time else ""
-            lines.append(f"• <b>{item.symbol}</b> → ⚠️ بازار {_status_text(item.market_status)}{extra}")
+            extra = f" | {t(language, 'scan_last_candle')}: {item.last_candle_time}" if item.last_candle_time else ""
+            lines.append(f"• <b>{item.symbol}</b> → ⚠️ {t(language, 'scan_market')} {_status_text(item.market_status, language)}{extra}")
             continue
 
         confidence = max(0, min(1, item.confidence)) * 100
         quality = "—" if item.trade_quality is None else f"{item.trade_quality:.0f}"
         rr = "—" if item.risk_reward is None else f"{item.risk_reward:.2f}"
-        lines.append(f"• <b>{item.symbol}</b> → {item.signal} | اطمینان {confidence:.0f}% | کیفیت {quality} | RR {rr} | روند {item.trend}")
+        lines.append(
+            f"• <b>{item.symbol}</b> → {item.signal} | {t(language, 'scan_confidence')} {confidence:.0f}% | "
+            f"{t(language, 'scan_quality')} {quality} | RR {rr} | {t(language, 'scan_trend')} {item.trend}"
+        )
 
     lines.extend(["", t(language, "scan_note")])
     return "\n".join(lines)
