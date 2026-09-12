@@ -24,6 +24,7 @@ def test_claims_highest_priority_pending_job():
     assert claimed is not None
     assert claimed.job_id == "high"
     assert claimed.status == "RUNNING"
+    assert claimed.claimed_at is not None
     queue.close()
 
 
@@ -37,6 +38,7 @@ def test_terminal_states_persist_result_and_error():
     assert completed is not None
     assert completed.status == "COMPLETED"
     assert completed.result == {"profit_factor": 1.4}
+    assert completed.claimed_at is None
 
     queue.enqueue(JobRequest("failed", "backtest"))
     queue.claim_next()
@@ -71,6 +73,49 @@ def test_cancel_and_timeout_are_explicit_terminal_states():
     timed_out = queue.timeout("timeout")
     assert timed_out.status == "TIMEOUT"
     assert timed_out.error == "Worker job timeout"
+    queue.close()
+
+
+def test_stale_running_job_is_recovered_to_pending(tmp_path):
+    database = tmp_path / "worker_queue.sqlite3"
+    queue = WorkerQueue(str(database))
+    queue.enqueue(JobRequest("stale", "backtest"))
+    claimed = queue.claim_next()
+    assert claimed is not None
+
+    recovered = queue.recover_stale_running(1)
+
+    assert [record.job_id for record in recovered] == ["stale"]
+    record = queue.get("stale")
+    assert record is not None
+    assert record.status == "PENDING"
+    assert record.claimed_at is None
+    assert record.error == "Recovered stale running job"
+    queue.close()
+
+
+def test_non_stale_running_job_is_not_recovered():
+    queue = WorkerQueue()
+    queue.enqueue(JobRequest("active", "backtest"))
+    queue.claim_next()
+
+    recovered = queue.recover_stale_running(3600)
+
+    assert recovered == []
+    record = queue.get("active")
+    assert record is not None
+    assert record.status == "RUNNING"
+    queue.close()
+
+
+def test_recovery_age_must_be_positive():
+    queue = WorkerQueue()
+    try:
+        queue.recover_stale_running(0)
+    except ValueError as exc:
+        assert str(exc) == "Recovery age must be greater than zero"
+    else:
+        raise AssertionError("non-positive recovery age must be rejected")
     queue.close()
 
 
