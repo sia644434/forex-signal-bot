@@ -21,6 +21,16 @@ class PCWorkerClient:
         with urllib.request.urlopen(request, timeout=self.timeout) as response:
             return json.loads(response.read().decode("utf-8"))
 
+    def heartbeat(self) -> dict[str, Any]:
+        request = urllib.request.Request(
+            f"{self.base_url}/heartbeat",
+            data=b"{}",
+            method="POST",
+            headers={"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            return json.loads(response.read().decode("utf-8"))
+
     def submit(self, job: JobRequest) -> JobResult:
         body = json.dumps({
             "job_id": job.job_id,
