@@ -1,10 +1,11 @@
 # Task State
 
-## PRE-TASK-004 — UNKNOWN
+## PRE-TASK-004 — AUDITED
 Phase: Phase 2 — Core Architecture
 Title: Phase 2 scope that existed before TASK-004
-Implementation Status: UNKNOWN / NOT YET AUDITED
-Checkpoint: Intentionally not marked complete. Revisit and verify this skipped section later before declaring Phase 2 complete.
+Implementation Status: AUDITED / NO SEPARATE HISTORICAL TASK CONTRACT RECOVERED
+Evidence: The repository history shows TASK-004 as the first explicitly recorded Phase 2 implementation task after TASK-003. No independent pre-TASK-004 task specification was recoverable from the persistent engineering state. The current architecture audit therefore treats the Master Prompt's explicit core-architecture requirements as the governing scope rather than inventing historical work.
+Concrete gaps identified by the audit are tracked as normal evidence-backed Phase 2 tasks.
 
 ## TASK-001
 Phase: Phase 1 — Repository Audit
@@ -30,30 +31,12 @@ Test Status: PASS via GitHub Actions.
 ## TASK-014
 Phase: Phase 2 — Core Architecture
 Title: PC Worker Scope and Configuration Boundary Hardening
-Objective: Keep the PC Worker focused on heavy Trading Intelligence Platform workloads and remove accidental legacy non-Forex worker coupling.
-Implementation Status: VERIFIED, with residual workload cleanup identified during follow-up audit.
-Implementation:
-- `d71ac4bb771580ce421a76139c66aa2080ab9f96` — removed legacy worker bootstrap coupling.
-- `43588c36a65b724342f8aeaa18ce4930f8fa8c4d` — removed legacy handler registration.
-- `9aaa89c0191fc0106a295189331574314b31b189` — removed legacy workload contract.
-- `957a156761638aa711b9518476cbb72c2bcbe89c` — added worker-scope regression coverage.
-- `bb0e9c181fb8f4ec0cc7525b480a341d44cb5468` — removed the legacy subsystem and related setup/test artifacts after reference inspection.
-Test Status: PASS — prior implementation-head Test and Security Audit succeeded.
-Checkpoint: Closed 2026-09-12.
+Implementation Status: VERIFIED
 
 ## TASK-015
 Phase: Phase 2 — Core Architecture
 Title: Worker Job Lifecycle Reliability
-Objective: Harden worker execution around validation, timeout, cancellation, active-job tracking, and completed-job idempotency.
-Changed Files:
-- `worker/runtime.py`
-- `tests/test_pc_worker_contracts.py`
 Implementation Status: VERIFIED
-Implementation:
-- `fdae930849f81470e2d459503cfa3c2298300b85` — hardened worker job lifecycle contracts.
-- `e2833498fce78d34d9e8e4084afef02faab8d284` — added lifecycle regression tests.
-Test Status: PASS — combined GitHub status for `e2833498fce78d34d9e8e4084afef02faab8d284` is `success`.
-Checkpoint: Verified 2026-09-12.
 
 ## TASK-016 — REMOVED
 Phase: Phase 2 — Core Architecture
@@ -66,24 +49,35 @@ Checkpoint: Removed 2026-09-12.
 Phase: Phase 2 — Core Architecture
 Title: Remove Residual Non-Forex Worker Workload
 Objective: Remove the remaining `multi_agent_analysis` workload and executor/test/documentation references so the PC Worker contains only workloads directly belonging to the Forex platform.
-Relevant Files:
-- `worker/contracts.py`
-- `worker/executors.py`
-- `worker/README.md`
-- `tests/test_pc_worker_contracts.py`
-- `tests/test_pc_worker_executors.py`
-- `docs/engineering/ARCHITECTURE_MAP.md`
-Implementation Status: TESTING
-Implementation:
+Implementation Status: VERIFIED
+Evidence:
 - `c2179782f17719d66e2baab1428ee5312e11ec38` — removed the residual workload from worker contracts.
 - `e47a5ca4af2cd0562a160c67ed11c857088d1724` — removed its executor and registration.
 - `dc37e64ef45203e58d4f6ed905124421d4371149` — removed contract test references and added an explicit regression assertion.
 - `8d4f09574d18dacac7ea7b48aefb4961528485b2` — removed executor test coverage for the out-of-scope workload.
 - `71d7a8619a1dffdbd2022a85805430ed1fbddd67` — aligned worker documentation with the Forex-only workload boundary.
 - `88ea88d564275bd6ca0ed8495400d84a28f40f76` — aligned the architecture map with the Forex-only worker boundary.
-Test Status: PENDING CI verification for the current cleanup head.
-Known Issue: GitHub code-search indexing may still return historical matches from pre-cleanup commits; current-file fetches are the source of truth.
-Next Action: Verify CI for the cleanup head, inspect any failures, then checkpoint TASK-017.
+- Final-gate run `34704118418`, job `103580948161`: completed/success; compile, runtime safety tests, full suite, and production Docker build all passed.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-018
+Phase: Phase 2 — Core Architecture
+Title: Durable Forex Worker Processing Queue Contract
+Objective: Establish an explicit durable/idempotent processing-queue boundary for heavy Forex worker jobs without introducing agent/coding-agent architecture or coupling queue storage to network transport.
+Implementation Status: TESTING
+Relevant Files:
+- `worker/queue.py`
+- `tests/test_worker_queue.py`
+- `worker/dispatcher.py` (integration remains intentionally separate)
+- `docs/engineering/ARCHITECTURE_MAP.md`
+Implementation:
+- `5853902a3f511cbfea9c4ba15003ebe543292b45` — added SQLite-backed queue contract.
+- `9f3c7477919c9a0bbb3b648bde72bd2e60949c6e` — cleaned and hardened queue implementation.
+- `bca3aba949b31a5fbb6fb08735ebc366096ef11a` — added queue lifecycle/persistence regression coverage.
+- `9632b55fa6f0196972bb93ca57a13879311a3994` — documented the queue architecture boundary.
+Current queue guarantees: idempotent enqueue by `job_id`, priority ordering, explicit `PENDING/RUNNING/COMPLETED/FAILED/CANCELLED/TIMEOUT` states, terminal-state idempotency, and file-backed persistence across connections.
+Known limitation: this is not yet a production distributed broker; shared storage, dispatcher integration, concurrency/recovery behavior across independent processes, and deployment verification remain to be validated.
+Test Status: PENDING current-head GitHub Actions verification.
 
 ## Active Task Selection Rule
-Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
+Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
