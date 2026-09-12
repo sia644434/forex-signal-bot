@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from urllib.error import HTTPError
 from urllib.request import urlopen
 
 from core.health_server import HealthServer
@@ -14,6 +15,27 @@ def test_health_server_serves_json_health() -> None:
             assert response.status == 200
             assert response.headers["Content-Type"].startswith("application/json")
             assert json.loads(response.read()) == {"status": "ok", "service": "test"}
+    finally:
+        server.stop()
+
+
+def test_health_server_returns_service_failure_as_503() -> None:
+    payload = {
+        "application": {"status": "degraded"},
+        "services": {
+            "telegram": {"status": "stopped", "critical": True},
+        },
+    }
+    server = HealthServer(lambda: payload, host="127.0.0.1", port=0)
+    server.start()
+    try:
+        try:
+            urlopen(f"http://127.0.0.1:{server.port}/health", timeout=2)
+        except HTTPError as exc:
+            assert exc.code == 503
+            assert json.loads(exc.read()) == payload
+        else:
+            raise AssertionError("degraded health unexpectedly returned success")
     finally:
         server.stop()
 
