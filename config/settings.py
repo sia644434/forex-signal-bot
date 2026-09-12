@@ -110,6 +110,8 @@ class Settings:
     ai_temperature: float = 0.2
     request_timeout: int = 30
     max_retries: int = 3
+    worker_queue_database_path: str = "worker_queue.sqlite3"
+    worker_queue_recovery_grace_seconds: int = 30
 
     def __post_init__(self) -> None:
         if not self.app_name.strip():
@@ -134,6 +136,10 @@ class Settings:
             raise ValueError("REQUEST_TIMEOUT must be at least 1 second.")
         if self.max_retries < 0:
             raise ValueError("MAX_RETRIES cannot be negative.")
+        if not self.worker_queue_database_path.strip():
+            raise ValueError("WORKER_QUEUE_DATABASE_PATH cannot be empty.")
+        if self.worker_queue_recovery_grace_seconds < 0:
+            raise ValueError("WORKER_QUEUE_RECOVERY_GRACE_SECONDS cannot be negative.")
         if self.ai_enabled and not self.ai_api_key:
             raise ValueError("AI_ENABLED is true but AI_API_KEY is not configured.")
 
@@ -165,6 +171,8 @@ class Settings:
             ai_temperature=_get_float("AI_TEMPERATURE", 0.2),
             request_timeout=_get_int("REQUEST_TIMEOUT", 30),
             max_retries=_get_int("MAX_RETRIES", 3),
+            worker_queue_database_path=_get_env("WORKER_QUEUE_DATABASE_PATH", "worker_queue.sqlite3"),
+            worker_queue_recovery_grace_seconds=_get_int("WORKER_QUEUE_RECOVERY_GRACE_SECONDS", 30),
         )
 
 
