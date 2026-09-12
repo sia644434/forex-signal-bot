@@ -7,7 +7,7 @@ from ..coach import explain_report
 from ..tracker import list_tracking, stop_tracking
 from ..i18n import t
 from analysis.full_engine import FullAnalysisEngine
-from data.market_data import MarketDataEngine
+from services.market_data.service import MarketDataService
 from core.errors import ApplicationError
 
 
@@ -56,7 +56,7 @@ def _apply_setting(state, data: str) -> str:
 
 async def _run_signal_report(state):
     symbol = state.settings.get("market_symbol", "EURUSD"); timeframe = state.settings.get("timeframe", "M15")
-    candles = await MarketDataEngine().get_candles_list(symbol, timeframe, 300)
+    candles = await MarketDataService().get_candles_list(symbol, timeframe, 300)
     if not candles: raise RuntimeError("empty market data")
     return await __import__("asyncio").to_thread(FullAnalysisEngine().analyze, candles)
 
