@@ -131,4 +131,4 @@ def test_worker_service_heartbeat_is_controlled_when_unconfigured():
     heartbeat = asyncio.run(service.heartbeat())
 
     assert heartbeat == {"status": "WORKER_OFFLINE", "configured": False}
-    assert service.health()["readiness"] == "WORKER_OFFLINE"
+    assert service.health()["readiness"] == "UNCONFIGURED"
