@@ -4,7 +4,7 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 from analysis.full_engine import FullAnalysisEngine
-from services.market_data.service import MarketDataService
+from services.market_data.service import get_market_data_service
 from services.telegram.state import get_user_state
 from services.telegram.tracker import track_report
 
@@ -42,7 +42,7 @@ def _format_signal(report, symbol: str, timeframe: str) -> str:
 
 
 async def signal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Fetch real market candles through the canonical market-data service."""
+    """Fetch real market candles through the application-scoped market-data service."""
     source_message = update.message or (update.callback_query.message if update.callback_query else None)
     if source_message is None:
         return
@@ -54,7 +54,8 @@ async def signal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     timeframe = _setting_value(state, "timeframe", DEFAULT_TIMEFRAME) if state else DEFAULT_TIMEFRAME
     status_message = await source_message.reply_text(f"⏳ در حال دریافت داده زنده {symbol}/{timeframe} و اجرای تحلیل کامل...")
     try:
-        candles = await MarketDataService().get_candles_list(symbol=symbol, timeframe=timeframe, limit=DEFAULT_CANDLE_LIMIT)
+        market_data = get_market_data_service(context.application)
+        candles = await market_data.get_candles_list(symbol=symbol, timeframe=timeframe, limit=DEFAULT_CANDLE_LIMIT)
         if not candles:
             raise RuntimeError("empty market data")
         report = await asyncio.to_thread(FullAnalysisEngine().analyze, candles)
