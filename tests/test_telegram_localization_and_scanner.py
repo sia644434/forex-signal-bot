@@ -1,5 +1,5 @@
 from services.telegram.i18n import t
-from services.telegram.scanner import ScanResult, format_scan
+from services.telegram.scanner import ScanReadiness, ScanResult, format_scan, get_scanner_provider_manager
 
 
 def test_language_translation_changes_main_text():
@@ -19,3 +19,26 @@ def test_scanner_localizes_success_output():
     fa = format_scan([result], "M15", "fa")
     en = format_scan([result], "M15", "en")
     assert "اطمینان" in fa and "confidence" in en
+
+
+def test_scanner_provider_manager_is_application_scoped(monkeypatch):
+    class Application:
+        def __init__(self):
+            self.bot_data = {}
+
+    application = Application()
+    readiness = iter([
+        ScanReadiness(("oanda",), ("finnhub",)),
+        ScanReadiness(("finnhub",), ("oanda",)),
+    ])
+    monkeypatch.setattr(
+        "services.telegram.scanner._provider_readiness",
+        lambda: next(readiness),
+    )
+
+    first = get_scanner_provider_manager(application)
+    second = get_scanner_provider_manager(application)
+
+    assert first is second
+    assert first.providers == ("finnhub",)
+    assert application.bot_data["scanner_provider_manager"] is first
