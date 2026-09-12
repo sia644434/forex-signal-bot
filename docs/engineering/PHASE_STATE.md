@@ -6,30 +6,36 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-011 — Application Error Contract Hardening
-Objective: Establish explicit, tested contracts for application startup, shutdown signaling, lifecycle coordination, partial-startup rollback, cleanup guarantees, entrypoint coordination, and error handling boundaries.
+Active Task: TASK-014 — PC Worker Scope and Configuration Boundary Hardening
+Objective: Keep the PC Worker explicitly focused on heavy Trading Intelligence Platform workloads, remove accidental local coding-agent/Ollama runtime coupling, and preserve worker-specific configuration boundaries without forcing unrelated local tooling into the core architecture.
 
 ### Phase 2 Scope Before TASK-004
 Status: UNKNOWN / NOT YET AUDITED
 Rule: This skipped pre-TASK-004 scope is intentionally not marked complete. It must be revisited and verified later before Phase 2 can be declared complete.
 
 Completed evidence:
-- TASK-004 through TASK-009 were verified by GitHub Actions; their lifecycle contracts are closed.
-- TASK-010 Main Entrypoint Lifecycle Contract Hardening:
-  - Commit `b90c31c694034838f8752e375fb8fc222c61fba4`.
-  - Test `34699973369` / job `103569881919`: success.
-  - Final Integration Gate `34699973444` / job `103569882107`: success, including compile, runtime safety tests, full suite, and production Docker build.
-  - Production Activation Validation `34699973428` / job `103569882020`: success.
-  - No local execution claimed.
+- TASK-004 through TASK-013 were verified and closed through GitHub Actions and repository checkpoints.
+- TASK-013 centralized application/health/logger configuration boundaries. Head `382d3461f2a95a3135fa074297a5e4c0a99f6c94` has successful combined status.
 
-Current TASK-011 evidence:
-- `core/errors.py` contains the application/domain error hierarchy, stable error codes, details payload, and centralized `handle_exception()` boundary.
-- Focused contract coverage was previously absent from the repository search.
-- Commit `44aac8eaab94e99bb340500cce473b1350abd183` adds `tests/test_error_contract.py` covering message/details preservation, hierarchy/codes, requested log-level routing, and fallback logging.
-- CI verification is pending.
-- No local execution claimed.
+### TASK-014 — IN_PROGRESS
+PC Worker Scope and Configuration Boundary Hardening.
 
-Next: verify TASK-011 CI completion, inspect failures if any, and only then checkpoint the task.
+Evidence:
+- `worker/executors.py` contains application workloads such as backtesting, market scans, feature engineering, model training/evaluation, and multi-timeframe analysis.
+- `worker/contracts.py` no longer declares `coding_agent` as a worker workload.
+- `worker/handlers.py` no longer exposes coding-agent registration.
+- `worker/main.py` no longer initializes a local coding agent or Ollama runtime and now uses centralized `Settings.load().log_level` for logging.
+- Legacy `worker/models/*` local-agent/Ollama artifacts remain present but are not on the active worker entrypoint path; they require a separate cleanup decision rather than an unverified mass deletion.
+
+Implementation commits:
+- `d71ac4bb771580ce421a76139c66aa2080ab9f96`
+- `43588c36a65b724342f8aeaa18ce4930f8fa8c4d`
+- `9aaa89c0191fc0106a295189331574314b31b189`
+- `957a156761638aa711b9518476cbb72c2bcbe89c`
+
+Verification: GitHub Actions for the implementation head is in progress.
+
+Next: verify CI, review the resulting diff, then determine whether the remaining local-agent artifacts should be removed as a separate scoped cleanup task.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
