@@ -55,7 +55,7 @@ def test_dispatcher_recovers_expired_jobs_on_initialization(tmp_path):
     queue.close()
 
     connection = sqlite3.connect(database)
-    connection.execute("UPDATE worker_jobs SET claimed_at = ? WHERE job_id = ?", (time.time() - 10, "crashed"))
+    connection.execute("UPDATE worker_jobs SET claimed_at = ? WHERE job_id = ?", (time.time() - 40, "crashed"))
     connection.commit()
     connection.close()
 
