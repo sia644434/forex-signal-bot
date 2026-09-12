@@ -27,6 +27,12 @@ def test_legacy_logger_uses_central_settings(monkeypatch: pytest.MonkeyPatch) ->
 def test_core_logger_uses_central_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LOG_LEVEL", "ERROR")
 
-    logger = setup_logger()
+    logger = logging.getLogger("forex-signal-bot")
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
+        handler.close()
+    logger.setLevel(logging.NOTSET)
 
-    assert logger.level == logging.ERROR
+    configured = setup_logger()
+
+    assert configured.level == logging.ERROR
