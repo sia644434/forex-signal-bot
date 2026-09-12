@@ -1,4 +1,6 @@
 import asyncio
+import sqlite3
+import time
 
 from worker.client import PCWorkerClient
 from worker.contracts import JobRequest
@@ -41,6 +43,29 @@ def test_dispatcher_uses_queue_before_transport_and_records_completion(tmp_path)
     assert record.status == "COMPLETED"
     assert record.result == {"rows": 10}
     queue.close()
+
+
+def test_dispatcher_recovers_expired_jobs_on_initialization(tmp_path):
+    database = tmp_path / "queue.sqlite3"
+    queue = WorkerQueue(str(database))
+    queue.enqueue(JobRequest("crashed", "backtest", timeout_seconds=1))
+    claimed = queue.claim_next()
+    assert claimed is not None
+    queue.close()
+
+    connection = sqlite3.connect(database)
+    connection.execute("UPDATE worker_jobs SET claimed_at = ? WHERE job_id = ?", (time.time() - 10, "crashed"))
+    connection.commit()
+    connection.close()
+
+    recovered_queue = WorkerQueue(str(database))
+    WorkerDispatcher(queue=recovered_queue)
+    record = recovered_queue.get("crashed")
+
+    assert record is not None
+    assert record.status == "PENDING"
+    assert record.claimed_at is None
+    recovered_queue.close()
 
 
 def test_dispatcher_records_transport_failure_in_queue():
