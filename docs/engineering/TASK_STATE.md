@@ -148,17 +148,28 @@ Title: AI Architecture Ownership Audit
 Implementation Status: VERIFIED — DORMANT / UNWIRED
 Evidence:
 - Repository-wide searches found no production or test caller constructing `AIOrchestrator`, `AIProviderManager`, `AIContextBuilder`, or `OpenAIProvider`.
-- The `ai/` package is internally self-contained: `orchestrator.py` wires context → prompt builder → provider → parser, while `provider.py` defines the provider abstraction and null fallback, but no application composition registers or invokes that pipeline.
-- `core/application.py` registers only `TelegramService` and `WorkerProcessingService`; there is no AI service in the production composition root.
-- AI-related settings remain referenced by configuration and production-readiness scaffolding, but those references do not establish an active trading/runtime caller.
+- The `ai/` package is internally self-contained and no application composition registers or invokes that pipeline.
 - Decision: preserve the dormant `ai/` package as future Phase 6 capability rather than deleting it or introducing an adapter into the active Forex path. It must not be treated as a production decision/risk owner or bypass canonical analysis → decision → risk flow.
 - `docs/engineering/ARCHITECTURE_MAP.md` records this ownership boundary and future activation requirements.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-036
+Phase: Phase 2 — Core Architecture
+Title: Market Data Ownership Consolidation
+Implementation Status: VERIFIED
+Evidence:
+- `services/market_data/service.py` is the canonical application-facing market-data facade.
+- Production Telegram candle retrieval in `services/telegram/handlers/signal.py`, `services/telegram/tracker.py`, `services/telegram/scanner.py`, and `services/telegram/handlers/callbacks.py` now routes through `MarketDataService` while preserving the canonical `MarketDataEngine` quality/freshness gates.
+- Scanner retains explicit `ProviderManager` construction only to preserve its provider-selection/readiness behavior, then injects that manager into `MarketDataEngine` supplied to `MarketDataService`; it does not bypass the service for candle retrieval.
+- No speculative heavy-Forex caller was introduced.
+- Current head `6174463174d8c6c4ad513896ad7ff96847e85edc` has successful Railway commit status and completed TASK-036 CI gates.
 Checkpoint: Verified 2026-09-12.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
 - #45 — PC Worker readiness enforcement at job-dispatch boundary — implemented as TASK-030.
 - #46 — Worker observability and operational contract audit — implemented as TASK-031.
+- #47 — Canonical market-data application boundary — implemented as TASK-036.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
