@@ -4,17 +4,17 @@
 - Current Branch: `main`
 - Overall Status: `PRODUCTION_VERIFIED`
 - Current Phase: Phase 2 — Core Architecture
-- Current Task: TASK-011 — Application Error Contract Hardening
-- Last Completed Task: TASK-010 — Main Entrypoint Lifecycle Contract Hardening
-- Next Task: Verify TASK-011 CI, then continue Phase 2 from repository evidence.
+- Current Task: TASK-014 — PC Worker Scope and Configuration Boundary Hardening
+- Last Completed Task: TASK-013 — Configuration Boundary Consistency Hardening
+- Next Task: Complete TASK-014 by verifying CI, reviewing the worker diff, and then audit/remove any remaining out-of-scope local-agent artifacts if repository evidence confirms they are unused.
 - Known Blockers: None for the verified Railway deployment path; GitHub Connector does not expose a local working tree/runtime.
-- Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository.
-- Broken Tests: None known; TASK-011 CI is pending.
-- CI Status: TASK-010 is green across Test, Final Integration Gate, and Production Activation Validation. TASK-011 has been committed and is awaiting CI evidence.
-- Deployment Status: Railway live deployment health and restart/recovery remain verified for the previously deployed commit.
-- Architecture Status: Phase 2 active; ServiceManager, Application lifecycle, ShutdownManager, startup rollback, shutdown cleanup, HealthServer lifecycle, and main entrypoint lifecycle contracts are covered. Error contract coverage is now the active boundary.
-- Production Readiness: `VERIFIED` for the previously observed deployment path; future runtime-affecting changes must repeat appropriate live gates.
-- Last Checkpoint: Phase 2 TASK-010 verification; TASK-011 implementation started.
+- Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. The repository still contains legacy `worker/models/*` local-agent/Ollama artifacts that are no longer part of the active PC Worker runtime path and require a separate cleanup decision.
+- Broken Tests: None known; current TASK-014 CI is in progress.
+- CI Status: Head `957a156761638aa711b9518476cbb72c2bcbe89c` has GitHub Actions runs in progress.
+- Deployment Status: Railway live deployment health and restart/recovery remain verified for the previously deployed commit. Current worker-scope changes are not yet production-verified.
+- Architecture Status: Phase 2 active. Core lifecycle/error/configuration contracts are verified; PC Worker is being explicitly constrained to application heavy-processing workloads rather than local coding-agent/Ollama execution.
+- Production Readiness: `VERIFIED` for the previously observed deployment path; current runtime-affecting changes are not yet re-verified in production.
+- Last Checkpoint: TASK-014 implementation checkpoint at head `957a156761638aa711b9518476cbb72c2bcbe89c`.
 - Last State Update: 2026-09-12
 
 ## Phase 2 — Core Architecture
@@ -22,59 +22,27 @@
 ### Pre-TASK-004 Scope — UNKNOWN
 The Phase 2 section that existed before TASK-004 was skipped during the sequential implementation pass. It is intentionally recorded as `UNKNOWN / NOT YET AUDITED`, not `COMPLETE`. It must be revisited and verified later before Phase 2 is declared complete.
 
-### TASK-004 — COMPLETE
-ServiceManager lifecycle contracts were added and verified. The contract suite covers registration uniqueness, startup rollback, non-critical startup degradation, reverse-order shutdown, shutdown-failure isolation, and health-failure isolation.
+### TASK-004 through TASK-013
+Verified and closed through repository evidence and GitHub Actions. TASK-013 centralized application/health/logger configuration boundaries and its head `382d3461f2a95a3135fa074297a5e4c0a99f6c94` has a successful combined status.
 
-### TASK-005 — COMPLETE
-Application lifecycle contract hardening is verified and closed, including startup/shutdown ordering, health aggregation, composition-root registration, and isolated lifecycle fixtures.
+### TASK-014 — IN_PROGRESS
+PC Worker Scope and Configuration Boundary Hardening.
 
-### TASK-006 — COMPLETE
-Shutdown lifecycle contract hardening is verified and closed, covering SIGINT/SIGTERM registration, trigger behavior, wait/unblock behavior, and idempotent triggering.
+Current evidence:
+- `worker/executors.py` contains real application workloads such as backtesting, market scans, feature engineering, model training, evaluation, and multi-timeframe analysis.
+- `worker/contracts.py` previously exposed `coding_agent` alongside application workloads; it has now been removed.
+- `worker/main.py` previously bootstrapped a local coding agent through Ollama; that runtime path has now been removed.
+- `worker/handlers.py` no longer exposes a coding-agent registration path.
+- `worker/main.py` now consumes centralized `Settings.load().log_level` for worker logging.
+- Legacy `worker/models/*` local-agent/Ollama files still exist in the repository but are no longer imported by the active worker entrypoint; cleanup remains a separate evidence-based task.
 
-### TASK-007 — COMPLETE
-Application startup rollback contract hardening is verified and closed. Services are rolled back if `HealthServer.start()` fails after service startup.
+Current implementation commits:
+- `d71ac4bb771580ce421a76139c66aa2080ab9f96` — `fix: keep PC worker focused on application workloads`
+- `43588c36a65b724342f8aeaa18ce4930f8fa8c4d` — `fix: remove coding-agent handler from PC worker`
+- `9aaa89c0191fc0106a295189331574314b31b189` — `fix: remove coding-agent workload from worker contract`
+- `957a156761638aa711b9518476cbb72c2bcbe89c` — `test: enforce application-only PC worker workloads`
 
-### TASK-008 — COMPLETE
-Application shutdown cleanup guarantee is verified and closed. `Application.stop()` guarantees service cleanup through `finally` if `HealthServer.stop()` raises.
-
-Verification:
-- Final-gate `34699763599` / job `103569325433`: success.
-- Activation-gate `34699763592` / job `103569325284`: success.
-- Readiness `34699763622` / job `103569325273`: success.
-- Dependency-audit `34699763583` / job `103569325266`: success.
-- Activation-validation `34699763626` / job `103569325282`: success.
-
-### TASK-009 — COMPLETE
-HealthServer lifecycle contract hardening is verified and closed. Focused coverage was added for start/stop idempotence, invalid ports, malformed health payloads, and existing HTTP health behavior.
-
-Verification:
-- The same green gate set above ran on head `086b872bfbe06cd00c5af0e0e7ab361e34a17e7f`, which included TASK-009.
-
-### TASK-010 — COMPLETE
-Main entrypoint lifecycle contract hardening is verified and closed.
-
-Implementation:
-- `b90c31c694034838f8752e375fb8fc222c61fba4` — `test: add main lifecycle integration contracts`
-- Added `tests/test_main_lifecycle_contract.py` covering normal lifecycle ordering and startup-failure behavior.
-
-Verification:
-- Test workflow `34699973369` / job `103569881919`: success, including lifecycle/persistence tests, full test suite, application health, imports, and syntax checks.
-- Final Integration Gate `34699973444` / job `103569882107`: success, including compile, runtime safety tests, full suite, and production Docker build.
-- Production Activation Validation `34699973428` / job `103569882020`: success.
-- No local execution claimed.
-
-### TASK-011 — IN_PROGRESS
-Application Error Contract Hardening.
-
-Evidence:
-- `core/errors.py` defines the application/domain error hierarchy, stable error codes, details payload, and centralized `handle_exception()` boundary.
-- Prior repository search did not show focused contract coverage for this boundary.
-- `44aac8eaab94e99bb340500cce473b1350abd183` — `test: add application error contracts`
-- Added `tests/test_error_contract.py` covering message/details preservation, stable hierarchy/codes, requested log level routing, and fallback logging behavior.
-
-Current verification:
-- CI pending for TASK-011.
-- No local execution claimed.
+Verification: GitHub Actions is currently in progress for head `957a156761638aa711b9518476cbb72c2bcbe89c`.
 
 ## Repository Mapping Decision
 
