@@ -178,13 +178,34 @@ Checkpoint: Verified 2026-09-12.
 ## TASK-039
 Phase: Phase 2 — Core Architecture
 Title: Provider-Specific Market Data Adapter Surface Audit
-Implementation Status: IN_PROGRESS
-Objective: Remove provider-named compatibility methods from `MarketDataEngine` when repository evidence shows the canonical provider-neutral `get_candles` contract is the only production path.
+Implementation Status: VERIFIED
+Test Status: PASS — implementation commit `044ab88fb83f7f929887fb8823d67a811c67e8a5` has successful Railway commit status; provider-specific adapter methods and focused tests were removed and the canonical provider-neutral path remains intact.
 Evidence:
 - `get_finnhub_candles`, `get_oanda_candles`, and `get_alphavantage_intraday` were found only in `data/market_data.py` and focused contract tests; no production caller was found.
 - The canonical path remains provider-neutral: `MarketDataService → MarketDataEngine → ProviderManager`.
-- The provider-specific adapter methods and their focused tests have been removed in commit `044ab88fb83f7f929887fb8823d67a811c67e8a5`.
-Verification: Pending GitHub Actions for `044ab88fb83f7f929887fb8823d67a811c67e8a5`.
+- The provider-specific adapter methods and their focused tests were removed in commit `044ab88fb83f7f929887fb8823d67a811c67e8a5`.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-040
+Phase: Phase 2 — Core Architecture / Reliability
+Title: ProviderManager Lifecycle and State Contract Audit
+Implementation Status: VERIFIED
+Test Status: PASS — commit `b4bfd674bf01c2fd8a1cadce62c13f273fc5d033`; Production Activation Validation and Security Audit completed successfully.
+Evidence:
+- `set_providers()` explicitly retains injected provider instances by contract; removing those retained objects would have contradicted the documented lifecycle behavior.
+- Regression coverage was added for active-priority replacement while preserving injected instances.
+- Regression coverage was added for replacing an injected instance when the same canonical provider name is rebound.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-041
+Phase: Phase 2 — Core Architecture / Reliability
+Title: MarketDataEngine Output-Surface and Compatibility Audit
+Implementation Status: IN_PROGRESS
+Objective: Audit the remaining DataFrame-returning `MarketDataEngine.get_candles()` surface against the canonical list-returning market-data path, and remove or harden it only where repository evidence justifies the change.
+Evidence:
+- Production `MarketDataService` uses the canonical `get_candles_list()` path.
+- `MarketDataEngine.get_candles()` remains covered by focused contract tests and therefore cannot be treated as dead code solely because no current internal production caller was found.
+- The next step is to determine whether the DataFrame surface is an intentional compatibility API or an unnecessary duplicate boundary, without introducing a replacement path.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
