@@ -17,7 +17,7 @@ def test_worker_service_without_transport_is_non_critical_and_controlled():
     assert service.health()["readiness"] == "UNCONFIGURED"
 
 
-def test_worker_service_uses_configured_transport():
+def test_worker_service_uses_configured_transport(monkeypatch):
     settings = Settings(
         pc_worker_url="http://worker.example",
         pc_worker_token="secret",
