@@ -230,46 +230,5 @@ class MarketDataEngine:
             normalized_symbol, normalized_timeframe, normalized_limit
         )
 
-    async def get_finnhub_candles(
-        self, symbol: str, resolution: str, from_timestamp: int, to_timestamp: int
-    ) -> pd.DataFrame:
-        if not isinstance(from_timestamp, int):
-            raise TypeError("from_timestamp must be an integer.")
-        if not isinstance(to_timestamp, int):
-            raise TypeError("to_timestamp must be an integer.")
-        if from_timestamp > to_timestamp:
-            raise ValueError("from_timestamp cannot exceed to_timestamp.")
-        normalized_symbol, normalized_timeframe, _ = self._validate_request(
-            symbol, resolution, 1
-        )
-        validated = await self._get_quality_gated_candles(
-            normalized_symbol, normalized_timeframe, 5000
-        )
-        start = datetime.fromtimestamp(from_timestamp, tz=timezone.utc)
-        end = datetime.fromtimestamp(to_timestamp, tz=timezone.utc)
-        filtered = [
-            candle for candle in validated if start <= candle.timestamp <= end
-        ]
-        return self._candles_to_dataframe(filtered)
-
-    async def get_oanda_candles(
-        self, instrument: str, granularity: str = "M15", count: int = 500
-    ) -> pd.DataFrame:
-        return await self.get_candles(
-            symbol=instrument, timeframe=granularity, limit=count
-        )
-
-    async def get_alphavantage_intraday(
-        self, symbol: str, interval: str = "15min"
-    ) -> pd.DataFrame:
-        interval_map = {
-            "1min": "M1", "5min": "M5", "15min": "M15",
-            "30min": "M30", "60min": "H1",
-        }
-        timeframe = interval_map.get(interval.strip().lower())
-        if timeframe is None:
-            raise ValueError(f"Unsupported Alpha Vantage interval: {interval!r}")
-        return await self.get_candles(symbol=symbol, timeframe=timeframe, limit=500)
-
 
 __all__ = ["MarketDataEngine"]

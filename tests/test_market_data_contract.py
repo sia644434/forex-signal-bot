@@ -36,30 +36,6 @@ def candles() -> list[Candle]:
 
 
 @pytest.fixture
-def oanda_candles() -> list[Candle]:
-    return [
-        Candle(
-            symbol="EUR_USD",
-            timestamp=datetime(2026, 1, 1, 0, 1, tzinfo=timezone.utc),
-            open=1.1000,
-            high=1.1010,
-            low=1.0990,
-            close=1.1005,
-            volume=100.0,
-        ),
-        Candle(
-            symbol="EUR_USD",
-            timestamp=datetime(2026, 1, 1, 0, 2, tzinfo=timezone.utc),
-            open=1.1005,
-            high=1.1020,
-            low=1.1000,
-            close=1.1015,
-            volume=110.0,
-        ),
-    ]
-
-
-@pytest.fixture
 def manager() -> AsyncMock:
     return AsyncMock()
 
@@ -148,59 +124,3 @@ async def test_get_candles_returns_empty_normalized_dataframe(manager):
     assert list(result.columns) == ["open", "high", "low", "close", "volume"]
     assert isinstance(result.index, pd.DatetimeIndex)
     assert str(result.index.tz) == "UTC"
-
-
-@pytest.mark.asyncio
-async def test_finnhub_compatibility_adapter_filters_timestamp_range(manager, candles, fresh_clock):
-    manager.get_candles.return_value = candles
-    engine = MarketDataEngine(provider_manager=manager, clock=fresh_clock)
-
-    result = await engine.get_finnhub_candles(
-        "EURUSD",
-        "15m",
-        int(datetime(2026, 1, 1, 0, 2, tzinfo=timezone.utc).timestamp()),
-        int(datetime(2026, 1, 1, 0, 2, tzinfo=timezone.utc).timestamp()),
-    )
-
-    assert len(result) == 1
-    assert result.index[0] == pd.Timestamp("2026-01-01T00:02:00Z")
-
-
-@pytest.mark.asyncio
-async def test_oanda_compatibility_adapter_delegates_to_unified_contract(manager, oanda_candles, fresh_clock):
-    manager.get_candles.return_value = oanda_candles
-    engine = MarketDataEngine(provider_manager=manager, clock=fresh_clock)
-
-    result = await engine.get_oanda_candles(" eur_usd ", "M15", count=2)
-
-    assert len(result) == 2
-    manager.get_candles.assert_awaited_once_with(
-        symbol="EUR_USD",
-        timeframe="M15",
-        limit=2,
-    )
-
-
-@pytest.mark.asyncio
-async def test_alphavantage_compatibility_adapter_maps_interval(manager, candles, fresh_clock):
-    manager.get_candles.return_value = candles
-    engine = MarketDataEngine(provider_manager=manager, clock=fresh_clock)
-
-    result = await engine.get_alphavantage_intraday("EURUSD", "15min")
-
-    assert len(result) == 2
-    manager.get_candles.assert_awaited_once_with(
-        symbol="EURUSD",
-        timeframe="M15",
-        limit=500,
-    )
-
-
-@pytest.mark.asyncio
-async def test_alphavantage_adapter_rejects_unknown_interval(manager):
-    engine = MarketDataEngine(provider_manager=manager)
-
-    with pytest.raises(ValueError):
-        await engine.get_alphavantage_intraday("EURUSD", "2min")
-
-    manager.get_candles.assert_not_awaited()
