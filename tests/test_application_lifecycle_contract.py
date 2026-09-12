@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
+
 from core.application import Application
 
 
@@ -21,11 +23,14 @@ class FakeServiceManager:
 
 
 class FakeHealthServer:
-    def __init__(self, events: list[str]) -> None:
+    def __init__(self, events: list[str], fail_on_start: bool = False) -> None:
         self.events = events
+        self.fail_on_start = fail_on_start
 
     def start(self) -> None:
         self.events.append("health.start")
+        if self.fail_on_start:
+            raise RuntimeError("health server failed to start")
 
     def stop(self) -> None:
         self.events.append("health.stop")
@@ -35,11 +40,15 @@ def run(coro):
     return asyncio.run(coro)
 
 
-def make_application(events: list[str], health_result: dict | None = None) -> Application:
+def make_application(
+    events: list[str],
+    health_result: dict | None = None,
+    health_start_fails: bool = False,
+) -> Application:
     app = object.__new__(Application)
     app.name = "forex-signal-bot"
     app.services = FakeServiceManager(events, health_result)
-    app.health_server = FakeHealthServer(events)
+    app.health_server = FakeHealthServer(events, fail_on_start=health_start_fails)
     return app
 
 
@@ -50,6 +59,16 @@ def test_application_start_starts_services_before_health_server() -> None:
     run(app.start())
 
     assert events == ["services.start", "health.start"]
+
+
+def test_application_start_rolls_back_services_when_health_server_fails() -> None:
+    events: list[str] = []
+    app = make_application(events, health_start_fails=True)
+
+    with pytest.raises(RuntimeError, match="health server failed to start"):
+        run(app.start())
+
+    assert events == ["services.start", "health.start", "services.stop"]
 
 
 def test_application_stop_stops_health_server_before_services() -> None:
