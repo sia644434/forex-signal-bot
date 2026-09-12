@@ -113,31 +113,31 @@ Checkpoint: Verified 2026-09-12.
 ## TASK-022
 Phase: Phase 2 — Core Architecture
 Title: Wire Heavy Forex Worker Through the Application Service Boundary
-Objective: Make the queue-backed PC Worker path part of the actual application composition root, with a non-critical service boundary, central transport configuration, controlled offline behavior, and no unrelated agent architecture.
 Implementation Status: VERIFIED
-Relevant Files:
-- `services/worker/service.py`
-- `config/settings.py`
-- `core/application.py`
-- `tests/test_worker_service.py`
-- `tests/test_settings.py`
-Implementation:
-- `2f14692d41cf965f8492394472336168206f3bcd` — added `WorkerProcessingService` as the application-facing heavy-Forex worker boundary.
-- `095535e7061e843030a997d893560c1d3b036b1e` — added optional `PC_WORKER_URL`, `PC_WORKER_TOKEN`, and `PC_WORKER_TIMEOUT` configuration with validation.
-- `09331be37ea4e942aa785925597a95821b0f5874` — registered the worker service in the application composition root.
-- `442364191dfcf69bb7e65cc4e00d454db8c7f8a5` — added application worker service regression coverage.
-- `ac6cd7c311559c0fe6c042facb71397477d97ff9` — added settings validation/loading coverage for the worker transport boundary.
-- `7a96afddaa46aefe9bb5aa990f40522905754572` — updated the application service registration contract for the new worker service.
-Verification:
-- Production Activation Validation run `34706492461`: success.
-- Production Activation Gate run `34706492375`: success.
-- Security Audit run `34706492390`: success.
-- Test run `34706492383`: success.
-- Production Readiness run `34706492377`: success.
-- Production E2E Contract Gate run `34706492399`: success.
-- Final Integration Gate run `34706492389`: success.
+Evidence: Application composition contains an optional non-critical worker processing service backed by the queue-aware dispatcher and centrally configured worker transport. Commit `7a96afddaa46aefe9bb5aa990f40522905754572` passed all seven push workflows.
 Safety rule: the worker remains optional/non-critical; when transport is not configured, heavy-job submission returns controlled `WORKER_OFFLINE` rather than blocking application startup.
 Checkpoint: Verified 2026-09-12.
+
+## TASK-023
+Phase: Phase 2 — Core Architecture
+Title: Verify and harden the real heavy-Forex workload routing boundary
+Implementation Status: VERIFIED — AUDIT COMPLETE
+Evidence:
+- Repository searches for `historical`, `simulation`, `monte_carlo`, and `dataset` found worker-owned heavy Forex executors/contracts/docs, but no real Forex domain caller submitting `JobRequest` through `WorkerProcessingService`.
+- Phase 9 — Backtesting / Simulation remains `NOT_STARTED`, so creating a speculative domain caller would violate the evidence-backed task rule.
+- Therefore no fake wrapper or speculative routing was introduced. The generic application worker boundary remains ready for the future Phase 9 implementation.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-024 — IN PROGRESS
+Phase: Phase 2 — Core Architecture
+Title: PC Worker Authenticated Heartbeat Contract
+Objective: Add a minimal authenticated worker heartbeat contract so the application-side transport can distinguish a reachable, authenticated, ready PC Worker from a generic HTTP endpoint.
+Implementation Status: IN PROGRESS
+Implementation:
+- `45a27a97299d11e9d598996e3786d6659af30ff8` — added authenticated `POST /heartbeat` on the PC Worker.
+- `eb49e802f3f4de968d2bef0fca3dc6f25a0c1188` — added `PCWorkerClient.heartbeat()`.
+- `32ed161e6ae03f41c03de75db56c225d3db10f88` — added integration coverage for successful authenticated heartbeat and invalid-token rejection.
+Verification: GitHub Actions is currently running for commit `32ed161e6ae03f41c03de75db56c225d3db10f88`; not yet marked VERIFIED.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
