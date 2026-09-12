@@ -12,10 +12,11 @@ def test_requested_workloads_are_worker_owned():
         "ml_training", "xgboost_training", "lightgbm_training", "random_forest_training",
         "timeseries_training", "ensemble_training", "candle_batch_analysis", "dataset_build",
         "model_evaluation", "deep_learning_training", "transformer_training", "lstm_training",
-        "gru_training", "medium_model_training", "multi_agent_analysis",
+        "gru_training", "medium_model_training",
     }
     assert expected <= HEAVY_JOB_TYPES
     assert "coding_agent" not in HEAVY_JOB_TYPES
+    assert "multi_agent_analysis" not in HEAVY_JOB_TYPES
 
 
 def test_worker_hardware_capabilities():
@@ -25,6 +26,7 @@ def test_worker_hardware_capabilities():
     assert capabilities.max_ram_gb == 16
     assert capabilities.limited_jobs
     assert "coding_agent" not in capabilities.limited_jobs
+    assert "multi_agent_analysis" not in capabilities.limited_jobs
 
 
 def test_offline_worker_does_not_block_railway():
