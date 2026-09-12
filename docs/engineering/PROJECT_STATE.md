@@ -2,7 +2,7 @@
 
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
-- Current Commit: `2b65d94a6f0282f61d541481b335e7fd666b1dea`
+- Current Commit: `d3ec1bdaedbe0c591bc1635f57d6fe21647d61a1`
 - Overall Status: `PRODUCTION_VERIFIED`
 - Current Phase: Phase 2 — Core Architecture
 - Current Task: TASK-037 — Dormant Direct OANDA Price Surface Audit
@@ -11,7 +11,7 @@
 - Known Blockers: None for the verified Railway deployment path; GitHub Connector does not expose a local working tree/runtime.
 - Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Phase 2 still has remaining evidence-backed architecture work before later phases are selected.
 - Broken Tests: None known for the verified TASK-036 head.
-- CI Status: TASK-036 implementation head `6174463174d8c6c4ad513896ad7ff96847e85edc` has successful completed CI gates and successful Railway commit status. The current main head is documentation-only synchronization after that verified implementation checkpoint.
+- CI Status: TASK-036 implementation head `6174463174d8c6c4ad513896ad7ff96847e85edc` has successful completed CI gates and successful Railway commit status. The current main head consists of documentation-only synchronization after that verified implementation checkpoint.
 - Deployment Status: TASK-036 implementation head has successful Railway commit status. No new production deployment is claimed solely from the documentation synchronization commits.
 - Architecture Status: Phase 2 active. The PC Worker is restricted to heavy Forex application processing. Durable queue, timeout-aware crash recovery, central queue configuration, application composition, authenticated heartbeat, readiness, observability, heartbeat freshness, minimal public health, authenticated job-request hardening, readiness-gated dispatch, Telegram ownership consolidation, Decision/Risk ownership consolidation, Analysis ownership consolidation, AI ownership auditing, and market-data application-boundary consolidation are recorded. The `ai/` package is dormant/unwired and reserved for Phase 6; it is not part of the active production trading flow. No local coding-agent/Ollama architecture is part of the active Forex worker path.
 - Production Readiness: `VERIFIED` for the observed Railway deployment path. TASK-036 is CI/deployment-status verified but does not claim a new live smoke solely from the source-repository checkpoint.
