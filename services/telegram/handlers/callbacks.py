@@ -1,7 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from ..state import update_menu, get_user_state
-from ..scanner import scan_market, format_scan
+from ..scanner import scan_market, format_scan, get_scanner_provider_manager
 from ..journal import format_journal, add_entry, JournalEntry
 from ..coach import explain_report
 from ..tracker import list_tracking, stop_tracking
@@ -84,7 +84,7 @@ async def menu_callback_handler(update: Update, context: ContextTypes.DEFAULT_TY
         if not state: return
         await query.edit_message_text("⏳ Scanning major markets..." if language == "en" else "⏳ در حال اسکن بازارهای اصلی...")
         try:
-            timeframe = state.settings.get("timeframe", "M15"); results = await scan_market(timeframe=timeframe)
+            timeframe = state.settings.get("timeframe", "M15"); results = await scan_market(timeframe=timeframe, provider_manager=get_scanner_provider_manager(context.application))
             await query.edit_message_text(format_scan(results, timeframe, language), parse_mode="HTML", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "retry"), callback_data="scanner")], [InlineKeyboardButton(t(language, "back"), callback_data="home")]]))
         except Exception as error:
             await query.edit_message_text(_scanner_failure_text(language, error), reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "retry"), callback_data="scanner")], [InlineKeyboardButton(t(language, "back"), callback_data="home")]]))
