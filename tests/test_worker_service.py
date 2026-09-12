@@ -17,7 +17,7 @@ def test_worker_service_without_transport_is_non_critical_and_controlled():
     assert service.health()["readiness"] == "UNCONFIGURED"
 
 
-def test_worker_service_uses_configured_transport(monkeypatch):
+def test_worker_service_uses_configured_transport():
     settings = Settings(
         pc_worker_url="http://worker.example",
         pc_worker_token="secret",
@@ -49,8 +49,12 @@ def test_worker_service_uses_configured_transport(monkeypatch):
     assert service.health()["configured"] is True
     assert service.health()["readiness"] == "UNKNOWN"
 
-    result = asyncio.run(service.submit(JobRequest("online", "backtest")))
+    result_before_heartbeat = asyncio.run(service.submit(JobRequest("blocked", "backtest")))
+    assert result_before_heartbeat.status == "WORKER_OFFLINE"
+    assert "UNKNOWN" in (result_before_heartbeat.error or "")
+
     heartbeat = asyncio.run(service.heartbeat())
+    result = asyncio.run(service.submit(JobRequest("online", "backtest")))
 
     assert result.status == "COMPLETED"
     assert result.output == {"ok": True}
@@ -65,6 +69,66 @@ def test_worker_service_uses_configured_transport(monkeypatch):
         "timeout": 12,
     }
     assert service.health()["configured"] is True
+
+
+def test_worker_service_blocks_dispatch_when_heartbeat_is_stale(monkeypatch):
+    settings = Settings(
+        pc_worker_url="http://worker.example",
+        pc_worker_token="secret",
+        pc_worker_heartbeat_max_age=60,
+    )
+
+    class FakeClient:
+        def __init__(self, base_url, token, timeout):
+            pass
+
+        def submit(self, request):
+            raise AssertionError("stale worker must not receive a job")
+
+        def heartbeat(self):
+            return {
+                "status": "READY",
+                "worker_id": "worker-1",
+                "timestamp": "2020-01-01T00:00:00+00:00",
+            }
+
+    monkeypatch.setattr("services.worker.service.PCWorkerClient", FakeClient)
+    service = WorkerProcessingService.from_settings(settings)
+
+    asyncio.run(service.heartbeat())
+    result = asyncio.run(service.submit(JobRequest("stale", "backtest")))
+
+    assert result.status == "WORKER_OFFLINE"
+    assert "STALE" in (result.error or "")
+    assert service.health()["readiness"] == "STALE"
+
+
+def test_worker_service_blocks_dispatch_when_heartbeat_reports_offline(monkeypatch):
+    settings = Settings(
+        pc_worker_url="http://worker.example",
+        pc_worker_token="secret",
+        pc_worker_timeout=12,
+    )
+
+    class FakeClient:
+        def __init__(self, base_url, token, timeout):
+            pass
+
+        def submit(self, request):
+            raise AssertionError("offline worker must not receive a job")
+
+        def heartbeat(self):
+            return {"status": "WORKER_OFFLINE", "configured": True, "error": "connection refused"}
+
+    monkeypatch.setattr("services.worker.service.PCWorkerClient", FakeClient)
+    service = WorkerProcessingService.from_settings(settings)
+
+    asyncio.run(service.heartbeat())
+    result = asyncio.run(service.submit(JobRequest("offline", "backtest")))
+
+    assert result.status == "WORKER_OFFLINE"
+    assert "WORKER_OFFLINE" in (result.error or "")
+    assert service.health()["readiness"] == "WORKER_OFFLINE"
 
 
 def test_worker_service_health_marks_stale_ready_heartbeat(monkeypatch):
