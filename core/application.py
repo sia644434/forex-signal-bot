@@ -62,7 +62,12 @@ class Application:
         """
 
         await self.services.start_all()
-        self.health_server.start()
+
+        try:
+            self.health_server.start()
+        except Exception:
+            await self.services.stop_all()
+            raise
 
         logger.info(
             f"{self.name} started successfully."
