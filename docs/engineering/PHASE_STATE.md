@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-028 — next evidence-backed Phase 2 gap selection
+Active Task: TASK-028 — Minimize Unauthenticated PC Worker Health Information Exposure
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Phase 2 Scope Before TASK-004
@@ -38,6 +38,15 @@ Evidence:
 - Current-head CI contains seven completed push workflow runs; Production E2E Contract Gate `34709726285` and Production Activation Validation `34709726258` are successful.
 - Railway deployment status for the commit is successful.
 
+### TASK-028 — IMPLEMENTED / VERIFICATION PENDING
+Minimize Unauthenticated PC Worker Health Information Exposure.
+Evidence:
+- Prior `/health` exposed the full worker runtime health payload without authentication.
+- `c092704fc8fb924a16556ef85686021965662264` changed public `/health` to the minimal `{"status":"READY"}` liveness contract.
+- `8160737a2a13ec066c3eb9e9e48f5adce662b099` added regression coverage for the minimal public response.
+- Detailed worker identity remains available through authenticated `/heartbeat`.
+- Current-head CI verification is pending.
+
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
 
@@ -61,11 +70,11 @@ Status: NOT_STARTED
 
 ## Phase 10 — Security / Production Hardening
 Status: IN_PROGRESS
-Evidence: Dependency security audit and production runtime verification are complete; broader security hardening remains a later roadmap phase/task.
+Evidence: Dependency security audit and production runtime verification are complete; broader security hardening remains a later roadmap phase/task. TASK-028 is an evidence-backed security hardening item executed within the current Phase 2 worker boundary.
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green; current Phase 2 worker heartbeat freshness contract is CI-verified.
+Evidence: Existing CI and production verification gates are green; TASK-028 adds a focused regression contract and awaits current-head CI verification.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
