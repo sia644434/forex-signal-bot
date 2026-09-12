@@ -17,21 +17,9 @@ def _status_handler(job_type: str) -> Callable[[dict[str, Any]], dict[str, Any]]
 
 
 def register_default_handlers(runtime) -> None:
-    """Register safe execution adapters for every declared workload."""
+    """Register safe execution adapters for every declared application workload."""
     for job_type in HEAVY_JOB_TYPES:
         runtime.register(job_type, _status_handler(job_type))
 
 
-def register_agent_handler(runtime, agent) -> None:
-    """Register the local coding agent as an explicit worker workload."""
-    def handler(payload: dict[str, Any]) -> dict[str, Any]:
-        task = str(payload.get("task", "")).strip()
-        if not task:
-            raise ValueError("agent task is required")
-        context = str(payload.get("context", ""))
-        return agent.run(task, context=context)
-
-    runtime.register("coding_agent", handler)
-
-
-__all__ = ["register_default_handlers", "register_agent_handler"]
+__all__ = ["register_default_handlers"]
