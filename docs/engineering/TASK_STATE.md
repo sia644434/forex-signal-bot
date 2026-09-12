@@ -35,7 +35,7 @@ Scope:
 - `services/base.py`
 - `tests/test_service_manager_contract.py`
 Implementation:
-- Commit `2e38e857dbed219c41c8b4339434bb61a372f040` — `test: add service manager lifecycle contracts`
+- Commit `2e38e857dbed219c41c8b4339434bb3deae66d6ce` — `test: add service manager lifecycle contracts`
 - Six focused contract tests added.
 Verification:
 - Test workflow `34698627396` / job `103566339790`: success.
@@ -50,13 +50,16 @@ Phase: Phase 2 — Core Architecture
 Title: Application Lifecycle Contract Hardening
 Objective: Establish explicit contract coverage for application startup/shutdown ordering, health-server lifecycle, health aggregation, and composition-root registration.
 Implementation Status: IN_PROGRESS
-Test Status: PENDING IMPLEMENTATION
-Scope:
-- `core/application.py`
-- `app.py`
-- `main.py`
-- `tests/test_application_lifecycle_contract.py`
-Next exact action: add focused application lifecycle contract tests, then verify them and the full regression suite in GitHub Actions.
+Test Status: CI FIX VERIFICATION IN PROGRESS
+Implementation:
+- Initial test commit `79b14578f69254c4748c58e2a9ce4672bf850aeb` — `test: add application lifecycle contracts`.
+- Test run `34698829433` / job `103566877894` failed in the full suite because the new tests instantiated a real `HealthServer`, leaking port `8080` between tests; result was `365 passed, 1 failed` with `OSError: [Errno 98] Address already in use`.
+- Fix commit `926fc1a63307107fcfd2b4bd2b487c696838d18d` — `test: isolate application lifecycle fixtures`.
+- The fix avoids real socket binding in lifecycle tests and mocks `HealthServer` for the composition-root test.
+Current verification:
+- GitHub Actions Test run for fix commit: `34698909805` / job `103567089476` is currently `in_progress`.
+- No local execution claimed.
+Next exact action: verify the fix run; if green, checkpoint TASK-005 and continue Phase 2.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
