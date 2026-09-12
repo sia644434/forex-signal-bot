@@ -35,9 +35,25 @@ class Application:
         self.health_server = HealthServer(self.health, host=host, port=port)
 
     def health(self) -> dict:
+        application_health = health_check()
+        service_health = self.services.health()
+
+        critical_failures = [
+            name
+            for name, status in service_health.items()
+            if status.get("critical") and status.get("status") != "ok"
+        ]
+
+        if critical_failures:
+            application_health = {
+                **application_health,
+                "status": "degraded",
+                "critical_failures": critical_failures,
+            }
+
         return {
-            "application": health_check(),
-            "services": self.services.health(),
+            "application": application_health,
+            "services": service_health,
         }
 
     async def start(self) -> None:
