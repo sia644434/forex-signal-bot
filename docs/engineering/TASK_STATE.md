@@ -55,9 +55,9 @@ Evidence:
 - `e47a5ca4af2cd0562a160c67ed11c857088d1724` — removed its executor and registration.
 - `dc37e64ef45203e58d4f6ed905124421d4371149` — removed contract test references and added an explicit regression assertion.
 - `8d4f09574d18dacac7ea7b48aefb4961528485b2` — removed executor test coverage for the out-of-scope workload.
-- `71d7a8619a1dffdbd2022a85805430ed1fbddd67` — aligned worker documentation with the Forex-only workload boundary.
-- `88ea88d564275bd6ca0ed8495400d84a28f40f76` — aligned the architecture map with the Forex-only worker boundary.
-- Final-gate run `34704118418`, job `103580948161`: completed/success; compile, runtime safety tests, full suite, and production Docker build all passed.
+- `71d7a8619a1dffdbd2022a85805430ed1fbddd67` — worker README aligned with Forex-only workload scope.
+- `88ea88d564275bd6ca0ed8495400d84a28f40f76` — architecture map aligned with Forex-only worker scope.
+- Final-gate run `34704118418`, job `103580948161`: success; compile, runtime safety tests, full suite, and production Docker build passed.
 Checkpoint: Verified 2026-09-12.
 
 ## TASK-018
@@ -65,14 +65,13 @@ Phase: Phase 2 — Core Architecture
 Title: Durable Forex Worker Processing Queue Contract
 Implementation Status: VERIFIED
 Evidence:
-- `5853902a3f511cbfea9c4ba15003ebe543292b45` — added SQLite-backed queue contract.
-- `9f3c7477919c9a0bbb3b648bde72bd2e60949c6e` — cleaned and hardened queue implementation.
-- `bca3aba949b31a5fbb6fb08735ebc366096ef11a` — added queue lifecycle/persistence regression coverage.
-- `9632b55fa6f0196972bb93ca57a13879311a3994` — documented the queue architecture boundary.
-- `98ad8076eba3808a819352949ba6f90c15147887` — integrated the queue with the Forex Worker Dispatcher.
-- Final Integration Gate run `34705244551`, job `103584015549`: success; compile, runtime safety tests, full suite, and production Docker build passed.
-- Security Audit run `34705244541`: success.
-Current guarantees: idempotent enqueue by `job_id`, priority ordering, explicit lifecycle states, terminal-state idempotency, file-backed persistence, and dispatcher integration.
+- `5853902a3f511cbfea9c4ba15003ebe543292b45` — added SQLite-backed queue.
+- `9f3c7477919c9a0bbb3b648bde72bd2e60949c6e` — cleanup/hardening.
+- `bca3aba949b31a5fbb6fb08735ebc366096ef11a` — lifecycle/persistence tests.
+- `9632b55fa6f0196972bb93ca57a13879311a3994` — architecture documentation.
+- `98ad8076eba3808a819352949ba6f90c15147887` — dispatcher integration.
+- Final Integration Gate `34705244551`: success; compile, runtime safety, full suite, and production Docker build passed.
+- Security Audit `34705244541`: success.
 Checkpoint: Verified 2026-09-12.
 
 ## TASK-019
@@ -80,10 +79,9 @@ Phase: Phase 2 — Core Architecture
 Title: Forex Worker Queue Crash-Recovery Contract
 Implementation Status: VERIFIED
 Evidence:
-- `40145b95d9f4732793f1a07b688bc61e85421ca5` — added `claimed_at` tracking and explicit stale-running recovery.
-- `4212c24263eccd2ef4610b4125e9be31153b76a1` — added regression coverage for stale recovery, active-job preservation, and invalid recovery age.
-- Current-head CI for `923d586b07cce1941723daa7faf20c330a435423`: Test run `34706092640` success and Final Integration Gate `34706092625` success.
-Safety rule: only stale `RUNNING` jobs are returned to `PENDING`; terminal states are untouched.
+- `40145b95d9f4732793f1a07b688bc61e85421ca5` — stale-running tracking/recovery.
+- `4212c24263eccd2ef4610b4125e9be31153b76a1` — recovery regression tests.
+- Current-head CI for `923d586b07cce1941723daa7faf20c330a435423`: Test `34706092640` and Final Integration `34706092625` succeeded.
 Checkpoint: Verified 2026-09-12.
 
 ## TASK-020
@@ -91,11 +89,10 @@ Phase: Phase 2 — Core Architecture
 Title: Activate Forex Worker Queue Crash Recovery
 Implementation Status: VERIFIED
 Evidence:
-- `403fa6977af5ab7b4a8577d35f2c0842d7d5592c` — added per-job-timeout-aware `recover_expired_running()`.
-- `832420b09b3e9b6a3bb9c7c81a7a3d4c0d65c3f4` — dispatcher initialization activates bounded crash recovery.
-- `32543940497e989e5da9eabb1760450a80c1dea8` and `01c0cc08c347bf51f9911b144973c5ec2b2171ea` — queue and dispatcher recovery regression coverage.
-- Current-head CI for `923d586b07cce1941723daa7faf20c330a435423`: all seven push workflows completed successfully.
-Safety rule: recovery occurs only after each job's own timeout plus configured grace period.
+- `403fa6977af5ab7b4a8577d35f2c0842d7d5592c` — per-job-timeout-aware recovery.
+- `832420b09b3e9b6a3bb9c7c81a7a3d4c0d65c3f4` — dispatcher initialization recovery.
+- `32543940497e989e5da9eabb1760450a80c1dea8` and `01c0cc08c347bf51f9911b144973c5ec2b2171ea` — regression coverage.
+- Current-head CI for `923d586b07cce1941723daa7faf20c330a435423`: all seven push workflows succeeded.
 Checkpoint: Verified 2026-09-12.
 
 ## TASK-021
@@ -103,41 +100,66 @@ Phase: Phase 2 — Core Architecture
 Title: Forex Worker Queue Persistence Configuration Boundary
 Implementation Status: VERIFIED
 Evidence:
-- `0cb4550608059c6c4c56cb4f924a55dbdad30e06` — central queue persistence path and recovery grace settings.
-- `d86138b316b420eb8b7b82fca9afc27c4834ba4f` — `WorkerDispatcher.from_settings()` uses central queue configuration.
-- `7d01ae73e4b73fd8f10e8bf1efb7d84df6e079be` and `2d4bdf87bf7f4c0e2758ce4e34af201e76d228e2` — settings and integration coverage.
-- Fixes `6f74d481665818f79da97eaab70eb53100ae6b94`, `91816763451c52756fd3d476a3fab321a46cecaa`, and `923d586b07cce1941723daa7faf20c330a435423` resolved the failed CI cases.
-- Current-head CI for `923d586b07cce1941723daa7faf20c330a435423`: all seven push workflows completed successfully, including Test, Final Integration Gate, Production Readiness, Production Activation Gate, Production Activation Validation, Production E2E Contract Gate, and Security Audit.
+- `0cb4550608059c6c4c56cb4f924a55dbdad30e06` — central queue persistence/recovery settings.
+- `d86138b316b420eb8b7b82fca9afc27c4834ba4f` — dispatcher uses central settings.
+- `7d01ae73e4b73fd8f10e8bf1efb7d84df6e079be` and `2d4bdf87bf7f4c0e2758ce4e34af201e76d228e2` — settings/integration tests.
+- Fixes `6f74d481665818f79da97eaab70eb53100ae6b94`, `91816763451c52756fd3d476a3fab321a46cecaa`, `923d586b07cce1941723daa7faf20c330a435423` resolved CI failures.
+- Current-head CI for `923d...`: all seven push workflows succeeded.
 Checkpoint: Verified 2026-09-12.
 
 ## TASK-022
 Phase: Phase 2 — Core Architecture
 Title: Wire Heavy Forex Worker Through the Application Service Boundary
 Implementation Status: VERIFIED
-Evidence: Application composition contains an optional non-critical worker processing service backed by the queue-aware dispatcher and centrally configured worker transport. Commit `7a96afddaa46aefe9bb5aa990f40522905754572` passed all seven push workflows.
-Safety rule: the worker remains optional/non-critical; when transport is not configured, heavy-job submission returns controlled `WORKER_OFFLINE` rather than blocking application startup.
+Evidence: Optional non-critical worker processing service is composed through the queue-aware dispatcher and central worker settings. Commit `7a96afddaa46aefe9bb5aa990f40522905754572` passed all seven push workflows.
+Safety rule: unconfigured worker submission returns controlled `WORKER_OFFLINE` and does not block startup.
 Checkpoint: Verified 2026-09-12.
 
 ## TASK-023
 Phase: Phase 2 — Core Architecture
 Title: Verify and harden the real heavy-Forex workload routing boundary
 Implementation Status: VERIFIED — AUDIT COMPLETE
-Evidence:
-- Repository searches for `historical`, `simulation`, `monte_carlo`, and `dataset` found worker-owned heavy Forex executors/contracts/docs, but no real Forex domain caller submitting `JobRequest` through `WorkerProcessingService`.
-- Phase 9 — Backtesting / Simulation remains `NOT_STARTED`, so creating a speculative domain caller would violate the evidence-backed task rule.
-- Therefore no fake wrapper or speculative routing was introduced. The generic application worker boundary remains ready for the future Phase 9 implementation.
+Evidence: Repository search found worker-owned heavy Forex executors/contracts but no real Forex domain caller submitting `JobRequest` through `WorkerProcessingService`. Phase 9 Backtesting / Simulation remains `NOT_STARTED`, so no speculative caller was introduced.
 Checkpoint: Verified 2026-09-12.
 
-## TASK-024 — IN PROGRESS
+## TASK-024
 Phase: Phase 2 — Core Architecture
 Title: PC Worker Authenticated Heartbeat Contract
-Objective: Add a minimal authenticated worker heartbeat contract so the application-side transport can distinguish a reachable, authenticated, ready PC Worker from a generic HTTP endpoint.
-Implementation Status: IN PROGRESS
-Implementation:
-- `45a27a97299d11e9d598996e3786d6659af30ff8` — added authenticated `POST /heartbeat` on the PC Worker.
-- `eb49e802f3f4de968d2bef0fca3dc6f25a0c1188` — added `PCWorkerClient.heartbeat()`.
-- `32ed161e6ae03f41c03de75db56c225d3db10f88` — added integration coverage for successful authenticated heartbeat and invalid-token rejection.
-Verification: GitHub Actions is currently running for commit `32ed161e6ae03f41c03de75db56c225d3db10f88`; not yet marked VERIFIED.
+Implementation Status: VERIFIED
+Evidence:
+- `45a27a97299d11e9d598996e3786d6659af30ff8` — authenticated `POST /heartbeat`.
+- `eb49e802f3f4de968d2bef0fca3dc6f25a0c1188` — `PCWorkerClient.heartbeat()`.
+- `32ed161e6ae03f41c03de75db56c225d3db10f88` — valid/invalid authentication regression coverage.
+- Subsequent current-head CI remained green across the push workflow set.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-025
+Phase: Phase 2 — Core Architecture
+Title: Worker Processing Health/Readiness Contract
+Implementation Status: VERIFIED
+Evidence:
+- `cab4d1ff83dd0bd25e1a41795fc312e444db040b` — health/readiness state derived from heartbeat state.
+- `ae665021c0a29016a09af8a4129da9e812b49699` — regression coverage for UNCONFIGURED, UNKNOWN, READY, and WORKER_OFFLINE.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-026
+Phase: Phase 2 — Core Architecture
+Title: Worker Heartbeat Observability
+Implementation Status: VERIFIED
+Evidence: Worker health exposes heartbeat worker identity/timestamp and the service-level tests were aligned with the heartbeat observability contract. This work was superseded/extended by TASK-027 freshness semantics.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-027
+Phase: Phase 2 — Core Architecture
+Title: PC Worker Heartbeat Freshness Contract
+Implementation Status: VERIFIED
+Evidence:
+- `1794b67fc5faa68ab8b1e6c38c11b8ea980a93cb` — added configurable `PC_WORKER_HEARTBEAT_MAX_AGE` with validation/default 120 seconds.
+- `6c2e9d12201ff2459883889fc2aaa4a54c4e5ba5` — readiness dynamically evaluates heartbeat freshness and returns `STALE` for expired/malformed/missing READY timestamps.
+- `d3fc220cc3da3a017b28fcc64ca0b67675ce9026` — freshness/settings regression coverage.
+- `316391aa4440d8ca2d31a0d11887bfa2482070b4` — aligned the unconfigured readiness test contract.
+- Current-head Actions for `316391...` contain seven completed push workflow runs; the Production E2E Contract Gate `34709726285` and Production Activation Validation `34709726258` are explicitly successful. The commit also has a successful Railway deployment status.
+Checkpoint: Verified 2026-09-12.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
