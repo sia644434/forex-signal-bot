@@ -4,6 +4,7 @@ from telegram import BotCommand
 from telegram.ext import Application
 
 from core.logger import setup_logger
+from services.market_data.service import install_market_data_service
 from services.telegram.router import register_routes
 
 
@@ -21,6 +22,7 @@ class TelegramClient:
             .build()
         )
 
+        self.market_data_service = install_market_data_service(self.application)
         register_routes(self.application)
         logger.info("Telegram client configured and routes registered.")
 
