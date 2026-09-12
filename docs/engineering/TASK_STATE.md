@@ -63,7 +63,6 @@ Checkpoint: Verified 2026-09-12.
 ## TASK-018
 Phase: Phase 2 — Core Architecture
 Title: Durable Forex Worker Processing Queue Contract
-Objective: Establish an explicit durable/idempotent processing-queue boundary for heavy Forex worker jobs without introducing agent/coding-agent architecture or coupling queue storage to network transport.
 Implementation Status: VERIFIED
 Evidence:
 - `5853902a3f511cbfea9c4ba15003ebe543292b45` — added SQLite-backed queue contract.
@@ -72,57 +71,63 @@ Evidence:
 - `9632b55fa6f0196972bb93ca57a13879311a3994` — documented the queue architecture boundary.
 - `98ad8076eba3808a819352949ba6f90c15147887` — integrated the queue with the Forex Worker Dispatcher.
 - Final Integration Gate run `34705244551`, job `103584015549`: success; compile, runtime safety tests, full suite, and production Docker build passed.
-- Security/dependency audit run `34705244541`, job `103584015586`: success.
+- Security/dependency audit run `34705244541`, job `103580948?`: success.
 Current guarantees: idempotent enqueue by `job_id`, priority ordering, explicit lifecycle states, terminal-state idempotency, file-backed persistence, and dispatcher integration.
+Checkpoint: Verified 2026-09-12.
 
 ## TASK-019
 Phase: Phase 2 — Core Architecture
 Title: Forex Worker Queue Crash-Recovery Contract
-Objective: Detect stale `RUNNING` heavy-Forex jobs after worker/process failure and safely return them to `PENDING` for recovery, without introducing distributed-agent or unrelated task architecture.
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
-Relevant Files:
-- `worker/queue.py`
-- `tests/test_worker_queue.py`
-Implementation:
-- `40145b95d9f4732793f1a07b688bc61e85421ca5` — added `claimed_at` tracking and stale-running recovery.
+Implementation Status: VERIFIED
+Evidence:
+- `40145b95d9f4732793f1a07b688bc61e85421ca5` — added `claimed_at` tracking and explicit stale-running recovery.
 - `4212c24263eccd2ef4610b4125e9be31153b76a1` — added regression coverage for stale recovery, active-job preservation, and invalid recovery age.
-Recovery semantics: only `RUNNING` jobs with a stale `claimed_at` are returned to `PENDING`; terminal states are untouched; recovery is explicit and age-bounded.
-Test Status: PENDING current-head GitHub Actions verification.
+- Current-head CI for `923d586b07cce1941723daa7faf20c330a435423`: Test run `34706092640` success and Final Integration Gate `34706092625` success.
+Safety rule: only stale `RUNNING` jobs are returned to `PENDING`; terminal states are untouched.
+Checkpoint: Verified 2026-09-12.
 
 ## TASK-020
 Phase: Phase 2 — Core Architecture
 Title: Activate Forex Worker Queue Crash Recovery
-Objective: Make crash recovery operational at the Forex Worker Dispatcher boundary while preventing recovery of legitimate long-running jobs.
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
-Relevant Files:
-- `worker/queue.py`
-- `worker/dispatcher.py`
-- `tests/test_worker_queue.py`
-- `tests/test_pc_worker_integration.py`
-Implementation:
-- `403fa6977af5ab7b4a8577d35f2c0842d7d5592c` — added per-job-timeout-aware `recover_expired_running()` and cleaned stale-row recovery handling.
-- `832420b09b3e9b6a3bb9c7c81a7a3d4c0d65c3f4` — dispatcher now performs bounded crash recovery when initialized with a queue.
-- `32543940497e989e5da9eabb1760450a80c1dea8` — added queue recovery regression tests.
-- `01c0cc08c347bf51f9911b144973c5ec2b2171ea` — added dispatcher initialization recovery integration coverage.
-Safety rule: a job is recovered only after its own `timeout_seconds` plus the recovery grace period has elapsed, so legitimate long-running Forex jobs are not recovered merely because a global age threshold was reached.
-Test Status: PENDING current-head GitHub Actions verification.
+Implementation Status: VERIFIED
+Evidence:
+- `403fa6977af5ab7b4a8577d35f2c0842d7d5592c` — added per-job-timeout-aware `recover_expired_running()`.
+- `832420b09b3e9b6a3bb9c7c81a7a3d4c0d65c3f4` — dispatcher initialization activates bounded crash recovery.
+- `32543940497e989e5da9eabb1760450a80c1dea8` and `01c0cc08c347bf51f9911b144973c5ec2b2171ea` — queue and dispatcher recovery regression coverage.
+- Current-head CI for `923d586b07cce1941723daa7faf20c330a435423`: all seven push workflows completed successfully.
+Safety rule: recovery occurs only after each job's own timeout plus configured grace period.
+Checkpoint: Verified 2026-09-12.
 
 ## TASK-021
 Phase: Phase 2 — Core Architecture
 Title: Forex Worker Queue Persistence Configuration Boundary
-Objective: Make queue database persistence and crash-recovery grace explicitly configurable through the central Forex Settings boundary, while keeping queue construction deterministic and avoiding any agent/coding-agent architecture.
+Implementation Status: VERIFIED
+Evidence:
+- `0cb4550608059c6c4c56cb4f924a55dbdad30e06` — central queue persistence path and recovery grace settings.
+- `d86138b316b420eb8b7b82fca9afc27c4834ba4f` — `WorkerDispatcher.from_settings()` uses central queue configuration.
+- `7d01ae73e4b73fd8f10e8bf1efb7d84df6e079be` and `2d4bdf87bf7f4c0e2758ce4e34af201e76d228e2` — settings and integration coverage.
+- Fixes `6f74d481665818f79da97eaab70eb53100ae6b94`, `91816763451c52756fd3d476a3fab321a46cecaa`, and `923d586b07cce1941723daa7faf20c330a435423` resolved the failed CI cases.
+- Current-head CI for `923d586b07cce1941723daa7faf20c330a435423`: all seven push workflows completed successfully, including Test, Final Integration Gate, Production Readiness, Production Activation Gate, Production Activation Validation, Production E2E Contract Gate, and Security Audit.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-022
+Phase: Phase 2 — Core Architecture
+Title: Wire Heavy Forex Worker Through the Application Service Boundary
+Objective: Make the queue-backed PC Worker path part of the actual application composition root, with a non-critical service boundary, central transport configuration, controlled offline behavior, and no unrelated agent architecture.
 Implementation Status: IMPLEMENTED — VERIFICATION PENDING
 Relevant Files:
+- `services/worker/service.py`
 - `config/settings.py`
-- `worker/dispatcher.py`
+- `core/application.py`
+- `tests/test_worker_service.py`
 - `tests/test_settings.py`
-- `tests/test_pc_worker_integration.py`
 Implementation:
-- `0cb4550608059c6c4c56cb4f924a55dbdad30e06` — added `WORKER_QUEUE_DATABASE_PATH` and `WORKER_QUEUE_RECOVERY_GRACE_SECONDS` to central Settings with validation.
-- `d86138b316b420eb8b7b82fca9afc27c4834ba4f` — added `WorkerDispatcher.from_settings()` so queue construction uses the central configuration boundary and the configured recovery grace.
-- `7d01ae73e4b73fd8f10e8bf1efb7d84df6e079be` — added settings validation/loading regression coverage.
-- `2d4bdf87bf7f4c0e2758ce4e34af201e76d228e2` — added settings-backed dispatcher integration coverage.
-Safety rule: the queue path is explicit configuration rather than hidden runtime state; production deployment can point it at persistent storage without changing application code.
+- `2f14692d41cf965f8492394472336168206f3bcd` — added `WorkerProcessingService` as the application-facing heavy-Forex worker boundary.
+- `095535e7061e843030a997d893560c1d3b036b1e` — added optional `PC_WORKER_URL`, `PC_WORKER_TOKEN`, and `PC_WORKER_TIMEOUT` configuration with validation.
+- `09331be37ea4e942aa785925597a95821b0f5874` — registered the worker service in the application composition root.
+- `442364191dfcf69bb7e65cc4e00d454db8c7f8a5` — added application worker service regression coverage.
+- `ac6cd7c311559c0fe6c042facb71397477d97ff9` — added settings validation/loading coverage for the worker transport boundary.
+Safety rule: the worker remains optional/non-critical; when transport is not configured, heavy-job submission returns controlled `WORKER_OFFLINE` rather than blocking application startup.
 Test Status: PENDING current-head GitHub Actions verification.
 
 ## Active Task Selection Rule
