@@ -32,10 +32,16 @@ Phase: Phase 1 — Production Verification / Reliability Hardening
 Title: Establish deployment and runtime verification evidence
 Objective: Determine the concrete gap between green CI and actual production readiness, then close it with the smallest evidence-backed changes.
 Implementation Status: IN_PROGRESS
-Test Status: CI baseline is green; live runtime verification remains outstanding.
-CI Status: Green on `066c503` for Test and Final Integration Gate.
-Known Blockers: No local runtime through GitHub Connector; private deployment/runtime credentials unavailable for independent live verification.
-Next Action: Inspect deployment workflows, health endpoints, Docker/Railway startup behavior, configuration validation, and automated production-readiness gates. Add/repair tests or gates where a concrete gap is found; never fabricate live health.
+Test Status: Live verification contract implemented; actual live runtime remains unverified.
+CI Status: New verification code and workflow are committed; CI result for the latest changes is pending.
+Changes:
+- `a7a394c` — add dependency-free live `/health` verification script with retries and safe failure handling.
+- `69590bd` — add unit coverage for successful, invalid, and transient-failure health responses.
+- `c61fdfe` — rename the internal workflow to `Production E2E Contract Gate` so it no longer implies live deployment verification.
+- `47523df` — add manual `Production Live Smoke` workflow using `PRODUCTION_BASE_URL` secret.
+Verified deployment contract: `/health` is exposed by the application, Railway is configured with `healthcheckPath = "/health"`, and the Docker image has a healthcheck.
+Known Blockers: No verified production URL/secret is available through the repository, and the GitHub Connector cannot independently access private deployment credentials. Therefore live production health has NOT been claimed.
+Next Action: Verify the new contract through GitHub Actions. If/when `PRODUCTION_BASE_URL` is configured in GitHub, run `Production Live Smoke`; only a successful live run may change production readiness from NOT VERIFIED.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
