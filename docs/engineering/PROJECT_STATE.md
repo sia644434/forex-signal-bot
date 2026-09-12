@@ -2,7 +2,7 @@
 
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
-- Current Commit: `73c4563993c27389ebb08b60717ef6537150bc74`
+- Current Commit: `6fcd36d12cd8f4052a78e7fab302f29dd6c6575d`
 - Overall Status: `PRODUCTION_VERIFIED`
 - Current Phase: Phase 2 — Core Architecture
 - Current Task: TASK-044 — Scanner ProviderManager Lifetime and Readiness Boundary Audit
@@ -11,7 +11,7 @@
 - Known Blockers: None for the verified Railway deployment path; GitHub Connector does not expose a local working tree/runtime.
 - Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Phase 2 still has remaining evidence-backed architecture work before later phases are selected.
 - Broken Tests: None known for the verified TASK-043 implementation head.
-- CI Status: TASK-043 implementation/documentation head `abe8e0db1d98e3c7ac3d6ffd09330604463656d9` completed Production Readiness run `34721145994`, Production Activation Validation run `34721150684`, and Production E2E Contract Gate run `34721147175` successfully. The current state-documentation commit is `73c4563993c27389ebb08b60717ef6537150bc74`.
+- CI Status: TASK-043 implementation head `abe8e0db1d98e3c7ac3d6ffd09330604463656d9` completed Production Readiness run `34721145994`, Production Activation Validation run `34721150684`, and Production E2E Contract Gate run `34721147175` successfully. Documentation state is synchronized through the current head.
 - Deployment Status: No new live production smoke is claimed solely from the TASK-043 implementation or documentation synchronization commits. The previously verified Railway path remains the production deployment evidence.
 - Architecture Status: Phase 2 active. The PC Worker is restricted to heavy Forex application processing. Durable queue, timeout-aware crash recovery, central queue configuration, application composition, authenticated heartbeat, readiness, observability, heartbeat freshness, minimal public health, authenticated job-request hardening, readiness-gated dispatch, Telegram ownership consolidation, Decision/Risk ownership consolidation, Analysis ownership consolidation, AI ownership auditing, market-data application-boundary consolidation, dormant direct OANDA price-surface removal, lower-level market-data facade removal, provider-specific adapter removal, ProviderManager lifecycle contract hardening, MarketDataEngine output-surface compatibility audit, MarketDataService construction-boundary hardening, and application-scoped MarketDataService lifetime hardening are recorded. The `ai/` package is dormant/unwired and reserved for Phase 6; it is not part of the active production trading flow. No local coding-agent/Ollama architecture is part of the active Forex worker path.
 - Production Readiness: `VERIFIED` for the observed Railway deployment path. No new live smoke is claimed for documentation-only synchronization commits.
