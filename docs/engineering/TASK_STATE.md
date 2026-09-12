@@ -5,6 +5,7 @@ Phase: Phase 2 — Core Architecture
 Title: Phase 2 scope that existed before TASK-004
 Implementation Status: AUDITED / NO SEPARATE HISTORICAL TASK CONTRACT RECOVERED
 Evidence: TASK-004 is the first explicitly recorded Phase 2 implementation task after TASK-003. No independent pre-TASK-004 task specification was recoverable from persistent engineering state. The current architecture audit therefore treats the Master Prompt's explicit core-architecture requirements as the governing scope rather than inventing historical work.
+Concrete gaps identified by the audit are tracked as normal evidence-backed Phase 2 tasks.
 
 ## TASK-001
 Phase: Phase 1 — Repository Audit
@@ -138,7 +139,20 @@ Evidence:
 - `analysis/full_engine.py` is the canonical production analysis composition; the alternate adapter/registry/orchestrator path had no production-active callers.
 - `analysis/contracts.py` also duplicated analysis-context ownership already represented by `models/market.py`.
 - The obsolete modules and architecture test were removed, and `analysis/__init__.py` was aligned with the canonical analysis exports.
-- Current head `6f4d49c6c0e82a9441b41af679c4709ae88c5c71` has seven completed push workflow runs; the visible Test run `34715545781` and Production E2E Contract Gate `34715545700` are successful, and the commit has successful Railway status.
+- Current head `6f4d49c6c0e82a9441b41af679c4709ae88c5c71` has completed CI evidence and successful Railway status.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-035
+Phase: Phase 2 — Core Architecture
+Title: AI Architecture Ownership Audit
+Implementation Status: VERIFIED — DORMANT / UNWIRED
+Evidence:
+- Repository-wide searches found no production or test caller constructing `AIOrchestrator`, `AIProviderManager`, `AIContextBuilder`, or `OpenAIProvider`.
+- The `ai/` package is internally self-contained: `orchestrator.py` wires context → prompt builder → provider → parser, while `provider.py` defines the provider abstraction and null fallback, but no application composition registers or invokes that pipeline.
+- `core/application.py` registers only `TelegramService` and `WorkerProcessingService`; there is no AI service in the production composition root.
+- AI-related settings remain referenced by configuration and production-readiness scaffolding, but those references do not establish an active trading/runtime caller.
+- Decision: preserve the dormant `ai/` package as future Phase 6 capability rather than deleting it or introducing an adapter into the active Forex path. It must not be treated as a production decision/risk owner or bypass canonical analysis → decision → risk flow.
+- `docs/engineering/ARCHITECTURE_MAP.md` records this ownership boundary and future activation requirements.
 Checkpoint: Verified 2026-09-12.
 
 ## Deferred Roadmap Issues
@@ -147,4 +161,4 @@ Checkpoint: Verified 2026-09-12.
 - #46 — Worker observability and operational contract audit — implemented as TASK-031.
 
 ## Active Task Selection Rule
-Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
+Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
