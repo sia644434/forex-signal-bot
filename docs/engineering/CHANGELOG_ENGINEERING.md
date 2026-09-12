@@ -5,40 +5,22 @@
 - Added baseline architecture/state tracking under `docs/engineering/`.
 - Recorded repository/CI evidence without claiming production readiness.
 - Preserved the current implementation; no mass architectural rewrite performed during baseline setup.
-- Corrected the PC Worker boundary: active worker runtime is dedicated to heavy Trading Intelligence Platform / Forex workloads and no longer initializes a local coding agent/Ollama runtime.
+- Corrected the PC Worker boundary: active worker runtime is dedicated to heavy Forex workloads and no longer initializes a local coding agent/Ollama runtime.
 - Removed `coding_agent` from the declared worker workload contract and added regression coverage preventing its reintroduction.
-- Removed the residual `multi_agent_analysis` worker workload, executor, tests, and documentation references; TASK-017 final CI gate passed.
+- Removed the residual `multi_agent_analysis` worker workload, executor, tests, and documentation references.
 - Audited the skipped pre-TASK-004 Phase 2 scope without inventing a missing historical task contract.
-- Added `worker/queue.py`, a dependency-free SQLite-backed durable processing queue for heavy Forex jobs with idempotent enqueue and explicit lifecycle states.
-- Added queue regression coverage for priority ordering, lifecycle transitions, idempotency, cancellation/timeout, and persistence across file-backed connections.
-- Added queue crash recovery and activated timeout-aware dispatcher recovery.
-- Centralized queue persistence/recovery configuration and wired the optional non-critical worker processing service through the application boundary.
-- Audited the real heavy-Forex routing boundary and deliberately avoided a speculative Phase 9 caller because Backtesting / Simulation is not started.
-- Added authenticated PC Worker heartbeat transport and application-boundary heartbeat handling.
-- Added worker readiness states and heartbeat identity/timestamp observability.
-- Added configurable PC Worker heartbeat freshness with `PC_WORKER_HEARTBEAT_MAX_AGE`; stale READY heartbeats now report `STALE` dynamically.
-- Corrected the unconfigured worker readiness regression contract in `316391aa4440d8ca2d31a0d11887bfa2482070b4`.
-- Verified the current-head CI path for TASK-027: seven completed push workflow runs are registered, with Production E2E Contract Gate `34709726285` and Production Activation Validation `34709726258` explicitly successful.
-- Synchronized `TASK_STATE.md`, `PROJECT_STATE.md`, `PHASE_STATE.md`, and `TEST_STATE.md` through TASK-027.
-- Added ADR-005 requiring engineering state synchronization after every verified task/state-changing checkpoint.
-- TASK-028: identified that unauthenticated worker `/health` exposed detailed runtime metadata.
-- TASK-028: changed public `/health` to the minimal `{"status":"READY"}` liveness contract in `c092704fc8fb924a16556ef85686021965662264`.
-- TASK-028: added focused regression coverage in `8160737a2a13ec066c3eb9e9e48f5adce662b099`.
-- TASK-028: retained detailed worker identity/readiness behind authenticated `/heartbeat` and recorded ADR-006 for the least-privilege boundary.
-- Synchronized `TASK_STATE.md`, `PROJECT_STATE.md`, `PHASE_STATE.md`, and `TEST_STATE.md` to record TASK-028 as implementation-complete with CI verification pending.
-- TASK-029: hardened authenticated worker job requests by requiring JSON content type, rejecting empty/oversized bodies, returning generic invalid-request responses for malformed input, and redacting internal exception details.
-- TASK-029: added regression coverage for non-JSON requests and internal error redaction; TASK-029 was verified by the repository's current-head checks and Issue #44 was closed as completed.
-- TASK-030: enforced fresh authenticated worker readiness at the heavy-job dispatch boundary; configured workers in `UNKNOWN`, `STALE`, or `WORKER_OFFLINE` state fail closed with controlled `WORKER_OFFLINE` results, while unconfigured workers do not enqueue jobs.
-- TASK-030: added regression coverage for readiness-gated dispatch and synchronized project/task state.
-- TASK-031: added queue aggregate metrics, dispatcher health, and service-level worker operational health while keeping payload/result/error contents out of public health exposure.
-- TASK-031: fixed queue metric test priority assumptions and service-test isolation, then hardened unconfigured dispatch to avoid queue insertion.
-- TASK-032: consolidated Telegram runtime ownership under `services/telegram/` and removed the inactive legacy `bot/`, `telegram_bot/`, and top-level `handlers/` trees after repository-wide reference inspection.
-- TASK-033: removed unused duplicate decision/risk/strategy trees and documented `analysis/decision_engine.py` and `analysis/risk_engine.py` as canonical production owners.
-- TASK-034: removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture and obsolete architecture test; aligned `analysis/__init__.py` with canonical analysis exports.
-- TASK-035: audited the `ai/` package and classified it as dormant/unwired future Phase 6 capability. No production AI caller or AI service composition was introduced.
-- TASK-036: consolidated production Telegram candle retrieval behind `services/market_data/service.py` (`MarketDataService`) while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing/fallback behavior.
-- TASK-036: migrated signal, tracker, scanner, and callback candle retrieval to the service boundary. Scanner retains explicit provider-manager selection only to preserve its provider-readiness semantics and injects it into the engine used by the service.
-- TASK-036: verified the implementation head `6174463174d8c6c4ad513896ad7ff96847e85edc` through completed CI gates and successful Railway commit status.
+- Added the durable SQLite-backed Forex worker queue, crash recovery, persistence configuration, application service composition, and heavy-Forex routing boundary without speculative callers.
+- Added authenticated PC Worker heartbeat transport, readiness states, heartbeat observability, freshness semantics, least-privilege public health, authenticated job requests, readiness-gated dispatch, and operational observability.
+- Consolidated Telegram ownership under `services/telegram/`.
+- Removed duplicate decision/risk/strategy architecture and documented canonical `analysis/decision_engine.py` and `analysis/risk_engine.py` ownership.
+- Removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture and aligned canonical analysis exports.
+- Audited the `ai/` package and classified it as dormant/unwired future Phase 6 capability. No production AI caller or AI service composition was introduced.
+- Consolidated production Telegram candle retrieval behind `services/market_data/service.py` (`MarketDataService`) while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing/fallback behavior.
+- Migrated signal, tracker, scanner, and callback candle retrieval to the service boundary. Scanner retains explicit provider-manager selection only to preserve provider-readiness semantics and injects it into the engine used by the service.
+- Verified TASK-036 implementation head `6174463174d8c6c4ad513896ad7ff96847e85edc` through completed CI gates and successful Railway commit status.
 - Added ADR-007 documenting the canonical application-facing market-data boundary.
-- Post-TASK-036 repository inspection identified the dormant `get_latest_oanda_price` surface in `data/market_data.py` with no production caller; this is the next evidence-backed audit target and has not been removed yet.
-- Synchronized engineering state documents through TASK-036 so the next conversation can resume from the correct Phase 2 checkpoint.
+- TASK-037: repository-wide inspection found the dormant `get_latest_oanda_price` surface in `data/market_data.py` with no production caller.
+- TASK-037: removed the dormant direct OANDA price surface and its now-unused dependency while preserving the canonical OANDA candle path.
+- TASK-037: implementation commit `65ea6150fa23895ad5655e59dbc9349945e67f96` passed GitHub Actions run `34719290035`; Railway commit status was successful.
+- TASK-038: started an evidence-backed audit of the lower-level `DataManager` / `ExplicitProviderManager` compatibility surface. Repository-wide searches found no production construction/caller; compatibility paths remain under review before any removal.
+- Synchronized engineering state through TASK-038 selection.
