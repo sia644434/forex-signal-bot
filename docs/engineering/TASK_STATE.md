@@ -79,7 +79,7 @@ Current guarantees: idempotent enqueue by `job_id`, priority ordering, explicit 
 Phase: Phase 2 — Core Architecture
 Title: Forex Worker Queue Crash-Recovery Contract
 Objective: Detect stale `RUNNING` heavy-Forex jobs after worker/process failure and safely return them to `PENDING` for recovery, without introducing distributed-agent or unrelated task architecture.
-Implementation Status: TESTING
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
 Relevant Files:
 - `worker/queue.py`
 - `tests/test_worker_queue.py`
@@ -87,6 +87,24 @@ Implementation:
 - `40145b95d9f4732793f1a07b688bc61e85421ca5` — added `claimed_at` tracking and stale-running recovery.
 - `4212c24263eccd2ef4610b4125e9be31153b76a1` — added regression coverage for stale recovery, active-job preservation, and invalid recovery age.
 Recovery semantics: only `RUNNING` jobs with a stale `claimed_at` are returned to `PENDING`; terminal states are untouched; recovery is explicit and age-bounded.
+Test Status: PENDING current-head GitHub Actions verification.
+
+## TASK-020
+Phase: Phase 2 — Core Architecture
+Title: Activate Forex Worker Queue Crash Recovery
+Objective: Make crash recovery operational at the Forex Worker Dispatcher boundary while preventing recovery of legitimate long-running jobs.
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Relevant Files:
+- `worker/queue.py`
+- `worker/dispatcher.py`
+- `tests/test_worker_queue.py`
+- `tests/test_pc_worker_integration.py`
+Implementation:
+- `403fa6977af5ab7b4a8577d35f2c0842d7d5592c` — added per-job-timeout-aware `recover_expired_running()` and cleaned stale-row recovery handling.
+- `832420b09b3e9b6a3bb9c7c81a7a3d4c0d65c3f4` — dispatcher now performs bounded crash recovery when initialized with a queue.
+- `32543940497e989e5da9eabb1760450a80c1dea8` — added queue recovery regression tests.
+- `01c0cc08c347bf51f9911b144973c5ec2b2171ea` — added dispatcher initialization recovery integration coverage.
+Safety rule: a job is recovered only after its own `timeout_seconds` plus the recovery grace period has elapsed, so legitimate long-running Forex jobs are not recovered merely because a global age threshold was reached.
 Test Status: PENDING current-head GitHub Actions verification.
 
 ## Active Task Selection Rule
