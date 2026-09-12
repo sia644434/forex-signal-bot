@@ -8,7 +8,7 @@ The repository is a Python Forex trading-intelligence application with a Telegra
 
 - `main.py`: async process entry point; creates the application, installs shutdown handling, starts services, waits, then stops services.
 - `app.py`: thin application factory wrapper.
-- `core/application.py`: application composition root; currently registers `TelegramService` in `ServiceManager`.
+- `core/application.py`: application composition root; registers `TelegramService` and the optional non-critical `WorkerProcessingService`.
 - `worker/main.py`: worker-side entry point for heavy Forex application workloads.
 
 ## Telegram Layer
@@ -23,6 +23,7 @@ The newer service-oriented path includes client, router, state, i18n, scanner, j
 - `core/service.py`: registration, startup/shutdown, health, and degraded-mode handling.
 - `services/base.py`: service contract.
 - `services/market_data/service.py`: market-data application service.
+- `services/worker/service.py`: optional non-critical application boundary for heavy Forex processing; builds the queue-aware `WorkerDispatcher` from central settings and returns controlled `WORKER_OFFLINE` results when PC-worker transport is not configured.
 
 ## Market Data / Providers
 
@@ -61,13 +62,19 @@ Verified application workloads include backtesting, walk-forward processing, Mon
 
 The worker boundary contains only workloads that directly support the Forex platform. Worker-specific network/auth/resource configuration remains a worker concern; genuinely global configuration such as `LOG_LEVEL` uses centralized settings.
 
-Required future verification: worker authentication, registration/heartbeat, lifecycle, idempotency, retries, timeouts, cancellation, resource limits, and restart recovery.
+The application-facing path is now:
+
+`Forex domain caller → WorkerProcessingService → WorkerDispatcher → durable queue and/or PCWorkerClient → PC Worker`
+
+`WorkerProcessingService` is optional and non-critical. When PC-worker transport is absent, submission fails in a controlled `WORKER_OFFLINE` result instead of blocking application startup.
+
+Required next verification: identify actual heavy-Forex domain call sites and confirm that backtesting, historical-data processing, simulation, batch calculations, and other expensive workloads use this boundary where required by the Master Prompt. Do not assume that exposing the service alone constitutes full workload routing.
 
 ## Processing Queue
 
-`worker/queue.py` now provides a dependency-free SQLite-backed durable job queue contract for heavy Forex jobs. It persists `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`, and `TIMEOUT` states, orders pending jobs by priority, makes enqueue idempotent by `job_id`, and preserves records across process connections when a file-backed database is configured.
+`worker/queue.py` provides a dependency-free SQLite-backed durable job queue contract for heavy Forex jobs. It persists `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`, and `TIMEOUT` states, orders pending jobs by priority, makes enqueue idempotent by `job_id`, and preserves records across process connections when a file-backed database is configured.
 
-The queue deliberately remains separate from network transport and worker execution. Dispatcher/transport integration and deployment-grade shared storage remain future verification work; the queue is not yet claimed as a production distributed broker.
+Dispatcher initialization performs timeout-aware recovery of expired running jobs using each job's own timeout plus configured grace. The queue remains separate from network transport and worker execution and is not claimed as a production distributed broker.
 
 ## Persistence / Storage
 
@@ -75,23 +82,23 @@ The queue deliberately remains separate from network transport and worker execut
 
 ## Configuration
 
-`config/` contains environment/settings/symbol configuration; `settings/` also contains AI settings. `.env.example` exists. Core application, health-server, and logger boundaries consume centralized settings. Worker-specific values such as worker host/port/token/identity/capabilities remain candidates for a worker-local configuration boundary rather than being forced into global application settings.
+`config/` contains environment/settings/symbol configuration; `settings/` also contains AI settings. `.env.example` exists. Core application, health-server, logger, queue, and worker-service boundaries consume centralized settings where appropriate. Worker-specific values such as worker host/port/token/identity/capabilities remain worker-local unless they are required by the application transport boundary; `PC_WORKER_URL`, `PC_WORKER_TOKEN`, and `PC_WORKER_TIMEOUT` are now explicitly validated application transport settings.
 
 ## External Services / Deployment
 
 - `Dockerfile`
 - `railway.toml`
-- `.github/workflows/` with testing, provider-contract, integration, production-readiness/activation, E2E, and automation runner workflows.
+- `.github/workflows/` with testing, provider-contract, integration, production-readiness/activation, E2E, security, and automation runner workflows.
 
 Railway is an infrastructure target, not a core application architecture dependency.
 
 ## Testing
 
-`tests/` includes unit/contract/integration-style coverage for providers, freshness, market data, analysis, decision logic, worker, Telegram, lifecycle, and production readiness. Worker workload tests enforce that only supported Forex application workloads are registered. `tests/test_worker_queue.py` covers queue idempotency, priority ordering, lifecycle transitions, terminal-state idempotency, cancellation/timeout, and persistence across connections.
+`tests/` includes unit/contract/integration-style coverage for providers, freshness, market data, analysis, decision logic, worker, Telegram, lifecycle, and production readiness. Worker workload tests enforce that only supported Forex application workloads are registered. `tests/test_worker_queue.py` covers queue idempotency, priority ordering, lifecycle transitions, terminal-state idempotency, cancellation/timeout, crash recovery, and persistence across connections. `tests/test_worker_service.py` covers the application-facing worker boundary and controlled offline behavior.
 
 ## CI/CD
 
-CI status must always be verified against the relevant commit rather than inferred from documentation. Existing workflows cover testing, provider contracts, integration/production gates, E2E, security audit, and automation runner behavior.
+CI status must always be verified against the relevant commit rather than inferred from documentation. The TASK-022 verification head `7a96afddaa46aefe9bb5aa990f40522905754572` passed Test, Final Integration Gate, Production Readiness, Production Activation Gate, Production Activation Validation, Production E2E Contract Gate, and Security Audit.
 
 ## Security Boundaries
 
@@ -101,7 +108,11 @@ Primary boundaries are Telegram input, external market-data providers, AI provid
 
 Telegram request → Telegram handlers/router → application/service layer → market data → analysis/orchestration → decision/risk → safe result/NO TRADE → Telegram response.
 
-Heavy Forex application workloads may be enqueued through the worker processing queue and dispatched separately through the PC Worker contracts/runtime.
+Heavy Forex application workloads should use:
+
+Forex heavy operation → `WorkerProcessingService` → `WorkerDispatcher` → queue/PC Worker → result → calling Forex service.
+
+The concrete domain call sites for this second flow are the next Phase 2 verification target.
 
 ## Failure Flow — Target
 
@@ -110,8 +121,9 @@ Provider failure → centralized fallback/failover → quality/freshness validat
 Optional analysis failure → isolate failure and preserve valid analyses where safe.
 Risk failure → fail closed.
 Queue/worker timeout/failure → explicit lifecycle state + bounded recovery behavior where required.
+Missing worker transport → controlled `WORKER_OFFLINE` result for optional heavy processing.
 External/AI failure → bounded degradation without unsafe decisions.
 
 ## Status
 
-The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions were removed and TASK-017 CI is green. A durable queue contract is now present, but distributed transport integration, worker authentication/heartbeat, and deployment-grade recovery remain unverified.
+The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions were removed. The durable queue, timeout-aware crash recovery, central queue configuration, and application composition boundary are verified. The next architectural task is to audit real heavy-Forex domain call sites and harden any missing routing through the worker boundary; no speculative architecture should be added.
