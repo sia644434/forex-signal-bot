@@ -1,5 +1,7 @@
-from telegram_bot.bot import get_bot_token
+from services.telegram.config import TelegramConfig
 
 
-def test_telegram_token_function_exists():
-    assert callable(get_bot_token)
+def test_telegram_configuration_contract_exists():
+    config = TelegramConfig()
+    assert config.token is None or isinstance(config.token, str)
+    assert isinstance(config.enabled, bool)

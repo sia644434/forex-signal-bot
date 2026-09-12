@@ -36,9 +36,9 @@ jobs:
       - name: Application health test
         run: |
           python -c "from app import create_app; app = create_app(); print(app.health())"
-      - name: Telegram bot import test
+      - name: Telegram service import test
         run: |
-          python -c "from telegram_bot.bot import get_bot_token; print('Telegram module OK')"
+          python -c "from services.telegram.service import TelegramService; from services.telegram.router import register_routes; print('Telegram service modules OK')"
       - name: Signal lifecycle import test
         run: |
           python -c "from services.telegram.tracker import track_report, refresh_tracking; from services.telegram.journal_store import JournalStore; print('Lifecycle modules OK')"
