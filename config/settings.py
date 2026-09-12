@@ -148,6 +148,8 @@ class Settings:
         telegram_token = _get_env("TELEGRAM_BOT_TOKEN")
         ai_api_key = _get_env("AI_API_KEY")
         ai_enabled = _get_bool("AI_ENABLED", bool(ai_api_key))
+        queue_path_raw = os.getenv("WORKER_QUEUE_DATABASE_PATH")
+        queue_path = "worker_queue.sqlite3" if queue_path_raw is None else queue_path_raw.strip()
         return cls(
             app_name=_get_env("APP_NAME", "Professional Trading Bot"),
             environment=_get_env("ENVIRONMENT", "development"),
@@ -171,7 +173,7 @@ class Settings:
             ai_temperature=_get_float("AI_TEMPERATURE", 0.2),
             request_timeout=_get_int("REQUEST_TIMEOUT", 30),
             max_retries=_get_int("MAX_RETRIES", 3),
-            worker_queue_database_path=_get_env("WORKER_QUEUE_DATABASE_PATH", "worker_queue.sqlite3"),
+            worker_queue_database_path=queue_path,
             worker_queue_recovery_grace_seconds=_get_int("WORKER_QUEUE_RECOVERY_GRACE_SECONDS", 30),
         )
 
