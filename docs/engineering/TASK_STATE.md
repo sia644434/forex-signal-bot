@@ -60,12 +60,8 @@ Test Status: PASS via GitHub Actions.
 Implementation:
 - Initial test commit `79b14578f69254c4748c58e2a9ce4672bf850aeb` — `test: add application lifecycle contracts`.
 - Fix commit `926fc1a63307107fcfd2b4bd2b487c696838d18d` — `test: isolate application lifecycle fixtures`.
-- The fix removed real socket binding from lifecycle tests and mocked `HealthServer` for the composition-root test.
 Verification:
-- Test workflow `34698909805` / job `103567089476`: success.
-- Lifecycle/persistence tests: success.
-- Full test suite: **366 passed**.
-- Application health, Telegram import, lifecycle import, and syntax checks: success.
+- Test workflow `34698909805` / job `103567089476`: success, 366 tests passed.
 - Production Activation Gate `34698909862` / job `103567089666`: success.
 - Production Readiness `34698909828` / job `103567089616`: success.
 - Dependency Audit `34698909815` / job `103567089540`: success.
@@ -92,16 +88,36 @@ Checkpoint: TASK-006 verified and closed 2026-09-12.
 Phase: Phase 2 — Core Architecture
 Title: Application Startup Rollback Contract Hardening
 Objective: Ensure that if the health server fails after service startup, already-started services are rolled back so the application does not remain partially started.
-Implementation Status: IN_PROGRESS
-Test Status: PENDING CI VERIFICATION
+Implementation Status: COMPLETE
+Test Status: PASS via GitHub Actions.
 Implementation:
 - Commit `33ae66e70402d140c7ebe4437951fab2db4a98d1` — `fix: rollback services when health server startup fails`.
 - Commit `1028a219875220d71b012c8a500c9647953f5a59` — `test: cover application startup rollback`.
 - Added focused regression coverage for health-server startup failure and service rollback ordering.
-Current verification:
-- GitHub Actions verification is pending for TASK-007.
+Verification:
+- Final-gate `34699115514` / job `103567612470`: success, including compile, final runtime safety tests, full test suite, and production Docker build.
+- Test `34699115551` / job `103567612517`: success, including lifecycle/persistence tests, full suite, application health, imports, and syntax checks.
+- Readiness `34699115528` / job `103567612438`: success.
+- Activation-validation `34699115556` / job `103567612531`: success.
+- Dependency-audit `34699115544` / job `103567612573`: success.
 - No local execution claimed.
-Next exact action: verify TASK-007 CI, inspect failures if any, then checkpoint TASK-007 if all required gates are green.
+Checkpoint: TASK-007 verified and closed 2026-09-12.
+
+## TASK-008
+Phase: Phase 2 — Core Architecture
+Title: Application Shutdown Cleanup Guarantee
+Objective: Ensure service cleanup still runs when health-server shutdown fails, preventing partially stopped applications and preserving cleanup guarantees.
+Implementation Status: IN_PROGRESS
+Test Status: PENDING CI VERIFICATION
+Implementation:
+- Commit `08716e48bb2e3ffcd38e59f027ea3c61ad507615` — `fix: guarantee service cleanup during application shutdown`.
+- Commit `7aafd9f08e1a2423befa9d23d89d429b9b059888` — `test: cover application shutdown cleanup guarantee`.
+- `Application.stop()` now guarantees `services.stop_all()` through `finally` if `HealthServer.stop()` raises.
+- Added focused regression coverage for cleanup ordering and exception propagation.
+Current verification:
+- GitHub Actions verification is pending for TASK-008.
+- No local execution claimed.
+Next exact action: verify TASK-008 CI, inspect failures if any, then checkpoint TASK-008 if all required gates are green.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
