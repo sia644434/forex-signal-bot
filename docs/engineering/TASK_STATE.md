@@ -4,22 +4,18 @@
 Phase: Phase 2 — Core Architecture
 Title: Phase 2 scope that existed before TASK-004
 Implementation Status: AUDITED / NO SEPARATE HISTORICAL TASK CONTRACT RECOVERED
-Evidence: The repository history shows TASK-004 as the first explicitly recorded Phase 2 implementation task after TASK-003. No independent pre-TASK-004 task specification was recoverable from the persistent engineering state. The current architecture audit therefore treats the Master Prompt's explicit core-architecture requirements as the governing scope rather than inventing historical work.
-Concrete gaps identified by the audit are tracked as normal evidence-backed Phase 2 tasks.
+Evidence: TASK-004 is the first explicitly recorded Phase 2 implementation task after TASK-003. No independent pre-TASK-004 task specification was recoverable from persistent engineering state. The current architecture audit therefore treats the Master Prompt's explicit core-architecture requirements as the governing scope rather than inventing historical work.
 
 ## TASK-001
 Phase: Phase 1 — Repository Audit
-Title: Establish persistent engineering memory and baseline architecture map
 Implementation Status: COMPLETE
 
 ## TASK-002
 Phase: Phase 1 — Baseline Stabilization
-Title: Restore failing data-quality and scanner contracts
 Implementation Status: COMPLETE
 
 ## TASK-003
 Phase: Phase 1 — Production Verification / Reliability Hardening
-Title: Establish deployment and runtime verification evidence
 Implementation Status: COMPLETE
 Test Status: PASS — live health and restart/recovery evidence verified.
 
@@ -115,48 +111,40 @@ Implementation Status: VERIFIED
 Phase: Phase 2 — Core Architecture / Reliability Hardening
 Title: PC Worker Readiness Enforcement at Job-Dispatch Boundary
 Implementation Status: VERIFIED
-Evidence:
-- `1e488f097902f62c947bc04dc82368d1d2331ffa` blocks configured worker dispatch unless cached authenticated heartbeat readiness is `READY`.
-- `2a665fdfb05a4805a1063cc8ed76faf89693aa89` adds regression coverage for blocked non-ready states and successful fresh READY dispatch.
-- Current-head Final Integration Gate `34715036954`, job `103610652082`: completed / success; compile, runtime safety, full test suite, and production Docker build all succeeded.
-Checkpoint: Verified 2026-09-12.
 
 ## TASK-031
 Phase: Phase 2 — Core Architecture / Observability
 Title: Worker Observability and Operational Contract Audit
 Implementation Status: VERIFIED
-Evidence:
-- Queue aggregate metrics were added for pending/running/completed/failed/cancelled/timeout/total states without exposing payload/result/error contents.
-- Dispatcher and application worker service health now expose actionable internal queue metrics while public `/health` remains minimal.
-- Test isolation and queue-priority assumptions were corrected during verification.
-- Final current-head checks for commit `255ddb1cd45d111dc1b35eef8203db51c4209c9` included successful readiness, production-e2e-contract, test, activation-gate, and final-gate checks; the implementation was then followed by the verified TASK-032 and TASK-033 heads.
-Checkpoint: Verified 2026-09-12.
 
 ## TASK-032
 Phase: Phase 2 — Core Architecture
 Title: Telegram Architecture Ownership Audit / Consolidation
 Implementation Status: VERIFIED
-Evidence:
-- Production composition was verified through `TelegramService` → `TelegramClient` → `services.telegram.router` → `services.telegram.handlers`.
-- Unused legacy Telegram trees were removed after repository-wide reference audit.
-- Canonical Telegram ownership is now under `services/telegram/`.
-- Final Gate `34714087357`, job `103607956046`: completed / success; compile, runtime safety tests, full suite, and production Docker build passed.
-Checkpoint: Verified 2026-09-12.
+Evidence: Canonical Telegram ownership is under `services/telegram/`; inactive legacy Telegram trees were removed after repository-wide reference audit. Final Gate `34714087357`, job `103607956046`: success.
 
 ## TASK-033
 Phase: Phase 2 — Core Architecture
 Title: Decision/Risk/Strategy Architecture Ownership Audit
 Implementation Status: VERIFIED
+Evidence: Canonical ownership is `analysis/decision_engine.py` for decision logic and `analysis/risk_engine.py` for risk logic. Unused overlapping `analysis/risk_manager.py`, `risk/manager.py`, `signal_engine/`, and `strategy/` trees were removed after repository-wide reference/call-site inspection. Final Integration Gate `34715036954`, job `103610652082`: success.
+
+## TASK-034
+Phase: Phase 2 — Core Architecture
+Title: Analysis Architecture Ownership Audit
+Implementation Status: VERIFIED
 Evidence:
-- Repository-wide ownership audit identified `analysis/decision_engine.py` as the canonical decision implementation and `analysis/risk_engine.py` as the canonical risk implementation used by the analysis path.
-- Legacy/overlapping unused modules `analysis/risk_manager.py`, `risk/manager.py`, `signal_engine/`, and `strategy/` were removed only after reference/call-site inspection showed no production-active callers.
-- `ARCHITECTURE_MAP.md` was updated to record the canonical ownership and remove obsolete parallel ownership.
-- Commit `a9dbd5a4822580a6a2795531a8a74b332355279d` has successful Railway status and Final Integration Gate `34715036954`, job `103610652082`: completed / success; compile, runtime safety tests, full suite, and production Docker build passed.
+- Repository-wide reference inspection identified an unused alternate analysis architecture consisting of `analysis/adapters.py`, `analysis/contracts.py`, `analysis/registry.py`, `analysis/orchestrator.py`, and `tests/test_analysis_architecture.py`.
+- `analysis/full_engine.py` is the canonical production analysis composition; the alternate adapter/registry/orchestrator path had no production-active callers.
+- `analysis/contracts.py` also duplicated analysis-context ownership already represented by `models/market.py`.
+- The obsolete modules and architecture test were removed, and `analysis/__init__.py` was aligned with the canonical analysis exports.
+- Current head `6f4d49c6c0e82a9441b41af679c4709ae88c5c71` has seven completed push workflow runs; the visible Test run `34715545781` and Production E2E Contract Gate `34715545700` are successful, and the commit has successful Railway status.
 Checkpoint: Verified 2026-09-12.
 
 ## Deferred Roadmap Issues
-- #45 — PC Worker readiness enforcement at job-dispatch boundary (source roadmap item; implemented as TASK-030).
-- #46 — Worker observability and operational contract audit (implemented as TASK-031).
+- #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
+- #45 — PC Worker readiness enforcement at job-dispatch boundary — implemented as TASK-030.
+- #46 — Worker observability and operational contract audit — implemented as TASK-031.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
