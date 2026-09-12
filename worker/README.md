@@ -14,7 +14,7 @@ The PC Worker is the optional heavy-computation tier for `forex-signal-bot`.
 - Medium time-series models
 - Ensemble models
 - Model evaluation and comparison
-- Limited deep learning, small transformers, LSTM/GRU, medium training, and multi-agent analysis
+- Limited deep learning, small transformers, LSTM/GRU, and medium training
 
 ## Architecture rule
 
