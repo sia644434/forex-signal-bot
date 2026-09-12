@@ -2,22 +2,31 @@
 
 ## Baseline
 - Test inventory: VERIFIED from repository tree.
-- Latest Verified Commit: `066c50311d5de48cbfeea95e9998c6d3a99c46ee`
+- Latest Verified Commit: `8bf2a77840b72add70b98cbf1a3b2187f85763f2`
 - Result: PASS in GitHub Actions
 - Local Execution: NOT_AVAILABLE through the GitHub Connector; no local execution claimed.
 - Coverage: Not measured in this session.
 
-## Latest CI Evidence
-- Test workflow run `34689532333` (`Test`, run #632): `completed / success`.
-- Test job `103542241504`: all listed steps completed successfully, including `Run full test suite`, `Application health test`, Telegram import, signal lifecycle import, and syntax check.
-- Final Integration Gate run `34689532294` (`Final Integration Gate`, run #124): `completed / success`.
-- Final gate job: compile, final runtime safety tests, and full test suite all completed successfully.
+## CI and Production Evidence
+- Final Integration Gate run `34690616947`: `completed / success`.
+- Security Audit run `34690739394`: `completed / success`.
+- Production Activation Gate run `34697570250`: `completed / success`.
+- Production Live Smoke run `34697840749`, job `103564290648`: `completed / success`.
+- Restart/recovery was performed manually in Railway after the successful live smoke.
+- Post-restart Production Live Smoke run `34698134769`, job `103565063400`: `completed / success`.
 
-## Contract Fixes Verified
-The previously observed baseline failures were addressed across data quality and Telegram scanner/localization behavior. The latest CI run provides execution evidence that the resulting commit passes the repository's configured test pipeline.
+## Live Contract Evidence
+The deployed service returned a healthy readiness contract both before and after restart:
+- `application.status = ok`
+- `services.telegram.status = ok`
+- `services.telegram.critical = true`
 
-## Remaining Verification Gap
-Production/live deployment health is still not established. CI success is not evidence of live Railway availability, external provider connectivity, restart recovery, or production configuration correctness.
+The post-restart verification job checked out deployed commit `8bf2a77840b72add70b98cbf1a3b2187f85763f2` and completed all verification steps successfully.
+
+## Verification Status
+The previous gap between CI and live production evidence is closed for the Railway-connected fork `sia644434/forex-signal-bot`, which is intentionally synchronized from source `siasoltoon/forex-signal-bot`.
+
+Production readiness is therefore verified for the observed deployment path. Future production changes must repeat the live smoke and recovery checks when the change can affect runtime health, deployment, or critical services.
 
 ## Next Verification
-Inspect deployment/runtime workflows and configuration, identify the smallest concrete production-verification gap, then add or repair automated gates where evidence shows they are missing. Do not mark production PASS without actual runtime/deployment evidence.
+Begin the final production audit and inspect concrete security, observability, dependency, and recovery gaps. Do not replace live evidence with CI-only claims.
