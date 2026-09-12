@@ -113,6 +113,26 @@ class WorkerQueue:
             "SELECT job_id FROM worker_jobs WHERE status = 'RUNNING' AND claimed_at IS NOT NULL AND claimed_at <= ?",
             (cutoff,),
         ).fetchall()
+        return self._recover_running_rows(rows)
+
+    def recover_expired_running(self, grace_seconds: int = 30) -> list[QueueRecord]:
+        """Recover jobs whose own execution timeout has elapsed after a crash."""
+        if grace_seconds < 0:
+            raise ValueError("Recovery grace must not be negative")
+        now = time.time()
+        rows = self._connection.execute(
+            """
+            SELECT job_id
+            FROM worker_jobs
+            WHERE status = 'RUNNING'
+              AND claimed_at IS NOT NULL
+              AND claimed_at + timeout_seconds + ? <= ?
+            """,
+            (grace_seconds, now),
+        ).fetchall()
+        return self._recover_running_rows(rows)
+
+    def _recover_running_rows(self, rows: list[sqlite3.Row]) -> list[QueueRecord]:
         if not rows:
             return []
         self._connection.executemany(
@@ -120,7 +140,12 @@ class WorkerQueue:
             [("Recovered stale running job", row["job_id"]) for row in rows],
         )
         self._connection.commit()
-        return [self.get(row["job_id"]) for row in rows if self.get(row["job_id"]) is not None]
+        records: list[QueueRecord] = []
+        for row in rows:
+            record = self.get(row["job_id"])
+            if record is not None:
+                records.append(record)
+        return records
 
     def finish(self, job_id: str, *, result: dict[str, Any] | None = None) -> QueueRecord:
         return self._transition(job_id, "COMPLETED", result=result, error=None)
