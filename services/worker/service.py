@@ -130,6 +130,7 @@ class WorkerProcessingService(BaseService):
             "critical": self.critical,
             "configured": self.configured,
             "readiness": readiness,
+            "dispatcher": self.dispatcher.health(),
         }
         if self._last_heartbeat is not None:
             for key in ("worker_id", "timestamp"):
