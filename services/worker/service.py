@@ -76,13 +76,19 @@ class WorkerProcessingService(BaseService):
         readiness = "UNCONFIGURED" if not self.configured else "UNKNOWN"
         if self._last_heartbeat is not None:
             readiness = str(self._last_heartbeat.get("status", "UNKNOWN"))
-        return {
+
+        health: dict[str, Any] = {
             "service": self.name,
             "status": "ok",
             "critical": self.critical,
             "configured": self.configured,
             "readiness": readiness,
         }
+        if self._last_heartbeat is not None:
+            for key in ("worker_id", "timestamp"):
+                if key in self._last_heartbeat:
+                    health[key] = self._last_heartbeat[key]
+        return health
 
 
 __all__ = ["WorkerProcessingService"]
