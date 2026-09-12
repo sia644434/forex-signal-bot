@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from typing import Any
 
 from .contracts import JobRequest
@@ -77,7 +76,10 @@ class WorkerQueue:
             ),
         )
         self._connection.commit()
-        return self.get(request.job_id)  # type: ignore[return-value]
+        record = self.get(request.job_id)
+        if record is None:
+            raise RuntimeError(f"Queue record was not created: {request.job_id}")
+        return record
 
     def claim_next(self) -> QueueRecord | None:
         row = self._connection.execute(
@@ -146,7 +148,10 @@ class WorkerQueue:
             if record is None:
                 raise KeyError(job_id)
             return record
-        return self.get(job_id)  # type: ignore[return-value]
+        record = self.get(job_id)
+        if record is None:
+            raise RuntimeError(f"Queue record disappeared: {job_id}")
+        return record
 
 
 __all__ = ["QUEUE_STATES", "QueueRecord", "WorkerQueue"]
