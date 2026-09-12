@@ -175,17 +175,28 @@ Checkpoint: Verified 2026-09-12.
 ## TASK-029
 Phase: Phase 2 — Core Architecture / Security Hardening
 Title: PC Worker Authenticated Job Request Boundary Hardening
-Implementation Status: IMPLEMENTED — CI VERIFICATION PENDING
+Implementation Status: VERIFIED
 Objective: Harden the authenticated `/jobs` boundary without changing the worker's Forex workload contract or queue semantics.
 Evidence:
-- `74be505158d2a6fff6af793457d629882c8e7687` requires JSON content type, rejects empty request bodies, and replaces internal exception details with stable generic error contracts.
+- `74be505158d2a6fff6af793457d629882c8e7687` requires JSON content type, rejects empty request bodies, caps payloads at 5 MB, and replaces internal exception details with stable generic error contracts.
 - `ab168b9fee18e94ce7a76134d6b557c04acfad17` adds regression coverage for non-JSON requests and internal error redaction while retaining the minimal public health contract.
+- Current-head `5828f4dd703d5a646640ebad749293daed0d833d` has exactly seven completed check runs, all successful: activation-gate `103600747800`, activation-validation `103600747407`, dependency-audit `103600747198`, production-e2e-contract `103600747088`, readiness `103600747023`, test `103600747017`, and final-gate `103600746929`.
+- Issue #44 is closed as completed.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-030
+Phase: Phase 2 — Core Architecture / Reliability Hardening
+Title: PC Worker Readiness Enforcement at Job-Dispatch Boundary
+Implementation Status: IMPLEMENTED — CI VERIFICATION PENDING
+Objective: Prevent heavy Forex jobs from reaching the PC Worker when the application-side authenticated heartbeat state is `UNKNOWN`, `STALE`, or `WORKER_OFFLINE`.
+Evidence:
+- `1e488f097902f62c947bc04dc82368d1d2331ffa` blocks configured worker dispatch unless cached authenticated heartbeat readiness is `READY`; unconfigured transport keeps the existing controlled `WORKER_OFFLINE` behavior.
+- `2a665fdfb05a4805a1063cc8ed76faf89693aa89` adds regression coverage for UNKNOWN, STALE, and WORKER_OFFLINE dispatch blocking and preserves successful dispatch after a fresh READY heartbeat.
 Verification: Awaiting current-head GitHub Actions.
 Checkpoint: Implemented 2026-09-12.
 
 ## Deferred Roadmap Issues
-- #44 — PC Worker request hardening and endpoint contract audit (source task for TASK-029; close after verification).
-- #45 — PC Worker readiness enforcement at job-dispatch boundary.
+- #45 — PC Worker readiness enforcement at job-dispatch boundary (source roadmap item; implemented here as TASK-030).
 - #46 — Worker observability and operational contract audit.
 
 ## Active Task Selection Rule
