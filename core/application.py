@@ -78,8 +78,10 @@ class Application:
         Stop application.
         """
 
-        self.health_server.stop()
-        await self.services.stop_all()
+        try:
+            self.health_server.stop()
+        finally:
+            await self.services.stop_all()
 
         logger.info(
             f"{self.name} stopped successfully."
