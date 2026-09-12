@@ -10,7 +10,7 @@ HEAVY_JOB_TYPES = {
     "ml_training", "xgboost_training", "lightgbm_training", "random_forest_training",
     "timeseries_training", "ensemble_training", "candle_batch_analysis", "dataset_build",
     "model_evaluation", "deep_learning_training", "transformer_training", "lstm_training",
-    "gru_training", "medium_model_training", "multi_agent_analysis", "coding_agent",
+    "gru_training", "medium_model_training", "multi_agent_analysis",
 }
 
 
@@ -22,7 +22,7 @@ class WorkerCapabilities:
     supported_jobs: frozenset[str] = frozenset(HEAVY_JOB_TYPES)
     limited_jobs: frozenset[str] = frozenset({
         "deep_learning_training", "transformer_training", "lstm_training", "gru_training",
-        "medium_model_training", "multi_agent_analysis", "coding_agent",
+        "medium_model_training", "multi_agent_analysis",
     })
 
 
