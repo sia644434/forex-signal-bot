@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime as dt
-import hashlib
 import hmac
 import json
 import os
@@ -41,7 +40,10 @@ class WorkerHTTPServer:
             def do_GET(self) -> None:  # noqa: N802
                 if self.path != "/health":
                     self._json(404, {"error": "not_found"}); return
-                self._json(200, runtime_ref.health())
+                # Keep the unauthenticated liveness endpoint deliberately minimal.
+                # Detailed worker identity/capability/job information remains behind
+                # the authenticated heartbeat/job boundary.
+                self._json(200, {"status": "READY"})
 
             def do_POST(self) -> None:  # noqa: N802
                 if self.path not in {"/jobs", "/heartbeat"}:
