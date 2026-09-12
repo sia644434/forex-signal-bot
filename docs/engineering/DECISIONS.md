@@ -59,3 +59,11 @@ Chosen Solution: Use `services/market_data/service.py` (`MarketDataService`) as 
 Reason: Consolidates application ownership without bypassing safety-critical market-data validation or provider failover behavior.
 Consequences: Application callers should not directly retrieve candles from `MarketDataEngine`. Scanner may retain explicit `ProviderManager` selection only when necessary for provider-readiness semantics, injecting it into the engine used by the service.
 Affected Components: `services/market_data/service.py`, `services/telegram/handlers/signal.py`, `services/telegram/tracker.py`, `services/telegram/scanner.py`, `services/telegram/handlers/callbacks.py`, market-data architecture documentation.
+
+## ADR-008 — Application-scoped market-data service lifetime
+Date: 2026-09-13
+Problem: `MarketDataService()` created a new `MarketDataEngine` and `ProviderManager` for each Telegram signal, coach, and tracking refresh call. `ProviderManager` intentionally owns provider instance caching and failure cooldown state, so per-call construction discarded those reliability controls between requests.
+Chosen Solution: Create one `MarketDataService` when the Telegram application is composed and store it in `Application.bot_data`. Handlers and tracking jobs retrieve that application-scoped instance. Keep scanner-specific `ProviderManager` construction scan-scoped because scanner readiness explicitly selects currently configured providers.
+Reason: Preserves provider instance reuse and cooldown state across independent application requests while keeping lifecycle ownership explicit at the Telegram composition root and avoiding a process-global singleton.
+Consequences: Telegram handlers must obtain market data through the configured application-scoped service. Code paths that intentionally require custom provider selection may continue to construct an explicit `ProviderManager` and inject it into a dedicated `MarketDataService`.
+Affected Components: `services/market_data/service.py`, `services/telegram/client.py`, `services/telegram/handlers/signal.py`, `services/telegram/handlers/callbacks.py`, `services/telegram/tracker.py`, `services/telegram/tracker_job.py`, `tests/test_market_data_service.py`.
