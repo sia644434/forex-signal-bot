@@ -75,6 +75,8 @@ def test_settings_loads_environment_values(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setenv("AI_TEMPERATURE", "0.7")
     monkeypatch.setenv("REQUEST_TIMEOUT", "15")
     monkeypatch.setenv("MAX_RETRIES", "4")
+    monkeypatch.setenv("HEALTH_HOST", "127.0.0.1")
+    monkeypatch.setenv("PORT", "9090")
 
     settings = Settings.load()
 
@@ -89,6 +91,8 @@ def test_settings_loads_environment_values(monkeypatch: pytest.MonkeyPatch) -> N
     assert settings.ai_temperature == 0.7
     assert settings.request_timeout == 15
     assert settings.max_retries == 4
+    assert settings.health_host == "127.0.0.1"
+    assert settings.health_port == 9090
 
 
 def test_settings_validation_rejects_invalid_runtime_configuration() -> None:
@@ -99,6 +103,9 @@ def test_settings_validation_rejects_invalid_runtime_configuration() -> None:
         {"max_open_positions": 0},
         {"timezone": "   "},
         {"log_level": "TRACE"},
+        {"health_host": "   "},
+        {"health_port": -1},
+        {"health_port": 65536},
         {"ai_temperature": 2.1},
         {"request_timeout": 0},
         {"max_retries": -1},
