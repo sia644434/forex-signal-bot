@@ -29,9 +29,9 @@ class ScanResult:
     trade_grade: str
     trend: str
     risk_reward: float | None
-    market_status: str = "UNKNOWN"
-    last_candle_time: str | None = None
     error: str | None = None
+    market_status: str = "OPEN"
+    last_candle_time: str | None = None
 
 
 @dataclass(frozen=True)
@@ -73,7 +73,8 @@ async def scan_market(symbols=DEFAULT_SCAN_SYMBOLS, timeframe=DEFAULT_TIMEFRAME,
             if status.status != "OPEN":
                 return ScanResult(
                     symbol, "NO_TRADE", 0.0, 0.0, None, "UNKNOWN", "unknown", None,
-                    status.status, getattr(status, "last_candle_time", None)
+                    market_status=status.status,
+                    last_candle_time=getattr(status, "last_candle_time", None),
                 )
 
             report = await asyncio.to_thread(analyzer.analyze, candles)
@@ -86,10 +87,10 @@ async def scan_market(symbols=DEFAULT_SCAN_SYMBOLS, timeframe=DEFAULT_TIMEFRAME,
                 report.trade_grade,
                 report.trend,
                 report.risk_reward,
-                status.status,
-                getattr(status, "last_candle_time", None),
+                market_status=status.status,
+                last_candle_time=getattr(status, "last_candle_time", None),
             )
-        except Exception as exc:
+        except Exception:
             logger.exception("Market scan failed for %s/%s", symbol, timeframe)
             # Keep internal exception types out of the user-facing result.
             return ScanResult(symbol, "NO_TRADE", 0.0, 0.0, None, "UNKNOWN", "unknown", None, error="scan_failed")
