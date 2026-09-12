@@ -164,15 +164,29 @@ Checkpoint: Verified 2026-09-12.
 ## TASK-028
 Phase: Phase 2 — Core Architecture / Security Hardening
 Title: Minimize Unauthenticated PC Worker Health Information Exposure
-Implementation Status: IMPLEMENTED — CI VERIFICATION PENDING
+Implementation Status: VERIFIED
 Objective: Keep the unauthenticated worker liveness endpoint useful for health checks without exposing worker identity, platform, Python version, capabilities, registered jobs, active jobs, or other runtime metadata.
 Evidence:
-- Prior `/health` returned the full `WorkerRuntime.health()` payload without authentication.
 - `c092704fc8fb924a16556ef85686021965662264` changed unauthenticated `/health` to the minimal `{"status":"READY"}` contract.
 - `8160737a2a13ec066c3eb9e9e48f5adce662b099` added regression coverage locking the minimal public contract.
-- Authenticated `/heartbeat` remains the detailed identity/readiness transport.
-Verification: Awaiting current-head GitHub Actions after the implementation commits.
+- Final current-head Actions on `29ba88238a71cbde1a9592177a89f8b36da00936`: Security Audit `34710857365`, Production E2E Contract Gate `34710857388`, Final Integration Gate `34710857352`, and Production Activation Gate `34710857390` succeeded.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-029
+Phase: Phase 2 — Core Architecture / Security Hardening
+Title: PC Worker Authenticated Job Request Boundary Hardening
+Implementation Status: IMPLEMENTED — CI VERIFICATION PENDING
+Objective: Harden the authenticated `/jobs` boundary without changing the worker's Forex workload contract or queue semantics.
+Evidence:
+- `74be505158d2a6fff6af793457d629882c8e7687` requires JSON content type, rejects empty request bodies, and replaces internal exception details with stable generic error contracts.
+- `ab168b9fee18e94ce7a76134d6b557c04acfad17` adds regression coverage for non-JSON requests and internal error redaction while retaining the minimal public health contract.
+Verification: Awaiting current-head GitHub Actions.
 Checkpoint: Implemented 2026-09-12.
+
+## Deferred Roadmap Issues
+- #44 — PC Worker request hardening and endpoint contract audit (source task for TASK-029; close after verification).
+- #45 — PC Worker readiness enforcement at job-dispatch boundary.
+- #46 — Worker observability and operational contract audit.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
