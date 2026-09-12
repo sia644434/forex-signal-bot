@@ -10,114 +10,89 @@ Checkpoint: Intentionally not marked complete. Revisit and verify this skipped s
 Phase: Phase 1 — Repository Audit
 Title: Establish persistent engineering memory and baseline architecture map
 Implementation Status: COMPLETE
-Checkpoint: Completed 2026-09-12.
 
 ## TASK-002
 Phase: Phase 1 — Baseline Stabilization
 Title: Restore failing data-quality and scanner contracts
 Implementation Status: COMPLETE
-Test Status: PASS via GitHub Actions on `066c503`.
-Checkpoint: Verified 2026-09-12.
 
 ## TASK-003
 Phase: Phase 1 — Production Verification / Reliability Hardening
 Title: Establish deployment and runtime verification evidence
 Implementation Status: COMPLETE
 Test Status: PASS — live health and restart/recovery evidence verified.
-Evidence:
-- Production Live Smoke `34697840749` / job `103564290648`: success.
-- Post-restart Production Live Smoke `34698134769` / job `103565063400`: success.
-- Live health was healthy before and after controlled Railway restart/redeploy.
-Checkpoint: Production verification completed 2026-09-12.
 
 ## TASK-004
 Phase: Phase 2 — Core Architecture
 Title: Service Lifecycle Contract Hardening
-Objective: Establish explicit contract coverage for service registration, startup, rollback, non-critical degradation, shutdown, and health isolation.
 Implementation Status: COMPLETE
 Test Status: PASS via GitHub Actions.
-Scope:
-- `core/service.py`
-- `services/base.py`
-- `tests/test_service_manager_contract.py`
-Implementation:
-- Commit `2e38e857dbed219c41c8b4339434bb61a372f040` — `test: add service manager lifecycle contracts`
-- Six focused contract tests added.
-Verification:
-- Test workflow `34698627396` / job `103566339790`: success.
-- Lifecycle/persistence tests: success.
-- Full test suite: success.
-- Application health, Telegram import, lifecycle import, and syntax checks: success.
-- No local execution claimed.
-Checkpoint: TASK-004 verified and closed 2026-09-12.
 
 ## TASK-005
 Phase: Phase 2 — Core Architecture
 Title: Application Lifecycle Contract Hardening
-Objective: Establish explicit contract coverage for application startup/shutdown ordering, health-server lifecycle, health aggregation, and composition-root registration.
 Implementation Status: COMPLETE
 Test Status: PASS via GitHub Actions.
-Implementation:
-- Initial test commit `79b14578f69254c4748c58e2a9ce4672bf850aeb` — `test: add application lifecycle contracts`.
-- Fix commit `926fc1a63307107fcfd2b4bd2b487c696838d18d` — `test: isolate application lifecycle fixtures`.
-Verification:
-- Test workflow `34698909805` / job `103567089476`: success, 366 tests passed.
-- Production Activation Gate `34698909862` / job `103567089666`: success.
-- Production Readiness `34698909828` / job `103567089616`: success.
-- Dependency Audit `34698909815` / job `103567089540`: success.
-- Final Gate `34698909812` / job `103567089502`: success, including production Docker build.
-- No local execution claimed.
-Checkpoint: TASK-005 verified and closed 2026-09-12.
 
 ## TASK-006
 Phase: Phase 2 — Core Architecture
 Title: Shutdown Lifecycle Contract Hardening
-Objective: Establish explicit contract coverage for SIGINT/SIGTERM registration, shutdown triggering, wait/unblock behavior, and idempotent shutdown signaling.
 Implementation Status: COMPLETE
 Test Status: PASS via GitHub Actions.
-Implementation:
-- Commit `2db7c75fcfc94cf1b44de76c6a279c1c45bc1686` — `test: add shutdown manager lifecycle contracts`.
-- Added `tests/test_shutdown_contract.py` with four focused contract tests.
-Verification:
-- GitHub Actions check runs for commit `2db7c75fcfc94cf1b44de76c6a279c1c45bc1686` completed successfully, including `test`, `final-gate`, `readiness`, `activation-validation`, and `dependency-audit` checks.
-- Test job `103567612517` completed successfully; lifecycle/persistence tests, full suite, application health, imports, and syntax checks all passed.
-- No local execution claimed.
-Checkpoint: TASK-006 verified and closed 2026-09-12.
 
 ## TASK-007
 Phase: Phase 2 — Core Architecture
 Title: Application Startup Rollback Contract Hardening
-Objective: Ensure that if the health server fails after service startup, already-started services are rolled back so the application does not remain partially started.
 Implementation Status: COMPLETE
 Test Status: PASS via GitHub Actions.
-Implementation:
-- Commit `33ae66e70402d140c7ebe4437951fab2db4a98d1` — `fix: rollback services when health server startup fails`.
-- Commit `1028a219875220d71b012c8a500c9647953f5a59` — `test: cover application startup rollback`.
-- Added focused regression coverage for health-server startup failure and service rollback ordering.
-Verification:
-- Final-gate `34699115514` / job `103567612470`: success, including compile, final runtime safety tests, full test suite, and production Docker build.
-- Test `34699115551` / job `103567612517`: success, including lifecycle/persistence tests, full suite, application health, imports, and syntax checks.
-- Readiness `34699115528` / job `103567612438`: success.
-- Activation-validation `34699115556` / job `103567612531`: success.
-- Dependency-audit `34699115544` / job `103567612573`: success.
-- No local execution claimed.
-Checkpoint: TASK-007 verified and closed 2026-09-12.
 
 ## TASK-008
 Phase: Phase 2 — Core Architecture
 Title: Application Shutdown Cleanup Guarantee
-Objective: Ensure service cleanup still runs when health-server shutdown fails, preventing partially stopped applications and preserving cleanup guarantees.
+Implementation Status: COMPLETE
+Test Status: PASS via GitHub Actions.
+Verification:
+- Final-gate `34699763599` / job `103569325433`: success.
+- Activation-gate `34699763592` / job `103569325284`: success.
+- Readiness `34699763622` / job `103569325273`: success.
+- Dependency-audit `34699763583` / job `103569325266`: success.
+- Activation-validation `34699763626` / job `103569325282`: success.
+
+## TASK-009
+Phase: Phase 2 — Core Architecture
+Title: Health Server Lifecycle Contract Hardening
+Implementation Status: COMPLETE
+Test Status: PASS via GitHub Actions.
+Verification: Green gate set on head `086b872bfbe06cd00c5af0e0e7ab361e34a17e7f` included TASK-009.
+
+## TASK-010
+Phase: Phase 2 — Core Architecture
+Title: Main Entrypoint Lifecycle Contract Hardening
+Implementation Status: COMPLETE
+Test Status: PASS via GitHub Actions.
+Implementation:
+- `b90c31c694034838f8752e375fb8fc222c61fba4` — `test: add main lifecycle integration contracts`.
+- Added `tests/test_main_lifecycle_contract.py` with normal lifecycle ordering and startup-failure coverage.
+Verification:
+- Test `34699973369` / job `103569881919`: success.
+- Final Integration Gate `34699973444` / job `103569882107`: success.
+- Production Activation Validation `34699973428` / job `103569882020`: success.
+- No local execution claimed.
+Checkpoint: TASK-010 verified and closed 2026-09-12.
+
+## TASK-011
+Phase: Phase 2 — Core Architecture
+Title: Application Error Contract Hardening
+Objective: Establish focused contracts for the application error hierarchy, stable error codes/details, and centralized exception logging behavior.
 Implementation Status: IN_PROGRESS
 Test Status: PENDING CI VERIFICATION
 Implementation:
-- Commit `08716e48bb2e3ffcd38e59f027ea3c61ad507615` — `fix: guarantee service cleanup during application shutdown`.
-- Commit `7aafd9f08e1a2423befa9d23d89d429b9b059888` — `test: cover application shutdown cleanup guarantee`.
-- `Application.stop()` now guarantees `services.stop_all()` through `finally` if `HealthServer.stop()` raises.
-- Added focused regression coverage for cleanup ordering and exception propagation.
+- `44aac8eaab94e99bb340500cce473b1350abd183` — `test: add application error contracts`.
+- Added `tests/test_error_contract.py` covering message/details preservation, domain hierarchy/codes, requested log-level routing, and fallback logging.
 Current verification:
-- GitHub Actions verification is pending for TASK-008.
+- CI pending.
 - No local execution claimed.
-Next exact action: verify TASK-008 CI, inspect failures if any, then checkpoint TASK-008 if all required gates are green.
+Next exact action: verify TASK-011 CI, inspect failures if any, then checkpoint TASK-011 if all required gates are green.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
