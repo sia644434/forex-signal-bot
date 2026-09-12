@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import logging
-import os
 from pathlib import Path
+
+from config.settings import Settings
 
 
 LOG_DIR = Path("logs")
@@ -26,17 +27,15 @@ def get_logger(
     if logger.handlers:
         return logger
 
-
-    level = os.getenv(
-        "LOG_LEVEL",
-        "INFO",
-    )
-
+    level = Settings.load().log_level.upper()
 
     logger.setLevel(
-        level
+        getattr(
+            logging,
+            level,
+            logging.INFO,
+        )
     )
-
 
     formatter = logging.Formatter(
         "%(asctime)s | "
@@ -45,31 +44,16 @@ def get_logger(
         "%(message)s"
     )
 
-
     console = logging.StreamHandler()
-
-    console.setFormatter(
-        formatter
-    )
-
+    console.setFormatter(formatter)
 
     file = logging.FileHandler(
         LOG_DIR / "app.log",
         encoding="utf-8",
     )
+    file.setFormatter(formatter)
 
-    file.setFormatter(
-        formatter
-    )
-
-
-    logger.addHandler(
-        console
-    )
-
-    logger.addHandler(
-        file
-    )
-
+    logger.addHandler(console)
+    logger.addHandler(file)
 
     return logger
