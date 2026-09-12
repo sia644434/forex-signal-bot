@@ -61,8 +61,12 @@ def _target_event(item: TrackedSignal, high: float, low: float) -> str | None:
     return None
 
 
-async def refresh_tracking(item: TrackedSignal, notify: Callable[[str], Awaitable[None]]) -> TrackedSignal:
-    candles = await MarketDataService().get_candles_list(item.symbol, item.timeframe, 300)
+async def refresh_tracking(
+    item: TrackedSignal,
+    notify: Callable[[str], Awaitable[None]],
+    market_data: MarketDataService,
+) -> TrackedSignal:
+    candles = await market_data.get_candles_list(item.symbol, item.timeframe, 300)
     if not candles:
         return item
     latest = candles[-1]
