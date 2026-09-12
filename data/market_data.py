@@ -3,12 +3,11 @@ from __future__ import annotations
 import logging
 import re
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Optional
+from typing import Callable
 
 import pandas as pd
 
 from data.base import MarketDataProvider
-from data.factory import ProviderFactory
 from data.freshness import FreshnessPolicy, FreshnessReport
 from data.models import Candle
 from data.provider_manager import ProviderManager
@@ -40,7 +39,6 @@ class MarketDataEngine:
         )
         self.freshness_policy = freshness_policy
         self._clock = clock or (lambda: datetime.now(timezone.utc))
-        self._oanda_provider: Any | None = None
 
     @staticmethod
     def _validate_request(
@@ -272,24 +270,6 @@ class MarketDataEngine:
         if timeframe is None:
             raise ValueError(f"Unsupported Alpha Vantage interval: {interval!r}")
         return await self.get_candles(symbol=symbol, timeframe=timeframe, limit=500)
-
-    async def get_latest_oanda_price(
-        self, instrument: str
-    ) -> Optional[dict[str, Any]]:
-        if not isinstance(instrument, str):
-            raise TypeError("instrument must be a string.")
-        if not instrument.strip():
-            raise ValueError("instrument cannot be empty.")
-        if self._oanda_provider is None:
-            self._oanda_provider = ProviderFactory.create("oanda")
-        client = getattr(self._oanda_provider, "client", None)
-        if client is None or not hasattr(client, "get_price"):
-            raise RuntimeError("OANDA provider does not expose the price endpoint.")
-        data = await client.get_price(instrument.strip().upper())
-        prices = data.get("prices", [])
-        if not prices:
-            return None
-        return prices[0]
 
 
 __all__ = ["MarketDataEngine"]
