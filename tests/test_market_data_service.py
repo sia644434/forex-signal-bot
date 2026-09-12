@@ -1,60 +1,29 @@
 from __future__ import annotations
 
+from unittest.mock import AsyncMock
+
 import pytest
 
 from services.market_data.service import MarketDataService
 
 
-class FakeManager:
+@pytest.mark.asyncio
+async def test_service_delegates_to_canonical_engine() -> None:
+    engine = AsyncMock()
+    engine.get_candles_list.return_value = ["candle"]
+    service = MarketDataService(engine=engine)
 
-    async def get_candles(
-        self,
-        provider_name,
-        symbol,
-        timeframe,
-        limit,
-    ):
-        return [
-            "candle"
-        ]
+    result = await service.get_candles_list("EUR_USD", "M15", 10)
 
+    assert result == ["candle"]
+    engine.get_candles_list.assert_awaited_once_with("EUR_USD", "M15", 10)
 
 
 @pytest.mark.asyncio
-async def test_service_returns_candles():
+async def test_service_propagates_engine_failure() -> None:
+    engine = AsyncMock()
+    engine.get_candles_list.side_effect = RuntimeError("engine failure")
+    service = MarketDataService(engine=engine)
 
-    service = MarketDataService(
-        FakeManager()
-    )
-
-
-    result = await service.get_candles(
-        symbol="EUR_USD",
-        timeframe="M15",
-        limit=10,
-    )
-
-
-    assert result == [
-        "candle"
-    ]
-
-
-
-@pytest.mark.asyncio
-async def test_service_invalid_limit():
-
-    service = MarketDataService(
-        FakeManager()
-    )
-
-
-    with pytest.raises(
-        ValueError
-    ):
-
-        await service.get_candles(
-            symbol="EUR_USD",
-            timeframe="M15",
-            limit=0,
-        )
+    with pytest.raises(RuntimeError, match="engine failure"):
+        await service.get_candles_list("EUR_USD", "M15", 10)

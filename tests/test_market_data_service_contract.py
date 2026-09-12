@@ -1,132 +1,55 @@
 from __future__ import annotations
 
+from unittest.mock import AsyncMock
+
 import pytest
 
-from core.errors import ApplicationError
 from services.market_data.service import MarketDataService
 
 
-class FakeManager:
-    def __init__(self, result=None, error=None):
-        self.result = result
-        self.error = error
-        self.calls = []
-
-    async def get_candles(self, provider_name, symbol, timeframe, limit):
-        self.calls.append(
-            {
-                "provider_name": provider_name,
-                "symbol": symbol,
-                "timeframe": timeframe,
-                "limit": limit,
-            }
-        )
-        if self.error is not None:
-            raise self.error
-        return self.result
-
-
 @pytest.mark.asyncio
-async def test_service_forwards_normalized_request():
-    manager = FakeManager(result=["candle"])
-    service = MarketDataService(manager)
-
-    result = await service.get_candles(
-        symbol=" eur_usd ",
-        timeframe="M15",
-        limit=10,
-        provider_name=" OANDA ",
+async def test_service_uses_canonical_engine_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    engine = AsyncMock()
+    engine.get_candles_list.return_value = []
+    monkeypatch.setattr(
+        "services.market_data.service.MarketDataEngine",
+        lambda: engine,
     )
 
-    assert result == ["candle"]
-    assert manager.calls == [
-        {
-            "provider_name": " OANDA ",
-            "symbol": "EUR_USD",
-            "timeframe": "M15",
-            "limit": 10,
-        }
-    ]
+    service = MarketDataService()
+    result = await service.get_candles_list("EURUSD", "M15", 10)
+
+    assert result == []
+    engine.get_candles_list.assert_awaited_once_with("EURUSD", "M15", 10)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "kwargs",
+    "symbol,timeframe,limit",
     [
-        {"symbol": "", "timeframe": "M15", "limit": 10},
-        {"symbol": "EUR_USD", "timeframe": "", "limit": 10},
-        {"symbol": "EUR_USD", "timeframe": "M15", "limit": 0},
-        {"symbol": "EUR_USD", "timeframe": "M15", "limit": -1},
-        {"symbol": "EUR_USD", "timeframe": "M15", "limit": True},
+        ("", "M15", 10),
+        ("EURUSD", "", 10),
+        ("EURUSD", "M15", 0),
     ],
 )
-async def test_service_rejects_invalid_request(kwargs):
-    service = MarketDataService(FakeManager(result=[]))
+async def test_service_does_not_replace_engine_validation(
+    symbol: str, timeframe: str, limit: int
+) -> None:
+    engine = AsyncMock()
+    engine.get_candles_list.side_effect = ValueError("invalid request")
+    service = MarketDataService(engine=engine)
 
-    with pytest.raises((TypeError, ValueError, ApplicationError)):
-        await service.get_candles(**kwargs)
-
-
-@pytest.mark.asyncio
-async def test_service_rejects_invalid_provider_name():
-    service = MarketDataService(FakeManager(result=[]))
-
-    with pytest.raises((TypeError, ValueError)):
-        await service.get_candles(
-            symbol="EUR_USD",
-            timeframe="M15",
-            limit=10,
-            provider_name="   ",
-        )
+    with pytest.raises(ValueError, match="invalid request"):
+        await service.get_candles_list(symbol, timeframe, limit)
 
 
 @pytest.mark.asyncio
-async def test_service_propagates_application_error():
-    manager = FakeManager(error=ApplicationError("upstream failure"))
-    service = MarketDataService(manager)
+async def test_service_preserves_engine_result_identity() -> None:
+    candles = [object(), object()]
+    engine = AsyncMock()
+    engine.get_candles_list.return_value = candles
+    service = MarketDataService(engine=engine)
 
-    with pytest.raises(ApplicationError):
-        await service.get_candles(
-            symbol="EUR_USD",
-            timeframe="M15",
-            limit=10,
-        )
+    result = await service.get_candles_list("EURUSD", "M15", 2)
 
-
-@pytest.mark.asyncio
-async def test_service_wraps_unexpected_manager_error():
-    manager = FakeManager(error=RuntimeError("network failure"))
-    service = MarketDataService(manager)
-
-    with pytest.raises(ApplicationError):
-        await service.get_candles(
-            symbol="EUR_USD",
-            timeframe="M15",
-            limit=10,
-        )
-
-
-@pytest.mark.asyncio
-async def test_service_returns_empty_list_for_none_result():
-    service = MarketDataService(FakeManager(result=None))
-
-    result = await service.get_candles(
-        symbol="EUR_USD",
-        timeframe="M15",
-        limit=10,
-    )
-
-    assert result == []
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("result", ["invalid", {"candle": 1}])
-async def test_service_rejects_non_list_manager_result(result):
-    service = MarketDataService(FakeManager(result=result))
-
-    with pytest.raises(ApplicationError):
-        await service.get_candles(
-            symbol="EUR_USD",
-            timeframe="M15",
-            limit=10,
-        )
+    assert result is candles
