@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The repository is a Python Forex trading-intelligence application with a Telegram interface, market-data/provider layer, modular Forex analysis engines, application AI/ML functionality, risk/decision components, a PC worker for heavy Forex processing, a durable worker processing queue, and deployment/CI infrastructure.
+The repository is a Python Forex trading-intelligence application with a Telegram interface, market-data/provider layer, modular Forex analysis engines, risk/decision components, a dormant/unwired AI/ML package reserved for its later roadmap phase, a PC worker for heavy Forex processing, a durable worker processing queue, and deployment/CI infrastructure.
 
 ## Entry Points
 
@@ -17,7 +17,7 @@ Canonical production ownership: `services/telegram/`.
 
 `core/application.py` registers `TelegramService`; `TelegramService` creates `TelegramClient`; `TelegramClient` imports `services.telegram.router.register_routes`; and the router registers the command/callback handlers under `services/telegram/handlers/`. This is the only Telegram runtime path composed by the production application entry point.
 
-TASK-032 audited the previously overlapping Telegram trees. The legacy `bot/`, `telegram_bot/`, and top-level `handlers/` trees were not referenced by the production composition root or `main.py`; their remaining references were limited to legacy tests/CI imports and to each other. They were removed, and the tests/CI import checks were migrated to the canonical `services/telegram/` path. This establishes a single Telegram ownership boundary and avoids parallel handler registration paths.
+TASK-032 audited the previously overlapping Telegram trees. The legacy `bot/`, `telegram_bot`, and top-level `handlers/` trees were not referenced by the production composition root or `main.py`; their remaining references were limited to legacy tests/CI imports and to each other. They were removed, and the tests/CI import checks were migrated to the canonical `services/telegram/` path. This establishes a single Telegram ownership boundary and avoids parallel handler registration paths.
 
 ## Application / Service Layer
 
@@ -39,7 +39,15 @@ Important production concerns: provider routing centralization, freshness classi
 
 `analysis/` contains the production modular analysis pipeline including indicators, ATR, candlestick, market structure/regime, price action, Elliott, harmonic, Wyckoff, supply/demand, SMC, scoring, confidence, decision, risk, and full-engine/report components.
 
-`analysis/registry.py` and `analysis/orchestrator.py` indicate a registry/orchestration pattern. Exact runtime composition and failure semantics require targeted verification.
+TASK-034 audited the previous alternate analysis architecture. `analysis/adapters.py`, `analysis/contracts.py`, `analysis/registry.py`, and `analysis/orchestrator.py` had no production-active callers; `analysis/contracts.py` also duplicated analysis-context ownership represented elsewhere. Those modules and their obsolete architecture test were removed. `analysis/full_engine.py` remains the canonical production analysis composition and `analysis/__init__.py` exposes only canonical analysis contracts/engines.
+
+## AI / ML Layer
+
+The `ai/` package is currently **dormant and not part of the production application composition**. TASK-035 audited its ownership boundary and found no production or test callers constructing `AIOrchestrator`, `AIProviderManager`, `AIContextBuilder`, `OpenAIProvider`, or the parser/prompt pipeline. The package therefore remains preserved as a future Phase 6 capability rather than being treated as an active runtime dependency or as a second production decision path.
+
+Active application composition in `core/application.py` does not register an AI service; the production Telegram path directly uses the canonical Forex analysis/report components. AI-related settings and production-readiness checks remain configuration scaffolding for the later AI/ML phase and must not be interpreted as evidence that AI currently participates in trading decisions.
+
+The dormant AI package must not control, override, or bypass the canonical analysis → decision → risk flow. Any future activation requires an explicit evidence-backed phase task with production callers, contracts, failure isolation, security review, and tests.
 
 ## Decision / Risk Ownership
 
@@ -97,15 +105,17 @@ Railway is an infrastructure target, not a core application architecture depende
 
 ## CI/CD
 
-CI status must always be verified against the relevant commit rather than inferred from documentation. The architecture audit changes are on the current `main` head and must pass the repository's configured checks before TASK-033 is marked verified.
+CI status must always be verified against the relevant commit rather than inferred from documentation. The architecture audit changes are on the current `main` head and must pass the repository's configured checks before the corresponding task is marked verified.
 
 ## Security Boundaries
 
-Primary boundaries are Telegram input, external market-data providers, AI provider calls, worker API/network boundary, environment secrets, and deployment runtime. Security review is not yet complete.
+Primary boundaries are Telegram input, external market-data providers, the dormant AI provider boundary reserved for a later phase, worker API/network boundary, environment secrets, and deployment runtime. Security review is not yet complete.
 
 ## Data Flow — Baseline Hypothesis to Verify
 
-Telegram request → canonical `services/telegram/` handlers/router → application/service layer → market data → analysis/orchestration → decision → risk → safe result/NO TRADE → Telegram response.
+Telegram request → canonical `services/telegram/` handlers/router → application/service layer → market data → analysis → decision → risk → safe result/NO TRADE → Telegram response.
+
+The dormant AI package is not in this production data flow.
 
 Heavy Forex application workloads should use:
 
@@ -121,8 +131,8 @@ Optional analysis failure → isolate failure and preserve valid analyses where 
 Risk failure → fail closed.
 Queue/worker timeout/failure → explicit lifecycle state + bounded recovery behavior where required.
 Missing/unready worker transport → controlled `WORKER_OFFLINE` result for optional heavy processing.
-External/AI failure → bounded degradation without unsafe decisions.
+Future AI provider failure → bounded degradation without unsafe decisions; AI must never bypass canonical decision/risk safety.
 
 ## Status
 
-The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions were removed. The durable queue, timeout-aware crash recovery, central queue configuration, application composition boundary, worker heartbeat/readiness/freshness, worker security boundaries, and observability contracts are verified. Telegram ownership has been consolidated under `services/telegram/`. TASK-033 has now removed the evidence-backed dead decision/risk/strategy parallel trees and documented `analysis/decision_engine.py` and `analysis/risk_engine.py` as the canonical production owners. Final verification is pending the current-head CI checks.
+The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions were removed. The durable queue, timeout-aware crash recovery, central queue configuration, application composition boundary, worker heartbeat/readiness/freshness, worker security boundaries, and observability contracts are verified. Telegram ownership has been consolidated under `services/telegram/`. TASK-033 removed the evidence-backed dead decision/risk/strategy parallel trees and documented `analysis/decision_engine.py` and `analysis/risk_engine.py` as the canonical production owners. TASK-034 removed the unused alternate analysis architecture. TASK-035 established that the existing `ai/` package is dormant/unwired and reserved for Phase 6 rather than an active production architecture.
