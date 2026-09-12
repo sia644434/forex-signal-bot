@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-035 — AI Architecture Ownership Audit
+Active Task: TASK-037 — Dormant Direct OANDA Price Surface Audit
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Phase 2 Scope Before TASK-004
@@ -35,6 +35,7 @@ Evidence: TASK-004 is the first explicitly recorded Phase 2 implementation task 
 - TASK-033 consolidated Decision/Risk ownership under canonical `analysis/` engines.
 - TASK-034 removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture and aligned `analysis/__init__.py` with the canonical analysis engines.
 - TASK-035 audited the `ai/` package and established that it is dormant/unwired, with no production caller; it is reserved for the later Phase 6 AI/ML scope and is not an active trading architecture.
+- TASK-036 consolidated production Telegram market-data candle retrieval behind the canonical `MarketDataService` application boundary while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing.
 
 ### TASK-034 — VERIFIED
 Analysis Architecture Ownership Audit.
@@ -55,6 +56,14 @@ Evidence:
 - Decision: preserve the dormant package for Phase 6 rather than deleting it or wiring it into the current Forex decision path. Any future activation requires a dedicated evidence-backed task, explicit callers, failure isolation, security review, and tests.
 - `ARCHITECTURE_MAP.md` records the dormant ownership boundary.
 - TASK-035 changed engineering documentation only; no executable production code was modified.
+
+### TASK-036 — VERIFIED
+Market Data Ownership Consolidation.
+Evidence:
+- `services/market_data/service.py` is the canonical application-facing market-data facade.
+- Production Telegram candle retrieval in signal, tracker, scanner, and callbacks routes through `MarketDataService`.
+- Scanner retains explicit `ProviderManager` selection semantics and injects it into the engine supplied to the service; it does not bypass the service for candle retrieval.
+- Current head `6174463174d8c6c4ad513896ad7ff96847e85edc` has successful Railway commit status and completed TASK-036 CI gates.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -84,7 +93,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green; TASK-035 is an audit/documentation checkpoint with no executable-code changes.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-036 introduced executable market-data ownership changes and its CI gates were completed successfully.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
