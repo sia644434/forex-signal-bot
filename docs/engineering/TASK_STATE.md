@@ -28,8 +28,8 @@ Checkpoint: Production verification completed 2026-09-12.
 Phase: Phase 2 — Core Architecture
 Title: Service Lifecycle Contract Hardening
 Objective: Establish explicit contract coverage for service registration, startup, rollback, non-critical degradation, shutdown, and health isolation.
-Implementation Status: IN_PROGRESS
-Test Status: PENDING CI EXECUTION
+Implementation Status: COMPLETE
+Test Status: PASS via GitHub Actions.
 Scope:
 - `core/service.py`
 - `services/base.py`
@@ -38,9 +38,25 @@ Implementation:
 - Commit `2e38e857dbed219c41c8b4339434bb61a372f040` — `test: add service manager lifecycle contracts`
 - Six focused contract tests added.
 Verification:
+- Test workflow `34698627396` / job `103566339790`: success.
+- Lifecycle/persistence tests: success.
+- Full test suite: success.
+- Application health, Telegram import, lifecycle import, and syntax checks: success.
 - No local execution claimed.
-- GitHub Actions workflow is configured to run on pushes to `main`; no workflow result has yet been evidenced for this commit.
-Next exact action: verify the new contract suite and full regression suite in GitHub Actions, then close TASK-004 only if green.
+Checkpoint: TASK-004 verified and closed 2026-09-12.
+
+## TASK-005
+Phase: Phase 2 — Core Architecture
+Title: Application Lifecycle Contract Hardening
+Objective: Establish explicit contract coverage for application startup/shutdown ordering, health-server lifecycle, health aggregation, and composition-root registration.
+Implementation Status: IN_PROGRESS
+Test Status: PENDING IMPLEMENTATION
+Scope:
+- `core/application.py`
+- `app.py`
+- `main.py`
+- `tests/test_application_lifecycle_contract.py`
+Next exact action: add focused application lifecycle contract tests, then verify them and the full regression suite in GitHub Actions.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
