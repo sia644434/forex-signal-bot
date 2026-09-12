@@ -88,6 +88,15 @@ class WorkerDispatcher:
             self._queue.fail(request.job_id, result.error or "Worker job failed")
         return result
 
+    def health(self) -> dict[str, Any]:
+        """Return non-sensitive dispatcher and durable queue operational state."""
+        if self._queue is None:
+            return {"queue_configured": False}
+        return {
+            "queue_configured": True,
+            "queue": self._queue.metrics(),
+        }
+
     async def submit_many(self, requests: list[JobRequest]) -> list[JobResult]:
         return await asyncio.gather(*(self.submit(request) for request in requests))
 
