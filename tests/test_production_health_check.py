@@ -27,10 +27,19 @@ def test_check_health_accepts_successful_json(monkeypatch):
 
     def fake_urlopen(request, timeout):
         calls.append((request.full_url, timeout))
-        return FakeResponse(200, {"status": "ok"})
+        return FakeResponse(
+            200,
+            {
+                "application": {"status": "ok"},
+                "services": {"telegram": {"status": "ok", "critical": True}},
+            },
+        )
 
     monkeypatch.setattr("scripts.production_health_check.urlopen", fake_urlopen)
-    assert check_health("https://example.test/") == {"status": "ok"}
+    assert check_health("https://example.test/") == {
+        "application": {"status": "ok"},
+        "services": {"telegram": {"status": "ok", "critical": True}},
+    }
     assert calls[0][0] == "https://example.test/health"
 
 
@@ -40,6 +49,33 @@ def test_check_health_rejects_non_object_json(monkeypatch):
         lambda request, timeout: FakeResponse(200, ["ok"]),
     )
     with pytest.raises(HealthCheckError, match="non-object JSON"):
+        check_health("https://example.test", attempts=1)
+
+
+def test_check_health_rejects_degraded_application(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.production_health_check.urlopen",
+        lambda request, timeout: FakeResponse(
+            200,
+            {"application": {"status": "degraded"}},
+        ),
+    )
+    with pytest.raises(HealthCheckError, match="not ready"):
+        check_health("https://example.test", attempts=1)
+
+
+def test_check_health_rejects_failed_critical_service(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.production_health_check.urlopen",
+        lambda request, timeout: FakeResponse(
+            200,
+            {
+                "application": {"status": "ok"},
+                "services": {"telegram": {"status": "stopped", "critical": True}},
+            },
+        ),
+    )
+    with pytest.raises(HealthCheckError, match="critical services"):
         check_health("https://example.test", attempts=1)
 
 
