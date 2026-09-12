@@ -102,6 +102,8 @@ class Settings:
     max_open_positions: int = 5
     timezone: str = "UTC"
     log_level: str = "INFO"
+    health_host: str = "0.0.0.0"
+    health_port: int = 8080
     ai_enabled: bool = False
     ai_api_key: Optional[str] = None
     ai_model: str = "gpt-5.6-luna"
@@ -122,6 +124,10 @@ class Settings:
             raise ValueError("TIMEZONE cannot be empty.")
         if self.log_level.upper() not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
             raise ValueError("LOG_LEVEL must be DEBUG, INFO, WARNING, ERROR, or CRITICAL.")
+        if not self.health_host.strip():
+            raise ValueError("HEALTH_HOST cannot be empty.")
+        if not 0 <= self.health_port <= 65535:
+            raise ValueError("PORT must be between 0 and 65535.")
         if not 0 <= self.ai_temperature <= 2:
             raise ValueError("AI_TEMPERATURE must be between 0 and 2.")
         if self.request_timeout < 1:
@@ -151,6 +157,8 @@ class Settings:
             max_open_positions=_get_int("MAX_OPEN_POSITIONS", 5),
             timezone=_get_env("TIMEZONE", "UTC"),
             log_level=_get_env("LOG_LEVEL", "INFO"),
+            health_host=_get_env("HEALTH_HOST", "0.0.0.0"),
+            health_port=_get_int("PORT", 8080),
             ai_enabled=ai_enabled,
             ai_api_key=ai_api_key,
             ai_model=_get_env("AI_MODEL", "gpt-5.6-luna"),
