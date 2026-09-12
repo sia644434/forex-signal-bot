@@ -32,8 +32,11 @@ Phase: Phase 1 — Production Verification / Reliability Hardening
 Title: Establish deployment and runtime verification evidence
 Objective: Determine the concrete gap between green CI and actual production readiness, then close it with the smallest evidence-backed changes.
 Implementation Status: IN_PROGRESS
-Test Status: Health/readiness contract hardened; latest CI is pending.
-CI Status: Latest Final Integration Gate run `34690616947` is currently queued on commit `f2d28f8f7a9c98bf2d72165f50abfdd254aeb481`.
+Test Status: Health/readiness contract hardened. Security Audit and Production Activation Validation are green; new documentation checkpoints have triggered fresh CI and must be re-verified.
+CI Evidence:
+- Final Integration Gate run `34690616947`: completed/success; final gate steps passed including full test suite and production Docker image build.
+- Security Audit run `34690739394`: completed/success; dependency audit step passed.
+- Production Activation Validation run `34690739448`: completed/success; activation validation tests passed.
 Changes:
 - `a7a394c` — add dependency-free live `/health` verification script with retries and safe failure handling.
 - `69590bd` — add unit coverage for successful, invalid, and transient-failure health responses.
@@ -44,9 +47,14 @@ Changes:
 - `c590b12` — test failed critical-service health responses at the HTTP boundary.
 - `3732761` — reject degraded application or failed critical services in live production health verification.
 - `f2d28f8` — add regression coverage for degraded application and failed critical-service verification.
+- `fc052af` — add dependency security audit workflow.
+- `500d726` — record successful dependency security audit evidence.
+- `eb24bad` — remove temporary duplicate task-state checkpoint.
 Verified deployment contract: `/health` is exposed by the application, Railway is configured with `healthcheckPath = "/health"`, and the Docker image has a healthcheck.
-Known Blockers: No verified production URL/secret is available through the repository, and the GitHub Connector cannot independently access private deployment credentials. Therefore live production health has NOT been claimed.
-Next Action: Wait for the latest CI gate to complete, inspect its result, then proceed to security/dependency audit and recovery verification. If `PRODUCTION_BASE_URL` is configured in GitHub, run `Production Live Smoke`; only a successful live run may change production readiness from NOT VERIFIED.
+Recovery Status: Restart policy and healthcheck configuration are documented, but actual Railway restart/recovery behavior remains unverified.
+Security Status: Dependency audit is green for the verified run; this does not prove complete application-level production security.
+Known Blockers: No verified production URL/secret is available through the repository, and the GitHub Connector cannot independently access private deployment credentials. Therefore live production health and restart recovery have NOT been claimed.
+Next Action: Re-verify CI triggered by the latest state commits, then perform the remaining live smoke/recovery verification if a production URL is actually available. Do not mark production readiness verified without live evidence.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
