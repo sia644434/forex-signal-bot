@@ -43,6 +43,6 @@ class TelegramService(BaseService):
         """Return Telegram service health information."""
         return {
             "service": self.name,
-            "status": "running" if self.client else "stopped",
+            "status": "ok" if self.client else "stopped",
             "critical": str(self.critical).lower(),
         }
