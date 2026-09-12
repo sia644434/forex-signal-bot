@@ -2,20 +2,20 @@
 
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
-- Current Commit: `e57941633fdb7636e7091ac8acc6f7af79fedc0a`
+- Current Commit: `a9dbd5a4822580a6a2795531a8a74b332355279d`
 - Overall Status: `PRODUCTION_VERIFIED`
 - Current Phase: Phase 2 — Core Architecture
-- Current Task: TASK-030 — PC Worker Readiness Enforcement at Job-Dispatch Boundary
-- Last Completed Task: TASK-029 — PC Worker Authenticated Job Request Boundary Hardening
+- Current Task: TASK-033 — Decision/Risk/Strategy Architecture Ownership Audit
+- Last Completed Task: TASK-033 — Decision/Risk/Strategy Architecture Ownership Audit
 - Removed Task: TASK-016 — Worker Retry and Failure Lifecycle; removed because it was inherited from the previous planning path and is not independently required by the final Forex-only Master Prompt.
 - Known Blockers: None for the verified Railway deployment path; GitHub Connector does not expose a local working tree/runtime.
-- Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. TASK-030 changes the application-side dispatch contract and requires current-head CI before verification is claimed.
-- Broken Tests: None known; TASK-030 current-head CI is pending.
-- CI Status: TASK-029 verification is complete. TASK-030 implementation and regression commits are pushed; current-head verification is pending.
-- Deployment Status: The previously verified Railway deployment path remains healthy. TASK-030 has not yet been promoted/independently live-verified.
-- Architecture Status: Phase 2 active. The PC Worker is restricted to heavy Forex application processing. Durable queue, timeout-aware crash recovery, central queue configuration, application composition, authenticated heartbeat, readiness, observability, heartbeat freshness, minimal public health, and authenticated job-request hardening are verified. TASK-030 now enforces fresh READY worker state at the application dispatch boundary. No local coding-agent/Ollama architecture is part of the active Forex worker path.
-- Production Readiness: `VERIFIED` for the previously observed deployment path. TASK-030 is implementation-complete but not yet CI-verified or separately live-verified.
-- Last Checkpoint: `e57941633fdb7636e7091ac8acc6f7af79fedc0a` — synchronized engineering state through TASK-030 implementation.
+- Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Phase 2 still has remaining evidence-backed architecture work before later phases are selected.
+- Broken Tests: None known.
+- CI Status: TASK-033 Final Integration Gate `34715036954`, job `103610652082`, completed successfully.
+- Deployment Status: Commit `a9dbd5a4822580a6a2795531a8a74b332355279d` has successful Railway deployment status. Previously verified live production health/restart evidence remains valid for the deployed path.
+- Architecture Status: Phase 2 active. The PC Worker is restricted to heavy Forex application processing. Durable queue, timeout-aware crash recovery, central queue configuration, application composition, authenticated heartbeat, readiness, observability, heartbeat freshness, minimal public health, authenticated job-request hardening, readiness-gated dispatch, Telegram ownership consolidation, and Decision/Risk ownership consolidation are verified. No local coding-agent/Ollama architecture is part of the active Forex worker path.
+- Production Readiness: `VERIFIED` for the observed Railway deployment path. TASK-033 itself is CI-verified and has successful Railway commit status.
+- Last Checkpoint: `a9dbd5a4822580a6a2795531a8a74b332355279d` — TASK-033 implementation and architecture documentation checkpoint.
 - Last State Update: 2026-09-12
 
 ## Phase 2 — Core Architecture
@@ -36,49 +36,58 @@ Worker Job Lifecycle Reliability.
 Worker Retry and Failure Lifecycle. Removed from the roadmap because it was inherited from the previous planning path and is not independently required by the final Forex-only Master Prompt.
 
 ### TASK-017 — VERIFIED
-Remove Residual Non-Forex Worker Workload. Final-gate run `34704118418`, job `103580948161`, completed successfully with compile, runtime safety tests, full suite, and production Docker build passing.
+Remove Residual Non-Forex Worker Workload.
 
 ### TASK-018 — VERIFIED
-Durable Forex Worker Processing Queue Contract. SQLite-backed queue, lifecycle states, idempotency, priority ordering, persistence, and dispatcher integration verified.
+Durable Forex Worker Processing Queue Contract.
 
 ### TASK-019 — VERIFIED
-Forex Worker Queue Crash-Recovery Contract. Stale `RUNNING` recovery and deterministic regression coverage verified.
+Forex Worker Queue Crash-Recovery Contract.
 
 ### TASK-020 — VERIFIED
-Activate Forex Worker Queue Crash Recovery. Per-job-timeout-aware recovery is activated at dispatcher initialization and verified.
+Activate Forex Worker Queue Crash Recovery.
 
 ### TASK-021 — VERIFIED
-Forex Worker Queue Persistence Configuration Boundary. Central queue path/recovery-grace configuration and dispatcher construction are verified.
+Forex Worker Queue Persistence Configuration Boundary.
 
 ### TASK-022 — VERIFIED
-Wire Heavy Forex Worker Through the Application Service Boundary. Optional non-critical worker processing service is backed by the queue-aware dispatcher and centrally configured worker transport.
+Wire Heavy Forex Worker Through the Application Service Boundary.
 
 ### TASK-023 — VERIFIED
 Verify and harden the real heavy-Forex workload routing boundary. No real Forex domain caller currently submits heavy jobs because Phase 9 Backtesting / Simulation is not started; no speculative caller was introduced.
 
 ### TASK-024 — VERIFIED
-PC Worker Authenticated Heartbeat Contract. Authenticated heartbeat endpoint/client contract and valid/invalid authentication coverage are complete.
+PC Worker Authenticated Heartbeat Contract.
 
 ### TASK-025 — VERIFIED
-Worker Processing Health/Readiness Contract. Worker readiness states are exposed through the application boundary and covered by regression tests.
+Worker Processing Health/Readiness Contract.
 
 ### TASK-026 — VERIFIED
-Worker Heartbeat Observability. Worker identity/timestamp observability is exposed through worker processing health.
+Worker Heartbeat Observability.
 
 ### TASK-027 — VERIFIED
-PC Worker Heartbeat Freshness Contract. Configurable maximum heartbeat age is enforced dynamically; expired, malformed, or timestamp-missing READY heartbeats become `STALE`. Current-head CI and Railway status are successful.
+PC Worker Heartbeat Freshness Contract.
 
 ### TASK-028 — VERIFIED
-Minimize Unauthenticated PC Worker Health Information Exposure. The public `/health` endpoint now returns only `{"status":"READY"}` while detailed worker identity/runtime metadata remains behind authenticated heartbeat transport. Current-head Actions verified the change.
+Minimize Unauthenticated PC Worker Health Information Exposure.
 
 ### TASK-029 — VERIFIED
-PC Worker Authenticated Job Request Boundary Hardening. Authenticated `/jobs` now requires JSON, rejects empty/oversized payloads, and redacts internal exceptions. Current-head `5828f4dd703d5a646640ebad749293daed0d833d` has seven completed successful checks: activation-gate, activation-validation, dependency-audit, production-e2e-contract, readiness, test, and final-gate.
+PC Worker Authenticated Job Request Boundary Hardening.
 
-### TASK-030 — IMPLEMENTED / VERIFICATION PENDING
-PC Worker Readiness Enforcement at Job-Dispatch Boundary. Configured heavy-job dispatch is blocked unless the cached authenticated heartbeat is fresh and `READY`; `UNKNOWN`, `STALE`, and `WORKER_OFFLINE` states are fail-closed. Regression coverage was added. Current-head CI is pending.
+### TASK-030 — VERIFIED
+PC Worker Readiness Enforcement at Job-Dispatch Boundary. Configured heavy-job dispatch is blocked unless the cached authenticated heartbeat is fresh and `READY`; non-ready states fail closed.
+
+### TASK-031 — VERIFIED
+Worker Observability and Operational Contract Audit. Queue/dispatcher/service operational metrics were added without exposing sensitive payload/result/error data through the public health endpoint.
+
+### TASK-032 — VERIFIED
+Telegram Architecture Ownership Audit / Consolidation. Canonical ownership is under `services/telegram/`; inactive legacy Telegram trees were removed after reference audit.
+
+### TASK-033 — VERIFIED
+Decision/Risk/Strategy Architecture Ownership Audit. Canonical ownership is `analysis/decision_engine.py` for decision logic and `analysis/risk_engine.py` for risk logic. Unused overlapping `analysis/risk_manager.py`, `risk/manager.py`, `signal_engine/`, and `strategy/` trees were removed after repository-wide reference/call-site inspection. `ARCHITECTURE_MAP.md` records the canonical ownership.
 
 ## Next Task Selection
-After TASK-030 CI verification, select the next task only from concrete repository evidence. Do not invent a task merely to increment the task number. The deferred issue #46 remains a candidate for the next evidence-backed worker observability audit.
+Select the next task only from concrete repository evidence after TASK-033. Do not invent a task merely to increment the task number. Continue Phase 2 until its evidence-backed core-architecture scope is complete.
 
 ## Repository Mapping Decision
 
