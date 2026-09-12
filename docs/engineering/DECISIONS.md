@@ -31,3 +31,11 @@ Chosen Solution: Option 3.
 Reason: The repository already contains real worker executors for backtesting, market scans, feature engineering, model training/evaluation, and other heavy application workloads. A local coding agent is not part of the trading platform architecture and would create an unnecessary runtime/configuration dependency.
 Trade-offs: Legacy local-agent files may remain temporarily as cleanup debt; they are not part of the active worker path.
 Affected Components: `worker/main.py`, `worker/handlers.py`, `worker/contracts.py`, worker configuration, future cleanup of `worker/models/*`.
+
+## ADR-004 — Do not carry forward non-Forex worker tasks
+Date: 2026-09-12
+Problem: `TASK-016 — Worker Retry and Failure Lifecycle` remained in the task roadmap after the worker's accidental coding-agent/Ollama architecture was removed. Its scope was inherited from the previous planning path rather than established as an independent requirement of the final Forex-only Master Prompt.
+Chosen Solution: Remove TASK-016 from the active roadmap without implementing it. Future retry/failure work must be introduced only when a concrete Forex application, Processing Queue, or Heavy Forex Worker requirement is evidenced by the repository.
+Reason: The final product architecture is strictly Forex-focused. Removing inherited tasks prevents obsolete architecture from driving new implementation.
+Consequences: No retry-specific code is added solely for TASK-016. Evidence-backed retry requirements for market data, Processing Queue, or Forex Worker operations may still be addressed later as properly scoped Forex tasks.
+Affected Components: `docs/engineering/TASK_STATE.md`, `docs/engineering/PHASE_STATE.md`, `docs/engineering/PROJECT_STATE.md`.
