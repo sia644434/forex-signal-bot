@@ -1,3 +1,6 @@
+import sqlite3
+import time
+
 from worker.contracts import JobRequest
 from worker.queue import WorkerQueue
 
@@ -83,6 +86,11 @@ def test_stale_running_job_is_recovered_to_pending(tmp_path):
     claimed = queue.claim_next()
     assert claimed is not None
 
+    connection = sqlite3.connect(database)
+    connection.execute("UPDATE worker_jobs SET claimed_at = ? WHERE job_id = ?", (time.time() - 10, "stale"))
+    connection.commit()
+    connection.close()
+
     recovered = queue.recover_stale_running(1)
 
     assert [record.job_id for record in recovered] == ["stale"]
@@ -125,9 +133,6 @@ def test_expired_running_job_uses_its_own_timeout(tmp_path):
     queue.enqueue(JobRequest("expired", "backtest", timeout_seconds=1))
     claimed = queue.claim_next()
     assert claimed is not None
-
-    import sqlite3
-    import time
 
     connection = sqlite3.connect(database)
     connection.execute("UPDATE worker_jobs SET claimed_at = ? WHERE job_id = ?", (time.time() - 10, "expired"))
