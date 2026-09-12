@@ -12,6 +12,7 @@ def test_requested_workloads_are_worker_owned():
         "gru_training", "medium_model_training", "multi_agent_analysis",
     }
     assert expected <= HEAVY_JOB_TYPES
+    assert "coding_agent" not in HEAVY_JOB_TYPES
 
 
 def test_worker_hardware_capabilities():
@@ -20,6 +21,7 @@ def test_worker_hardware_capabilities():
     assert capabilities.gpu is True
     assert capabilities.max_ram_gb == 16
     assert capabilities.limited_jobs
+    assert "coding_agent" not in capabilities.limited_jobs
 
 
 def test_offline_worker_does_not_block_railway():
