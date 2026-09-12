@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-028 — Minimize Unauthenticated PC Worker Health Information Exposure
+Active Task: TASK-034 — Analysis Architecture Ownership Audit
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Phase 2 Scope Before TASK-004
@@ -14,7 +14,7 @@ Status: AUDITED
 Evidence: TASK-004 is the first explicitly recorded Phase 2 implementation task after TASK-003. No independent historical pre-TASK-004 task contract was recoverable from persistent engineering state, so no missing historical task is being invented.
 
 ### Completed Evidence
-- TASK-004 through TASK-013 were verified and closed through GitHub Actions and repository checkpoints.
+- TASK-004 through TASK-013 were verified and closed through GitHub Actions.
 - TASK-014 removed the accidental local coding-agent/Ollama worker architecture and verified the application-only worker boundary.
 - TASK-015 hardened worker job lifecycle validation, timeout, cancellation, active-job tracking, and completed-job idempotency.
 - TASK-017 removed the residual `multi_agent_analysis` workload, executor, tests, and documentation references; final gate passed.
@@ -27,25 +27,23 @@ Evidence: TASK-004 is the first explicitly recorded Phase 2 implementation task 
 - TASK-025 added worker processing readiness states.
 - TASK-026 added heartbeat identity/timestamp observability.
 - TASK-027 added configurable heartbeat freshness semantics so an old READY heartbeat becomes STALE without requiring another heartbeat call.
+- TASK-028 minimized unauthenticated worker health exposure.
+- TASK-029 hardened the authenticated worker job-request boundary and redacted internal errors.
+- TASK-030 enforced READY heartbeat state at the worker dispatch boundary.
+- TASK-031 added actionable internal queue/dispatcher/service observability while keeping public health minimal.
+- TASK-032 consolidated Telegram ownership under `services/telegram/`.
+- TASK-033 consolidated Decision/Risk ownership under canonical `analysis/` engines.
+- TASK-034 removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture and aligned `analysis/__init__.py` with the canonical analysis engines.
 
-### TASK-027 — VERIFIED
-PC Worker Heartbeat Freshness Contract.
+### TASK-034 — VERIFIED
+Analysis Architecture Ownership Audit.
 Evidence:
-- `1794b67fc5faa68ab8b1e6c38c11b8ea980a93cb` added `PC_WORKER_HEARTBEAT_MAX_AGE` with validation/default 120 seconds.
-- `6c2e9d12201ff2459883889fc2aaa4a54c4e5ba5` added dynamic freshness evaluation.
-- `d3fc220cc3da3a017b28fcc64ca0b67675ce9026` added freshness/settings regression coverage.
-- `316391aa4440d8ca2d31a0d11887bfa2482070b4` aligned the unconfigured readiness test contract.
-- Current-head CI contains seven completed push workflow runs; Production E2E Contract Gate `34709726285` and Production Activation Validation `34709726258` are successful.
-- Railway deployment status for the commit is successful.
-
-### TASK-028 — IMPLEMENTED / VERIFICATION PENDING
-Minimize Unauthenticated PC Worker Health Information Exposure.
-Evidence:
-- Prior `/health` exposed the full worker runtime health payload without authentication.
-- `c092704fc8fb924a16556ef85686021965662264` changed public `/health` to the minimal `{"status":"READY"}` liveness contract.
-- `8160737a2a13ec066c3eb9e9e48f5adce662b099` added regression coverage for the minimal public response.
-- Detailed worker identity remains available through authenticated `/heartbeat`.
-- Current-head CI verification is pending.
+- Repository-wide reference inspection showed no production-active callers for `analysis.adapters`, `analysis.registry`, or `analysis.orchestrator`.
+- `analysis.contracts.py` duplicated analysis-context ownership already represented by `models/market.py`.
+- Obsolete `analysis/adapters.py`, `analysis/contracts.py`, `analysis/registry.py`, `analysis/orchestrator.py`, and `tests/test_analysis_architecture.py` were removed.
+- `analysis/__init__.py` was updated to expose only canonical analysis contracts/engines.
+- Current head `6f4d49c6c0e82a9441b41af679c4709ae88c5c71` has seven completed push workflow runs; visible Test run `34715545781` and Production E2E Contract Gate `34715545700` are successful.
+- Railway commit status for the current head is successful.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -70,11 +68,11 @@ Status: NOT_STARTED
 
 ## Phase 10 — Security / Production Hardening
 Status: IN_PROGRESS
-Evidence: Dependency security audit and production runtime verification are complete; broader security hardening remains a later roadmap phase/task. TASK-028 is an evidence-backed security hardening item executed within the current Phase 2 worker boundary.
+Evidence: Dependency security audit and production runtime verification are complete; broader security hardening remains a later roadmap phase/task. Worker endpoint hardening was handled as evidence-backed Phase 2 work.
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green; TASK-028 adds a focused regression contract and awaits current-head CI verification.
+Evidence: Existing CI and production verification gates are green and TASK-034 has completed current-head CI evidence.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
