@@ -38,16 +38,30 @@ def test_worker_service_uses_configured_transport(monkeypatch):
                 "worker_id": "worker-1",
             })()
 
+        def heartbeat(self):
+            return {"status": "READY", "worker_id": "worker-1", "timestamp": "2026-09-12T00:00:00+00:00"}
+
     monkeypatch.setattr("services.worker.service.PCWorkerClient", FakeClient)
     service = WorkerProcessingService.from_settings(settings)
 
     result = asyncio.run(service.submit(JobRequest("online", "backtest")))
+    heartbeat = asyncio.run(service.heartbeat())
 
     assert result.status == "COMPLETED"
     assert result.output == {"ok": True}
+    assert heartbeat["status"] == "READY"
+    assert heartbeat["worker_id"] == "worker-1"
     assert captured == {
         "base_url": "http://worker.example",
         "token": "secret",
         "timeout": 12,
     }
     assert service.health()["configured"] is True
+
+
+def test_worker_service_heartbeat_is_controlled_when_unconfigured():
+    service = WorkerProcessingService.from_settings(Settings())
+
+    heartbeat = asyncio.run(service.heartbeat())
+
+    assert heartbeat == {"status": "WORKER_OFFLINE", "configured": False}
