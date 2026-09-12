@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import logging
-import os
 from pathlib import Path
+
+from config.settings import Settings
 
 
 LOG_DIR = Path("logs")
@@ -18,21 +19,14 @@ def setup_logger() -> logging.Logger:
     Configure application logger.
     """
 
-
     logger = logging.getLogger(
         "forex-signal-bot"
     )
 
-
     if logger.handlers:
         return logger
 
-
-    log_level = os.getenv(
-        "LOG_LEVEL",
-        "INFO",
-    ).upper()
-
+    log_level = Settings.load().log_level.upper()
 
     logger.setLevel(
         getattr(
@@ -42,7 +36,6 @@ def setup_logger() -> logging.Logger:
         )
     )
 
-
     formatter = logging.Formatter(
         "%(asctime)s | "
         "%(levelname)s | "
@@ -50,23 +43,18 @@ def setup_logger() -> logging.Logger:
         "%(message)s"
     )
 
-
     console_handler = logging.StreamHandler()
-
     console_handler.setFormatter(
         formatter
     )
-
 
     file_handler = logging.FileHandler(
         LOG_DIR / "app.log",
         encoding="utf-8",
     )
-
     file_handler.setFormatter(
         formatter
     )
-
 
     logger.addHandler(
         console_handler
@@ -75,6 +63,5 @@ def setup_logger() -> logging.Logger:
     logger.addHandler(
         file_handler
     )
-
 
     return logger
