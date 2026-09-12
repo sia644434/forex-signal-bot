@@ -3,8 +3,8 @@ import numpy as np
 from worker.executors import (
     backtest, candle_batch_analysis, deep_learning_training, ensemble_training,
     feature_engineering, gru_training, lstm_training, monte_carlo,
-    multitimeframe_analysis, multi_agent_analysis, random_forest_training,
-    timeseries_training, transformer_training, walk_forward,
+    multitimeframe_analysis, random_forest_training, timeseries_training,
+    transformer_training, walk_forward,
 )
 
 
@@ -50,9 +50,3 @@ def test_random_forest():
     result = random_forest_training({"X": x, "y": y, "n_estimators": 20})
     assert result["model"] == "random_forest"
     assert result["rmse"] >= 0
-
-
-def test_multi_agent_orchestration():
-    result = multi_agent_analysis({"analyses": [{"score": 1}, {"score": -0.5}, {"score": 0.2}]})
-    assert result["agents"] == 3
-    assert result["decision"] in {"BUY", "SELL", "WAIT"}
