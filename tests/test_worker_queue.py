@@ -119,6 +119,55 @@ def test_recovery_age_must_be_positive():
     queue.close()
 
 
+def test_expired_running_job_uses_its_own_timeout(tmp_path):
+    database = tmp_path / "worker_queue.sqlite3"
+    queue = WorkerQueue(str(database))
+    queue.enqueue(JobRequest("expired", "backtest", timeout_seconds=1))
+    claimed = queue.claim_next()
+    assert claimed is not None
+
+    import sqlite3
+    import time
+
+    connection = sqlite3.connect(database)
+    connection.execute("UPDATE worker_jobs SET claimed_at = ? WHERE job_id = ?", (time.time() - 10, "expired"))
+    connection.commit()
+    connection.close()
+
+    recovered = queue.recover_expired_running(grace_seconds=0)
+
+    assert [record.job_id for record in recovered] == ["expired"]
+    record = queue.get("expired")
+    assert record is not None
+    assert record.status == "PENDING"
+    queue.close()
+
+
+def test_expired_recovery_does_not_recover_long_running_job():
+    queue = WorkerQueue()
+    queue.enqueue(JobRequest("active", "backtest", timeout_seconds=3600))
+    queue.claim_next()
+
+    recovered = queue.recover_expired_running(grace_seconds=0)
+
+    assert recovered == []
+    record = queue.get("active")
+    assert record is not None
+    assert record.status == "RUNNING"
+    queue.close()
+
+
+def test_recovery_grace_must_not_be_negative():
+    queue = WorkerQueue()
+    try:
+        queue.recover_expired_running(-1)
+    except ValueError as exc:
+        assert str(exc) == "Recovery grace must not be negative"
+    else:
+        raise AssertionError("negative recovery grace must be rejected")
+    queue.close()
+
+
 def test_queue_persists_across_connections(tmp_path):
     database = tmp_path / "worker_queue.sqlite3"
     request = JobRequest("persisted", "backtest", payload={"bars": 500})
