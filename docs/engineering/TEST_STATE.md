@@ -2,7 +2,7 @@
 
 ## Baseline
 - Test inventory: VERIFIED from repository tree.
-- Latest verified executable architecture work: TASK-037.
+- Latest verified executable architecture work: TASK-043.
 - Result: PASS for the verified CI gates recorded below.
 - Local Execution: NOT_AVAILABLE through the GitHub Connector; no local execution claimed.
 - Coverage: Not measured in this session.
@@ -43,12 +43,18 @@
 - Railway commit status for the implementation commit is `success`.
 - No new live-smoke or restart claim is made solely from this source-repository checkpoint.
 
-## TASK-038 Verification
-- Status: IN PROGRESS.
-- Repository-wide `DataManager(` inspection found construction only in tests.
-- `ExplicitProviderManager` is referenced by `DataManager` and focused tests; no production caller was found.
-- `MarketDataService` still exposes compatibility paths for the lower-level manager, while production callers use the canonical engine path.
-- Required next verification: inspect all remaining imports, exports, documentation, tests, and compatibility surfaces before deciding whether consolidation/removal is safe.
+## TASK-038 through TASK-042 Verification
+- TASK-038 through TASK-042 were verified through their recorded implementation commits, focused regression coverage, and GitHub Actions/deployment evidence documented in `TASK_STATE.md`.
+
+## TASK-043 Verification
+- Implementation head: `abe8e0db1d98e3c7ac3d6ffd09330604463656d9`.
+- Production Readiness run `34721145994`: `completed / success`; lifecycle/persistence tests, production readiness tests, and full test suite all succeeded.
+- Production Activation Validation run `34721150684`: `completed / success`.
+- Production E2E Contract Gate run `34721147175`: `completed / success`; production E2E contract tests and full test suite succeeded.
+- Repository audit established that Telegram signal, callback, and tracker paths needed application-scoped `MarketDataService` reuse to preserve ProviderManager state across calls.
+- Regression coverage was added for the application-scoped lifetime/state contract.
+- Scanner intentionally remains outside this shared application service because it has a distinct provider-readiness selection contract.
+- No local execution is claimed.
 
 ## CI and Production Evidence
 - Existing production verification remains valid for the previously deployed commit `8bf2a77840b72add70b98f1b3a2187f85763f2`.
@@ -63,7 +69,7 @@ The previously deployed service returned a healthy readiness contract both befor
 - `services.telegram.critical = true`
 
 ## Verification Status
-Production readiness remains verified for the observed Railway deployment path. TASK-037 is CI/deployment-status verified; it does not claim a new live smoke or restart verification.
+Production readiness remains verified for the observed Railway deployment path. TASK-043 is CI/activation/E2E verified; it does not claim a new live smoke or restart verification.
 
 ## Next Verification
-Continue TASK-038 with evidence-backed inspection of the lower-level market-data compatibility surface. Do not remove contracts until references and tests prove they are dormant and safe to consolidate. Do not reintroduce agent/Ollama/local coding-agent architecture.
+TASK-044: inspect scanner `ProviderManager` lifetime and readiness semantics. Verify all `scan_market()` callers, scheduler/background lifecycle, provider configuration changes, and existing cooldown/cache tests before deciding whether any shared manager or other lifecycle change is justified. Do not reintroduce agent/Ollama/local coding-agent architecture.
