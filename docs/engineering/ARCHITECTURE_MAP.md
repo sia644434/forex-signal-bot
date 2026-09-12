@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The repository is a Python Forex trading-intelligence application with a Telegram interface, market-data/provider layer, modular Forex analysis engines, application AI/ML functionality, risk/decision components, a PC worker for heavy Forex processing, and deployment/CI infrastructure.
+The repository is a Python Forex trading-intelligence application with a Telegram interface, market-data/provider layer, modular Forex analysis engines, application AI/ML functionality, risk/decision components, a PC worker for heavy Forex processing, a durable worker processing queue, and deployment/CI infrastructure.
 
 ## Entry Points
 
@@ -63,13 +63,15 @@ The worker boundary contains only workloads that directly support the Forex plat
 
 Required future verification: worker authentication, registration/heartbeat, lifecycle, idempotency, retries, timeouts, cancellation, resource limits, and restart recovery.
 
-## Queue
+## Processing Queue
 
-A dedicated persistent queue implementation is not obvious from the baseline tree. Worker dispatcher/task lifecycle may provide part of this behavior. A persistent/idempotent queue model must be confirmed or introduced only where justified.
+`worker/queue.py` now provides a dependency-free SQLite-backed durable job queue contract for heavy Forex jobs. It persists `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`, and `TIMEOUT` states, orders pending jobs by priority, makes enqueue idempotent by `job_id`, and preserves records across process connections when a file-backed database is configured.
+
+The queue deliberately remains separate from network transport and worker execution. Dispatcher/transport integration and deployment-grade shared storage remain future verification work; the queue is not yet claimed as a production distributed broker.
 
 ## Persistence / Storage
 
-No obvious dedicated database/migration directory was identified in the baseline tree. `services/telegram/journal_store.py` and data/model layers exist. Persistence, retention, concurrency, and recovery require targeted inspection.
+`worker/queue.py` is the first explicit durable persistence boundary for worker job lifecycle state. Broader application persistence, retention, concurrency, and recovery remain subject to targeted inspection. `services/telegram/journal_store.py` and other data/model layers also exist.
 
 ## Configuration
 
@@ -85,7 +87,7 @@ Railway is an infrastructure target, not a core application architecture depende
 
 ## Testing
 
-`tests/` includes unit/contract/integration-style coverage for providers, freshness, market data, analysis, decision logic, worker, Telegram, lifecycle, and production readiness. Worker workload tests enforce that only supported Forex application workloads are registered.
+`tests/` includes unit/contract/integration-style coverage for providers, freshness, market data, analysis, decision logic, worker, Telegram, lifecycle, and production readiness. Worker workload tests enforce that only supported Forex application workloads are registered. `tests/test_worker_queue.py` covers queue idempotency, priority ordering, lifecycle transitions, terminal-state idempotency, cancellation/timeout, and persistence across connections.
 
 ## CI/CD
 
@@ -99,7 +101,7 @@ Primary boundaries are Telegram input, external market-data providers, AI provid
 
 Telegram request → Telegram handlers/router → application/service layer → market data → analysis/orchestration → decision/risk → safe result/NO TRADE → Telegram response.
 
-Heavy Forex application workloads may be dispatched separately through the PC Worker contracts/runtime.
+Heavy Forex application workloads may be enqueued through the worker processing queue and dispatched separately through the PC Worker contracts/runtime.
 
 ## Failure Flow — Target
 
@@ -107,9 +109,9 @@ Invalid/stale market data → safe degraded state / NO TRADE.
 Provider failure → centralized fallback/failover → quality/freshness validation.
 Optional analysis failure → isolate failure and preserve valid analyses where safe.
 Risk failure → fail closed.
-Worker timeout/failure → explicit lifecycle state + bounded recovery behavior where required.
+Queue/worker timeout/failure → explicit lifecycle state + bounded recovery behavior where required.
 External/AI failure → bounded degradation without unsafe decisions.
 
 ## Status
 
-The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions are being removed and verified. Remaining worker work is reliability, lifecycle, authentication, idempotency, timeout/recovery, and resource-boundary verification.
+The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions were removed and TASK-017 CI is green. A durable queue contract is now present, but distributed transport integration, worker authentication/heartbeat, and deployment-grade recovery remain unverified.
