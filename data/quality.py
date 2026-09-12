@@ -24,7 +24,9 @@ class DataQuality:
 
     @staticmethod
     def _validate_interval(interval: timedelta) -> None:
-        if not isinstance(interval, timedelta) or interval <= timedelta(0):
+        if not isinstance(interval, timedelta):
+            raise TypeError("interval must be a timedelta")
+        if interval <= timedelta(0):
             raise ValueError("interval must be greater than zero.")
 
     @staticmethod
@@ -52,8 +54,6 @@ class DataQuality:
             if delta <= timedelta(days=3, hours=6):
                 return True
 
-        # Short provider/session interruptions are treated as expected closure gaps.
-        # Larger gaps remain invalid and are reported below.
         return False
 
     @classmethod
