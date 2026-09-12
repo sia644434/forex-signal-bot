@@ -2,18 +2,22 @@
 
 ## Baseline
 - Test inventory: VERIFIED from repository tree.
-- Last Run: Not executed in this session.
-- Relevant Commit: `0cd1b6f476a9ee0e1ec2ae6c91801a0e8d638408`
-- Result: NOT_RUN
-- Failures: Not established.
-- Known Flaky Tests: Not established.
+- Latest Verified Commit: `066c50311d5de48cbfeea95e9998c6d3a99c46ee`
+- Result: PASS in GitHub Actions
+- Local Execution: NOT_AVAILABLE through the GitHub Connector; no local execution claimed.
 - Coverage: Not measured in this session.
 
-## Existing Test Areas
-The repository contains tests for analysis architecture/engines/indicators/scoring/market structure/supply-demand, provider contracts and errors, provider managers, market-data contracts/freshness/quality, decision logic, application lifecycle/final runtime, Telegram/localization/scanner, worker contracts/executors/integration/runtime, production activation/E2E/readiness, settings/logger/errors, and local coding-agent smoke behavior.
+## Latest CI Evidence
+- Test workflow run `34689532333` (`Test`, run #632): `completed / success`.
+- Test job `103542241504`: all listed steps completed successfully, including `Run full test suite`, `Application health test`, Telegram import, signal lifecycle import, and syntax check.
+- Final Integration Gate run `34689532294` (`Final Integration Gate`, run #124): `completed / success`.
+- Final gate job: compile, final runtime safety tests, and full test suite all completed successfully.
 
-## CI Evidence
-The latest commit has a combined status containing one successful context: `lavish-energy - forex-signal-bot`. This is recorded as CI evidence but not as proof that every workflow/job is green.
+## Contract Fixes Verified
+The previously observed baseline failures were addressed across data quality and Telegram scanner/localization behavior. The latest CI run provides execution evidence that the resulting commit passes the repository's configured test pipeline.
+
+## Remaining Verification Gap
+Production/live deployment health is still not established. CI success is not evidence of live Railway availability, external provider connectivity, restart recovery, or production configuration correctness.
 
 ## Next Verification
-Run/inspect the smallest relevant test set first. Then establish a broader regression matrix based on risk. Do not mark PASS without actual execution evidence.
+Inspect deployment/runtime workflows and configuration, identify the smallest concrete production-verification gap, then add or repair automated gates where evidence shows they are missing. Do not mark production PASS without actual runtime/deployment evidence.

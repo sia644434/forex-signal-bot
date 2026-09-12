@@ -4,16 +4,38 @@
 Phase: Phase 1 — Repository Audit
 Title: Establish persistent engineering memory and baseline architecture map
 Objective: Make the repository independently resumable across ChatGPT sessions and preserve verified baseline facts.
-Scope: `docs/engineering/PROJECT_STATE.md`, `ARCHITECTURE_MAP.md`, `PHASE_STATE.md`, `TASK_STATE.md`, `TEST_STATE.md`, `DECISIONS.md`, `CHANGELOG_ENGINEERING.md`
-Files Expected: The seven files above.
-Files Changed: The seven files above (to be committed in one atomic documentation checkpoint).
-Dependencies: Repository tree and Git/CI metadata.
-Implementation Status: IN_PROGRESS until commit is created and verified.
-Test Status: Documentation/state consistency review only; no runtime test executed.
-CI Status: Latest combined status context successful; workflow-level verification pending.
-Known Issues: GitHub Connector does not expose a local working tree, so uncommitted local edits cannot be independently determined.
-Next Action: Commit the persistent memory files, verify the resulting commit and CI, then start targeted baseline verification of the highest-risk subsystem.
-Checkpoint: Baseline repository reconnaissance completed on 2026-09-12.
+Implementation Status: COMPLETE
+Test Status: Documentation/state consistency established.
+CI Status: Repository CI later verified the stabilized code path.
+Checkpoint: Completed 2026-09-12.
+
+## TASK-002
+Phase: Phase 1 — Baseline Stabilization
+Title: Restore failing data-quality and scanner contracts
+Objective: Remove the five baseline contract regressions without broad rewrites.
+Scope: `data/quality.py`, `services/telegram/scanner.py`, `services/telegram/i18n.py`
+Implementation Status: COMPLETE
+Test Status: PASS via GitHub Actions on `066c503`.
+CI Evidence:
+- Test run `34689532333`: completed/success.
+- Final Integration Gate run `34689532294`: completed/success.
+- Test job included full suite, application health, Telegram import, signal lifecycle import, and syntax checks; all completed successfully.
+Changes:
+- `6ccb77d` — fix: enforce market data quality contract
+- `7ebb648` — fix: localize and sanitize scanner output
+- `5573f77` — fix: complete scanner localization strings
+- `066c503` — fix: harden scanner result rendering contract
+Checkpoint: Verified 2026-09-12.
+
+## TASK-003
+Phase: Phase 1 — Production Verification / Reliability Hardening
+Title: Establish deployment and runtime verification evidence
+Objective: Determine the concrete gap between green CI and actual production readiness, then close it with the smallest evidence-backed changes.
+Implementation Status: IN_PROGRESS
+Test Status: CI baseline is green; live runtime verification remains outstanding.
+CI Status: Green on `066c503` for Test and Final Integration Gate.
+Known Blockers: No local runtime through GitHub Connector; private deployment/runtime credentials unavailable for independent live verification.
+Next Action: Inspect deployment workflows, health endpoints, Docker/Railway startup behavior, configuration validation, and automated production-readiness gates. Add/repair tests or gates where a concrete gap is found; never fabricate live health.
 
 ## Active Task Selection Rule
-After TASK-001, prioritize concrete correctness/reliability/security blockers evidenced by code, tests, or CI rather than adding new features speculatively.
+Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
