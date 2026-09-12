@@ -222,6 +222,30 @@ Evidence:
 - A follow-up contract-test compatibility fix was committed as `e2f7f189b84d611e2806bc050ebe347766f77f4a`; all observed Actions gates for that head completed successfully.
 Checkpoint: Verified 2026-09-12.
 
+## TASK-043
+Phase: Phase 2 — Core Architecture / Reliability
+Title: MarketDataService Lifetime and Application Composition Hardening
+Implementation Status: VERIFIED
+Test Status: PASS — Production Readiness run `34721145994`, Production Activation Validation run `34721150684`, and Production E2E Contract Gate run `34721147175` completed successfully for head `abe8e0db1d98e3c7ac3d6ffd09330604463656d9`.
+Evidence:
+- Telegram callers were audited for repeated `MarketDataService()` construction that recreated `MarketDataEngine` / `ProviderManager` state.
+- A single application-scoped `MarketDataService` is now composed and reused by Telegram signal, callback, and tracker paths.
+- Scanner remains intentionally separate because its explicit provider-readiness selection is a distinct contract.
+- Regression coverage was added for application-scoped market-data lifetime/state reuse.
+- ADR-008 records the lifetime decision.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-044
+Phase: Phase 2 — Core Architecture / Reliability
+Title: Scanner ProviderManager Lifetime and Readiness Boundary Audit
+Implementation Status: IN PROGRESS
+Objective: Determine whether the scanner's per-invocation `ProviderManager` construction is intentional and correct, or whether repeated scans unnecessarily discard provider cache/cooldown/failure state. Preserve the scanner's runtime provider-readiness semantics and do not introduce shared state until repository call frequency, lifecycle, configuration-change behavior, and tests justify it.
+Initial Evidence:
+- `scan_market()` currently calls `_build_provider_manager()` on every invocation.
+- `_build_provider_manager()` derives configured providers through `ProviderFactory` and creates a fresh `ProviderManager`.
+- `callbacks.py` invokes `scan_market()` directly, so repeated user scans can create fresh manager state.
+- The next audit must verify all current `scan_market()` callers, scheduler/background usage, provider configuration lifecycle, and existing cooldown/cache contract tests before deciding on any code change.
+
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
 - #45 — PC Worker readiness enforcement at job-dispatch boundary — implemented as TASK-030.
