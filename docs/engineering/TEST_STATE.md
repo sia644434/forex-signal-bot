@@ -2,7 +2,7 @@
 
 ## Baseline
 - Test inventory: VERIFIED from repository tree.
-- Latest verified architecture work: TASK-034.
+- Latest verified architecture work: TASK-035.
 - Result: PASS for the verified CI gates recorded below.
 - Local Execution: NOT_AVAILABLE through the GitHub Connector; no local execution claimed.
 - Coverage: Not measured in this session.
@@ -22,18 +22,17 @@
 - Authenticated heartbeat, worker readiness, heartbeat observability, and configurable heartbeat freshness were implemented and regression-tested.
 - Recorded current-head CI and deployment evidence remained green for the verified path.
 
-## TASK-028 through TASK-033 Verification
-- Worker public-health minimization, authenticated job-request hardening, readiness-gated dispatch, internal queue observability, Telegram ownership consolidation, and Decision/Risk/Strategy ownership consolidation were verified through their recorded repository and CI evidence.
+## TASK-028 through TASK-034 Verification
+- Worker public-health minimization, authenticated job-request hardening, readiness-gated dispatch, internal queue observability, Telegram ownership consolidation, Decision/Risk/Strategy ownership consolidation, and Analysis ownership consolidation were verified through their recorded repository and CI evidence.
 
-## TASK-034 Verification
-- Implementation head: `6f4d49c6c0e82a9441b41af679c4709ae88c5c71`.
-- Obsolete analysis architecture was removed: `analysis/adapters.py`, `analysis/contracts.py`, `analysis/registry.py`, `analysis/orchestrator.py`, and `tests/test_analysis_architecture.py`.
-- `analysis/__init__.py` was aligned with canonical analysis exports.
-- Current-head Actions reports seven completed push workflow runs.
-- Test run `34715545781`: `completed / success`.
-- Production E2E Contract Gate `34715545700`: `completed / success`.
-- Commit-level Railway status: `success`.
-- The current-head workflow set was observed as completed; no local execution is claimed.
+## TASK-035 Verification
+- Audit head before documentation checkpoint: `6f4d49c6c0e82a9441b41af679c4709ae88c5c71`.
+- Repository-wide searches found no production/test construction of `AIOrchestrator`, `AIProviderManager`, `AIContextBuilder`, or `OpenAIProvider`.
+- `core/application.py` registers only `TelegramService` and `WorkerProcessingService`; no AI service is composed.
+- The `ai/` package is therefore classified as dormant/unwired future Phase 6 architecture, not an active production trading path.
+- No executable code was changed for TASK-035; only architecture/state documentation was updated.
+- The preceding TASK-034 head had successful current-head CI evidence and Railway status.
+- No new production deployment or runtime verification is claimed for TASK-035.
 
 ## CI and Production Evidence
 - Existing production verification remains valid for the previously deployed commit `8bf2a77840b72add70b98f1b3a2187f85763f2`.
@@ -48,7 +47,7 @@ The previously deployed service returned a healthy readiness contract both befor
 - `services.telegram.critical = true`
 
 ## Verification Status
-Production readiness remains verified for the observed Railway deployment path. TASK-034 is CI-verified on current head and has successful Railway commit status.
+Production readiness remains verified for the observed Railway deployment path. TASK-034 remains CI-verified. TASK-035 is an evidence-backed architecture audit/documentation checkpoint with no executable-code changes.
 
 ## Next Verification
 Select the next evidence-backed Phase 2 architecture task from repository inspection. Do not invent speculative work or reintroduce agent/Ollama/local coding-agent architecture.
