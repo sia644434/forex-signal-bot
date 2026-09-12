@@ -107,5 +107,23 @@ Implementation:
 Safety rule: a job is recovered only after its own `timeout_seconds` plus the recovery grace period has elapsed, so legitimate long-running Forex jobs are not recovered merely because a global age threshold was reached.
 Test Status: PENDING current-head GitHub Actions verification.
 
+## TASK-021
+Phase: Phase 2 — Core Architecture
+Title: Forex Worker Queue Persistence Configuration Boundary
+Objective: Make queue database persistence and crash-recovery grace explicitly configurable through the central Forex Settings boundary, while keeping queue construction deterministic and avoiding any agent/coding-agent architecture.
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Relevant Files:
+- `config/settings.py`
+- `worker/dispatcher.py`
+- `tests/test_settings.py`
+- `tests/test_pc_worker_integration.py`
+Implementation:
+- `0cb4550608059c6c4c56cb4f924a55dbdad30e06` — added `WORKER_QUEUE_DATABASE_PATH` and `WORKER_QUEUE_RECOVERY_GRACE_SECONDS` to central Settings with validation.
+- `d86138b316b420eb8b7b82fca9afc27c4834ba4f` — added `WorkerDispatcher.from_settings()` so queue construction uses the central configuration boundary and the configured recovery grace.
+- `7d01ae73e4b73fd8f10e8bf1efb7d84df6e079be` — added settings validation/loading regression coverage.
+- `2d4bdf87bf7f4c0e2758ce4e34af201e76d228e2` — added settings-backed dispatcher integration coverage.
+Safety rule: the queue path is explicit configuration rather than hidden runtime state; production deployment can point it at persistent storage without changing application code.
+Test Status: PENDING current-head GitHub Actions verification.
+
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
