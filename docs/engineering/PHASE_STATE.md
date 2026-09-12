@@ -6,64 +6,40 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-037 — Dormant Direct OANDA Price Surface Audit
+Active Task: TASK-038 — Market Data Lower-Level Facade / Alternate Ownership Audit
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
-
-### Phase 2 Scope Before TASK-004
-Status: AUDITED
-Evidence: TASK-004 is the first explicitly recorded Phase 2 implementation task after TASK-003. No independent historical pre-TASK-004 task contract was recoverable from persistent engineering state, so no missing historical task is being invented.
 
 ### Completed Evidence
 - TASK-004 through TASK-013 were verified and closed through GitHub Actions.
 - TASK-014 removed the accidental local coding-agent/Ollama worker architecture and verified the application-only worker boundary.
 - TASK-015 hardened worker job lifecycle validation, timeout, cancellation, active-job tracking, and completed-job idempotency.
-- TASK-017 removed the residual `multi_agent_analysis` workload, executor, tests, and documentation references; final gate passed.
-- TASK-018 added the durable SQLite-backed Forex worker queue and dispatcher integration.
-- TASK-019 and TASK-020 added and activated timeout-aware crash recovery.
-- TASK-021 centralized queue persistence/recovery configuration.
-- TASK-022 wired the heavy Forex worker through the application service boundary as an optional non-critical service.
-- TASK-023 audited the real heavy-Forex routing boundary without inventing a speculative caller while Phase 9 remains unstarted.
-- TASK-024 added authenticated worker heartbeat transport.
-- TASK-025 added worker processing readiness states.
-- TASK-026 added heartbeat identity/timestamp observability.
-- TASK-027 added configurable heartbeat freshness semantics so an old READY heartbeat becomes STALE without requiring another heartbeat call.
-- TASK-028 minimized unauthenticated worker health exposure.
-- TASK-029 hardened the authenticated worker job-request boundary and redacted internal errors.
-- TASK-030 enforced READY heartbeat state at the worker dispatch boundary.
-- TASK-031 added actionable internal queue/dispatcher/service observability while keeping public health minimal.
+- TASK-017 removed the residual `multi_agent_analysis` workload, executor, tests, and documentation references.
+- TASK-018 through TASK-023 established durable Forex worker queue, crash recovery, persistence configuration, application service composition, and the real heavy-Forex routing boundary without speculative callers.
+- TASK-024 through TASK-031 established authenticated heartbeat, readiness, freshness, least-privilege health exposure, authenticated job requests, readiness-gated dispatch, and worker observability.
 - TASK-032 consolidated Telegram ownership under `services/telegram/`.
 - TASK-033 consolidated Decision/Risk ownership under canonical `analysis/` engines.
-- TASK-034 removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture and aligned `analysis/__init__.py` with the canonical analysis engines.
-- TASK-035 audited the `ai/` package and established that it is dormant/unwired, with no production caller; it is reserved for the later Phase 6 AI/ML scope and is not an active trading architecture.
-- TASK-036 consolidated production Telegram market-data candle retrieval behind the canonical `MarketDataService` application boundary while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing.
+- TASK-034 removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture.
+- TASK-035 audited the `ai/` package and established that it is dormant/unwired future Phase 6 capability and not an active trading architecture.
+- TASK-036 consolidated production Telegram market-data candle retrieval behind `MarketDataService` while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing.
+- TASK-037 removed the dormant direct OANDA price surface after repository-wide reference inspection found no production caller. CI and Railway status were successful for the verified implementation commit.
 
-### TASK-034 — VERIFIED
-Analysis Architecture Ownership Audit.
+### TASK-037 — VERIFIED
+Dormant Direct OANDA Price Surface Audit.
 Evidence:
-- Repository-wide reference inspection showed no production-active callers for `analysis.adapters`, `analysis.registry`, or `analysis.orchestrator`.
-- `analysis.contracts.py` duplicated analysis-context ownership already represented by `models/market.py`.
-- Obsolete `analysis/adapters.py`, `analysis/contracts.py`, `analysis/registry.py`, `analysis/orchestrator.py`, and `tests/test_analysis_architecture.py` were removed.
-- `analysis/__init__.py` was updated to expose only canonical analysis contracts/engines.
-- Current head `6f4d49c6c0e82a9441b41af679c4709ae88c5c71` had completed CI evidence and successful Railway status.
+- `get_latest_oanda_price` had no production caller.
+- The direct OANDA price method and its now-unused factory dependency were removed.
+- The canonical OANDA candle path remains intact.
+- GitHub Actions run `34719290035` completed successfully for commit `65ea6150fa23895ad5655e59dbc9349945e67f96`.
+- Railway commit status for that commit is `success`.
 
-### TASK-035 — VERIFIED
-AI Architecture Ownership Audit.
+### TASK-038 — IN PROGRESS
+Market Data Lower-Level Facade / Alternate Ownership Audit.
+Objective: Verify whether `DataManager`, `ExplicitProviderManager`, and their compatibility paths are still required now that `MarketDataService` is the canonical application-facing boundary.
 Evidence:
-- Repository-wide searches found no production or test caller constructing `AIOrchestrator`, `AIProviderManager`, `AIContextBuilder`, or `OpenAIProvider`.
-- `ai/orchestrator.py`, `ai/provider.py`, `ai/context.py`, `ai/prompt_builder.py`, `ai/parser.py`, and `ai/providers/openai_provider.py` form a self-contained future AI pipeline, but no production composition root registers it.
-- `core/application.py` registers only `TelegramService` and `WorkerProcessingService`.
-- AI settings remain referenced by configuration/production-readiness scaffolding, but that does not establish an active trading caller.
-- Decision: preserve the dormant package for Phase 6 rather than deleting it or wiring it into the current Forex decision path. Any future activation requires a dedicated evidence-backed task, explicit callers, failure isolation, security review, and tests.
-- `ARCHITECTURE_MAP.md` records the dormant ownership boundary.
-- TASK-035 changed engineering documentation only; no executable production code was modified.
-
-### TASK-036 — VERIFIED
-Market Data Ownership Consolidation.
-Evidence:
-- `services/market_data/service.py` is the canonical application-facing market-data facade.
-- Production Telegram candle retrieval in signal, tracker, scanner, and callbacks routes through `MarketDataService`.
-- Scanner retains explicit `ProviderManager` selection semantics and injects it into the engine supplied to the service; it does not bypass the service for candle retrieval.
-- Current head `6174463174d8c6c4ad513896ad7ff96847e85edc` has successful Railway commit status and completed TASK-036 CI gates.
+- `DataManager(` repository search found construction only in tests.
+- `ExplicitProviderManager` is referenced by `DataManager` and focused tests, with no production caller found.
+- `MarketDataService` still supports a lower-level `DataManager` path that production callers do not use.
+Constraint: Do not delete compatibility contracts until repository references, tests, and externally meaningful behavior are fully checked.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -93,7 +69,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-036 introduced executable market-data ownership changes and its CI gates were completed successfully.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-037's full test workflow completed successfully.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
