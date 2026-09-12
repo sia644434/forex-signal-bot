@@ -64,11 +64,12 @@ Test Status: PASS — combined GitHub status for `e2833498fce78d34d9e8e4084afef0
 Known Limitation: The current runtime timeout boundary directly wraps asynchronous handlers. Synchronous blocking handlers are not independently preempted by `asyncio.wait_for` and require a separate execution/resource-boundary decision.
 Checkpoint: Verified 2026-09-12.
 
-## TASK-016
+## TASK-016 — REMOVED
 Phase: Phase 2 — Core Architecture
 Title: Worker Retry and Failure Lifecycle
-Implementation Status: TODO
-Objective: Establish bounded retry semantics and explicit terminal failure handling for timeout/failure paths without reintroducing uncontrolled background execution.
+Status: REMOVED FROM ROADMAP
+Reason: This task was carried forward from the previous worker/agent-oriented planning path and is not a standalone requirement established by the final Forex-only Master Prompt. No implementation was performed and no retry architecture is being introduced solely to satisfy this legacy task.
+Checkpoint: Removed 2026-09-12.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
