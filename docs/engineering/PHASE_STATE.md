@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-018 — Durable Forex Worker Processing Queue Contract
+Active Task: TASK-028 — next evidence-backed Phase 2 gap selection
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Phase 2 Scope Before TASK-004
@@ -17,21 +17,26 @@ Evidence: TASK-004 is the first explicitly recorded Phase 2 implementation task 
 - TASK-004 through TASK-013 were verified and closed through GitHub Actions and repository checkpoints.
 - TASK-014 removed the accidental local coding-agent/Ollama worker architecture and verified the application-only worker boundary.
 - TASK-015 hardened worker job lifecycle validation, timeout, cancellation, active-job tracking, and completed-job idempotency.
-- TASK-017 removed the residual `multi_agent_analysis` workload, executor, tests, and documentation references. Final-gate run `34704118418`, job `103580948161`, completed successfully with compile, runtime safety tests, full suite, and production Docker build passing.
+- TASK-017 removed the residual `multi_agent_analysis` workload, executor, tests, and documentation references; final gate passed.
+- TASK-018 added the durable SQLite-backed Forex worker queue and dispatcher integration.
+- TASK-019 and TASK-020 added and activated timeout-aware crash recovery.
+- TASK-021 centralized queue persistence/recovery configuration.
+- TASK-022 wired the heavy Forex worker through the application service boundary as an optional non-critical service.
+- TASK-023 audited the real heavy-Forex routing boundary without inventing a speculative caller while Phase 9 remains unstarted.
+- TASK-024 added authenticated worker heartbeat transport.
+- TASK-025 added worker processing readiness states.
+- TASK-026 added heartbeat identity/timestamp observability.
+- TASK-027 added configurable heartbeat freshness semantics so an old READY heartbeat becomes STALE without requiring another heartbeat call.
 
-### TASK-018 — TESTING
-Durable Forex Worker Processing Queue Contract.
-
-Evidence implemented:
-- `worker/queue.py` adds a dependency-free SQLite-backed durable queue boundary.
-- Queue states are explicit: `PENDING`, `RUNNING`, `COMPLETED`, `FAILED`, `CANCELLED`, `TIMEOUT`.
-- Enqueue is idempotent by `job_id`.
-- Pending jobs are priority ordered.
-- Terminal transitions are idempotent and persisted.
-- File-backed queue state survives a connection/process boundary.
-- `tests/test_worker_queue.py` covers these contracts.
-
-Known limitation: the queue is not yet claimed as a production distributed broker. Shared storage, transport/dispatcher integration, multi-process recovery semantics, worker authentication/heartbeat, and deployment verification remain future work.
+### TASK-027 — VERIFIED
+PC Worker Heartbeat Freshness Contract.
+Evidence:
+- `1794b67fc5faa68ab8b1e6c38c11b8ea980a93cb` added `PC_WORKER_HEARTBEAT_MAX_AGE` with validation/default 120 seconds.
+- `6c2e9d12201ff2459883889fc2aaa4a54c4e5ba5` added dynamic freshness evaluation.
+- `d3fc220cc3da3a017b28fcc64ca0b67675ce9026` added freshness/settings regression coverage.
+- `316391aa4440d8ca2d31a0d11887bfa2482070b4` aligned the unconfigured readiness test contract.
+- Current-head CI contains seven completed push workflow runs; Production E2E Contract Gate `34709726285` and Production Activation Validation `34709726258` are successful.
+- Railway deployment status for the commit is successful.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -60,7 +65,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green; current Phase 2 queue contract is awaiting fresh CI verification.
+Evidence: Existing CI and production verification gates are green; current Phase 2 worker heartbeat freshness contract is CI-verified.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
