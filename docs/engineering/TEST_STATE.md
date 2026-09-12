@@ -2,7 +2,7 @@
 
 ## Baseline
 - Test inventory: VERIFIED from repository tree.
-- Latest Verified Code Commit: `957a156761638aa711b9518476cbb72c2bcbe89c`
+- Latest Verified Code Commit: `e2833498fce78d34d9e8e4084afef02faab8d284`.
 - Result: PASS in GitHub Actions.
 - Local Execution: NOT_AVAILABLE through the GitHub Connector; no local execution claimed.
 - Coverage: Not measured in this session.
@@ -12,8 +12,13 @@
 - Test job `103574003447`: success.
 - The job ran lifecycle/persistence tests, the full test suite, application health/import checks, and syntax checks.
 - Security Audit `34701517670` for the same head: `completed / success`.
-- The focused worker regression now asserts `coding_agent` is absent from `HEAVY_JOB_TYPES` and worker limited workloads.
-- Production Activation Validation and other production gates continued successfully on the subsequent documentation checkpoint commits; no runtime production verification is claimed for the worker-scope code change itself.
+- The focused worker regression asserts `coding_agent` is absent from `HEAVY_JOB_TYPES` and worker limited workloads.
+- No runtime production verification is claimed for the worker-scope code change itself.
+
+## TASK-015 Verification
+- Test commit `e2833498fce78d34d9e8e4084afef02faab8d284`: combined GitHub status `success`.
+- Worker lifecycle regression coverage includes validation, completed-job idempotency, active duplicate handling, async timeout, cancellation propagation, and worker health tracking.
+- No TASK-016 implementation or retry-specific test suite exists because TASK-016 was removed as an inherited non-Forex planning task.
 
 ## CI and Production Evidence
 - Existing production verification remains valid for the previously deployed commit `8bf2a77840b72add70b98f1b3a2187f85763f2`.
@@ -36,4 +41,4 @@ The previous gap between CI and live production evidence is closed for the Railw
 Production readiness is verified for the observed deployment path. Future production changes must repeat the live smoke and recovery checks when the change can affect runtime health, deployment, or critical services.
 
 ## Next Verification
-Continue Phase 2 with evidence-based worker reliability/configuration contracts. Treat legacy local-agent/Ollama artifacts as separate cleanup work; do not use them as evidence that the active trading platform depends on Ollama.
+Revisit the skipped pre-TASK-004 Phase 2 scope and identify the next concrete Forex-only architecture gap. Do not reintroduce TASK-016 or any other inherited agent-oriented task unless an independent Forex requirement is evidenced by the repository.
