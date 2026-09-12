@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as dt
 import hashlib
 import hmac
 import json
@@ -43,10 +44,17 @@ class WorkerHTTPServer:
                 self._json(200, runtime_ref.health())
 
             def do_POST(self) -> None:  # noqa: N802
-                if self.path != "/jobs":
+                if self.path not in {"/jobs", "/heartbeat"}:
                     self._json(404, {"error": "not_found"}); return
                 if not self._authorized():
                     self._json(401, {"error": "unauthorized"}); return
+                if self.path == "/heartbeat":
+                    self._json(200, {
+                        "status": "READY",
+                        "worker_id": runtime_ref.worker_id,
+                        "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+                    })
+                    return
                 try:
                     length = int(self.headers.get("Content-Length", "0"))
                     if length > 5_000_000:
