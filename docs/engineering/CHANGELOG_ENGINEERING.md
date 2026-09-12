@@ -21,3 +21,8 @@
 - Verified the current-head CI path for TASK-027: seven completed push workflow runs are registered, with Production E2E Contract Gate `34709726285` and Production Activation Validation `34709726258` explicitly successful.
 - Synchronized `TASK_STATE.md`, `PROJECT_STATE.md`, `PHASE_STATE.md`, and `TEST_STATE.md` through TASK-027.
 - Added ADR-005 requiring engineering state synchronization after every verified task/state-changing checkpoint.
+- TASK-028: identified that unauthenticated worker `/health` exposed detailed runtime metadata.
+- TASK-028: changed public `/health` to the minimal `{"status":"READY"}` liveness contract in `c092704fc8fb924a16556ef85686021965662264`.
+- TASK-028: added focused regression coverage in `8160737a2a13ec066c3eb9e9e48f5adce662b099`.
+- TASK-028: retained detailed worker identity/readiness behind authenticated `/heartbeat` and recorded ADR-006 for the least-privilege boundary.
+- Synchronized `TASK_STATE.md`, `PROJECT_STATE.md`, `PHASE_STATE.md`, and `TEST_STATE.md` to record TASK-028 as implementation-complete with CI verification pending.
