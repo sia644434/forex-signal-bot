@@ -42,3 +42,38 @@ def test_worker_queue_settings_reject_invalid_values(monkeypatch):
         assert "WORKER_QUEUE_RECOVERY_GRACE_SECONDS" in str(exc)
     else:
         raise AssertionError("Expected negative recovery grace to be rejected")
+
+
+def test_pc_worker_transport_settings_are_loaded(monkeypatch):
+    monkeypatch.setenv("PC_WORKER_URL", "http://192.168.1.3:8765")
+    monkeypatch.setenv("PC_WORKER_TOKEN", "worker-secret")
+    monkeypatch.setenv("PC_WORKER_TIMEOUT", "45")
+
+    settings = Settings.load()
+
+    assert settings.pc_worker_url == "http://192.168.1.3:8765"
+    assert settings.pc_worker_token == "worker-secret"
+    assert settings.pc_worker_timeout == 45
+
+
+def test_pc_worker_url_requires_token(monkeypatch):
+    monkeypatch.setenv("PC_WORKER_URL", "http://worker.example")
+    monkeypatch.delenv("PC_WORKER_TOKEN", raising=False)
+
+    try:
+        Settings.load()
+    except ValueError as exc:
+        assert "PC_WORKER_TOKEN" in str(exc)
+    else:
+        raise AssertionError("Expected configured worker URL without token to be rejected")
+
+
+def test_pc_worker_timeout_must_be_positive(monkeypatch):
+    monkeypatch.setenv("PC_WORKER_TIMEOUT", "0")
+
+    try:
+        Settings.load()
+    except ValueError as exc:
+        assert "PC_WORKER_TIMEOUT" in str(exc)
+    else:
+        raise AssertionError("Expected non-positive PC worker timeout to be rejected")
