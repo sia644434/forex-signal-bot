@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Awaitable, Callable
 
 from analysis.full_engine import FullAnalysisEngine
-from data.market_data import MarketDataEngine
+from services.market_data.service import MarketDataService
 
 
 @dataclass
@@ -62,7 +62,7 @@ def _target_event(item: TrackedSignal, high: float, low: float) -> str | None:
 
 
 async def refresh_tracking(item: TrackedSignal, notify: Callable[[str], Awaitable[None]]) -> TrackedSignal:
-    candles = await MarketDataEngine().get_candles_list(item.symbol, item.timeframe, 300)
+    candles = await MarketDataService().get_candles_list(item.symbol, item.timeframe, 300)
     if not candles:
         return item
     latest = candles[-1]
