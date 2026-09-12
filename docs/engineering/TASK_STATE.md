@@ -120,12 +120,25 @@ Phase: Phase 2 — Core Architecture
 Title: Configuration Boundary Consistency Hardening
 Objective: Audit and harden remaining direct environment-variable access at core/application boundaries so configuration ownership is explicit and behavior remains backward-compatible.
 Implementation Status: IN_PROGRESS
-Test Status: PENDING TARGETED INSPECTION / CI
+Test Status: PENDING CI VERIFICATION
 Evidence:
-- `config.settings` is established as the central configuration source of truth.
-- Repository search still finds direct `os.getenv()` usage in core/application, core/logger, Telegram legacy paths, worker runtime/server, and model bootstrap paths.
-- Not all direct environment access is necessarily a defect; TASK-013 will classify ownership first and change only evidenced boundary inconsistencies.
-Next exact action: inspect the highest-impact core/application and logging configuration consumers, map contracts, then add the smallest focused tests/change justified by evidence.
+- `config.settings` is the central configuration source of truth and already owns `LOG_LEVEL` parsing/validation.
+- `core/application.py` directly consumed `HEALTH_HOST` and `PORT`; these are now represented as validated `health_host` / `health_port` settings and consumed through `Settings.load()`.
+- `core/logger.py` and legacy `utils/logger.py` both directly consumed `LOG_LEVEL`; both now consume the validated `Settings.load().log_level` value instead.
+- `utils.logger.get_logger` has no production call sites found by repository search beyond `tests/test_logger.py`, so the legacy API was preserved rather than removed.
+Implementation:
+- `7a19bbe636711f6d4ac2fcb9cffa8c8c03ea3507` — `fix: centralize application boundary settings`.
+- `a2b8c5b5711cfd0bfce67fb37c019a127fff6df7` — `fix: route application settings through config`.
+- `7a18734be1edca00ac7479194199ebbacaeb99ac` — `fix: centralize core logger configuration`.
+- `0e6f25a0cf93dcb63623abc11c1b16224f74aaaf` — `fix: centralize legacy logger configuration`.
+- `6a6b8af37b27e4af9bda3148e1b8e9e192f3722a` — `test: cover application boundary settings`.
+- `d400d817d6c5f1fd386d6c8476dcb06f2aee08cc` — `test: isolate core logger configuration`.
+Tests added/extended:
+- `Settings.load()` contract now covers `HEALTH_HOST` and `PORT`.
+- `Settings` validation now rejects invalid health host/port boundaries.
+- Core and legacy logger contracts verify `LOG_LEVEL` is consumed through centralized settings.
+Verification: CI has not yet reported a status for head `d400d817d6c5f1fd386d6c8476dcb06f2aee08cc`; no local execution claimed.
+Next exact action: inspect the new CI run and, if green, perform regression/diff review before closing TASK-013 or moving to the next evidenced configuration boundary.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
