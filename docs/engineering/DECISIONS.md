@@ -43,3 +43,11 @@ Chosen Solution: After each verified task or state-changing checkpoint, update t
 Reason: Prevents `TASK_STATE.md`, `PROJECT_STATE.md`, `PHASE_STATE.md`, `TEST_STATE.md`, and the engineering changelog from becoming stale relative to code and CI evidence.
 Trade-offs: Adds small documentation commits after implementation/verification checkpoints, but substantially improves recoverability and prevents contradictory task selection.
 Affected Components: `docs/engineering/*`.
+
+## ADR-006 — Keep public worker liveness minimal
+Date: 2026-09-12
+Problem: The PC Worker's unauthenticated `GET /health` endpoint exposed detailed runtime metadata including worker identity, host/platform information, Python version, capabilities, registered jobs, and active jobs.
+Chosen Solution: Keep `/health` unauthenticated for simple liveness checks but return only `{"status":"READY"}`. Retain detailed worker identity/readiness information behind the authenticated `/heartbeat` transport.
+Reason: This preserves compatibility with simple health probes while applying least-privilege information exposure.
+Consequences: Consumers needing worker identity or detailed readiness must use the authenticated heartbeat contract.
+Affected Components: `worker/server.py`, `tests/test_pc_worker_health_security.py`, worker monitoring/integration consumers.
