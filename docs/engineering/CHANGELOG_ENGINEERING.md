@@ -26,3 +26,19 @@
 - TASK-028: added focused regression coverage in `8160737a2a13ec066c3eb9e9e48f5adce662b099`.
 - TASK-028: retained detailed worker identity/readiness behind authenticated `/heartbeat` and recorded ADR-006 for the least-privilege boundary.
 - Synchronized `TASK_STATE.md`, `PROJECT_STATE.md`, `PHASE_STATE.md`, and `TEST_STATE.md` to record TASK-028 as implementation-complete with CI verification pending.
+- TASK-029: hardened authenticated worker job requests by requiring JSON content type, rejecting empty/oversized bodies, returning generic invalid-request responses for malformed input, and redacting internal exception details.
+- TASK-029: added regression coverage for non-JSON requests and internal error redaction; TASK-029 was verified by the repository's current-head checks and Issue #44 was closed as completed.
+- TASK-030: enforced fresh authenticated worker readiness at the heavy-job dispatch boundary; configured workers in `UNKNOWN`, `STALE`, or `WORKER_OFFLINE` state fail closed with controlled `WORKER_OFFLINE` results, while unconfigured workers do not enqueue jobs.
+- TASK-030: added regression coverage for readiness-gated dispatch and synchronized project/task state.
+- TASK-031: added queue aggregate metrics, dispatcher health, and service-level worker operational health while keeping payload/result/error contents out of public health exposure.
+- TASK-031: fixed queue metric test priority assumptions and service-test isolation, then hardened unconfigured dispatch to avoid queue insertion.
+- TASK-032: consolidated Telegram runtime ownership under `services/telegram/` and removed the inactive legacy `bot/`, `telegram_bot/`, and top-level `handlers/` trees after repository-wide reference inspection.
+- TASK-033: removed unused duplicate decision/risk/strategy trees and documented `analysis/decision_engine.py` and `analysis/risk_engine.py` as canonical production owners.
+- TASK-034: removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture and obsolete architecture test; aligned `analysis/__init__.py` with canonical analysis exports.
+- TASK-035: audited the `ai/` package and classified it as dormant/unwired future Phase 6 capability. No production AI caller or AI service composition was introduced.
+- TASK-036: consolidated production Telegram candle retrieval behind `services/market_data/service.py` (`MarketDataService`) while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing/fallback behavior.
+- TASK-036: migrated signal, tracker, scanner, and callback candle retrieval to the service boundary. Scanner retains explicit provider-manager selection only to preserve its provider-readiness semantics and injects it into the engine used by the service.
+- TASK-036: verified the implementation head `6174463174d8c6c4ad513896ad7ff96847e85edc` through completed CI gates and successful Railway commit status.
+- Added ADR-007 documenting the canonical application-facing market-data boundary.
+- Post-TASK-036 repository inspection identified the dormant `get_latest_oanda_price` surface in `data/market_data.py` with no production caller; this is the next evidence-backed audit target and has not been removed yet.
+- Synchronized engineering state documents through TASK-036 so the next conversation can resume from the correct Phase 2 checkpoint.
