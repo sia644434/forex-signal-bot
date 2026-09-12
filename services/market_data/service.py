@@ -5,6 +5,9 @@ from data.models import Candle
 from data.provider_manager import ProviderManager
 
 
+MARKET_DATA_SERVICE_KEY = "market_data_service"
+
+
 class MarketDataService:
     """Canonical application-facing market-data service.
 
@@ -40,4 +43,38 @@ class MarketDataService:
         return await self.engine.get_candles_list(symbol, timeframe, limit)
 
 
-__all__ = ["MarketDataService"]
+def install_market_data_service(application: object) -> MarketDataService:
+    """Create and register one market-data service for an application lifetime.
+
+    The service owns a ProviderManager through MarketDataEngine, so keeping the
+    service application-scoped preserves provider instance caches and cooldown
+    state across independent Telegram requests without introducing a process-
+    global singleton.
+    """
+    bot_data = getattr(application, "bot_data", None)
+    if not isinstance(bot_data, dict):
+        raise TypeError("application must expose a mutable bot_data dictionary.")
+
+    service = MarketDataService()
+    bot_data[MARKET_DATA_SERVICE_KEY] = service
+    return service
+
+
+def get_market_data_service(application: object) -> MarketDataService:
+    """Return the application-scoped market-data service."""
+    bot_data = getattr(application, "bot_data", None)
+    if not isinstance(bot_data, dict):
+        raise TypeError("application must expose a mutable bot_data dictionary.")
+
+    service = bot_data.get(MARKET_DATA_SERVICE_KEY)
+    if not isinstance(service, MarketDataService):
+        raise RuntimeError("Application market-data service is not configured.")
+    return service
+
+
+__all__ = [
+    "MARKET_DATA_SERVICE_KEY",
+    "MarketDataService",
+    "get_market_data_service",
+    "install_market_data_service",
+]
