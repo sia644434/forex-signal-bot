@@ -35,11 +35,17 @@ def run(coro):
     return asyncio.run(coro)
 
 
+def make_application(events: list[str], health_result: dict | None = None) -> Application:
+    app = object.__new__(Application)
+    app.name = "forex-signal-bot"
+    app.services = FakeServiceManager(events, health_result)
+    app.health_server = FakeHealthServer(events)
+    return app
+
+
 def test_application_start_starts_services_before_health_server() -> None:
     events: list[str] = []
-    app = Application()
-    app.services = FakeServiceManager(events)
-    app.health_server = FakeHealthServer(events)
+    app = make_application(events)
 
     run(app.start())
 
@@ -48,9 +54,7 @@ def test_application_start_starts_services_before_health_server() -> None:
 
 def test_application_stop_stops_health_server_before_services() -> None:
     events: list[str] = []
-    app = Application()
-    app.services = FakeServiceManager(events)
-    app.health_server = FakeHealthServer(events)
+    app = make_application(events)
 
     run(app.stop())
 
@@ -59,8 +63,7 @@ def test_application_stop_stops_health_server_before_services() -> None:
 
 def test_application_health_marks_critical_service_failure_as_degraded() -> None:
     events: list[str] = []
-    app = Application()
-    app.services = FakeServiceManager(
+    app = make_application(
         events,
         {
             "telegram": {
@@ -80,8 +83,7 @@ def test_application_health_marks_critical_service_failure_as_degraded() -> None
 
 def test_application_health_preserves_healthy_application_status() -> None:
     events: list[str] = []
-    app = Application()
-    app.services = FakeServiceManager(
+    app = make_application(
         events,
         {
             "telegram": {
@@ -105,7 +107,12 @@ def test_create_app_registers_telegram_service(monkeypatch) -> None:
         name = "telegram"
         critical = True
 
+    class FakeServer:
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
     monkeypatch.setattr(application_module, "TelegramService", FakeTelegramService)
+    monkeypatch.setattr(application_module, "HealthServer", FakeServer)
 
     app = application_module.create_app()
 
