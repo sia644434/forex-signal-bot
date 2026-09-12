@@ -37,24 +37,21 @@ Important production concerns: provider routing centralization, freshness classi
 
 ## Analysis Layer
 
-`analysis/` contains a large modular engine set including indicators, ATR, candlestick, market structure/regime, price action, Elliott, harmonic, Wyckoff, supply/demand, SMC, scoring, confidence, risk-related analysis, registry, orchestration, and full-engine/report components.
+`analysis/` contains the production modular analysis pipeline including indicators, ATR, candlestick, market structure/regime, price action, Elliott, harmonic, Wyckoff, supply/demand, SMC, scoring, confidence, decision, risk, and full-engine/report components.
 
 `analysis/registry.py` and `analysis/orchestrator.py` indicate a registry/orchestration pattern. Exact runtime composition and failure semantics require targeted verification.
 
-## AI/ML Application Layer
+## Decision / Risk Ownership
 
-`ai/` provides context, prompt construction, parsing, provider abstraction, orchestration, and an OpenAI provider.
+TASK-033 audited the previously overlapping decision/risk/strategy area against repository-wide references and the production composition path.
 
-AI/ML components must represent genuine Forex Trading Intelligence Platform functionality and remain separate from the PC Worker's heavy-processing boundary.
+- **Canonical production risk owner:** `analysis/risk_engine.py`. `analysis/full_engine.py` constructs `RiskEngine` and uses it to calculate the production risk layer before building `AnalysisReport`.
+- **Canonical production decision owner:** `analysis/decision_engine.py`. `analysis/full_engine.py` constructs `DecisionEngine` and uses its decision output in the production analysis pipeline.
+- `analysis/risk_manager.py` was an unused duplicate risk implementation with no repository import/call sites and has been removed.
+- `risk/manager.py` and the `signal_engine/` package formed an isolated legacy signal/risk path. Repository-wide searches found no production or test callers for that path; it has been removed rather than maintained as a parallel ownership tree.
+- The `strategy/` package (`contracts.py`, `registry.py`, `orchestrator.py`) was likewise self-contained with no external runtime callers. It has been removed as dead parallel architecture rather than introducing an unnecessary adapter or duplicate strategy layer.
 
-## Decision / Risk / Strategy
-
-- `analysis/decision_engine.py`, `analysis/risk_engine.py`, `analysis/risk_manager.py`
-- `risk/manager.py`
-- `strategy/` contracts, registry, and orchestrator
-- `signal_engine/engine.py`
-
-These overlapping areas require contract-level mapping before refactoring. The final architecture must keep analysis, decision, risk, and execution concerns separated.
+The resulting ownership boundary is intentionally simple: analysis engines produce analytical inputs → `DecisionEngine` produces the decision → `RiskEngine` applies the risk layer → `FullAnalysisEngine` assembles the final report. No separate legacy risk manager, signal engine, or strategy orchestration path remains.
 
 ## Worker / Heavy Processing
 
@@ -100,7 +97,7 @@ Railway is an infrastructure target, not a core application architecture depende
 
 ## CI/CD
 
-CI status must always be verified against the relevant commit rather than inferred from documentation. The current code-consolidation commit is `b1a7b6e48b710eec70d608daf9a5fe5756348c45`; its seven GitHub Actions checks were triggered and must be allowed to complete before this task is marked verified.
+CI status must always be verified against the relevant commit rather than inferred from documentation. The architecture audit changes are on the current `main` head and must pass the repository's configured checks before TASK-033 is marked verified.
 
 ## Security Boundaries
 
@@ -108,7 +105,7 @@ Primary boundaries are Telegram input, external market-data providers, AI provid
 
 ## Data Flow — Baseline Hypothesis to Verify
 
-Telegram request → canonical `services/telegram/` handlers/router → application/service layer → market data → analysis/orchestration → decision/risk → safe result/NO TRADE → Telegram response.
+Telegram request → canonical `services/telegram/` handlers/router → application/service layer → market data → analysis/orchestration → decision → risk → safe result/NO TRADE → Telegram response.
 
 Heavy Forex application workloads should use:
 
@@ -128,4 +125,4 @@ External/AI failure → bounded degradation without unsafe decisions.
 
 ## Status
 
-The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions were removed. The durable queue, timeout-aware crash recovery, central queue configuration, application composition boundary, worker heartbeat/readiness/freshness, worker security boundaries, and observability contracts are verified. Telegram ownership has now been consolidated under `services/telegram/`; legacy overlapping Telegram trees were removed after reference/entry-point audit. The next architectural task must be selected from fresh repository evidence after TASK-032 CI verification; no speculative architecture should be added.
+The PC Worker is restricted to heavy Forex application processing. Residual non-Forex workload definitions were removed. The durable queue, timeout-aware crash recovery, central queue configuration, application composition boundary, worker heartbeat/readiness/freshness, worker security boundaries, and observability contracts are verified. Telegram ownership has been consolidated under `services/telegram/`. TASK-033 has now removed the evidence-backed dead decision/risk/strategy parallel trees and documented `analysis/decision_engine.py` and `analysis/risk_engine.py` as the canonical production owners. Final verification is pending the current-head CI checks.
