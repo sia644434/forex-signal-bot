@@ -57,8 +57,12 @@ class WorkerHTTPServer:
                         "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
                     })
                     return
+                if not self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() == "application/json":
+                    self._json(415, {"error": "unsupported_media_type"}); return
                 try:
                     length = int(self.headers.get("Content-Length", "0"))
+                    if length <= 0:
+                        self._json(400, {"error": "invalid_request"}); return
                     if length > 5_000_000:
                         self._json(413, {"error": "payload_too_large"}); return
                     payload = json.loads(self.rfile.read(length))
@@ -66,10 +70,10 @@ class WorkerHTTPServer:
                     import asyncio
                     result = asyncio.run(runtime_ref.execute(request))
                     self._json(200, {"job_id": result.job_id, "status": result.status, "job_type": result.job_type, "output": result.output, "error": result.error, "worker_id": result.worker_id})
-                except (KeyError, ValueError, TypeError, json.JSONDecodeError) as exc:
-                    self._json(400, {"error": f"invalid_request: {exc}"})
-                except Exception as exc:
-                    self._json(500, {"error": f"internal_error: {type(exc).__name__}: {exc}"})
+                except (KeyError, ValueError, TypeError, json.JSONDecodeError):
+                    self._json(400, {"error": "invalid_request"})
+                except Exception:
+                    self._json(500, {"error": "internal_error"})
 
             def log_message(self, format: str, *args: Any) -> None:
                 return
