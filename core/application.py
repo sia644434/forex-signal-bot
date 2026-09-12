@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import os
 
 from core.logger import setup_logger
 from core.service import ServiceManager
+from core.health_server import HealthServer
 
 from health import health_check
 
@@ -19,22 +21,24 @@ class Application:
     Main application core.
     """
 
-
     name: str = "forex-signal-bot"
-
 
     services: ServiceManager = field(
         default_factory=ServiceManager
     )
 
+    health_server: HealthServer = field(init=False)
+
+    def __post_init__(self) -> None:
+        host = os.getenv("HEALTH_HOST", "0.0.0.0")
+        port = int(os.getenv("PORT", "8080"))
+        self.health_server = HealthServer(self.health, host=host, port=port)
 
     def health(self) -> dict:
-
         return {
             "application": health_check(),
             "services": self.services.health(),
         }
-
 
     async def start(self) -> None:
         """
@@ -42,25 +46,23 @@ class Application:
         """
 
         await self.services.start_all()
-
+        self.health_server.start()
 
         logger.info(
             f"{self.name} started successfully."
         )
-
 
     async def stop(self) -> None:
         """
         Stop application.
         """
 
+        self.health_server.stop()
         await self.services.stop_all()
-
 
         logger.info(
             f"{self.name} stopped successfully."
         )
-
 
 
 def create_app() -> Application:
@@ -70,10 +72,8 @@ def create_app() -> Application:
 
     app = Application()
 
-
     app.services.register(
         TelegramService()
     )
-
 
     return app

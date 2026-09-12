@@ -1,0 +1,32 @@
+from __future__ import annotations
+
+import json
+from urllib.request import urlopen
+
+from core.health_server import HealthServer
+
+
+def test_health_server_serves_json_health() -> None:
+    server = HealthServer(lambda: {"status": "ok", "service": "test"}, host="127.0.0.1", port=0)
+    server.start()
+    try:
+        with urlopen(f"http://127.0.0.1:{server.port}/health", timeout=2) as response:
+            assert response.status == 200
+            assert response.headers["Content-Type"].startswith("application/json")
+            assert json.loads(response.read()) == {"status": "ok", "service": "test"}
+    finally:
+        server.stop()
+
+
+def test_health_server_returns_not_found_for_unknown_path() -> None:
+    server = HealthServer(lambda: {"status": "ok"}, host="127.0.0.1", port=0)
+    server.start()
+    try:
+        try:
+            urlopen(f"http://127.0.0.1:{server.port}/unknown", timeout=2)
+        except Exception as exc:
+            assert getattr(exc, "code", None) == 404
+        else:
+            raise AssertionError("unknown health path unexpectedly returned success")
+    finally:
+        server.stop()

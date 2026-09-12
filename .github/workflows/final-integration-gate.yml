@@ -11,7 +11,7 @@ permissions:
 jobs:
   final-gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,3 +33,6 @@ jobs:
 
       - name: Full test suite
         run: python -m pytest -q
+
+      - name: Build production Docker image
+        run: docker build --pull -t forex-signal-bot:ci .
