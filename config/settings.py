@@ -112,6 +112,9 @@ class Settings:
     max_retries: int = 3
     worker_queue_database_path: str = "worker_queue.sqlite3"
     worker_queue_recovery_grace_seconds: int = 30
+    pc_worker_url: Optional[str] = None
+    pc_worker_token: Optional[str] = None
+    pc_worker_timeout: int = 30
 
     def __post_init__(self) -> None:
         if not self.app_name.strip():
@@ -140,6 +143,12 @@ class Settings:
             raise ValueError("WORKER_QUEUE_DATABASE_PATH cannot be empty.")
         if self.worker_queue_recovery_grace_seconds < 0:
             raise ValueError("WORKER_QUEUE_RECOVERY_GRACE_SECONDS cannot be negative.")
+        if self.pc_worker_url is not None and not self.pc_worker_url.strip():
+            raise ValueError("PC_WORKER_URL cannot be empty.")
+        if self.pc_worker_url and not self.pc_worker_token:
+            raise ValueError("PC_WORKER_URL is configured but PC_WORKER_TOKEN is missing.")
+        if self.pc_worker_timeout < 1:
+            raise ValueError("PC_WORKER_TIMEOUT must be at least 1 second.")
         if self.ai_enabled and not self.ai_api_key:
             raise ValueError("AI_ENABLED is true but AI_API_KEY is not configured.")
 
@@ -175,6 +184,9 @@ class Settings:
             max_retries=_get_int("MAX_RETRIES", 3),
             worker_queue_database_path=queue_path,
             worker_queue_recovery_grace_seconds=_get_int("WORKER_QUEUE_RECOVERY_GRACE_SECONDS", 30),
+            pc_worker_url=_get_env("PC_WORKER_URL"),
+            pc_worker_token=_get_env("PC_WORKER_TOKEN"),
+            pc_worker_timeout=_get_int("PC_WORKER_TIMEOUT", 30),
         )
 
 
