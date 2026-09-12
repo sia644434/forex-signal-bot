@@ -3,10 +3,10 @@
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
 - Overall Status: `PRODUCTION_VERIFIED`
-- Current Phase: Phase 1 — Production Verification / Reliability Hardening
-- Current Task: TASK-003 — Production deployment and runtime verification gap
+- Current Phase: Phase 13 — Final Production Audit
+- Current Task: Final production audit / security and observability hardening
 - Last Completed Task: TASK-003 — Establish deployment and runtime verification evidence
-- Next Task: Perform final production audit and continue security/observability hardening based on evidence
+- Next Task: Audit concrete security, observability, dependency, and recovery gaps; fix only evidence-backed issues
 - Known Blockers: None for the verified Railway deployment path; GitHub Connector still does not expose a local working tree or private deployment credentials
 - Known Risks: Production verification evidence applies to the Railway deployment connected to `sia644434/forex-signal-bot`; that repository is the user's intentional fork/live deployment repository and is synchronized from the source repository after changes
 - Broken Tests: None in the latest verified CI runs
@@ -38,7 +38,7 @@ TASK-003 production verification was completed against the intentional Railway/l
 
 ## Checkpoint
 
-What was done: completed the remaining live production verification gap, including a successful live health smoke, controlled Railway restart/recovery observation, and a second successful live health smoke after recovery.
+What was done: completed the remaining live production verification gap, including a successful live health smoke, controlled Railway restart/recovery observation, and a second successful live health smoke after recovery. Persistent engineering state has been updated to record the evidence.
 
 Verified commit:
 - `8bf2a77840b72add70b98cbf1a3b2187f85763f2` — `fix: align Telegram health status contract`
@@ -54,4 +54,4 @@ Health contract observed after deployment and recovery:
 
 What was tested: GitHub Actions live verification and user-observed Railway restart/recovery; no local runtime execution was claimed.
 
-Next exact action: persist the completed production verification state across task/phase/test/recovery records, then begin the final production audit. Do not weaken the evidence requirements for future production changes.
+Next exact action: begin the final production audit, starting with concrete security and observability gaps. Preserve the existing live verification gates for future production changes.
