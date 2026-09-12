@@ -71,7 +71,7 @@ Evidence:
 - `9632b55fa6f0196972bb93ca57a13879311a3994` — documented the queue architecture boundary.
 - `98ad8076eba3808a819352949ba6f90c15147887` — integrated the queue with the Forex Worker Dispatcher.
 - Final Integration Gate run `34705244551`, job `103584015549`: success; compile, runtime safety tests, full suite, and production Docker build passed.
-- Security/dependency audit run `34705244541`, job `103580948?`: success.
+- Security Audit run `34705244541`: success.
 Current guarantees: idempotent enqueue by `job_id`, priority ordering, explicit lifecycle states, terminal-state idempotency, file-backed persistence, and dispatcher integration.
 Checkpoint: Verified 2026-09-12.
 
@@ -114,7 +114,7 @@ Checkpoint: Verified 2026-09-12.
 Phase: Phase 2 — Core Architecture
 Title: Wire Heavy Forex Worker Through the Application Service Boundary
 Objective: Make the queue-backed PC Worker path part of the actual application composition root, with a non-critical service boundary, central transport configuration, controlled offline behavior, and no unrelated agent architecture.
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Relevant Files:
 - `services/worker/service.py`
 - `config/settings.py`
@@ -127,8 +127,17 @@ Implementation:
 - `09331be37ea4e942aa785925597a95821b0f5874` — registered the worker service in the application composition root.
 - `442364191dfcf69bb7e65cc4e00d454db8c7f8a5` — added application worker service regression coverage.
 - `ac6cd7c311559c0fe6c042facb71397477d97ff9` — added settings validation/loading coverage for the worker transport boundary.
+- `7a96afddaa46aefe9bb5aa990f40522905754572` — updated the application service registration contract for the new worker service.
+Verification:
+- Production Activation Validation run `34706492461`: success.
+- Production Activation Gate run `34706492375`: success.
+- Security Audit run `34706492390`: success.
+- Test run `34706492383`: success.
+- Production Readiness run `34706492377`: success.
+- Production E2E Contract Gate run `34706492399`: success.
+- Final Integration Gate run `34706492389`: success.
 Safety rule: the worker remains optional/non-critical; when transport is not configured, heavy-job submission returns controlled `WORKER_OFFLINE` rather than blocking application startup.
-Test Status: PENDING current-head GitHub Actions verification.
+Checkpoint: Verified 2026-09-12.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
