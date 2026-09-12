@@ -51,81 +51,37 @@ Phase: Phase 2 — Core Architecture
 Title: Application Shutdown Cleanup Guarantee
 Implementation Status: COMPLETE
 Test Status: PASS via GitHub Actions.
-Verification:
-- Final-gate `34699763599` / job `103569325433`: success.
-- Activation-gate `34699763592` / job `103569325284`: success.
-- Readiness `34699763622` / job `103569325273`: success.
-- Dependency-audit `34699763583` / job `103569325266`: success.
-- Activation-validation `34699763626` / job `103569325282`: success.
 
 ## TASK-009
 Phase: Phase 2 — Core Architecture
 Title: Health Server Lifecycle Contract Hardening
 Implementation Status: COMPLETE
 Test Status: PASS via GitHub Actions.
-Verification: Green gate set on head `086b872bfbe06cd00c5af0e0e7ab361e34a17e7f` included TASK-009.
 
 ## TASK-010
 Phase: Phase 2 — Core Architecture
 Title: Main Entrypoint Lifecycle Contract Hardening
 Implementation Status: COMPLETE
 Test Status: PASS via GitHub Actions.
-Implementation:
-- `b90c31c694034838f8752e375fb8fc222c61fba4` — `test: add main lifecycle integration contracts`.
-- Added `tests/test_main_lifecycle_contract.py` with normal lifecycle ordering and startup-failure coverage.
-Verification:
-- Test `34699973369` / job `103569881919`: success.
-- Final Integration Gate `34699973444` / job `103569882107`: success.
-- Production Activation Validation `34699973428` / job `103569882020`: success.
-- No local execution claimed.
-Checkpoint: TASK-010 verified and closed 2026-09-12.
 
 ## TASK-011
 Phase: Phase 2 — Core Architecture
 Title: Application Error Contract Hardening
 Implementation Status: COMPLETE
 Test Status: PASS via GitHub Actions.
-Implementation:
-- `44aac8eaab94e99bb340500cce473b1350abd183` — `test: add application error contracts`.
-- Added `tests/test_error_contract.py` covering message/details preservation, domain hierarchy/codes, requested log-level routing, and fallback logging.
-Verification:
-- Test and lifecycle/persistence checks: success on the subsequent Phase 2 CI sequence.
-- No local execution claimed.
-Checkpoint: TASK-011 verified and closed 2026-09-12.
 
 ## TASK-012
 Phase: Phase 2 — Core Architecture
 Title: Configuration Settings Contract Hardening
-Objective: Establish focused contracts for environment parsing, defaults, required values, Settings.load(), runtime validation, and immutability.
 Implementation Status: COMPLETE
 Test Status: PASS via GitHub Actions.
-Implementation:
-- `99f6340aadcbe2d72fba73dd14357d73b1b3c9e0` — `test: add configuration settings contracts`.
-- Added `tests/test_config_settings_contract.py` covering normalization/parsing, defaults/required values, invalid values, Settings.load(), validation, and immutability.
-Verification:
-- Test `34700295179`: success.
-- Production Readiness `34700295198`: success.
-- Production Activation Gate `34700295162`: success.
-- Production Activation Validation `34700295209`: success.
-- Final Integration Gate `34700295220`: success.
-- Production E2E Contract Gate `34700295303`: success.
-- Security Audit `34700295292`: success.
-- Dependency audit also returned success for head `99f6340aadcbe2d72fba73dd14357d73b1b3c9e0`.
-- Combined commit status: success.
-- No local execution claimed.
-Checkpoint: TASK-012 verified and closed 2026-09-12.
 
 ## TASK-013
 Phase: Phase 2 — Core Architecture
 Title: Configuration Boundary Consistency Hardening
 Objective: Audit and harden remaining direct environment-variable access at core/application boundaries so configuration ownership is explicit and behavior remains backward-compatible.
-Implementation Status: IN_PROGRESS
-Test Status: PENDING CI VERIFICATION
-Evidence:
-- `config.settings` is the central configuration source of truth and already owns `LOG_LEVEL` parsing/validation.
-- `core/application.py` directly consumed `HEALTH_HOST` and `PORT`; these are now represented as validated `health_host` / `health_port` settings and consumed through `Settings.load()`.
-- `core/logger.py` and legacy `utils/logger.py` both directly consumed `LOG_LEVEL`; both now consume the validated `Settings.load().log_level` value instead.
-- `utils.logger.get_logger` has no production call sites found by repository search beyond `tests/test_logger.py`, so the legacy API was preserved rather than removed.
+Implementation Status: COMPLETE
+Test Status: PASS — combined status for head `382d3461f2a95a3135fa074297a5e4c0a99f6c94` returned `success`.
 Implementation:
 - `7a19bbe636711f6d4ac2fcb9cffa8c8c03ea3507` — `fix: centralize application boundary settings`.
 - `a2b8c5b5711cfd0bfce67fb37c019a127fff6df7` — `fix: route application settings through config`.
@@ -133,12 +89,38 @@ Implementation:
 - `0e6f25a0cf93dcb63623abc11c1b16224f74aaaf` — `fix: centralize legacy logger configuration`.
 - `6a6b8af37b27e4af9bda3148e1b8e9e192f3722a` — `test: cover application boundary settings`.
 - `d400d817d6c5f1fd386d6c8476dcb06f2aee08cc` — `test: isolate core logger configuration`.
-Tests added/extended:
-- `Settings.load()` contract now covers `HEALTH_HOST` and `PORT`.
-- `Settings` validation now rejects invalid health host/port boundaries.
-- Core and legacy logger contracts verify `LOG_LEVEL` is consumed through centralized settings.
-Verification: CI has not yet reported a status for head `d400d817d6c5f1fd386d6c8476dcb06f2aee08cc`; no local execution claimed.
-Next exact action: inspect the new CI run and, if green, perform regression/diff review before closing TASK-013 or moving to the next evidenced configuration boundary.
+- `382d3461f2a95a3135fa074297a5e4c0a99f6c94` — `docs: record TASK-013 configuration boundary hardening`.
+Checkpoint: TASK-013 closed 2026-09-12.
+
+## TASK-014
+Phase: Phase 2 — Core Architecture
+Title: PC Worker Scope and Configuration Boundary Hardening
+Objective: Keep the PC Worker focused on heavy Trading Intelligence Platform workloads, remove accidental local coding-agent/Ollama runtime coupling, and centralize only genuinely global worker configuration.
+Scope:
+- `worker/main.py`
+- `worker/handlers.py`
+- `worker/contracts.py`
+- `worker/executors.py`
+- `tests/test_pc_worker_contracts.py`
+- legacy `worker/models/*` artifacts for evidence-based cleanup decision
+Expected Files: Worker runtime/contract/handler boundaries and focused worker tests.
+Changed Files:
+- `worker/main.py`
+- `worker/handlers.py`
+- `worker/contracts.py`
+- `tests/test_pc_worker_contracts.py`
+Dependencies: TASK-013 configuration boundary work.
+Implementation Status: IN_PROGRESS
+Implementation:
+- `d71ac4bb771580ce421a76139c66aa2080ab9f96` — removed local coding-agent/Ollama bootstrap from worker entrypoint and centralized `LOG_LEVEL` through `Settings.load()`.
+- `43588c36a65b724342f8aeaa18ce4930f8fa8c4d` — removed coding-agent handler registration.
+- `9aaa89c0191fc0106a295189331574314b31b189` — removed `coding_agent` from worker workload contracts.
+- `957a156761638aa711b9518476cbb72c2bcbe89c` — added regression assertions that worker workloads remain application-only.
+Test Status: PENDING CI VERIFICATION
+CI Status: IN_PROGRESS for implementation head `957a156761638aa711b9518476cbb72c2bcbe89c`.
+Known Issues: Legacy `worker/models/*` local-agent/Ollama files and `tests/test_local_coding_agent.py` still exist but are no longer part of the active worker runtime path. They should not be removed until a separate cleanup scope confirms all references and dependency impact.
+Next Action: Verify CI and review the diff. If green, decide whether to open a separate cleanup task for unused local-agent artifacts.
+Checkpoint: Active 2026-09-12.
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, CI, or deployment configuration. Avoid speculative feature work and broad rewrites.
