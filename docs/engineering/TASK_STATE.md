@@ -1,7 +1,7 @@
 # Task State
 
 ## PRE-TASK-004 — AUDITED
-Phase: Phase 2 — Core Architecture
+Phase: Phase 2 — Repository/Core Architecture
 Title: Phase 2 scope that existed before TASK-004
 Implementation Status: AUDITED / NO SEPARATE HISTORICAL TASK CONTRACT RECOVERED
 Evidence: TASK-004 is the first explicitly recorded Phase 2 implementation task after TASK-003. No independent pre-TASK-004 task specification was recoverable from persistent engineering state. The current architecture audit therefore treats the Master Prompt's explicit core-architecture requirements as the governing scope rather than inventing historical work.
@@ -134,36 +134,45 @@ Evidence: Canonical ownership is `analysis/decision_engine.py` for decision logi
 Phase: Phase 2 — Core Architecture
 Title: Analysis Architecture Ownership Audit
 Implementation Status: VERIFIED
-Evidence:
-- Repository-wide reference inspection identified an unused alternate analysis architecture consisting of `analysis/adapters.py`, `analysis/contracts.py`, `analysis/registry.py`, `analysis/orchestrator.py`, and `tests/test_analysis_architecture.py`.
-- `analysis/full_engine.py` is the canonical production analysis composition; the alternate adapter/registry/orchestrator path had no production-active callers.
-- `analysis/contracts.py` also duplicated analysis-context ownership already represented by `models/market.py`.
-- The obsolete modules and architecture test were removed, and `analysis/__init__.py` was aligned with the canonical analysis exports.
-- Current head `6f4d49c6c0e82a9441b41af679c4709ae88c5c71` has completed CI evidence and successful Railway status.
+Evidence: Unused alternate analysis architecture was removed and `analysis/full_engine.py` remains canonical. Current verified checkpoint had completed CI evidence.
 Checkpoint: Verified 2026-09-12.
 
 ## TASK-035
 Phase: Phase 2 — Core Architecture
 Title: AI Architecture Ownership Audit
 Implementation Status: VERIFIED — DORMANT / UNWIRED
-Evidence:
-- Repository-wide searches found no production or test caller constructing `AIOrchestrator`, `AIProviderManager`, `AIContextBuilder`, or `OpenAIProvider`.
-- The `ai/` package is internally self-contained and no application composition registers or invokes that pipeline.
-- Decision: preserve the dormant `ai/` package as future Phase 6 capability rather than deleting it or introducing an adapter into the active Forex path. It must not be treated as a production decision/risk owner or bypass canonical analysis → decision → risk flow.
-- `docs/engineering/ARCHITECTURE_MAP.md` records this ownership boundary and future activation requirements.
+Evidence: Repository-wide searches found no production/test caller constructing `AIOrchestrator`, `AIProviderManager`, `AIContextBuilder`, or `OpenAIProvider`. The `ai/` package remains dormant future Phase 6 capability and is not part of the active trading path.
 Checkpoint: Verified 2026-09-12.
 
 ## TASK-036
 Phase: Phase 2 — Core Architecture
 Title: Market Data Ownership Consolidation
 Implementation Status: VERIFIED
-Evidence:
-- `services/market_data/service.py` is the canonical application-facing market-data facade.
-- Production Telegram candle retrieval in `services/telegram/handlers/signal.py`, `services/telegram/tracker.py`, `services/telegram/scanner.py`, and `services/telegram/handlers/callbacks.py` now routes through `MarketDataService` while preserving the canonical `MarketDataEngine` quality/freshness gates.
-- Scanner retains explicit `ProviderManager` construction only to preserve its provider-selection/readiness behavior, then injects that manager into `MarketDataEngine` supplied to `MarketDataService`; it does not bypass the service for candle retrieval.
-- No speculative heavy-Forex caller was introduced.
-- Current head `6174463174d8c6c4ad513896ad7ff96847e85edc` has successful Railway commit status and completed TASK-036 CI gates.
+Evidence: Production Telegram candle retrieval routes through `MarketDataService`, preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing. Scanner keeps explicit provider-manager selection only for its provider-readiness semantics. Implementation head `6174463174d8c6c4ad513896ad7ff96847e85edc` has completed CI gates and successful Railway status.
 Checkpoint: Verified 2026-09-12.
+
+## TASK-037
+Phase: Phase 2 — Core Architecture
+Title: Dormant Direct OANDA Price Surface Audit
+Implementation Status: VERIFIED
+Test Status: PASS — GitHub Actions run `34719290035` completed successfully for commit `65ea6150fa23895ad5655e59dbc9349945e67f96`.
+Evidence:
+- Repository-wide inspection found `get_latest_oanda_price` only in `data/market_data.py` with no production caller.
+- The direct OANDA price surface was removed.
+- The canonical OANDA candle path remains through `MarketDataEngine` / `ProviderManager`.
+- Railway commit status for `65ea6150fa23895ad5655e59dbc9349945e67f96` is `success`.
+Checkpoint: Verified 2026-09-12.
+
+## TASK-038
+Phase: Phase 2 — Core Architecture
+Title: Market Data Lower-Level Facade / Alternate Ownership Audit
+Implementation Status: IN_PROGRESS
+Objective: Determine whether the dormant `DataManager` / `ExplicitProviderManager` application path is still required after `MarketDataService` became the canonical application-facing boundary.
+Evidence to date:
+- Repository-wide `DataManager(` search found construction only in tests.
+- `ExplicitProviderManager` is referenced by `DataManager` and its focused tests; no production caller was found.
+- `MarketDataService` still contains compatibility paths for `DataManager`, while production callers use the engine path.
+Constraint: Do not remove the lower-level contracts until all references, tests, and compatibility requirements are verified.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
