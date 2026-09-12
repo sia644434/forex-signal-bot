@@ -43,20 +43,29 @@ def test_queue_metrics_report_state_counts_without_payloads():
         "total": 0,
     }
 
-    queue.enqueue(JobRequest("pending", "backtest"))
-    queue.enqueue(JobRequest("running", "backtest"))
-    queue.claim_next()
-    queue.enqueue(JobRequest("completed", "backtest"))
-    queue.claim_next()
+    queue.enqueue(JobRequest("pending", "backtest", priority=10))
+    queue.enqueue(JobRequest("running", "backtest", priority=20))
+    claimed = queue.claim_next()
+    assert claimed is not None and claimed.job_id == "running"
+
+    queue.enqueue(JobRequest("completed", "backtest", priority=90))
+    claimed = queue.claim_next()
+    assert claimed is not None and claimed.job_id == "completed"
     queue.finish("completed", result={"secret": "must not be exposed by metrics"})
-    queue.enqueue(JobRequest("failed", "backtest"))
-    queue.claim_next()
+
+    queue.enqueue(JobRequest("failed", "backtest", priority=80))
+    claimed = queue.claim_next()
+    assert claimed is not None and claimed.job_id == "failed"
     queue.fail("failed", "provider unavailable")
-    queue.enqueue(JobRequest("cancelled", "backtest"))
-    queue.claim_next()
+
+    queue.enqueue(JobRequest("cancelled", "backtest", priority=70))
+    claimed = queue.claim_next()
+    assert claimed is not None and claimed.job_id == "cancelled"
     queue.cancel("cancelled")
-    queue.enqueue(JobRequest("timeout", "backtest"))
-    queue.claim_next()
+
+    queue.enqueue(JobRequest("timeout", "backtest", priority=60))
+    claimed = queue.claim_next()
+    assert claimed is not None and claimed.job_id == "timeout"
     queue.timeout("timeout")
 
     assert queue.metrics() == {
