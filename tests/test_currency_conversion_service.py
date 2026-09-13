@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import pytest
 
@@ -84,7 +85,8 @@ async def test_missing_market_data_fails_closed() -> None:
 
 @pytest.mark.asyncio
 async def test_invalid_market_price_fails_closed() -> None:
-    engine = FakeMarketDataEngine([candle("USDJPY", 0.0)])
+    invalid_candle = SimpleNamespace(close=0.0, timestamp=datetime(2026, 9, 13, 20, 0, tzinfo=timezone.utc))
+    engine = FakeMarketDataEngine([invalid_candle])
     service = CurrencyConversionService(MarketDataService(engine=engine))
 
     with pytest.raises(ValueError, match="Unable to resolve fresh currency conversion JPY->USD"):
