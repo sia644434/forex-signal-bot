@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Work: Evidence-backed ProviderManager retry/backoff/fallback state audit after VERIFIED TASK-057.
+Active Work: TASK-058 CI/verification after a concrete FreshnessPolicy threshold-validation defect was fixed; then continue evidence-backed market-data reliability audit.
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -43,7 +43,9 @@ Objective: Complete only architecture work that directly supports the Forex plat
 
 ### Current Audit
 - TASK-057 is VERIFIED.
-- The next evidence-backed audit target is ProviderManager retry/backoff/fallback state semantics, including attempt accounting, failure diagnostics, cooldown interaction, and behavior when providers recover during retries.
+- TASK-058 identified and fixed a concrete FreshnessPolicy validation defect: explicit `timedelta(0)` thresholds were silently replaced by defaults because of truthiness-based defaulting.
+- TASK-058 is currently awaiting GitHub Actions/production verification.
+- After TASK-058 verification, continue the evidence-backed market-data reliability audit.
 - No new task is created unless a concrete repository-backed correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
 
 ## Phase 3 — Telegram Bot
