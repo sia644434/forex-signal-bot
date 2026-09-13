@@ -7,7 +7,7 @@ from ..journal import format_journal, add_entry, JournalEntry
 from ..coach import explain_report
 from ..tracker import list_tracking, stop_tracking
 from ..i18n import t
-from analysis.full_engine import FullAnalysisEngine
+from analysis.market_aware_engine import MarketAwareAnalysisEngine
 from services.market_data.service import get_market_data_service
 from core.errors import ApplicationError
 
@@ -59,8 +59,7 @@ async def _run_signal_report(state, market_data):
     symbol = state.settings.get("market_symbol", "EURUSD"); timeframe = state.settings.get("timeframe", "M15")
     candles = await market_data.get_candles_list(symbol, timeframe, 300)
     if not candles: raise RuntimeError("empty market data")
-    report = await __import__("asyncio").to_thread(FullAnalysisEngine().analyze, candles)
-    return replace(report, symbol=symbol, timeframe=timeframe)
+    return await MarketAwareAnalysisEngine(market_data=market_data).analyze(candles, symbol=symbol, timeframe=timeframe)
 
 
 def _scanner_failure_text(language: str, error: Exception) -> str:
