@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio
 import logging
+from dataclasses import replace
 from telegram import Update
 from telegram.ext import ContextTypes
 from analysis.full_engine import FullAnalysisEngine
@@ -59,6 +60,7 @@ async def signal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if not candles:
             raise RuntimeError("empty market data")
         report = await asyncio.to_thread(FullAnalysisEngine().analyze, candles)
+        report = replace(report, symbol=symbol, timeframe=timeframe)
         if user_id is not None and str(report.signal).upper() not in {"WAIT", "NO_TRADE"}:
             track_report(user_id, symbol, timeframe, report)
         await status_message.edit_text(_format_signal(report, symbol, timeframe), parse_mode="HTML")
