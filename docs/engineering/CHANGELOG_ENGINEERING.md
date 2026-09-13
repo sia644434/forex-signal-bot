@@ -1,13 +1,17 @@
 # Engineering Changelog
 
 ## 2026-09-13
+- TASK-049: identified a Telegram journal persistence safety gap: `JournalStore._read()` converted filesystem/JSON read failures into `{}`, so a later append could treat corrupted storage as empty and risk discarding persisted data.
+- TASK-049: changed `JournalStore._read()` to raise `JournalStoreError` on unreadable or malformed persisted JSON instead of silently returning an empty journal.
+- TASK-049: added regression coverage verifying corrupt storage is rejected by both list and append paths and that a failed append does not overwrite the original corrupt file.
+- TASK-049: implementation head `87dd8a5e827f6db30cbdec6f925be2ea091eed38` passed the required 7-workflow GitHub Actions set and Railway commit status.
 - TASK-048: identified a real Telegram journal concurrency gap: `add_entry()` and `close_entry()` performed read-modify-write across separate `JournalStore` lock scopes, allowing overlapping callbacks to lose updates.
 - TASK-048: changed `journal.add_entry()` to use the store's atomic append path and added `JournalStore.update_at()` for atomic indexed mutation under one lock.
 - TASK-048: added concurrency regression coverage with 40 simultaneous additions across 8 workers and verified all entries remain present.
 - TASK-048: implementation head `b9157db60e52fb975c634f6f0abb2585f7f36de4` passed 7 successful GitHub Actions workflows: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate. Railway commit status is successful.
 - TASK-047: completed the Telegram journal ordering/persistence contract audit and corrected the chronological storage/public newest-first representation boundary, including close-by-index semantics.
 - TASK-047: implementation head `2e6bef7ec971501cd3573b21544c22f721253f99` passed the required CI/security/activation/readiness/E2E/deployment gates.
-- Synchronized persistent engineering state after TASK-048 verification. Phase 2 remains active pending selection of the next evidence-backed architecture/reliability gap.
+- Synchronized persistent engineering state after TASK-049 verification. Phase 2 remains active pending selection of the next evidence-backed architecture/reliability gap.
 
 ## 2026-09-12
 - Established the first persistent engineering-memory checkpoint for the repository.
