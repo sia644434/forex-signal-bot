@@ -72,3 +72,39 @@ def test_risk_reward_target_must_be_positive():
         assert "risk_reward_target" in str(exc)
     else:
         raise AssertionError("RiskEngine must reject a non-positive risk-reward target")
+
+
+def test_current_price_must_be_positive():
+    engine = RiskEngine()
+
+    for price in (0.0, -1.0):
+        try:
+            engine.calculate(
+                signal="BUY",
+                current_price=price,
+                risk_distance=1.0,
+                confidence=0.90,
+                score=100.0,
+            )
+        except ValueError as exc:
+            assert "current_price" in str(exc)
+        else:
+            raise AssertionError("RiskEngine must reject non-positive current prices")
+
+
+def test_risk_distance_must_be_positive_when_explicitly_overridden():
+    engine = RiskEngine()
+
+    for distance in (0.0, -2.0):
+        try:
+            engine.calculate(
+                signal="BUY",
+                current_price=100.0,
+                risk_distance=distance,
+                confidence=0.90,
+                score=100.0,
+            )
+        except ValueError as exc:
+            assert "risk distance" in str(exc)
+        else:
+            raise AssertionError("RiskEngine must reject non-positive risk distances")
