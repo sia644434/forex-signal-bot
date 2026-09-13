@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import logging
 from typing import Any
 
@@ -115,6 +115,7 @@ async def scan_market(
                 )
 
             report = await asyncio.to_thread(analyzer.analyze, candles)
+            report = replace(report, symbol=symbol, timeframe=timeframe)
             return ScanResult(
                 symbol,
                 str(report.signal).upper(),
