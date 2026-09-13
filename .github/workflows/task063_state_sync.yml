@@ -1,0 +1,50 @@
+name: TASK-063 state sync
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: github.actor == 'siasoltoon'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record verified TASK-063 state
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          entry = '''\n\n## TASK-063\nPhase: Phase 2 — Core Architecture / Analysis/Risk Reliability\nTitle: Supply-Demand Score Wiring into Confidence Contract\nImplementation Status: VERIFIED\nEvidence:\n- `FullAnalysisEngine` now preserves `supply_demand_result.score` as the explicit `AnalysisResult.supply_demand_score` contract.\n- `ConfidenceEngine` already consumes the explicit `supply_demand_score` field and no longer aliases supply-demand confidence to trend score.\n- Regression coverage verifies that the full analysis pipeline passes the supply-demand score into the confidence boundary.\n- Implementation commit: `916d4837c7dfc0b456f411c4e97d4f21e741a8b5`.\n- Regression harness correction: `c3e7207512788eea0b96e9e3b762082ac049fab3`.\n- Final verification trigger head: `3299076fdecf821a37ae5cd231ebfe4ffcd114b2`.\n- Production E2E Contract Gate run `34777255242` completed successfully, including the full test suite.\n- No local execution is claimed.\nCheckpoint: Verified 2026-09-13.\n'''
+
+          task = Path('docs/engineering/TASK_STATE.md')
+          text = task.read_text()
+          if '## TASK-063' not in text:
+              task.write_text(text + entry)
+
+          phase = Path('docs/engineering/PHASE_STATE.md')
+          text = phase.read_text()
+          marker = '- TASK-061 fixed the ConfidenceEngine/DecisionEngine score-contract mismatch: signed analysis component scores are normalized around neutral 50 before confidence voting, while volatility remains a separate ratio contract. Required verification passed.\n'
+          addition = '- TASK-062 fixed supply-demand confidence score aliasing by separating the supply-demand component from trend score; required verification passed.\n- TASK-063 wired the real `SupplyDemandEngine` score into `AnalysisResult` so the explicit supply-demand confidence contract is populated in the production `FullAnalysisEngine` path; required verification passed.\n'
+          if 'TASK-063 wired the real' not in text:
+              phase.write_text(text.replace(marker, marker + addition, 1))
+
+          test = Path('docs/engineering/TEST_STATE.md')
+          text = test.read_text()
+          if '## TASK-063 — VERIFIED' not in text:
+              test.write_text(text + '''\n\n## TASK-063 — VERIFIED\n- Full-analysis regression coverage verifies the production score wiring.\n- Final Production E2E Contract Gate run `34777255242` passed, including the full test suite.\n- No local execution is claimed.\n''')
+
+          changelog = Path('docs/engineering/CHANGELOG_ENGINEERING.md')
+          text = changelog.read_text()
+          if '## 2026-09-13 — TASK-063' not in text:
+              changelog.write_text(text + '''\n\n## 2026-09-13 — TASK-063\n- Wired the actual SupplyDemandEngine score into the AnalysisResult confidence contract.\n- Added full-pipeline regression coverage and verified the final main head with the Production E2E Contract Gate.\n''')
+          PY
+
+          rm -f .github/workflows/task063_state_sync.yml
+          git config user.name 'siasoltoon'
+          git config user.email 'siyavashjahangiri105@gmail.com'
+          git add docs/engineering/TASK_STATE.md docs/engineering/PHASE_STATE.md docs/engineering/TEST_STATE.md docs/engineering/CHANGELOG_ENGINEERING.md .github/workflows/task063_state_sync.yml
+          git commit -m 'docs: record TASK-063 verification state'
+          git push origin main
