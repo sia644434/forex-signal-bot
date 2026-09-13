@@ -1,0 +1,34 @@
+name: TASK-063 cleanup
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor == 'siasoltoon'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Correct regression test and remove temporary workflows
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          test = Path('tests/test_full_engine.py')
+          text = test.read_text()
+          old = '''def test_full_engine_wires_supply_demand_score_to_analysis_contract(monkeypatch) -> None:\n    engine = FullAnalysisEngine()\n    captured = {}\n\n    def capture(analysis):\n        captured["analysis"] = analysis\n        return engine.confidence_engine.evaluate.__wrapped__(analysis)\n\n    monkeypatch.setattr(engine.confidence_engine, "evaluate", capture)\n'''
+          new = '''def test_full_engine_wires_supply_demand_score_to_analysis_contract(monkeypatch) -> None:\n    engine = FullAnalysisEngine()\n    captured = {}\n    original_evaluate = engine.confidence_engine.evaluate\n\n    def capture(analysis):\n        captured["analysis"] = analysis\n        return original_evaluate(analysis)\n\n    monkeypatch.setattr(engine.confidence_engine, "evaluate", capture)\n'''
+          if old not in text:
+              raise SystemExit('Expected TASK-063 test body not found')
+          test.write_text(text.replace(old, new, 1))
+          PY
+
+          rm -f .github/workflows/task063_apply.yml .github/workflows/task063_cleanup.yml
+          git config user.name 'siasoltoon'
+          git config user.email 'siyavashjahangiri105@gmail.com'
+          git add tests/test_full_engine.py .github/workflows/task063_apply.yml .github/workflows/task063_cleanup.yml
+          git commit -m 'test: correct TASK-063 regression harness'
+          git push origin main
