@@ -337,3 +337,19 @@ Evidence:
 - Verification is triggered by the next connector-authored main commit because GitHub-token-authored pushes do not recursively trigger push workflows.
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
+
+
+## TASK-063
+Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
+Title: Supply-Demand Score Wiring into Confidence Contract
+Implementation Status: VERIFIED
+Evidence:
+- `FullAnalysisEngine` now preserves `supply_demand_result.score` as the explicit `AnalysisResult.supply_demand_score` contract.
+- `ConfidenceEngine` already consumes the explicit `supply_demand_score` field and no longer aliases supply-demand confidence to trend score.
+- Regression coverage verifies that the full analysis pipeline passes the supply-demand score into the confidence boundary.
+- Implementation commit: `916d4837c7dfc0b456f411c4e97d4f21e741a8b5`.
+- Regression harness correction: `c3e7207512788eea0b96e9e3b762082ac049fab3`.
+- Final verification trigger head: `3299076fdecf821a37ae5cd231ebfe4ffcd114b2`.
+- Production E2E Contract Gate run `34777255242` completed successfully, including the full test suite.
+- No local execution is claimed.
+Checkpoint: Verified 2026-09-13.

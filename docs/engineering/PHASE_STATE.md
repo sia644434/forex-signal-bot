@@ -92,3 +92,5 @@ Status: NOT_STARTED
 Work phases sequentially. Completing Phase 1 does not skip directly to Phase 12 or Phase 13. Phase 2 must be completed before Phase 3, and so on, unless an explicit evidence-backed dependency requires a temporary cross-phase check.
 
 - TASK-061 fixed the ConfidenceEngine/DecisionEngine score-contract mismatch: signed analysis component scores are normalized around neutral 50 before confidence voting, while volatility remains a separate ratio contract. Required verification passed.
+- TASK-062 fixed supply-demand confidence score aliasing by separating the supply-demand component from trend score; required verification passed.
+- TASK-063 wired the real `SupplyDemandEngine` score into `AnalysisResult` so the explicit supply-demand confidence contract is populated in the production `FullAnalysisEngine` path; required verification passed.
