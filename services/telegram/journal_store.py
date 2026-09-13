@@ -21,11 +21,19 @@ class JournalStore:
         if not self.path.exists():
             return {}
         try:
-            return json.loads(self.path.read_text(encoding="utf-8"))
+            data = json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, ValueError) as error:
             # Never treat a read failure or corrupted JSON as an empty journal:
             # a subsequent write would otherwise silently discard persisted data.
             raise JournalStoreError(f"unable to read journal store: {self.path}") from error
+        if not isinstance(data, dict):
+            raise JournalStoreError(f"invalid journal store structure: {self.path}")
+        for user_id, entries in data.items():
+            if not isinstance(user_id, str) or not isinstance(entries, list):
+                raise JournalStoreError(f"invalid journal store structure: {self.path}")
+            if not all(isinstance(entry, dict) for entry in entries):
+                raise JournalStoreError(f"invalid journal store structure: {self.path}")
+        return data
 
     def _write(self, data: dict) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
