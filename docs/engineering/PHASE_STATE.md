@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Work: TASK-058 CI/verification after a concrete FreshnessPolicy threshold-validation defect was fixed; then continue evidence-backed market-data reliability audit.
+Active Work: TASK-059 is verified; continue the evidence-backed analysis/reliability audit and create a new task only when a concrete repository-backed gap is demonstrated.
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -40,12 +40,14 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-055 closed the Worker Queue resource lifecycle gap by releasing the durable queue during service shutdown.
 - TASK-056 isolated ProviderManager failure diagnostics per concurrent request with `ContextVar` and request-local failure tracking.
 - TASK-057 fixed stale ProviderManager cooldown state surviving removal and later re-addition of providers during configuration/readiness refresh; regression coverage was added and the required gate set passed.
+- TASK-058 fixed explicit-zero FreshnessPolicy threshold handling so omitted thresholds use defaults while supplied zero thresholds reach validation and are rejected; required verification passed.
+- TASK-059 fixed RiskEngine asymmetry caused by interpreting the DecisionEngine's 0..100 score as zero-centered; directional strength is now symmetric around neutral score 50 and required verification passed.
 
 ### Current Audit
 - TASK-057 is VERIFIED.
-- TASK-058 identified and fixed a concrete FreshnessPolicy validation defect: explicit `timedelta(0)` thresholds were silently replaced by defaults because of truthiness-based defaulting.
-- TASK-058 is currently awaiting GitHub Actions/production verification.
-- After TASK-058 verification, continue the evidence-backed market-data reliability audit.
+- TASK-058 is VERIFIED.
+- TASK-059 is VERIFIED.
+- Continue the evidence-backed analysis/reliability audit.
 - No new task is created unless a concrete repository-backed correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
 
 ## Phase 3 — Telegram Bot
