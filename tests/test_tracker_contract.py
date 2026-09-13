@@ -46,6 +46,10 @@ def teardown_function() -> None:
     ACTIVE_TRACKS.clear()
 
 
+async def collect_notification(notifications: list[str], message: str) -> None:
+    notifications.append(message)
+
+
 def test_track_report_replaces_same_user_symbol_timeframe_and_lists_it() -> None:
     first = track_report(1, "EURUSD", "M15", Report("BUY"))
     second = track_report(1, "EURUSD", "M15", Report("SELL"))
@@ -70,7 +74,7 @@ def test_refresh_tracking_stops_buy_when_stop_loss_is_touched() -> None:
     result = asyncio.run(
         refresh_tracking(
             item,
-            notifications.append,
+            lambda message: collect_notification(notifications, message),
             FakeMarketData([Candle(high=101.0, low=94.0, close=96.0)]),
         )
     )
@@ -87,7 +91,7 @@ def test_refresh_tracking_marks_buy_target_and_removes_track() -> None:
     result = asyncio.run(
         refresh_tracking(
             item,
-            notifications.append,
+            lambda message: collect_notification(notifications, message),
             FakeMarketData([Candle(high=106.0, low=99.0, close=104.0)]),
         )
     )
@@ -110,7 +114,7 @@ def test_refresh_tracking_records_signal_change_and_updates_timestamp(monkeypatc
     result = asyncio.run(
         refresh_tracking(
             item,
-            notifications.append,
+            lambda message: collect_notification(notifications, message),
             FakeMarketData([Candle(high=101.0, low=99.0, close=100.5)]),
         )
     )
