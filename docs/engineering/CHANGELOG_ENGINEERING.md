@@ -1,6 +1,16 @@
 # Engineering Changelog
 
 ## 2026-09-13
+- TASK-059: identified a concrete RiskEngine score-contract gap: DecisionEngine emits a 0..100 score centered on neutral 50, while RiskEngine used `abs(score)` as though the score were centered on zero.
+- TASK-059: introduced symmetric directional strength `abs((score - 50) * 2)` so equivalent bullish/bearish scores receive equivalent risk treatment.
+- TASK-059: applied the normalized strength consistently to dynamic risk percentage, risk level, and trade-quality calculations.
+- TASK-059: added regression coverage for symmetric score pairs and neutral-score behavior.
+- TASK-059: implementation commit `a98411053c3433fe219b82abf82575547efc98b3`.
+- TASK-059: required 7-workflow GitHub Actions verification completed successfully after a push-based CI trigger sequence; final verification commit on `main` was `bb1e4464f0177fd612eeff2240aa096447275b2c`.
+- TASK-059: Railway commit status for the final verified `main` head is successful.
+- TASK-059: temporary CI trigger file was removed after verification.
+- TASK-058: verified the FreshnessPolicy explicit-zero threshold fix across the required CI gate set and Railway deployment/status path.
+- Synchronized persistent engineering state after TASK-058 and TASK-059 verification. Phase 2 remains active for continued evidence-backed analysis/reliability auditing.
 - TASK-055: identified a concrete worker resource-lifecycle gap: `WorkerDispatcher.from_settings()` creates a durable SQLite-backed `WorkerQueue`, while `WorkerProcessingService.stop()` previously left the queue connection open during application shutdown.
 - TASK-055: added `WorkerDispatcher.close()` to release its queue resource and made it idempotent by clearing the owned queue reference after close.
 - TASK-055: changed `WorkerProcessingService.stop()` to delegate queue cleanup through the dispatcher lifecycle boundary.
