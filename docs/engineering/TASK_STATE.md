@@ -234,7 +234,7 @@ Checkpoint: Verified 2026-09-13.
 ## TASK-057
 Phase: Phase 2 — Core Architecture / Market Data Reliability
 Title: ProviderManager Cooldown State Consistency Across Reconfiguration
-Implementation Status: IMPLEMENTED — AWAITING GATE VERIFICATION
+Implementation Status: VERIFIED
 Evidence:
 - The scanner retains an application-scoped `ProviderManager` but recalculates configured provider readiness on every scan and calls `set_providers()` with the current configured provider set.
 - A provider that fails is placed into cooldown. `set_providers()` previously retained that cooldown even after the provider was removed from the active configuration.
@@ -244,10 +244,11 @@ Evidence:
 - Regression coverage verifies cooldown removal on provider removal and immediate usable recovery when the provider is re-added.
 - Implementation commit: `705531c2f1e00a7fafbbca795a6844051c3b2235`.
 - Regression test commit: `3282aa0053e3b82e5434ca8906c7804d8bec5a5c`.
+- Final docs head `df7db987dfbe0a29529675aa1c8a528af52ef05b` passed the required 7-workflow GitHub Actions set successfully and Railway commit status is `success`.
 - No local execution is claimed.
 
 ## Current Phase 2 Audit State
-TASK-057 is implemented and awaits the required GitHub Actions verification gates. After verification, continue the evidence-backed ProviderManager/market-data reliability audit; do not create another task unless a concrete gap is demonstrated.
+TASK-057 is VERIFIED. Continue the evidence-backed ProviderManager/market-data reliability audit, with the next focus on retry/backoff/fallback state semantics. Do not create another task unless a concrete correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
