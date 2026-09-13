@@ -150,10 +150,11 @@ def test_full_engine_directional_strength_is_symmetric() -> None:
 def test_full_engine_wires_supply_demand_score_to_analysis_contract(monkeypatch) -> None:
     engine = FullAnalysisEngine()
     captured = {}
+    original_evaluate = engine.confidence_engine.evaluate
 
     def capture(analysis):
         captured["analysis"] = analysis
-        return engine.confidence_engine.evaluate.__wrapped__(analysis)
+        return original_evaluate(analysis)
 
     monkeypatch.setattr(engine.confidence_engine, "evaluate", capture)
 
