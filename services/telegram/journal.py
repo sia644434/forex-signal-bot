@@ -24,15 +24,18 @@ _STORE = JournalStore()
 
 
 def _load(user_id: int) -> list[JournalEntry]:
-    # JournalStore.list() returns newest-first at its public boundary, while its
-    # persisted representation is chronological. Keep the journal module's
-    # internal representation chronological so append operations remain stable.
-    return [JournalEntry(**item) for item in _STORE.list(user_id, limit=1000)]
+    # JournalStore.list() returns newest-first at its public boundary. Keep the
+    # journal module's internal representation chronological so append and
+    # persistence operations remain stable.
+    return [
+        JournalEntry(**item)
+        for item in reversed(_STORE.list(user_id, limit=1000))
+    ]
 
 
 def _save(user_id: int, entries: list[JournalEntry]) -> None:
-    # JournalStore.list() reverses the persisted chronological representation;
-    # persist the internal chronological order unchanged.
+    # The journal module stores entries chronologically; JournalStore.list()
+    # reverses that persisted representation when reading it publicly.
     _STORE.replace(user_id, [asdict(item) for item in entries])
 
 
