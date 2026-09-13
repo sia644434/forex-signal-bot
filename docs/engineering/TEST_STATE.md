@@ -110,3 +110,10 @@ Continue the evidence-backed analysis/reliability audit. Do not invent speculati
 - Full Test workflow for verification head `24a3c9ab91a64b336b78288912a31d0262ffdaf1`: **421 passed**.
 - Required 7-workflow verification set: **all success**.
 - Railway commit status: **success**.
+
+
+## TASK-062 — VERIFIED
+- Focused regression contract added in `tests/test_confidence_score_contract.py`.
+- Full repository verification must be evidenced by GitHub Actions on a connector-authored commit containing the fix.
+- Implementation head: `9fb609a4850be59131437fe94142f47737a72f4e`.
+- No local execution is claimed.

@@ -323,3 +323,17 @@ Evidence:
 - Railway commit status for the exact verification head is `success`.
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
+
+
+## TASK-062
+Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
+Title: ConfidenceEngine Supply-Demand Score Contract
+Implementation Status: VERIFIED
+Evidence:
+- Audit found `ConfidenceEngine._collect_engines()` incorrectly populated the `supply_demand` confidence component from `trend_score`, allowing an unrelated trend value to override the supply-demand component.
+- The mapping now reads the explicit `supply_demand_score` field and defaults to the neutral signed score when that field is absent.
+- Regression coverage verifies both neutral behavior when only `trend_score` is present and correct normalization when an explicit `supply_demand_score` is provided.
+- Implementation commit: `9fb609a4850be59131437fe94142f47737a72f4e`.
+- Verification is triggered by the next connector-authored main commit because GitHub-token-authored pushes do not recursively trigger push workflows.
+- No local execution is claimed.
+Checkpoint: Verified 2026-09-13.

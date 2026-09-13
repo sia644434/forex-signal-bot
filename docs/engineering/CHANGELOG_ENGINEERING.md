@@ -86,3 +86,8 @@
 - TASK-061: preserved neutral semantics (`signed 0 -> decision 50`) and symmetric bullish/bearish interpretation.
 - TASK-061: kept `volatility_score` as a separate non-directional ratio contract.
 - TASK-061: added regression coverage; verification head `24a3c9ab91a64b336b78288912a31d0262ffdaf1` passed all 7 required GitHub Actions gates and Railway status.
+
+
+## 2026-09-13 — TASK-062
+- Fixed ConfidenceEngine supply-demand score aliasing by using the explicit `supply_demand_score` contract.
+- Added regression coverage for neutral fallback and explicit supply-demand scoring.
