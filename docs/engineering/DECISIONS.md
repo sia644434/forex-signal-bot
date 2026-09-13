@@ -67,3 +67,7 @@ Chosen Solution: Create one `MarketDataService` when the Telegram application is
 Reason: Preserves provider instance reuse and cooldown state across independent application requests while keeping lifecycle ownership explicit at the Telegram composition root and avoiding a process-global singleton.
 Consequences: Telegram handlers must obtain market data through the configured application-scoped service. Code paths that intentionally require custom provider selection may continue to construct an explicit `ProviderManager` and inject it into a dedicated `MarketDataService`.
 Affected Components: `services/market_data/service.py`, `services/telegram/client.py`, `services/telegram/handlers/signal.py`, `services/telegram/handlers/callbacks.py`, `services/telegram/tracker.py`, `services/telegram/tracker_job.py`, `tests/test_market_data_service.py`.
+
+
+## TASK-061 — Analysis Score Contract Boundary
+The analysis layer's directional component scores are signed (`-100..100`), while DecisionEngine consumes a normalized `0..100` representation centered on neutral `50`. ConfidenceEngine must normalize directional analysis components at its input boundary using the same mapping. `volatility_score` is explicitly excluded because it is a non-directional ratio.

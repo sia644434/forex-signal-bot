@@ -102,3 +102,11 @@ Production readiness remains verified for the observed Railway deployment path. 
 
 ## Next Verification
 Continue the evidence-backed analysis/reliability audit. Do not invent speculative tasks. Preserve the Forex-only scope and do not reintroduce agent/Ollama/local coding-agent architecture.
+
+
+## TASK-061 Verification
+- Regression coverage added for signed score normalization: `-20 -> 40`, `0 -> 50`, `+20 -> 60`.
+- Coverage verifies bearish/neutral/bullish direction preservation and keeps `volatility_score` on its ratio contract.
+- Full Test workflow for verification head `24a3c9ab91a64b336b78288912a31d0262ffdaf1`: **421 passed**.
+- Required 7-workflow verification set: **all success**.
+- Railway commit status: **success**.

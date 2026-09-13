@@ -298,7 +298,7 @@ Evidence:
 Checkpoint: Verified 2026-09-13.
 
 ## Current Phase 2 Audit State
-TASK-060 is VERIFIED. Continue the evidence-backed analysis/reliability audit. Do not create another task unless a concrete correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
+TASK-061 is VERIFIED. Continue the evidence-backed analysis/reliability audit. Do not create another task unless a concrete correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
@@ -308,3 +308,18 @@ TASK-060 is VERIFIED. Continue the evidence-backed analysis/reliability audit. D
 
 ## Active Task Selection Rule
 Prioritize concrete correctness, reliability, security, observability, deployment, and recovery gaps evidenced by repository code, tests, or deployment configuration. Avoid speculative feature work and broad rewrites. Never introduce local coding-agent, Ollama, or unrelated agent architecture into this Forex repository.
+
+## TASK-061
+Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
+Title: ConfidenceEngine Signed Analysis Score Contract Alignment
+Implementation Status: VERIFIED
+Evidence:
+- `ConfidenceEngine` now converts signed analysis component scores from `-100..100` to the shared `0..100` directional score contract, preserving `0 -> 50` neutral semantics.
+- Missing directional component defaults are neutral (`0` signed) rather than being interpreted as bullish.
+- `volatility_score` remains a non-directional ratio and is not passed through signed-score normalization.
+- Regression coverage verifies signed negative/zero/positive normalization, directional symmetry, engine collection, and volatility ratio handling.
+- Verification commit: `24a3c9ab91a64b336b78288912a31d0262ffdaf1`.
+- The required 7 GitHub Actions workflows completed successfully: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate.
+- Railway commit status for the exact verification head is `success`.
+- No local execution is claimed.
+Checkpoint: Verified 2026-09-13.

@@ -81,3 +81,8 @@
 - TASK-043 changed Telegram signal, callback, and tracker paths to reuse one application-scoped MarketDataService.
 - TASK-044 changed scanner ProviderManager lifetime to application-scoped storage while preserving dynamic provider-readiness refresh.
 - Synchronized engineering state through TASK-044 selection.
+
+- TASK-061: aligned ConfidenceEngine with the signed analysis-component score contract used by the analysis engines and normalized by DecisionEngine.
+- TASK-061: preserved neutral semantics (`signed 0 -> decision 50`) and symmetric bullish/bearish interpretation.
+- TASK-061: kept `volatility_score` as a separate non-directional ratio contract.
+- TASK-061: added regression coverage; verification head `24a3c9ab91a64b336b78288912a31d0262ffdaf1` passed all 7 required GitHub Actions gates and Railway status.
