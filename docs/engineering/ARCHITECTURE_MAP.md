@@ -47,7 +47,7 @@ No concrete Phase 9 heavy-Forex domain caller currently exists because Backtesti
 `worker/queue.py` provides the SQLite-backed durable job queue contract. It persists lifecycle states and supports crash-recovery semantics. It is not claimed as a distributed broker.
 
 ## Persistence / Storage
-Worker queue persistence is durable. `services/telegram/journal_store.py` is the file-backed Telegram journal persistence boundary. TASK-047 corrected its ordering/index contract, and TASK-048 made journal mutations atomic across read-modify-write operations.
+Worker queue persistence is durable. `services/telegram/journal_store.py` is the file-backed Telegram journal persistence boundary. TASK-047 corrected its ordering/index contract, TASK-048 made journal mutations atomic across read-modify-write operations, TASK-049 made corrupt/unreadable storage fail closed, and TASK-050 validates the persisted JSON structure before it reaches journal operations.
 
 ## Configuration
 `config/` contains environment/settings/symbol configuration. Worker-specific network/auth/resource settings remain worker-local unless required by the application transport boundary.
@@ -59,10 +59,10 @@ Worker queue persistence is durable. `services/telegram/journal_store.py` is the
 Railway is an infrastructure target, not a core application architecture dependency.
 
 ## Testing
-`tests/` includes unit/contract/integration-style coverage for providers, market data, analysis, decision logic, worker, Telegram, lifecycle, and production readiness. TASK-048 adds explicit concurrency regression coverage for Telegram journal mutation atomicity.
+`tests/` includes unit/contract/integration-style coverage for providers, market data, analysis, decision logic, worker, Telegram, lifecycle, and production readiness. TASK-048 adds explicit concurrency regression coverage for Telegram journal mutation atomicity; TASK-049 and TASK-050 add explicit persistence corruption/structure-validation coverage.
 
 ## CI/CD
-CI status must always be verified against the relevant commit rather than inferred from documentation. TASK-048's exact head passed the configured required workflow set.
+CI status must always be verified against the relevant commit rather than inferred from documentation. TASK-050's exact implementation head passed the configured required workflow set.
 
 ## Security Boundaries
 Primary boundaries are Telegram input, external market-data providers, dormant AI provider boundary reserved for a later phase, worker API/network boundary, environment secrets, and deployment runtime. Security review is not yet complete.
@@ -80,7 +80,8 @@ Risk failure → fail closed.
 Queue/worker timeout/failure → explicit lifecycle state + bounded recovery behavior where required.
 Missing/unready worker transport → controlled `WORKER_OFFLINE` result for optional heavy processing.
 Future AI provider failure → bounded degradation without unsafe decisions.
+Telegram journal persistence read/parse/structure failure → explicit `JournalStoreError` rather than treating storage as empty or allowing malformed structures into mutation paths.
 Telegram journal mutation failure/concurrency → atomic store operation or explicit error; no split read-modify-write contract remains in the journal mutation paths.
 
 ## Status
-The PC Worker is restricted to heavy Forex application processing. Telegram ownership is consolidated under `services/telegram/`. Decision/Risk/Analysis ownership is consolidated. The `ai/` package is dormant/unwired. Market-data candle retrieval is canonical through `MarketDataService → MarketDataEngine → ProviderManager`. TASK-047 and TASK-048 established the Telegram journal ordering/persistence and mutation-atomicity contracts. Phase 2 remains active pending the next evidence-backed architecture/reliability gap.
+The PC Worker is restricted to heavy Forex application processing. Telegram ownership is consolidated under `services/telegram/`. Decision/Risk/Analysis ownership is consolidated. The `ai/` package is dormant/unwired. Market-data candle retrieval is canonical through `MarketDataService → MarketDataEngine → ProviderManager`. TASK-047, TASK-048, TASK-049, and TASK-050 established the Telegram journal ordering/persistence, mutation-atomicity, fail-closed corruption handling, and structure-validation contracts. Phase 2 remains active pending the next evidence-backed architecture/reliability gap.
