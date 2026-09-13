@@ -24,9 +24,8 @@ _STORE = JournalStore()
 
 
 def _load(user_id: int) -> list[JournalEntry]:
-    # JournalStore.list() returns newest-first, while _save() stores entries
-    # chronologically. Keep the in-memory representation chronological so
-    # append/reverse operations preserve a stable public ordering contract.
+    # JournalStore.list() returns newest-first; keep the internal representation
+    # chronological so append operations remain stable.
     return [JournalEntry(**item) for item in reversed(_STORE.list(user_id, limit=1000))]
 
 
@@ -50,9 +49,10 @@ def list_entries(user_id: int, limit: int = 10) -> list[JournalEntry]:
 
 def close_entry(user_id: int, index: int, result: str) -> JournalEntry:
     entries = _load(user_id)
-    if index < 0 or index >= len(entries):
+    public_entries = list(reversed(entries))
+    if index < 0 or index >= len(public_entries):
         raise IndexError("journal entry not found")
-    entry = entries[index]
+    entry = public_entries[index]
     entry.status = "CLOSED"
     entry.result = result
     _save(user_id, entries)
