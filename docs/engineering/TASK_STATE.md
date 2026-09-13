@@ -185,7 +185,6 @@ Evidence:
 - Regression coverage verifies cleanup for both critical and non-critical failed-start services and confirms startup continues for non-critical failures.
 - Implementation head `0b97e1487bdb6b1d944f4957b6a4e782dc6713f5` passed the required GitHub Actions gate set successfully.
 - No local execution is claimed.
-Checkpoint: Verified 2026-09-13.
 
 ## TASK-053
 Phase: Phase 2 — Core Architecture / Application Lifecycle Reliability
@@ -206,7 +205,7 @@ Checkpoint: Verified 2026-09-13.
 ## TASK-054
 Phase: Phase 2 — Core Architecture / Application Lifecycle Reliability
 Title: Failed-Start Cleanup Retry Tracking
-Implementation Status: IMPLEMENTED / AWAITING GATE VERIFICATION
+Implementation Status: VERIFIED
 Evidence:
 - Audit found that a service whose `start()` failed was cleaned up once, but if its `stop()` cleanup also failed, it was not retained in `_started_services` and therefore could never be retried by `stop_all()`.
 - `ServiceManager.start_all()` now retains a failed-start service in the lifecycle tracking set until its cleanup succeeds.
@@ -214,7 +213,9 @@ Evidence:
 - Regression coverage verifies a failed non-critical start with failed cleanup is retained and successfully retried during `stop_all()`.
 - Implementation commit: `689920a13f6ade3a41bea3d28fc3d1fd40c1a3e3`.
 - Test commit: `50d456f1cebd5e2bccc2789254894b683182ae94`.
+- Final docs head `4208e6d17fdbca79bdf30b5434d17607857ee7ad` passed all 7 required GitHub Actions checks successfully: `test`, `production-e2e-contract`, `final-gate`, `activation-validation`, `dependency-audit`, `readiness`, and `activation-gate`.
 - No local execution is claimed.
+Checkpoint: Verified 2026-09-13.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
