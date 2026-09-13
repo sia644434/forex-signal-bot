@@ -98,6 +98,7 @@ class Settings:
     ALPHAVANTAGE_API_KEY: Optional[str] = None
     default_symbol: str = "EURUSD"
     default_timeframe: str = "1h"
+    account_currency: Optional[str] = None
     risk_per_trade: float = 0.01
     max_open_positions: int = 5
     timezone: str = "UTC"
@@ -122,6 +123,10 @@ class Settings:
             raise ValueError("APP_NAME cannot be empty.")
         if self.environment.lower() not in {"development", "testing", "staging", "production"}:
             raise ValueError("ENVIRONMENT must be development, testing, staging, or production.")
+        if self.account_currency is not None and not self.account_currency.strip():
+            raise ValueError("ACCOUNT_CURRENCY cannot be empty when configured.")
+        if self.account_currency is not None and len(self.account_currency.strip()) != 3:
+            raise ValueError("ACCOUNT_CURRENCY must be a 3-letter ISO currency code.")
         if not 0 < self.risk_per_trade <= 1:
             raise ValueError("RISK_PER_TRADE must be greater than 0 and at most 1.")
         if self.max_open_positions < 1:
@@ -173,6 +178,7 @@ class Settings:
             ALPHAVANTAGE_API_KEY=_get_env("ALPHAVANTAGE_API_KEY"),
             default_symbol=_get_env("DEFAULT_SYMBOL", "EURUSD"),
             default_timeframe=_get_env("DEFAULT_TIMEFRAME", "1h"),
+            account_currency=_get_env("ACCOUNT_CURRENCY"),
             risk_per_trade=_get_float("RISK_PER_TRADE", 0.01),
             max_open_positions=_get_int("MAX_OPEN_POSITIONS", 5),
             timezone=_get_env("TIMEZONE", "UTC"),
