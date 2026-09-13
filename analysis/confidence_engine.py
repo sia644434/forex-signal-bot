@@ -360,7 +360,7 @@ class ConfidenceEngine:
                 self._get(
                     analysis,
                     "smart_money_score",
-                    50.0,
+                    0.0,
                 )
             ),
 
@@ -368,7 +368,7 @@ class ConfidenceEngine:
                 self._get(
                     analysis,
                     "structure_score",
-                    50.0,
+                    0.0,
                 )
             ),
 
@@ -376,7 +376,7 @@ class ConfidenceEngine:
                 self._get(
                     analysis,
                     "price_action_score",
-                    50.0,
+                    0.0,
                 )
             ),
 
@@ -384,7 +384,7 @@ class ConfidenceEngine:
                 self._get(
                     analysis,
                     "momentum_score",
-                    50.0,
+                    0.0,
                 )
             ),
 
@@ -392,7 +392,7 @@ class ConfidenceEngine:
                 self._get(
                     analysis,
                     "trend_score",
-                    50.0,
+                    0.0,
                 )
             ),
 
@@ -400,7 +400,7 @@ class ConfidenceEngine:
                 self._get(
                     analysis,
                     "candlestick_score",
-                    50.0,
+                    0.0,
                 )
             ),
 
@@ -408,7 +408,7 @@ class ConfidenceEngine:
                 self._get(
                     analysis,
                     "elliott_score",
-                    50.0,
+                    0.0,
                 )
             ),
 
@@ -416,7 +416,7 @@ class ConfidenceEngine:
                 self._get(
                     analysis,
                     "harmonic_score",
-                    50.0,
+                    0.0,
                 )
             ),
 
@@ -424,7 +424,7 @@ class ConfidenceEngine:
                 self._get(
                     analysis,
                     "brooks_score",
-                    50.0,
+                    0.0,
                 )
             ),
 
@@ -432,7 +432,7 @@ class ConfidenceEngine:
                 self._get(
                     analysis,
                     "wyckoff_score",
-                    50.0,
+                    0.0,
                 )
             ),
         }
@@ -723,7 +723,7 @@ class ConfidenceEngine:
             self._get(
                 analysis,
                 "structure_score",
-                50.0,
+                0.0,
             )
         )
 
@@ -735,7 +735,7 @@ class ConfidenceEngine:
             self._get(
                 analysis,
                 "momentum_score",
-                50.0,
+                0.0,
             )
         )
 
