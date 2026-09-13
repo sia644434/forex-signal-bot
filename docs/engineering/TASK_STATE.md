@@ -229,6 +229,20 @@ Evidence:
 - Implementation commits: `d67a9a3a96c8bafd64978caa46dfa9af044c1a7f`, `4e2c0478284d0077aff587f4978c47eedc561bc2`, `adfc8733105c8adbdc498d8ec8f3bd9f3e11acd3`.
 - No local execution is claimed.
 
+## TASK-056
+Phase: Phase 2 — Core Architecture / Market Data Reliability
+Title: ProviderManager Concurrent Failure-State Isolation
+Implementation Status: IMPLEMENTED — AWAITING CI VERIFICATION
+Evidence:
+- Audit found that `_last_failures` was a shared mutable list reset at the start of every `get_candles()` request, so overlapping asyncio requests could overwrite or mix failure diagnostics belonging to different requests.
+- Provider retry/fallback/cooldown behavior was otherwise preserved; the fix is limited to request-scoped failure diagnostics.
+- `ProviderManager` now stores `last_failures` in an asyncio task/context-local `ContextVar` and `_request_with_retry()` appends to a request-local failure list.
+- The final `ApplicationError.details["failures"]` is built from the same request-local list, so concurrent requests cannot report another request's failures.
+- Regression coverage in `tests/test_provider_manager_concurrency.py` overlaps two failing provider requests and verifies that each request retains only its own failure diagnostics.
+- Implementation commit: `8b74f42d9d5ae3d2ae12a317cc126310458ed396`.
+- Regression test commits: `13a5790b72463797ed4ebe2130cd64842c2a44f1`, `a91e8476c8924f229929011474921d4ad3431908`.
+- Current CI for exact head `a91e8476c8924f229929011474921d4ad3431908` is running; no local execution is claimed.
+
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
 - #45 — PC Worker readiness enforcement at job-dispatch boundary — implemented as TASK-030.
