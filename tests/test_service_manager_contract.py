@@ -71,6 +71,24 @@ def test_start_all_cleans_up_failed_noncritical_service_before_continuing():
     assert healthy.events == ["start"]
 
 
+def test_failed_start_cleanup_failure_is_retained_for_shutdown_retry():
+    manager = ServiceManager()
+    failing = FakeService("optional", fail_start=True, fail_stop=True)
+    healthy = FakeService("healthy")
+    manager.register(failing)
+    manager.register(healthy)
+
+    run(manager.start_all())
+    assert failing.events == ["start", "stop"]
+    assert healthy.events == ["start"]
+
+    failing.fail_stop = False
+    run(manager.stop_all())
+
+    assert failing.events == ["start", "stop", "stop"]
+    assert healthy.events == ["start", "stop"]
+
+
 def test_stop_all_stops_only_started_services_in_reverse_start_order():
     manager = ServiceManager()
     first = FakeService("first")
