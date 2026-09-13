@@ -24,7 +24,10 @@ _STORE = JournalStore()
 
 
 def _load(user_id: int) -> list[JournalEntry]:
-    return [JournalEntry(**item) for item in _STORE.list(user_id, limit=1000)]
+    # JournalStore.list() returns newest-first, while _save() stores entries
+    # chronologically. Keep the in-memory representation chronological so
+    # append/reverse operations preserve a stable public ordering contract.
+    return [JournalEntry(**item) for item in reversed(_STORE.list(user_id, limit=1000))]
 
 
 def _save(user_id: int, entries: list[JournalEntry]) -> None:
