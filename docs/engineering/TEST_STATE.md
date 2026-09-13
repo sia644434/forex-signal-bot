@@ -2,7 +2,7 @@
 
 ## Baseline
 - Test inventory: VERIFIED from repository tree.
-- Latest verified executable architecture work: TASK-043.
+- Latest verified executable architecture work: TASK-044.
 - Result: PASS for the verified CI gates recorded below.
 - Local Execution: NOT_AVAILABLE through the GitHub Connector; no local execution claimed.
 - Coverage: Not measured in this session.
@@ -56,6 +56,14 @@
 - Scanner intentionally remains outside this shared application service because it has a distinct provider-readiness selection contract.
 - No local execution is claimed.
 
+## TASK-044 Verification
+- Implementation commits: `680fc4cd447d770fb7013563d0d538a04e8cc4d2`, `99dc8679680590d96641e574b00716f637b4988d`, `7180828f4c3b12e7bb30588b614941cc662c0154`.
+- Final Integration Gate run `34721606858`, job `103628419256`: `completed / success`; compile, runtime safety, full test suite, and production Docker build succeeded.
+- Production Activation Validation run `34721606855`, job `103628419303`: `completed / success`.
+- Production E2E Contract Gate run `34721606841`, job `103628419217`: `completed / success`; production E2E contract tests and full suite succeeded.
+- Regression coverage verifies application-scoped scanner manager reuse and dynamic provider-readiness updates.
+- No local execution is claimed.
+
 ## CI and Production Evidence
 - Existing production verification remains valid for the previously deployed commit `8bf2a77840b72add70b98f1b3a2187f85763f2`.
 - Production Live Smoke run `34697840749`, job `103564290648`: `completed / success`.
@@ -69,7 +77,7 @@ The previously deployed service returned a healthy readiness contract both befor
 - `services.telegram.critical = true`
 
 ## Verification Status
-Production readiness remains verified for the observed Railway deployment path. TASK-043 is CI/activation/E2E verified; it does not claim a new live smoke or restart verification.
+Production readiness remains verified for the observed Railway deployment path. TASK-044 is CI/activation/E2E verified; it does not claim a new live smoke or restart verification.
 
 ## Next Verification
-TASK-044: inspect scanner `ProviderManager` lifetime and readiness semantics. Verify all `scan_market()` callers, scheduler/background lifecycle, provider configuration changes, and existing cooldown/cache tests before deciding whether any shared manager or other lifecycle change is justified. Do not reintroduce agent/Ollama/local coding-agent architecture.
+Select the next evidence-backed Phase 2 architecture/reliability gap from repository inspection. Do not assume a new task before evidence is collected. Preserve the Forex-only scope and do not reintroduce agent/Ollama/local coding-agent architecture.
