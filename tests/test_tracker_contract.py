@@ -106,6 +106,9 @@ def test_refresh_tracking_records_signal_change_and_updates_timestamp(monkeypatc
     notifications: list[str] = []
 
     class FakeEngine:
+        def __init__(self, **kwargs) -> None:
+            self.market_data = kwargs["market_data"]
+
         async def analyze(self, candles, *, symbol: str, timeframe: str):
             return Report("SELL")
 
