@@ -247,8 +247,22 @@ Evidence:
 - Final docs head `df7db987dfbe0a29529675aa1c8a528af52ef05b` passed the required 7-workflow GitHub Actions set successfully and Railway commit status is `success`.
 - No local execution is claimed.
 
+## TASK-058
+Phase: Phase 2 — Core Architecture / Market Data Reliability
+Title: FreshnessPolicy Explicit Zero-Threshold Validation
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- Audit found that `FreshnessPolicy.assess()` used `warning_after or default`, `stale_after or default`, and `reject_after or default`.
+- Because `timedelta(0)` is falsy, an explicitly supplied zero threshold silently became the default threshold instead of reaching `_validate_duration()` and being rejected as invalid.
+- This violated the method's own validation contract, which requires each threshold to be greater than zero.
+- Fixed by using explicit `is not None` defaulting so only omitted thresholds receive defaults; explicitly supplied zero values now reach validation and raise `ValueError`.
+- Regression coverage verifies zero is rejected independently for warning, stale, and reject thresholds.
+- Implementation commit: `497076047e9b421ede7df2e80c89f61034d529fb`.
+- Regression test commit: `d2ca6aec69a8329f762211e06b101126c6bac148`.
+- GitHub Actions verification is still pending; no local execution is claimed.
+
 ## Current Phase 2 Audit State
-TASK-057 is VERIFIED. Continue the evidence-backed ProviderManager/market-data reliability audit, with the next focus on retry/backoff/fallback state semantics. Do not create another task unless a concrete correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
+TASK-058 is implemented and awaiting CI/production verification. After verification, continue the evidence-backed market-data reliability audit. Do not create another task unless a concrete correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
