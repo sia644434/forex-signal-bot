@@ -32,6 +32,12 @@ class ServiceManager:
                 logger.info("%s service started.", service.name)
             except Exception as error:
                 handle_exception(error)
+                # A service may have partially started before raising (for example,
+                # after allocating a client or starting an internal runtime). Treat
+                # the failed start attempt as requiring cleanup before handling the
+                # already-started services. Service.stop() is the lifecycle boundary
+                # responsible for making that cleanup safe/idempotent.
+                await self._stop_services([service])
                 if service.critical:
                     await self._stop_services(started)
                     raise CriticalServiceError(
