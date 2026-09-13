@@ -172,7 +172,7 @@ Evidence:
 - Legacy entries that omit optional fields continue to use the dataclass defaults.
 - Regression coverage verifies missing required fields, invalid numeric types, unknown fields, and legacy optional-field compatibility.
 - Implementation head `210922f91584c6d713d67bed192fa7b4f6796de1` passed all 7 required GitHub Actions workflows.
-- Railway commit status for the exact implementation head is `success`.
+- Railway commit status for the exact head is `success`.
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
@@ -243,26 +243,45 @@ Evidence:
 - Existing injected-provider retention/rebinding semantics are unchanged.
 - Regression coverage verifies cooldown removal on provider removal and immediate usable recovery when the provider is re-added.
 - Implementation commit: `705531c2f1e00a7fafbbca795a6844051c3b2235`.
-- Regression test commit: `3282aa0053e3b82e5434ca8906c7804d8bec5a5c`.
+- Regression test commit: `3282aa0053e3b82e5434ca8906c7804d8beca5a5c`.
 - Final docs head `df7db987dfbe0a29529675aa1c8a528af52ef05b` passed the required 7-workflow GitHub Actions set successfully and Railway commit status is `success`.
 - No local execution is claimed.
 
 ## TASK-058
 Phase: Phase 2 — Core Architecture / Market Data Reliability
 Title: FreshnessPolicy Explicit Zero-Threshold Validation
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - Audit found that `FreshnessPolicy.assess()` used `warning_after or default`, `stale_after or default`, and `reject_after or default`.
 - Because `timedelta(0)` is falsy, an explicitly supplied zero threshold silently became the default threshold instead of reaching `_validate_duration()` and being rejected as invalid.
-- This violated the method's own validation contract, which requires each threshold to be greater than zero.
 - Fixed by using explicit `is not None` defaulting so only omitted thresholds receive defaults; explicitly supplied zero values now reach validation and raise `ValueError`.
 - Regression coverage verifies zero is rejected independently for warning, stale, and reject thresholds.
 - Implementation commit: `497076047e9b421ede7df2e80c89f61034d529fb`.
 - Regression test commit: `d2ca6aec69a8329f762211e06b101126c6bac148`.
-- GitHub Actions verification is still pending; no local execution is claimed.
+- Exact-head GitHub Actions verification completed successfully across the required 7-workflow gate set.
+- Railway commit status for the verified implementation head is `success`.
+- No local execution is claimed.
+Checkpoint: Verified 2026-09-13.
+
+## TASK-059
+Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
+Title: RiskEngine Decision-Score Symmetry
+Implementation Status: VERIFIED
+Evidence:
+- Audit found that `DecisionEngine` emits a 0..100 score where 50 is neutral, but `RiskEngine` treated the score as if it were centered around zero by using `abs(score)`.
+- This made bullish scores strong while equivalent bearish scores were treated as weak, affecting dynamic risk percentage, risk level, and trade-quality grading.
+- Added a single symmetric directional-strength conversion: `abs((score - 50) * 2)`, mapping 0/100 to 100, 25/75 to 50, and 50 to 0.
+- Applied the normalized strength consistently to dynamic risk percentage, risk level, and trade-quality calculations.
+- Added regression coverage for symmetric score pairs and neutral-score behavior.
+- Implementation commit: `a98411053c3433fe219b82abf82575547efc98b3`.
+- Required 7-workflow GitHub Actions verification completed successfully after the CI trigger sequence; the final verification commit on `main` is `bb1e4464f0177fd612eeff2240aa096447275b2c`.
+- Railway commit status for the final verified `main` head is `success`.
+- The temporary CI trigger file was created only to activate push-based verification and was removed afterward.
+- No local execution is claimed.
+Checkpoint: Verified 2026-09-13.
 
 ## Current Phase 2 Audit State
-TASK-058 is implemented and awaiting CI/production verification. After verification, continue the evidence-backed market-data reliability audit. Do not create another task unless a concrete correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
+TASK-059 is VERIFIED. Continue the evidence-backed analysis/reliability audit. Do not create another task unless a concrete correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
