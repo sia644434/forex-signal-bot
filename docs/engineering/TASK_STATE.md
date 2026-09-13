@@ -248,6 +248,18 @@ Evidence:
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
+## TASK-057
+Phase: Phase 2 — Core Architecture / Market Data Reliability
+Title: ProviderManager Provider-Rebinding State Consistency
+Implementation Status: IDENTIFIED — IMPLEMENTATION PENDING
+Evidence:
+- `set_providers()` replaces the active provider-priority tuple but only updates `_provider_objects` with newly injected instances; it does not remove injected instances that are no longer active.
+- Therefore, after an injected provider named `oanda` is configured, calling `set_providers(["oanda"])` can still resolve the previously injected object instead of the factory-created OANDA provider. The active configuration says provider-name reference, but stale injected-object state continues to take precedence in `_get_provider()`.
+- This is a concrete state-consistency violation in the provider configuration boundary, not a speculative concurrency concern.
+- Required fix: make `set_providers()` rebuild/retain injected-object state only for currently active provider names, while preserving same-name instance rebinding semantics and existing retention behavior for still-active injected instances.
+- Required regression coverage: injected instance → same provider name string must switch to factory resolution; removed injected providers must not remain in `status()["injected_instances"]`; same-name injected replacement must still win.
+- No implementation or local execution is claimed yet.
+
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
 - #45 — PC Worker readiness enforcement at job-dispatch boundary — implemented as TASK-030.
