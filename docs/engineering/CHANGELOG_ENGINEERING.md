@@ -1,6 +1,10 @@
 # Engineering Changelog
 
 ## 2026-09-13
+- TASK-052: identified a concrete application lifecycle gap in `ServiceManager.start_all()`: a service that partially started and then raised was not included in the cleanup path because it was appended to the started list only after successful startup.
+- TASK-052: hardened `ServiceManager.start_all()` to invoke the failed service's `stop()` lifecycle boundary before cleaning previously started services, covering both critical and non-critical startup failures.
+- TASK-052: added regression coverage verifying cleanup of failed critical/non-critical services and continued startup after non-critical cleanup.
+- TASK-052: implementation commits `e879593ac29065cad7c55fe186f1c3d55d1b9cec` and `32e3133ff8ddb0a5adb28b0cf74c0e508caf0a99`; gate verification pending.
 - TASK-051: identified the remaining Telegram journal boundary gap where structurally valid entry dictionaries could still violate the `JournalEntry` schema.
 - TASK-051: added entry-level validation for required fields, optional/defaulted fields, scalar types, and unknown fields before constructing `JournalEntry`.
 - TASK-051: added regression coverage for missing required fields, invalid numeric types, unknown fields, and legacy entries without optional fields.
