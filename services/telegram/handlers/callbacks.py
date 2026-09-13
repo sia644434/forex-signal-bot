@@ -1,3 +1,4 @@
+from dataclasses import replace
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from ..state import update_menu, get_user_state
@@ -58,7 +59,8 @@ async def _run_signal_report(state, market_data):
     symbol = state.settings.get("market_symbol", "EURUSD"); timeframe = state.settings.get("timeframe", "M15")
     candles = await market_data.get_candles_list(symbol, timeframe, 300)
     if not candles: raise RuntimeError("empty market data")
-    return await __import__("asyncio").to_thread(FullAnalysisEngine().analyze, candles)
+    report = await __import__("asyncio").to_thread(FullAnalysisEngine().analyze, candles)
+    return replace(report, symbol=symbol, timeframe=timeframe)
 
 
 def _scanner_failure_text(language: str, error: Exception) -> str:
