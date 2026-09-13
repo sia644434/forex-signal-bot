@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: Fresh evidence-backed Phase 2 audit after TASK-051; no new task selected without a concrete active gap.
+Active Task: TASK-052 — Partial Service Startup Cleanup (awaiting gate verification).
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -20,7 +20,7 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-033 consolidated Decision/Risk ownership under canonical `analysis/` engines.
 - TASK-034 removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture.
 - TASK-035 audited the `ai/` package and established that it is dormant/unwired future Phase 6 capability and not an active trading architecture.
-- TASK-036 consolidated production Telegram market-data candle retrieval behind `MarketDataService` while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing.
+- TASK-036 consolidated production Telegram candle retrieval behind `MarketDataService` while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing.
 - TASK-037 removed the dormant direct OANDA price surface after repository-wide reference inspection found no production caller.
 - TASK-038 removed the unused lower-level `DataManager` / `ExplicitProviderManager` compatibility architecture.
 - TASK-039 removed unused provider-specific market-data adapter methods while preserving the provider-neutral canonical path.
@@ -36,45 +36,17 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-049 made Telegram journal storage fail closed on unreadable/corrupt persisted JSON and added corruption regression coverage.
 - TASK-050 added structural validation for syntactically valid but invalid Telegram journal JSON and regression coverage preserving the original file on rejection.
 - TASK-051 added entry-level journal schema validation and regression coverage for invalid persisted entry shapes and legacy optional-field compatibility.
+- TASK-052 identified and hardened the application service lifecycle so a service that partially starts and then raises is explicitly given its cleanup path.
 
-### TASK-047 — VERIFIED
-Telegram Journal Ordering and Persistence Contract Audit.
-Evidence: Journal loading now converts the store's newest-first public read representation back to chronological mutation order; saving preserves the chronological representation; public listing reverses to newest-first. Regression coverage validates multiple-add ordering, reload ordering, close-by-index semantics, and invalid indexes. Final implementation head `2e6bef7ec971501cd3573b21544c22f721253f99` passed the required CI/security/activation/readiness/E2E/deployment gates.
-
-### TASK-048 — VERIFIED
-Telegram Journal Mutation Atomicity.
+### TASK-052 — IMPLEMENTED / AWAITING GATE VERIFICATION
+Partial Service Startup Cleanup.
 Evidence:
-- `JournalStore.add()` provides atomic append under the store lock.
-- `JournalStore.update_at()` performs indexed read-modify-write under one lock and preserves the journal's chronological storage contract.
-- `journal.add_entry()` uses the atomic store append path.
-- `journal.close_entry()` uses the atomic indexed-update path.
-- Concurrent regression coverage submits 40 additions from 8 workers and verifies that all 40 entries remain present.
-- Implementation head `b9157db60e52fb975c634f6f0abb2585f7f36de4` passed 7 successful GitHub Actions workflows and Railway commit status.
-
-### TASK-049 — VERIFIED
-Telegram Journal Corruption Fail-Closed Contract.
-Evidence:
-- `JournalStore._read()` now raises `JournalStoreError` for filesystem/JSON read failures instead of returning `{}`.
-- Append and list operations therefore cannot silently treat corrupted persisted data as an empty journal.
-- Regression coverage verifies malformed JSON is rejected and the original corrupt file remains unchanged after a failed append.
-- Implementation head `87dd8a5e827f6db30cbdec6f925be2ea091eed38` passed the required GitHub Actions workflow set and Railway commit status.
-
-### TASK-050 — VERIFIED
-Telegram Journal Storage Structure Validation.
-Evidence:
-- `JournalStore._read()` now validates the root JSON object, user-to-entry-list mapping, and entry-object structure.
-- Invalid structures such as a root list/null, a user value that is not a list, or an entry that is not an object now fail with `JournalStoreError` rather than leaking type/attribute errors.
-- Regression coverage verifies representative invalid structures and preserves the original file contents after rejection.
-- Implementation head `b1415472efa6ebffcbea6bba86535597c28501bb` passed the required 7-workflow GitHub Actions set and Railway commit status.
-
-### TASK-051 — VERIFIED
-Telegram Journal Entry Schema Validation.
-Evidence:
-- The journal boundary validates required fields, optional/defaulted fields, scalar types, and unknown fields before constructing `JournalEntry`.
-- Invalid persisted entry shapes fail closed with `JournalStoreError` rather than leaking dataclass/type errors into journal operations.
-- Legacy entries without optional fields continue to use dataclass defaults.
-- Regression coverage verifies missing required fields, invalid numeric types, unknown fields, and legacy optional-field compatibility.
-- Implementation head `210922f91584c6d713d67bed192fa7b4f6796de1` passed all 7 required GitHub Actions workflows and Railway commit status.
+- `ServiceManager.start_all()` previously excluded the currently failing service from the cleanup set because it was appended to `started` only after successful completion.
+- `TelegramClient.start()` performs multiple resource initialization/start steps before polling is fully established, so a later startup exception can leave partial runtime state behind unless the failed service receives `stop()` cleanup.
+- `ServiceManager.start_all()` now cleans the failed service first, then cleans previously started services for a critical failure.
+- Regression coverage verifies cleanup of both critical and non-critical failed-start services.
+- Code/test commits: `e879593ac29065cad7c55fe186f1c3d55d1b9cec`, `32e3133ff8ddb0a5adb28b0cf74c0e508caf0a99`.
+- No local execution is claimed.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -104,7 +76,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-051 entry-schema regression, lifecycle, activation, security, readiness, and E2E contract gates completed successfully.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-052 adds a regression contract for partial service startup cleanup and is awaiting the required gate results.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
