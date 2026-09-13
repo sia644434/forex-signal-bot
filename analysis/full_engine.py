@@ -195,7 +195,15 @@ class FullAnalysisEngine:
         )
 
 
-    
+    @staticmethod
+    def _directional_strength(score: float) -> float:
+        """
+        Converts the DecisionEngine 0..100 score into symmetric
+        0..100 directional strength centered on neutral score 50.
+        """
+        return abs((float(score) - 50.0) * 2.0)
+
+
     # ==================================================
     # Main Analysis
     # ==================================================
@@ -783,7 +791,7 @@ class FullAnalysisEngine:
 
                         (
 
-                            abs(
+                            self._directional_strength(
 
                                 decision.score
 
