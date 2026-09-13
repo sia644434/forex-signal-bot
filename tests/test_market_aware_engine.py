@@ -99,7 +99,8 @@ def test_market_aware_engine_uses_real_inverse_conversion_for_jpy_quotes(
     assert report.position_size is not None
     assert report.lot_size is not None
     assert report.risk_amount == pytest.approx(20.0)
-    assert report.position_size == pytest.approx(20.0 / (1.5 * 100000 * expected_rate))
+    assert report.position_size == pytest.approx(20.0 / (1.5 * expected_rate))
+    assert report.lot_size == pytest.approx(report.position_size / 100000, abs=0.0005)
     assert f"via {conversion_symbol}" in report.reasons[-1]
 
 
