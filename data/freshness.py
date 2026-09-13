@@ -55,9 +55,9 @@ class FreshnessPolicy:
         cls._validate_timestamp(now)
         cls._validate_duration(timeframe, "timeframe")
 
-        warning = warning_after or timeframe * 2
-        stale = stale_after or timeframe * 3
-        reject = reject_after or timeframe * 6
+        warning = warning_after if warning_after is not None else timeframe * 2
+        stale = stale_after if stale_after is not None else timeframe * 3
+        reject = reject_after if reject_after is not None else timeframe * 6
 
         for value, name in (
             (warning, "warning_after"),
