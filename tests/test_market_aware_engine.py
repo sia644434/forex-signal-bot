@@ -59,7 +59,8 @@ def _price_candles(symbol: str, price: float = 150.0) -> list[Candle]:
     ("symbol", "conversion_symbol", "conversion_price", "expected_rate"),
     [
         ("USDJPY", "USDJPY", 150.0, 1.0 / 150.0),
-        ("EURJPY", "EURJPY", 160.0, 1.0 / 160.0),
+        # EURJPY is quoted in JPY, so JPY->USD still resolves through USDJPY.
+        ("EURJPY", "USDJPY", 150.0, 1.0 / 150.0),
     ],
 )
 def test_market_aware_engine_uses_real_inverse_conversion_for_jpy_quotes(
