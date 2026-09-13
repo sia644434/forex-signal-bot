@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock
 
@@ -164,6 +162,52 @@ async def test_manager_skips_provider_in_cooldown():
     first.get_candles.assert_not_awaited()
     second.get_candles.assert_awaited_once()
     assert manager.status()["cooldowns"]["first"] > 0
+
+
+@pytest.mark.asyncio
+async def test_set_providers_removes_cooldown_for_removed_provider():
+    first = FakeProvider("first", error=TimeoutError("down"))
+    second = FakeProvider("second", [candle(2)])
+
+    manager = ProviderManager(
+        providers=[first, second],
+        retries=0,
+        retry_delay=0,
+        cooldown_seconds=60,
+    )
+
+    await manager.get_candles("EURUSD", "15m", limit=1)
+    assert manager.status()["cooldowns"]["first"] > 0
+
+    manager.set_providers([second])
+
+    assert "first" not in manager.status()["cooldowns"]
+
+
+@pytest.mark.asyncio
+async def test_removed_provider_restarts_without_stale_cooldown_when_readded():
+    first = FakeProvider("first", error=TimeoutError("down"))
+    second = FakeProvider("second", [candle(2)])
+
+    manager = ProviderManager(
+        providers=[first, second],
+        retries=0,
+        retry_delay=0,
+        cooldown_seconds=60,
+    )
+
+    await manager.get_candles("EURUSD", "15m", limit=1)
+    first.get_candles.reset_mock()
+    manager.set_providers([second])
+    manager.set_providers([first, second])
+
+    first.get_candles.side_effect = None
+    first.get_candles.return_value = [candle(1)]
+
+    result = await manager.get_candles("EURUSD", "15m", limit=1)
+
+    assert result == [candle(1)]
+    first.get_candles.assert_awaited_once()
 
 
 def test_manager_rejects_empty_provider_configuration():
