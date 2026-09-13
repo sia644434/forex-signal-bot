@@ -71,30 +71,54 @@ def test_start_all_cleans_up_failed_noncritical_service_before_continuing():
     assert healthy.events == ["start"]
 
 
-def test_stop_all_stops_services_in_reverse_registration_order():
+def test_stop_all_stops_only_started_services_in_reverse_start_order():
     manager = ServiceManager()
     first = FakeService("first")
+    failing = FakeService("failing", fail_start=True)
     second = FakeService("second")
     manager.register(first)
+    manager.register(failing)
     manager.register(second)
 
+    run(manager.start_all())
     run(manager.stop_all())
 
-    assert second.events == ["stop"]
-    assert first.events == ["stop"]
+    assert first.events == ["start", "stop"]
+    assert failing.events == ["start", "stop"]
+    assert second.events == ["start", "stop"]
 
 
-def test_stop_all_isolates_stop_failures_and_continues_cleanup():
+def test_stop_all_does_not_stop_services_that_never_started_after_critical_failure():
     manager = ServiceManager()
     first = FakeService("first")
-    failing = FakeService("failing", fail_stop=True)
+    failing = FakeService("critical", critical=True, fail_start=True)
+    never_started = FakeService("never-started")
     manager.register(first)
     manager.register(failing)
+    manager.register(never_started)
+
+    with pytest.raises(CriticalServiceError):
+        run(manager.start_all())
 
     run(manager.stop_all())
 
-    assert failing.events == ["stop"]
-    assert first.events == ["stop"]
+    assert first.events == ["start", "stop"]
+    assert failing.events == ["start", "stop"]
+    assert never_started.events == []
+
+
+def test_stop_all_retries_services_whose_stop_failed():
+    manager = ServiceManager()
+    failing = FakeService("failing", fail_stop=True)
+    manager.register(failing)
+
+    run(manager.start_all())
+    run(manager.stop_all())
+    assert failing.events == ["start", "stop"]
+
+    failing.fail_stop = False
+    run(manager.stop_all())
+    assert failing.events == ["start", "stop", "stop"]
 
 
 def test_health_isolates_service_health_failure():
