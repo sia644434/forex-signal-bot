@@ -140,6 +140,16 @@ class RiskEngine:
 
 
 
+    @staticmethod
+    def _directional_strength(score: float) -> float:
+        """
+        Converts the DecisionEngine 0..100 score into symmetric
+        0..100 directional strength centered on neutral score 50.
+        """
+
+        return abs((float(score) - 50.0) * 2.0)
+
+
     # ==================================================
     # Dynamic Risk Percentage
     # ==================================================
@@ -160,7 +170,7 @@ class RiskEngine:
 
             and
 
-            abs(score) >= 80
+            self._directional_strength(score) >= 80
 
         ):
 
@@ -174,7 +184,7 @@ class RiskEngine:
 
             and
 
-            abs(score) >= 60
+            self._directional_strength(score) >= 60
 
         ):
 
@@ -210,7 +220,7 @@ class RiskEngine:
 
             and
 
-            abs(score) >= 60
+            RiskEngine._directional_strength(score) >= 60
 
         ):
 
@@ -453,7 +463,7 @@ class RiskEngine:
 
             min(
 
-                abs(score),
+                RiskEngine._directional_strength(score),
 
                 50
 
