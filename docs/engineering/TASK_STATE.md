@@ -230,7 +230,7 @@ Test Status: PASS — Production Readiness run `34721145994`, Production Activat
 Evidence:
 - Telegram callers were audited for repeated `MarketDataService()` construction that recreated `MarketDataEngine` / `ProviderManager` state.
 - A single application-scoped `MarketDataService` is now composed and reused by Telegram signal, callback, and tracker paths.
-- Scanner remains intentionally separate because its explicit provider-readiness selection is a distinct contract.
+- Scanner remains intentionally separate due to distinct provider-readiness contract.
 - Regression coverage was added for application-scoped market-data lifetime/state reuse.
 - ADR-008 records the lifetime decision.
 Checkpoint: Verified 2026-09-12.
@@ -248,6 +248,39 @@ Evidence:
 - `scan_market()` accepts an optional manager for application composition while retaining `_build_provider_manager()` fallback for direct/non-application callers.
 - Regression coverage verifies manager identity reuse and provider-readiness changes across repeated application calls.
 - Implementation commits: `680fc4cd447d770fb7013563d0d538a04e8cc4d2`, `99dc8679680590d96641e574b00716f637b4988d`, `7180828f4c3b12e7bb30588b614941cc662c0154`.
+Checkpoint: Verified 2026-09-13.
+
+## TASK-045
+Phase: Phase 2 — Core Architecture / Telegram Reliability
+Title: Telegram Signal Tracker Contract Audit
+Implementation Status: VERIFIED
+Test Status: PASS — implementation correction commit `276be55c75f54cdffbd82aadbb3e7f53fa97240a` passed the required GitHub Actions gates.
+Evidence:
+- Focused regression coverage was added for tracker replacement, idempotent stop, BUY stop-loss handling, BUY target handling, and signal-change timestamp/update behavior.
+- CI exposed a test-double mismatch around the tracker's asynchronous notification callback; the correction changed the test callback to async without changing production behavior.
+- Production Activation Validation run `34742847128`, job `103685663171`: success.
+- Production Activation Gate run `34742847126`: success.
+- Production Readiness run `34742847163`: success.
+- Production E2E Contract Gate run `34742847216`: success.
+- Final Integration Gate run `34742847153`: success.
+- Test run for the corrected head `276be55c75f54cdffbd82aadbb3e7f53fa97240a` completed successfully; Security Audit also passed.
+Checkpoint: Verified 2026-09-13.
+
+## TASK-046
+Phase: Phase 2 — Core Architecture / Telegram Reliability
+Title: Telegram User State Contract Coverage
+Implementation Status: VERIFIED
+Test Status: PASS — implementation commit `2970f7224a12db64353d0e70b9932d65c8e48a6c` passed all observed required GitHub Actions gates.
+Evidence:
+- Added focused regression coverage for creation/reuse of per-user state, mutation of `current_menu`, and isolation of mutable `settings` between users.
+- Production Activation Validation run `34742956007`, job `103685663171`: success.
+- Security Audit run `34742955998`, job `103685663261`: success.
+- Production E2E Contract Gate run `34742956014`, job `103685663284`: success.
+- Test run `34742956032`, job `103685663329`: success; lifecycle/persistence tests, full test suite, application health, Telegram import, signal lifecycle import, and syntax checks all succeeded.
+- Production Activation Gate run `34742955996`, job `103685663235`: success.
+- Production Readiness run `34742956006`, job `103685663216`: success.
+- Final Integration Gate run `34742955999`, job `103685663094`: success; compile, runtime safety, full test suite, and production Docker build succeeded.
+- No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
 ## Deferred Roadmap Issues
