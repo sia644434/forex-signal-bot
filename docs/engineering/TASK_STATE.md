@@ -220,19 +220,21 @@ Checkpoint: Verified 2026-09-13.
 ## TASK-055
 Phase: Phase 2 — Core Architecture / Worker Lifecycle Reliability
 Title: Worker Queue Resource Lifecycle
-Implementation Status: IMPLEMENTED — AWAITING CI VERIFICATION
+Implementation Status: VERIFIED
 Evidence:
 - Audit found a concrete resource-lifecycle gap: `WorkerDispatcher.from_settings()` creates a durable `WorkerQueue`, but `WorkerProcessingService.stop()` previously did nothing, so the SQLite connection owned by the application service was not closed during normal application shutdown.
 - `WorkerDispatcher.close()` now closes and releases its owned queue resource; `WorkerProcessingService.stop()` delegates to that boundary.
 - Regression coverage verifies service shutdown releases the dispatcher queue and that dispatcher close is idempotent.
 - No production behavior or worker workload contract was changed; this is application resource cleanup only.
 - Implementation commits: `d67a9a3a96c8bafd64978caa46dfa9af044c1a7f`, `4e2c0478284d0077aff587f4978c47eedc561bc2`, `adfc8733105c8adbdc498d8ec8f3bd9f3e11acd3`.
+- Descendant exact head `d904bd4bbb37e0970fc9579b07e56bf6cddd2e95` passed all 7 required GitHub Actions workflows and has successful Railway commit status; these gates include the full test suite and production contract gates covering the TASK-055 implementation.
 - No local execution is claimed.
+Checkpoint: Verified 2026-09-13.
 
 ## TASK-056
 Phase: Phase 2 — Core Architecture / Market Data Reliability
 Title: ProviderManager Concurrent Failure-State Isolation
-Implementation Status: IMPLEMENTED — AWAITING CI VERIFICATION
+Implementation Status: VERIFIED
 Evidence:
 - Audit found that `_last_failures` was a shared mutable list reset at the start of every `get_candles()` request, so overlapping asyncio requests could overwrite or mix failure diagnostics belonging to different requests.
 - Provider retry/fallback/cooldown behavior was otherwise preserved; the fix is limited to request-scoped failure diagnostics.
@@ -241,7 +243,10 @@ Evidence:
 - Regression coverage in `tests/test_provider_manager_concurrency.py` overlaps two failing provider requests and verifies that each request retains only its own failure diagnostics.
 - Implementation commit: `8b74f42d9d5ae3d2ae12a317cc126310458ed396`.
 - Regression test commits: `13a5790b72463797ed4ebe2130cd64842c2a44f1`, `a91e8476c8924f229929011474921d4ad3431908`.
-- Current CI for exact head `a91e8476c8924f229929011474921d4ad3431908` is running; no local execution is claimed.
+- Exact head `d904bd4bbb37e0970fc9579b07e56bf6cddd2e95` passed all 7 required GitHub Actions workflows: Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, Test, Production Readiness, and Final Integration Gate.
+- Railway commit status for the exact head is `success`.
+- No local execution is claimed.
+Checkpoint: Verified 2026-09-13.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
