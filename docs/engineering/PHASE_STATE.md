@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: Next evidence-backed Phase 2 task selection after TASK-048.
+Active Task: Next evidence-backed Phase 2 task selection after TASK-049.
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -33,6 +33,7 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-046 added focused Telegram user-state contract coverage.
 - TASK-047 corrected Telegram journal ordering and persistence/index semantics.
 - TASK-048 made Telegram journal mutations atomic across the full read-modify-write boundary and added concurrency regression coverage.
+- TASK-049 made Telegram journal storage fail closed on unreadable/corrupt persisted JSON and added corruption regression coverage.
 
 ### TASK-047 — VERIFIED
 Telegram Journal Ordering and Persistence Contract Audit.
@@ -47,6 +48,14 @@ Evidence:
 - `journal.close_entry()` uses the atomic indexed-update path.
 - Concurrent regression coverage submits 40 additions from 8 workers and verifies that all 40 entries remain present.
 - Implementation head `b9157db60e52fb975c634f6f0abb2585f7f36de4` passed 7 successful GitHub Actions workflows and Railway commit status.
+
+### TASK-049 — VERIFIED
+Telegram Journal Corruption Fail-Closed Contract.
+Evidence:
+- `JournalStore._read()` now raises `JournalStoreError` for filesystem/JSON read failures instead of returning `{}`.
+- Append and list operations therefore cannot silently treat corrupted persisted data as an empty journal.
+- Regression coverage verifies malformed JSON is rejected and the original corrupt file remains unchanged after a failed append.
+- Implementation head `87dd8a5e827f6db30cbdec6f925be2ea091eed38` passed the required GitHub Actions workflow set and Railway commit status.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -76,7 +85,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-048 concurrency regression, lifecycle, activation, security, readiness, and E2E contract gates completed successfully.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-049 corruption regression, lifecycle, activation, security, readiness, and E2E contract gates completed successfully.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
