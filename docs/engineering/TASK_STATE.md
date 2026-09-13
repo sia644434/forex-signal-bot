@@ -149,6 +149,19 @@ Evidence:
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
+## TASK-050
+Phase: Phase 2 — Core Architecture / Telegram Reliability
+Title: Telegram Journal Storage Structure Validation
+Implementation Status: VERIFIED
+Evidence:
+- `JournalStore._read()` now validates that persisted JSON is a dictionary whose user keys map to lists of entry dictionaries.
+- Structurally invalid but syntactically valid JSON is rejected with `JournalStoreError` instead of leaking inconsistent `AttributeError`/`TypeError` behavior into journal operations.
+- Regression coverage verifies invalid root/list/null/user-entry structures are rejected and the original file remains unchanged.
+- Implementation head `b1415472efa6ebffcbea6bba86535597c28501bb` completed the required 7-workflow GitHub Actions set successfully.
+- Railway commit status for the exact implementation head is `success`.
+- No local execution is claimed.
+Checkpoint: Verified 2026-09-13.
+
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
 - #45 — PC Worker readiness enforcement at job-dispatch boundary — implemented as TASK-030.
