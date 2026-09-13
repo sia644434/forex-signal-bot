@@ -1,9 +1,11 @@
 # TASK-064 Verification Trigger
 
-Connector-authored verification trigger for the DecisionEngine supply-demand score contract repair.
+Connector-authored verification trigger for TASK-064.
 
-Implementation:
-- `analysis/decision_engine.py` now reads `supply_demand_score` for the Supply/Demand decision component.
-- `tests/test_decision_engine.py` adds regression coverage proving explicit Supply/Demand score changes affect the final decision score independently of `trend_score`.
+TASK-064 fixes the DecisionEngine Supply/Demand contract so the decision layer consumes `supply_demand_score` instead of `trend_score`.
 
-Run the repository production verification workflows against this commit before marking TASK-064 verified.
+Implementation evidence:
+- `analysis/decision_engine.py`
+- `tests/test_decision_engine.py`
+
+This connector-authored update triggers the repository push-based verification workflows against the corrected main branch state.
