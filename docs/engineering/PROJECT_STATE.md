@@ -2,7 +2,7 @@
 
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
-- Current Commit: `6b5b7df27430abd61d10816d63cc6680dd26dd6f`
+- Current Commit: `ecd5bc11188238ad7205c1a043e74a1ce6d5fdfe`
 - Overall Status: `PRODUCTION_VERIFIED`
 - Current Phase: Phase 2 — Core Architecture
 - Current Task: Next evidence-backed Phase 2 task selection after TASK-044
