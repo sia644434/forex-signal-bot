@@ -5,7 +5,7 @@ from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from typing import Awaitable, Callable
 
-from analysis.full_engine import FullAnalysisEngine
+from analysis.market_aware_engine import MarketAwareAnalysisEngine
 from services.market_data.service import MarketDataService
 
 
@@ -79,9 +79,9 @@ async def refresh_tracking(
         ACTIVE_TRACKS.pop((item.user_id, item.symbol, item.timeframe), None)
         return item
 
-    report = await asyncio.to_thread(FullAnalysisEngine().analyze, candles)
-    if hasattr(report, "symbol") and hasattr(report, "timeframe"):
-        report = replace(report, symbol=item.symbol, timeframe=item.timeframe)
+    report = await MarketAwareAnalysisEngine(market_data=market_data).analyze(
+        candles, symbol=item.symbol, timeframe=item.timeframe
+    )
     new_signal = str(report.signal).upper()
     old_signal = item.last_signal
     item.last_signal = new_signal
