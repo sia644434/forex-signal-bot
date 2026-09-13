@@ -162,6 +162,20 @@ Evidence:
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
+## TASK-051
+Phase: Phase 2 — Core Architecture / Telegram Reliability
+Title: Telegram Journal Entry Schema Validation
+Implementation Status: VERIFIED
+Evidence:
+- The journal boundary now validates required fields, optional/defaulted fields, accepted scalar types, and rejects unknown entry fields before constructing `JournalEntry`.
+- Persisted invalid entry shapes fail closed with controlled `JournalStoreError` behavior instead of leaking `TypeError`/`AttributeError` from dataclass construction or later journal operations.
+- Legacy entries that omit optional fields continue to use the dataclass defaults.
+- Regression coverage verifies missing required fields, invalid numeric types, unknown fields, and legacy optional-field compatibility.
+- Implementation head `210922f91584c6d713d67bed192fa7b4f6796de1` passed all 7 required GitHub Actions workflows: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate.
+- Railway commit status for the exact implementation head is `success`.
+- No local execution is claimed.
+Checkpoint: Verified 2026-09-13.
+
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
 - #45 — PC Worker readiness enforcement at job-dispatch boundary — implemented as TASK-030.
