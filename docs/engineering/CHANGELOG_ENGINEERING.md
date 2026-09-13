@@ -1,5 +1,15 @@
 # Engineering Changelog
 
+## 2026-09-13
+- TASK-044: completed the scanner `ProviderManager` lifetime and readiness boundary audit.
+- TASK-044: confirmed the Telegram callback is the real application caller of `scan_market()` in the current code path; no scheduler/background scanner lifecycle was found that justified a separate manager design.
+- TASK-044: changed scanner manager lifetime from per-scan construction to application-scoped storage in `Application.bot_data`, preserving provider instances, cooldowns, and failure state without introducing process-global state.
+- TASK-044: preserved dynamic provider-readiness semantics by recalculating readiness on each manager retrieval and refreshing provider priority through `set_providers()`.
+- TASK-044: retained `_build_provider_manager()` as the direct/non-application fallback for `scan_market()`.
+- TASK-044: added regression coverage for application-scoped manager reuse and readiness changes.
+- TASK-044: implementation commits `680fc4cd447d770fb7013563d0d538a04e8cc4d2`, `99dc8679680590d96641e574b00716f637b4988d`, and `7180828f4c3b12e7bb30588b614941cc662c0154` passed Final Integration Gate `34721606858`, Production Activation Validation `34721606855`, and Production E2E Contract Gate `34721606841`.
+- Synchronized persistent engineering state after TASK-044 verification. Phase 2 remains active pending selection of the next evidence-backed architecture/reliability gap.
+
 ## 2026-09-12
 - Established the first persistent engineering-memory checkpoint for the repository.
 - Added baseline architecture/state tracking under `docs/engineering/`.
