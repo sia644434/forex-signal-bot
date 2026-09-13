@@ -2,10 +2,38 @@
 
 ## Baseline
 - Test inventory: VERIFIED from repository tree.
-- Latest verified executable architecture work: TASK-060.
+- Latest verified executable architecture work: TASK-064.
 - Result: PASS for the verified CI gates recorded below.
 - Local Execution: NOT_AVAILABLE through the GitHub Connector; no local execution claimed.
 - Coverage: Not measured in this session.
+
+## TASK-064 Verification
+- Implementation commit: `39e897d253d701b48e4772e1fa582f5d13383d52` triggered the connector-based repair workflow; the resulting production code fix is present on `main` and the persistent verification trigger was committed as `2790e5d4151e1ca72d644cb6b4685d464d7e2114`.
+- DecisionEngine now reads `supply_demand_score` instead of `trend_score` for the Supply/Demand component.
+- Regression coverage verifies that changing explicit Supply/Demand score changes the final decision score independently of `trend_score`.
+- Verification commit: `6b21d82f04a4a7deab2865ffe1bc86a066c8fca5`.
+- Test run `34778972992`, job `103782342868`: `completed / success`; lifecycle/persistence tests, full test suite, application health, Telegram imports, signal lifecycle imports, and syntax checks all succeeded.
+- Production Activation Gate run `34778972997`, job `103782342960`: `completed / success`; compile, activation tests, and full test suite all succeeded.
+- No local execution is claimed.
+- Checkpoint: Verified 2026-09-13.
+
+## TASK-063 Verification
+- Full-analysis regression coverage verifies the production score wiring.
+- Final Production E2E Contract Gate run `34777255242` passed, including the full test suite.
+- No local execution is claimed.
+
+## TASK-062 — VERIFIED
+- Focused regression contract added in `tests/test_confidence_score_contract.py`.
+- Full repository verification was evidenced by GitHub Actions on a connector-authored commit containing the fix.
+- Implementation head: `9fb609a4850be59131437fe94142f47737a72f4e`.
+- No local execution is claimed.
+
+## TASK-061 Verification
+- Regression coverage added for signed score normalization: `-20 -> 40`, `0 -> 50`, `+20 -> 60`.
+- Coverage verifies bearish/neutral/bullish direction preservation and keeps `volatility_score` on its ratio contract.
+- Full Test workflow for verification head `24a3c9ab91a64b336b78288912a31d0262ffdaf1`: **421 passed**.
+- Required 7-workflow verification set: **all success**.
+- Railway commit status: **success**.
 
 ## TASK-060 Verification
 - Implementation commit: `17335d61eaca21614b50de963e7b08d3a655a063`.
@@ -98,28 +126,7 @@
 - Post-restart Production Live Smoke run `34698134769`, job `103565063400`: `completed / success`.
 
 ## Verification Status
-Production readiness remains verified for the observed Railway deployment path. TASK-058, TASK-059, and TASK-060 are CI/activation/E2E/security/readiness verified; this does not claim a new live smoke or restart verification.
+Production readiness remains verified for the observed Railway deployment path. TASK-058, TASK-059, TASK-060, and TASK-064 are CI/activation/E2E/security/readiness verified; this does not claim a new live smoke or restart verification.
 
 ## Next Verification
 Continue the evidence-backed analysis/reliability audit. Do not invent speculative tasks. Preserve the Forex-only scope and do not reintroduce agent/Ollama/local coding-agent architecture.
-
-
-## TASK-061 Verification
-- Regression coverage added for signed score normalization: `-20 -> 40`, `0 -> 50`, `+20 -> 60`.
-- Coverage verifies bearish/neutral/bullish direction preservation and keeps `volatility_score` on its ratio contract.
-- Full Test workflow for verification head `24a3c9ab91a64b336b78288912a31d0262ffdaf1`: **421 passed**.
-- Required 7-workflow verification set: **all success**.
-- Railway commit status: **success**.
-
-
-## TASK-062 — VERIFIED
-- Focused regression contract added in `tests/test_confidence_score_contract.py`.
-- Full repository verification must be evidenced by GitHub Actions on a connector-authored commit containing the fix.
-- Implementation head: `9fb609a4850be59131437fe94142f47737a72f4e`.
-- No local execution is claimed.
-
-
-## TASK-063 — VERIFIED
-- Full-analysis regression coverage verifies the production score wiring.
-- Final Production E2E Contract Gate run `34777255242` passed, including the full test suite.
-- No local execution is claimed.
