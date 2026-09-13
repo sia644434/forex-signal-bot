@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-052 — Partial Service Startup Cleanup (awaiting gate verification).
+Active Work: Evidence-backed reliability audit after TASK-056.
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -36,17 +36,14 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-049 made Telegram journal storage fail closed on unreadable/corrupt persisted JSON and added corruption regression coverage.
 - TASK-050 added structural validation for syntactically valid but invalid Telegram journal JSON and regression coverage preserving the original file on rejection.
 - TASK-051 added entry-level journal schema validation and regression coverage for invalid persisted entry shapes and legacy optional-field compatibility.
-- TASK-052 identified and hardened the application service lifecycle so a service that partially starts and then raises is explicitly given its cleanup path.
+- TASK-052 through TASK-054 hardened partial-start cleanup, started-service shutdown tracking, and failed-cleanup retry semantics.
+- TASK-055 closed the Worker Queue resource lifecycle gap by releasing the durable queue during service shutdown.
+- TASK-056 isolated ProviderManager failure diagnostics per concurrent request with `ContextVar` and request-local failure tracking.
 
-### TASK-052 — IMPLEMENTED / AWAITING GATE VERIFICATION
-Partial Service Startup Cleanup.
-Evidence:
-- `ServiceManager.start_all()` previously excluded the currently failing service from the cleanup set because it was appended to `started` only after successful completion.
-- `TelegramClient.start()` performs multiple resource initialization/start steps before polling is fully established, so a later startup exception can leave partial runtime state behind unless the failed service receives `stop()` cleanup.
-- `ServiceManager.start_all()` now cleans the failed service first, then cleans previously started services for a critical failure.
-- Regression coverage verifies cleanup of both critical and non-critical failed-start services.
-- Code/test commits: `e879593ac29065cad7c55fe186f1c3d55d1b9cec`, `32e3133ff8ddb0a5adb28b0cf74c0e508caf0a99`.
-- No local execution is claimed.
+### Current Audit
+- TASK-057 was reviewed and rejected as a false positive. Existing ProviderManager contract tests intentionally require retention of injected provider instances after active-priority changes and require same-name rebinding to replace the retained instance.
+- Current work continues with evidence-backed ProviderManager cooldown/retry/fallback and provider-state lifecycle auditing.
+- No new task is created unless a concrete repository-backed correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -76,7 +73,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-052 adds a regression contract for partial service startup cleanup and is awaiting the required gate results.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. Reliability regression coverage is added only when a concrete Phase 2 defect is confirmed.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
