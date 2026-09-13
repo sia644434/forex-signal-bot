@@ -80,7 +80,8 @@ async def refresh_tracking(
         return item
 
     report = await asyncio.to_thread(FullAnalysisEngine().analyze, candles)
-    report = replace(report, symbol=item.symbol, timeframe=item.timeframe)
+    if hasattr(report, "symbol") and hasattr(report, "timeframe"):
+        report = replace(report, symbol=item.symbol, timeframe=item.timeframe)
     new_signal = str(report.signal).upper()
     old_signal = item.last_signal
     item.last_signal = new_signal
