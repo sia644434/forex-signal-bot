@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: Next evidence-backed Phase 2 task selection after TASK-050.
+Active Task: Fresh evidence-backed Phase 2 audit after TASK-051; no new task selected without a concrete active gap.
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -35,6 +35,7 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-048 made Telegram journal mutations atomic across the full read-modify-write boundary and added concurrency regression coverage.
 - TASK-049 made Telegram journal storage fail closed on unreadable/corrupt persisted JSON and added corruption regression coverage.
 - TASK-050 added structural validation for syntactically valid but invalid Telegram journal JSON and regression coverage preserving the original file on rejection.
+- TASK-051 added entry-level journal schema validation and regression coverage for invalid persisted entry shapes and legacy optional-field compatibility.
 
 ### TASK-047 — VERIFIED
 Telegram Journal Ordering and Persistence Contract Audit.
@@ -66,6 +67,15 @@ Evidence:
 - Regression coverage verifies representative invalid structures and preserves the original file contents after rejection.
 - Implementation head `b1415472efa6ebffcbea6bba86535597c28501bb` passed the required 7-workflow GitHub Actions set and Railway commit status.
 
+### TASK-051 — VERIFIED
+Telegram Journal Entry Schema Validation.
+Evidence:
+- The journal boundary validates required fields, optional/defaulted fields, scalar types, and unknown fields before constructing `JournalEntry`.
+- Invalid persisted entry shapes fail closed with `JournalStoreError` rather than leaking dataclass/type errors into journal operations.
+- Legacy entries without optional fields continue to use dataclass defaults.
+- Regression coverage verifies missing required fields, invalid numeric types, unknown fields, and legacy optional-field compatibility.
+- Implementation head `210922f91584c6d713d67bed192fa7b4f6796de1` passed all 7 required GitHub Actions workflows and Railway commit status.
+
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
 
@@ -94,7 +104,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-050 structure-validation regression, lifecycle, activation, security, readiness, and E2E contract gates completed successfully.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-051 entry-schema regression, lifecycle, activation, security, readiness, and E2E contract gates completed successfully.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
