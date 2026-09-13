@@ -95,3 +95,23 @@ def test_corrupt_store_is_not_reported_as_empty(tmp_path) -> None:
 
     with pytest.raises(JournalStoreError, match="unable to read journal store"):
         store.list(17)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        "[]",
+        "null",
+        '{"16": "not-a-list"}',
+        '{"16": ["not-an-entry-object"]}',
+    ],
+)
+def test_structurally_invalid_store_fails_closed(tmp_path, payload) -> None:
+    path = tmp_path / "journal.json"
+    path.write_text(payload, encoding="utf-8")
+    store = JournalStore(str(path))
+
+    with pytest.raises(JournalStoreError, match="invalid journal store structure"):
+        store.list(16)
+
+    assert path.read_text(encoding="utf-8") == payload
