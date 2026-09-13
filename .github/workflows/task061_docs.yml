@@ -1,0 +1,58 @@
+name: TASK-061 docs sync
+
+on:
+  push:
+    paths:
+      - .github/workflows/task061_docs.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Synchronize engineering state
+        shell: python
+        run: |
+          from pathlib import Path
+
+          blocks = {
+              "docs/engineering/TASK_STATE.md": '''\n## TASK-061\nPhase: Phase 2 — Core Architecture / Analysis/Risk Reliability\nTitle: ConfidenceEngine Signed Analysis Score Contract Alignment\nImplementation Status: VERIFIED\nEvidence:\n- `ConfidenceEngine` now converts signed analysis component scores from `-100..100` to the shared `0..100` directional score contract, preserving `0 -> 50` neutral semantics.\n- Missing directional component defaults are neutral (`0` signed) rather than being interpreted as bullish.\n- `volatility_score` remains a non-directional ratio and is not passed through signed-score normalization.\n- Regression coverage verifies signed negative/zero/positive normalization, directional symmetry, engine collection, and volatility ratio handling.\n- Verification commit: `24a3c9ab91a64b336b78288912a31d0262ffdaf1`.\n- The required 7 GitHub Actions workflows completed successfully: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate.\n- Railway commit status for the exact verification head is `success`.\n- No local execution is claimed.\nCheckpoint: Verified 2026-09-13.\n''',
+              "docs/engineering/PHASE_STATE.md": '''\n- TASK-061 fixed the ConfidenceEngine/DecisionEngine score-contract mismatch: signed analysis component scores are normalized around neutral 50 before confidence voting, while volatility remains a separate ratio contract. Required verification passed.\n''',
+              "docs/engineering/TEST_STATE.md": '''\n\n## TASK-061 Verification\n- Regression coverage added for signed score normalization: `-20 -> 40`, `0 -> 50`, `+20 -> 60`.\n- Coverage verifies bearish/neutral/bullish direction preservation and keeps `volatility_score` on its ratio contract.\n- Full Test workflow for verification head `24a3c9ab91a64b336b78288912a31d0262ffdaf1`: **421 passed**.\n- Required 7-workflow verification set: **all success**.\n- Railway commit status: **success**.\n''',
+              "docs/engineering/CHANGELOG_ENGINEERING.md": '''\n- TASK-061: aligned ConfidenceEngine with the signed analysis-component score contract used by the analysis engines and normalized by DecisionEngine.\n- TASK-061: preserved neutral semantics (`signed 0 -> decision 50`) and symmetric bullish/bearish interpretation.\n- TASK-061: kept `volatility_score` as a separate non-directional ratio contract.\n- TASK-061: added regression coverage; verification head `24a3c9ab91a64b336b78288912a31d0262ffdaf1` passed all 7 required GitHub Actions gates and Railway status.\n''',
+              "docs/engineering/DECISIONS.md": '''\n\n## TASK-061 — Analysis Score Contract Boundary\nThe analysis layer's directional component scores are signed (`-100..100`), while DecisionEngine consumes a normalized `0..100` representation centered on neutral `50`. ConfidenceEngine must normalize directional analysis components at its input boundary using the same mapping. `volatility_score` is explicitly excluded because it is a non-directional ratio.\n''',
+          }
+
+          task_marker = "## TASK-061"
+          for filename, block in blocks.items():
+              path = Path(filename)
+              text = path.read_text()
+              if task_marker not in text:
+                  text += block
+              path.write_text(text)
+
+          task_state = Path("docs/engineering/TASK_STATE.md")
+          text = task_state.read_text()
+          text = text.replace(
+              "## Current Phase 2 Audit State\nTASK-060 is VERIFIED.",
+              "## Current Phase 2 Audit State\nTASK-061 is VERIFIED."
+          )
+          task_state.write_text(text)
+
+          workflow = Path(".github/workflows/task061_docs.yml")
+          workflow.unlink()
+
+      - name: Commit docs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/engineering .github/workflows/task061_docs.yml
+          git diff --cached --quiet && exit 0
+          git commit -m "docs: record TASK-061 verification state"
+          git push origin HEAD:main
