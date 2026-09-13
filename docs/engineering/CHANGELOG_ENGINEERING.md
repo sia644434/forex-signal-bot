@@ -1,5 +1,16 @@
 # Engineering Changelog
 
+## 2026-09-13 — TASK-065
+- Identified a concrete RiskEngine configuration gap: `risk_reward_target` was accepted as a constructor parameter but TP2 and reported risk/reward remained hardcoded at `2.0`.
+- Wired `risk_reward_target` into BUY/SELL TP2 and `RiskResult.risk_reward`.
+- Added validation rejecting non-positive risk/reward targets.
+- Added regression coverage for the configurable target and invalid values.
+- Implementation commit `377b08e05f47c8eeb5b1fd4d74f5aaa100181f77`.
+- Test/verification commit `5b90cb34a43076ef5fda326e761159e3fc4fe69d`.
+- Test run `34779486453` / job `103783750712` completed successfully, including lifecycle/persistence tests, full test suite, application health, Telegram imports, signal lifecycle imports, and syntax checks.
+- Production E2E Contract Gate run `34779486425` / job `103783750727` completed successfully, including compile, production E2E contract tests, and full test suite.
+- TASK-065 is VERIFIED. No local execution is claimed.
+
 ## 2026-09-13 — TASK-064
 - Fixed a concrete DecisionEngine contract gap: the Supply/Demand decision component was reading `trend_score` instead of the explicit `supply_demand_score` produced by the production analysis pipeline.
 - Added regression coverage proving that explicit Supply/Demand score changes affect the final decision score independently of `trend_score`.
@@ -17,6 +28,10 @@
 - Added regression coverage for neutral fallback and explicit supply-demand scoring.
 
 ## 2026-09-13
+- TASK-061: aligned ConfidenceEngine with the signed analysis-component score contract used by the analysis engines and normalized by DecisionEngine.
+- TASK-061: preserved neutral semantics (`signed 0 -> decision 50`) and symmetric bullish/bearish interpretation.
+- TASK-061: kept `volatility_score` as a separate non-directional ratio contract.
+- TASK-061: added regression coverage; verification head `24a3c9ab91a64b336b78288912a31d0262ffdaf1` passed all 7 required GitHub Actions gates and Railway status.
 - TASK-060: identified a concrete FullAnalysisEngine score-contract gap: DecisionEngine emits a 0..100 score centered on neutral 50, while FullAnalysisEngine used `abs(decision.score)` when calculating trade quality.
 - TASK-060: this made equivalent bearish and bullish score strengths receive different trade-quality contributions.
 - TASK-060: introduced neutral-centered directional strength `abs((score - 50) * 2)` at the FullAnalysisEngine trade-quality boundary.
@@ -36,3 +51,64 @@
 - TASK-059: temporary CI trigger file was removed after verification.
 - TASK-058: verified the FreshnessPolicy explicit-zero threshold fix across the required CI gate set and Railway deployment/status path.
 - Synchronized persistent engineering state after TASK-058, TASK-059, and TASK-060 verification. Phase 2 remains active for continued evidence-backed analysis/reliability auditing.
+- TASK-055: identified a concrete worker resource-lifecycle gap: `WorkerDispatcher.from_settings()` creates a durable SQLite-backed `WorkerQueue`, while `WorkerProcessingService.stop()` previously left the queue connection open during application shutdown.
+- TASK-055: added `WorkerDispatcher.close()` to release its queue resource and made it idempotent by clearing the owned queue reference after close.
+- TASK-055: changed `WorkerProcessingService.stop()` to delegate queue cleanup through the dispatcher lifecycle boundary.
+- TASK-055: added regression coverage for service shutdown queue release and idempotent dispatcher close.
+- TASK-055: implementation commits `d67a9a3a96c8bafd64978caa46dfa9af044c1a7f`, `4e2c0478284d0077aff587f4978c47eedc561bc2`, and `adfc8733105c8adbdc498d8ec8f3bd9f3e11acd3`.
+- TASK-053: identified a concrete application lifecycle gap in `ServiceManager.stop_all()`: it attempted to stop every registered service, including services that never started or had already been cleaned up after startup failure.
+- TASK-053: changed `ServiceManager` to track successfully started services explicitly and restrict shutdown to that lifecycle set.
+- TASK-053: successfully stopped services are removed from the tracked set, while services whose `stop()` fails remain tracked so a later shutdown attempt can retry cleanup.
+- TASK-053: added regression coverage for started-service reverse-order shutdown, never-started services after critical failure, and retry after stop failure.
+- TASK-053: implementation commits `b82b5c5a31fc57f2b484849df9e397d67c446a93` and `98db3b8c0f6a0580212dbe93a11a71b346f50f32`.
+- TASK-053: exact final implementation/docs head `15a85e37d866e2f4f6bf75e5c427ca394f3b3cd2` passed all 7 required GitHub Actions workflows: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate. Railway commit status is successful.
+- TASK-052: identified a concrete application lifecycle gap in `ServiceManager.start_all()`: a service that partially started and then raised was not included in the cleanup path because it was appended to the started list only after successful startup.
+- TASK-052: hardened `ServiceManager.start_all()` to invoke the failed service's `stop()` lifecycle boundary before cleaning previously started services, covering both critical and non-critical startup failures.
+- TASK-052: added regression coverage verifying cleanup of failed critical/non-critical services and continued startup after non-critical cleanup.
+- TASK-052: implementation head `0b97e1487bdb6b1d944f4957b6a4e782dc6713f5` passed the required GitHub Actions gate set successfully.
+- TASK-052: corrected the engineering changelog to use the verified implementation head rather than the earlier implementation-only commit pair.
+- TASK-051: identified the remaining Telegram journal boundary gap where structurally valid entry dictionaries could still violate the `JournalEntry` schema.
+- TASK-051: added entry-level validation for required fields, optional/defaulted fields, scalar types, and unknown fields before constructing `JournalEntry`.
+- TASK-051: added regression coverage for missing required fields, invalid numeric types, unknown fields, and legacy entries without optional fields.
+- TASK-051: implementation head `210922f91584c6d713d67bed192fa7b4f6796de1` passed all 7 required GitHub Actions workflows and Railway commit status.
+- TASK-050: identified a Telegram journal structure-validation gap: syntactically valid JSON could still have an invalid root, user mapping, or entry shape and leak uncontrolled type/attribute errors into journal operations.
+- TASK-050: changed `JournalStore._read()` to validate the persisted JSON structure and raise `JournalStoreError` for invalid root/user/entry shapes.
+- TASK-050: added regression coverage for representative invalid structures and verified that rejected storage is not modified.
+- TASK-050: implementation head `b1415472efa6ebffcbea6bba86535597c28501bb` passed the required 7-workflow GitHub Actions set and Railway commit status.
+- TASK-049: identified a Telegram journal persistence safety gap: `JournalStore._read()` converted filesystem/JSON read failures into `{}`, so a later append could treat corrupted storage as empty and risk discarding persisted data.
+- TASK-049: changed `JournalStore._read()` to raise `JournalStoreError` on unreadable or malformed persisted JSON instead of silently returning an empty journal.
+- TASK-049: added regression coverage verifying corrupt storage is rejected by both list and append paths and that a failed append does not overwrite the original corrupt file.
+- TASK-049: implementation head `87dd8a5e827f6db30cbdec6f925be2ea091eed38` passed the required 7-workflow gate set and Railway commit status.
+- TASK-048: identified a real Telegram journal concurrency gap: `add_entry()` and `close_entry()` performed read-modify-write across separate `JournalStore` lock scopes, allowing overlapping callbacks to lose updates.
+- TASK-048: changed `journal.add_entry()` to use the store's atomic append path and added `JournalStore.update_at()` for atomic indexed mutation under one lock.
+- TASK-048: added concurrency regression coverage with 40 simultaneous additions across 8 workers and verified all entries remain present.
+- TASK-048: implementation head `b9157db60e52fb975c634f6f0abb2585f7f36de4` passed 7 successful GitHub Actions workflows: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate. Railway commit status is successful.
+- TASK-047: completed the Telegram journal ordering/persistence contract audit and corrected the chronological storage/public newest-first representation boundary, including close-by-index semantics.
+- TASK-047: implementation head `2e6bef7ec971501cd3573b21544c22f721253f99` passed the required CI/security/activation/readiness/E2E/deployment gates.
+- Synchronized persistent engineering state after TASK-053 verification. Phase 2 remains active pending selection of the next evidence-backed architecture/reliability gap.
+
+## 2026-09-12
+- Established the first persistent engineering-memory checkpoint for the repository.
+- Added baseline architecture/state tracking under `docs/engineering/`.
+- Recorded repository/CI evidence without claiming production readiness.
+- Preserved the current implementation; no mass architectural rewrite performed during baseline setup.
+- Corrected the PC Worker boundary: active worker runtime is dedicated to heavy Forex workloads and no longer initializes a local coding agent/Ollama runtime.
+- Removed `coding_agent` from the declared worker workload contract and added regression coverage preventing its reintroduction.
+- Removed the residual `multi_agent_analysis` worker workload, executor, tests, and documentation references.
+- Audited the skipped pre-TASK-004 Phase 2 scope without inventing a missing historical task contract.
+- Added the durable SQLite-backed Forex worker queue, crash recovery, persistence configuration, application service composition, and heavy-Forex routing boundary without speculative callers.
+- Added authenticated PC Worker heartbeat transport, readiness states, heartbeat observability, freshness semantics, least-privilege public health, authenticated job requests, readiness-gated dispatch, and operational observability.
+- Consolidated Telegram ownership under `services/telegram/`.
+- Removed duplicate decision/risk/strategy architecture and documented canonical `analysis/decision_engine.py` and `analysis/risk_engine.py` ownership.
+- Removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture and aligned canonical analysis exports.
+- Audited the `ai/` package and classified it as dormant/unwired future Phase 6 capability. No production AI caller or AI service composition was introduced.
+- Consolidated production Telegram candle retrieval behind `services/market_data/service.py` (`MarketDataService`) while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing/fallback behavior.
+- TASK-037 removed the dormant direct OANDA price surface and preserved the canonical OANDA candle path.
+- TASK-038 removed the unused lower-level `DataManager` / `ExplicitProviderManager` compatibility architecture.
+- TASK-039 removed unused provider-specific market-data adapter methods after repository-wide caller inspection.
+- TASK-040 verified ProviderManager lifecycle/state semantics and added regression coverage for injected provider retention and rebinding.
+- TASK-041 verified the MarketDataEngine output/compatibility surface and retained the tested DataFrame contract because repository evidence did not justify removal.
+- TASK-042 hardened the MarketDataService construction boundary so scanner no longer directly constructs MarketDataEngine.
+- TASK-043 changed Telegram signal, callback, and tracker paths to reuse one application-scoped MarketDataService.
+- TASK-044 changed scanner ProviderManager lifetime to application-scoped storage while preserving dynamic provider-readiness refresh.
+- Synchronized engineering state through TASK-044 selection.
