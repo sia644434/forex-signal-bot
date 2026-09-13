@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 
 import pytest
 
@@ -42,11 +43,11 @@ class FallbackProvider:
         return [
             Candle(
                 symbol=symbol,
-                timestamp=__import__("datetime").datetime(
+                timestamp=datetime(
                     2026,
                     1,
                     1,
-                    tzinfo=__import__("datetime").timezone.utc,
+                    tzinfo=timezone.utc,
                 ),
                 open=1.1,
                 high=1.2,
