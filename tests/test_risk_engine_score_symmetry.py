@@ -74,6 +74,29 @@ def test_risk_reward_target_must_be_positive():
         raise AssertionError("RiskEngine must reject a non-positive risk-reward target")
 
 
+def test_risk_engine_configuration_must_be_positive():
+    invalid_configurations = (
+        {"atr_multiplier": 0},
+        {"atr_multiplier": -1},
+        {"account_balance": 0},
+        {"account_balance": -100},
+        {"risk_percent": 0},
+        {"risk_percent": -1},
+        {"contract_size": 0},
+        {"contract_size": -100000},
+    )
+
+    for configuration in invalid_configurations:
+        try:
+            RiskEngine(**configuration)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(
+                f"RiskEngine must reject invalid configuration: {configuration}"
+            )
+
+
 def test_current_price_must_be_positive():
     engine = RiskEngine()
 
