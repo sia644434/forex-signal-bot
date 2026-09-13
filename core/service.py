@@ -14,6 +14,7 @@ class ServiceManager:
 
     def __init__(self) -> None:
         self.services: dict[str, BaseService] = {}
+        self._started_services: list[BaseService] = []
 
     def register(self, service: BaseService) -> None:
         if service.name in self.services:
@@ -21,14 +22,12 @@ class ServiceManager:
         self.services[service.name] = service
 
     async def start_all(self) -> None:
-        started: list[BaseService] = []
-
         for service in self.services.values():
             try:
                 result = service.start()
                 if hasattr(result, "__await__"):
                     await result
-                started.append(service)
+                self._started_services.append(service)
                 logger.info("%s service started.", service.name)
             except Exception as error:
                 handle_exception(error)
@@ -39,7 +38,7 @@ class ServiceManager:
                 # responsible for making that cleanup safe/idempotent.
                 await self._stop_services([service])
                 if service.critical:
-                    await self._stop_services(started)
+                    await self._stop_services(list(self._started_services))
                     raise CriticalServiceError(
                         f"Critical service failed to start: {service.name}",
                         {"service": service.name},
@@ -50,7 +49,7 @@ class ServiceManager:
                 )
 
     async def stop_all(self) -> None:
-        await self._stop_services(list(self.services.values()))
+        await self._stop_services(list(self._started_services))
 
     async def _stop_services(self, services: list[BaseService]) -> None:
         for service in reversed(services):
@@ -58,6 +57,8 @@ class ServiceManager:
                 result = service.stop()
                 if hasattr(result, "__await__"):
                     await result
+                if service in self._started_services:
+                    self._started_services.remove(service)
                 logger.info("%s service stopped.", service.name)
             except Exception as error:
                 handle_exception(error)
