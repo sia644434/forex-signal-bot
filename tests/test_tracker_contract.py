@@ -106,10 +106,10 @@ def test_refresh_tracking_records_signal_change_and_updates_timestamp(monkeypatc
     notifications: list[str] = []
 
     class FakeEngine:
-        def analyze(self, candles):
+        async def analyze(self, candles, *, symbol: str, timeframe: str):
             return Report("SELL")
 
-    monkeypatch.setattr(tracker_module, "FullAnalysisEngine", FakeEngine)
+    monkeypatch.setattr(tracker_module, "MarketAwareAnalysisEngine", FakeEngine)
 
     result = asyncio.run(
         refresh_tracking(
