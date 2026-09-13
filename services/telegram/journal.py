@@ -4,7 +4,7 @@ from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from typing import Any
 
-from .journal_store import JournalStore
+from .journal_store import JournalStore, JournalStoreError
 
 
 @dataclass
@@ -21,6 +21,49 @@ class JournalEntry:
 
 
 _STORE = JournalStore()
+_ENTRY_FIELDS = {
+    "symbol",
+    "side",
+    "entry",
+    "stop_loss",
+    "take_profit",
+    "notes",
+    "status",
+    "result",
+    "created_at",
+}
+_REQUIRED_ENTRY_FIELDS = {"symbol", "side", "entry", "stop_loss", "take_profit"}
+
+
+def _to_entry(item: dict) -> JournalEntry:
+    """Validate persisted entry data before constructing the domain object."""
+    if not isinstance(item, dict):
+        raise JournalStoreError("invalid journal entry structure")
+
+    if not _REQUIRED_ENTRY_FIELDS.issubset(item) or set(item) - _ENTRY_FIELDS:
+        raise JournalStoreError("invalid journal entry structure")
+
+    normalized = dict(item)
+    normalized.setdefault("notes", "")
+    normalized.setdefault("status", "OPEN")
+    normalized.setdefault("result", None)
+    normalized.setdefault("created_at", "")
+
+    if not isinstance(normalized["symbol"], str) or not isinstance(normalized["side"], str):
+        raise JournalStoreError("invalid journal entry structure")
+    if any(
+        value is not None and (isinstance(value, bool) or not isinstance(value, (int, float)))
+        for value in (normalized["entry"], normalized["stop_loss"], normalized["take_profit"])
+    ):
+        raise JournalStoreError("invalid journal entry structure")
+    if not isinstance(normalized["notes"], str) or not isinstance(normalized["status"], str):
+        raise JournalStoreError("invalid journal entry structure")
+    if normalized["result"] is not None and not isinstance(normalized["result"], str):
+        raise JournalStoreError("invalid journal entry structure")
+    if not isinstance(normalized["created_at"], str):
+        raise JournalStoreError("invalid journal entry structure")
+
+    return JournalEntry(**normalized)
 
 
 def _load(user_id: int) -> list[JournalEntry]:
@@ -28,7 +71,7 @@ def _load(user_id: int) -> list[JournalEntry]:
     # journal module's internal representation chronological so append and
     # persistence operations remain stable.
     return [
-        JournalEntry(**item)
+        _to_entry(item)
         for item in reversed(_STORE.list(user_id, limit=1000))
     ]
 
@@ -64,7 +107,7 @@ def close_entry(user_id: int, index: int, result: str) -> JournalEntry:
     # journal module's persisted representation. JournalStore.update_at()
     # performs selection and mutation atomically under the store lock.
     item = _STORE.update_at(user_id, index, _close)
-    return JournalEntry(**item)
+    return _to_entry(item)
 
 
 def format_journal(user_id: int, limit: int = 10) -> str:
