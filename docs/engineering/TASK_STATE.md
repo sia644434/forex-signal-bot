@@ -280,8 +280,25 @@ Evidence:
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
+## TASK-060
+Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
+Title: FullAnalysisEngine Trade-Quality Score Symmetry
+Implementation Status: VERIFIED
+Evidence:
+- Audit found that `FullAnalysisEngine` reused the DecisionEngine 0..100 score contract but calculated `trade_quality` with `abs(decision.score)`, incorrectly treating bearish score 0 as weak compared with bullish score 100.
+- Added the same neutral-centered directional-strength normalization used by the RiskEngine: `abs((score - 50) * 2)`.
+- The normalized strength is now used only at the existing FullAnalysisEngine trade-quality calculation boundary; no public API or unrelated behavior was changed.
+- Added regression coverage for symmetric score pairs: 0/100, 25/75, and neutral 50.
+- Implementation commit: `17335d61eaca21614b50de963e7b08d3a655a063`.
+- Regression test commit: `cf3787509e951755eb082a783ddf531f164febda`.
+- Verification trigger commit `5e91e0e5771f6d81cec2f421dc51c8e51e8cd9e6` completed all 7 required GitHub Actions workflows successfully.
+- Railway commit status for the verification trigger commit is `success`.
+- The temporary CI trigger file is removed in the final cleanup commit after persistent engineering state synchronization.
+- No local execution is claimed.
+Checkpoint: Verified 2026-09-13.
+
 ## Current Phase 2 Audit State
-TASK-059 is VERIFIED. Continue the evidence-backed analysis/reliability audit. Do not create another task unless a concrete correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
+TASK-060 is VERIFIED. Continue the evidence-backed analysis/reliability audit. Do not create another task unless a concrete correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
