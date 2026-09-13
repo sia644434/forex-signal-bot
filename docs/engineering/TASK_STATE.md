@@ -176,6 +176,19 @@ Evidence:
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
+## TASK-052
+Phase: Phase 2 — Core Architecture / Application Lifecycle Reliability
+Title: Partial Service Startup Cleanup
+Implementation Status: IMPLEMENTED / AWAITING GATE VERIFICATION
+Evidence:
+- `ServiceManager.start_all()` previously added a service to the started list only after `service.start()` completed successfully.
+- If a service partially initialized resources and then raised, the failed service itself was never passed through the lifecycle cleanup path.
+- This is a concrete startup/shutdown correctness gap because `TelegramClient.start()` initializes and starts multiple resources before polling completes; a failure after any of those steps can leave the service partially active.
+- `ServiceManager.start_all()` now explicitly invokes the failed service's `stop()` cleanup path before handling already-started services.
+- Regression coverage verifies cleanup for both critical and non-critical failed-start services and confirms startup continues for non-critical failures.
+- Code/test implementation commits: `e879593ac29065cad7c55fe186f1c3d55d1b9cec`, `32e3133ff8ddb0a5adb28b0cf74c0e508caf0a99`.
+- No local execution is claimed.
+
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
 - #45 — PC Worker readiness enforcement at job-dispatch boundary — implemented as TASK-030.
