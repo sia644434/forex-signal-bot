@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 
+import pytest
+
 from services.telegram import journal as journal_module
 from services.telegram.journal import JournalEntry
-from services.telegram.journal_store import JournalStore
+from services.telegram.journal_store import JournalStore, JournalStoreError
 
 
 def _entry(symbol: str) -> JournalEntry:
@@ -59,12 +61,8 @@ def test_close_entry_updates_selected_entry_without_reordering(tmp_path, monkeyp
 def test_close_entry_rejects_invalid_index(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(journal_module, "_STORE", JournalStore(str(tmp_path / "journal.json")))
 
-    try:
+    with pytest.raises(IndexError, match="journal entry not found"):
         journal_module.close_entry(14, 0, "TP1")
-    except IndexError as error:
-        assert str(error) == "journal entry not found"
-    else:
-        raise AssertionError("expected close_entry to reject an invalid index")
 
 
 def test_concurrent_adds_do_not_lose_journal_entries(tmp_path, monkeypatch) -> None:
@@ -76,3 +74,24 @@ def test_concurrent_adds_do_not_lose_journal_entries(tmp_path, monkeypatch) -> N
     entries = journal_module.list_entries(15, limit=100)
     assert len(entries) == 40
     assert {entry.symbol for entry in entries} == {f"PAIR{index}" for index in range(40)}
+
+
+def test_corrupt_store_fails_closed_without_overwriting_data(tmp_path) -> None:
+    path = tmp_path / "journal.json"
+    original = "{not-valid-json"
+    path.write_text(original, encoding="utf-8")
+    store = JournalStore(str(path))
+
+    with pytest.raises(JournalStoreError, match="unable to read journal store"):
+        store.add(16, {"symbol": "EURUSD"})
+
+    assert path.read_text(encoding="utf-8") == original
+
+
+def test_corrupt_store_is_not_reported_as_empty(tmp_path) -> None:
+    path = tmp_path / "journal.json"
+    path.write_text("[broken", encoding="utf-8")
+    store = JournalStore(str(path))
+
+    with pytest.raises(JournalStoreError, match="unable to read journal store"):
+        store.list(17)

@@ -6,6 +6,10 @@ from threading import Lock
 from typing import Callable
 
 
+class JournalStoreError(RuntimeError):
+    """Raised when the persisted journal cannot be read safely."""
+
+
 class JournalStore:
     """Small dependency-free persistent journal store suitable for Railway volumes."""
 
@@ -18,8 +22,10 @@ class JournalStore:
             return {}
         try:
             return json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return {}
+        except (OSError, ValueError) as error:
+            # Never treat a read failure or corrupted JSON as an empty journal:
+            # a subsequent write would otherwise silently discard persisted data.
+            raise JournalStoreError(f"unable to read journal store: {self.path}") from error
 
     def _write(self, data: dict) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
