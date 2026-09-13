@@ -217,6 +217,18 @@ Evidence:
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
+## TASK-055
+Phase: Phase 2 — Core Architecture / Worker Lifecycle Reliability
+Title: Worker Queue Resource Lifecycle
+Implementation Status: IMPLEMENTED — AWAITING CI VERIFICATION
+Evidence:
+- Audit found a concrete resource-lifecycle gap: `WorkerDispatcher.from_settings()` creates a durable `WorkerQueue`, but `WorkerProcessingService.stop()` previously did nothing, so the SQLite connection owned by the application service was not closed during normal application shutdown.
+- `WorkerDispatcher.close()` now closes and releases its owned queue resource; `WorkerProcessingService.stop()` delegates to that boundary.
+- Regression coverage verifies service shutdown releases the dispatcher queue and that dispatcher close is idempotent.
+- No production behavior or worker workload contract was changed; this is application resource cleanup only.
+- Implementation commits: `d67a9a3a96c8bafd64978caa46dfa9af044c1a7f`, `4e2c0478284d0077aff587f4978c47eedc561bc2`, `adfc8733105c8adbdc498d8ec8f3bd9f3e11acd3`.
+- No local execution is claimed.
+
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
 - #45 — PC Worker readiness enforcement at job-dispatch boundary — implemented as TASK-030.
