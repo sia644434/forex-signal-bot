@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-057 — ProviderManager Cooldown State Consistency Across Reconfiguration (awaiting gate verification).
+Active Work: Evidence-backed ProviderManager retry/backoff/fallback state audit after VERIFIED TASK-057.
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -39,18 +39,12 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-052 through TASK-054 hardened partial-start cleanup, started-service shutdown tracking, and failed-cleanup retry semantics.
 - TASK-055 closed the Worker Queue resource lifecycle gap by releasing the durable queue during service shutdown.
 - TASK-056 isolated ProviderManager failure diagnostics per concurrent request with `ContextVar` and request-local failure tracking.
+- TASK-057 fixed stale ProviderManager cooldown state surviving removal and later re-addition of providers during configuration/readiness refresh; regression coverage was added and the required gate set passed.
 
-### TASK-057 — IMPLEMENTED / AWAITING GATE VERIFICATION
-ProviderManager Cooldown State Consistency Across Reconfiguration.
-Evidence:
-- Scanner retains an application-scoped ProviderManager while refreshing its configured provider set on each scan.
-- ProviderManager previously retained cooldown state for providers removed from the active configuration.
-- A provider removed and later re-enabled could therefore inherit a stale cooldown and be skipped after reconfiguration, delaying recovery.
-- `set_providers()` now retains cooldowns only for providers that remain active and removes obsolete cooldown state for removed providers.
-- Regression coverage verifies cooldown removal and immediate recovery after re-adding a previously removed provider.
-- Implementation commit: `705531c2f1e00a7fafbbca795a6844051c3b2235`.
-- Regression test commit: `3282aa0053e3b82e5434ca8906c7804d8bec5a5c`.
-- No local execution is claimed.
+### Current Audit
+- TASK-057 is VERIFIED.
+- The next evidence-backed audit target is ProviderManager retry/backoff/fallback state semantics, including attempt accounting, failure diagnostics, cooldown interaction, and behavior when providers recover during retries.
+- No new task is created unless a concrete repository-backed correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -80,7 +74,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-057 adds regression coverage for provider cooldown cleanup across configuration changes and is awaiting the required gate results.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. Reliability regression coverage is added only when a concrete Phase 2 defect is confirmed.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
