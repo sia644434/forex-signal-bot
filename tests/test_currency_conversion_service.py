@@ -97,4 +97,4 @@ async def test_unsupported_conversion_pair_fails_closed() -> None:
     service = CurrencyConversionService(MarketDataService(engine=engine))
 
     with pytest.raises(ValueError, match="No supported Forex conversion pair"):
-        await service.get_conversion(source_currency="CHF", target_currency="USD")
+        await service.get_conversion(source_currency="XAU", target_currency="USD")
