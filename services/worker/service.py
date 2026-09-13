@@ -102,7 +102,7 @@ class WorkerProcessingService(BaseService):
         return None
 
     def stop(self) -> None:
-        return None
+        self.dispatcher.close()
 
     def _heartbeat_readiness(self) -> str:
         if self._last_heartbeat is None:
