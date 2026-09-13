@@ -179,14 +179,25 @@ Checkpoint: Verified 2026-09-13.
 ## TASK-052
 Phase: Phase 2 — Core Architecture / Application Lifecycle Reliability
 Title: Partial Service Startup Cleanup
-Implementation Status: IMPLEMENTED / AWAITING GATE VERIFICATION
+Implementation Status: VERIFIED
 Evidence:
-- `ServiceManager.start_all()` previously added a service to the started list only after `service.start()` completed successfully.
-- If a service partially initialized resources and then raised, the failed service itself was never passed through the lifecycle cleanup path.
-- This is a concrete startup/shutdown correctness gap because `TelegramClient.start()` initializes and starts multiple resources before polling completes; a failure after any of those steps can leave the service partially active.
 - `ServiceManager.start_all()` now explicitly invokes the failed service's `stop()` cleanup path before handling already-started services.
 - Regression coverage verifies cleanup for both critical and non-critical failed-start services and confirms startup continues for non-critical failures.
-- Code/test implementation commits: `e879593ac29065cad7c55fe186f1c3d55d1b9cec`, `32e3133ff8ddb0a5adb28b0cf74c0e508caf0a99`.
+- Implementation head `0b97e1487bdb6b1d944f4957b6a4e782dc6713f5` passed the required GitHub Actions gate set successfully.
+- No local execution is claimed.
+Checkpoint: Verified 2026-09-13.
+
+## TASK-053
+Phase: Phase 2 — Core Architecture / Application Lifecycle Reliability
+Title: Started-Service Shutdown Tracking
+Implementation Status: IMPLEMENTED / AWAITING GATE VERIFICATION
+Evidence:
+- `ServiceManager.stop_all()` previously attempted to stop every registered service, including services that never started or had already failed startup and been cleaned up.
+- This violates the lifecycle boundary and can invoke `stop()` on an uninitialized service; it also makes post-startup-failure shutdown perform duplicate cleanup.
+- `ServiceManager` now tracks successfully started services explicitly and `stop_all()` only targets that set.
+- Successfully stopped services are removed from the tracked set; services whose `stop()` fails remain tracked so a later shutdown attempt can retry cleanup.
+- Regression coverage verifies reverse start-order shutdown, no shutdown of never-started services after critical failure, and retry after stop failure.
+- Implementation commits: `b82b5c5a31fc57f2b484849df9e397d67c446a93`, `98db3b8c0f6a0580212dbe93a11a71b346f50f32`.
 - No local execution is claimed.
 
 ## Deferred Roadmap Issues
