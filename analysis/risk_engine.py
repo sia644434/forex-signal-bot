@@ -369,11 +369,17 @@ class RiskEngine:
         risk_distance:
             Manual stop distance override
         """
+        if current_price <= 0:
+            raise ValueError("current_price must be greater than zero.")
+
         distance = self._calculate_risk_distance(
             price=current_price,
             atr=atr,
             risk_distance=risk_distance,
         )
+
+        if distance <= 0:
+            raise ValueError("risk distance must be greater than zero.")
 
         signal = signal.upper()
         risk_level = self._calculate_risk_level(confidence, score)
