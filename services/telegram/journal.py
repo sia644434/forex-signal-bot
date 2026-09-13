@@ -55,10 +55,11 @@ def list_entries(user_id: int, limit: int = 10) -> list[JournalEntry]:
 
 def close_entry(user_id: int, index: int, result: str) -> JournalEntry:
     entries = _load(user_id)
-    public_entries = list(reversed(entries))
-    if index < 0 or index >= len(public_entries):
+    if index < 0 or index >= len(entries):
         raise IndexError("journal entry not found")
-    entry = public_entries[index]
+    # close_entry's index contract follows the journal module's stable
+    # chronological representation. Closing an entry must not reorder it.
+    entry = entries[index]
     entry.status = "CLOSED"
     entry.result = result
     _save(user_id, entries)
