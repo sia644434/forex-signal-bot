@@ -88,6 +88,12 @@ class WorkerDispatcher:
             self._queue.fail(request.job_id, result.error or "Worker job failed")
         return result
 
+    def close(self) -> None:
+        """Close the dispatcher-owned durable queue resource, if any."""
+        if self._queue is not None:
+            self._queue.close()
+            self._queue = None
+
     def health(self) -> dict[str, Any]:
         """Return non-sensitive dispatcher and durable queue operational state."""
         if self._queue is None:
