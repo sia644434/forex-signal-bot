@@ -2,10 +2,28 @@
 
 ## Baseline
 - Test inventory: VERIFIED from repository tree.
-- Latest verified executable architecture work: TASK-059.
+- Latest verified executable architecture work: TASK-060.
 - Result: PASS for the verified CI gates recorded below.
 - Local Execution: NOT_AVAILABLE through the GitHub Connector; no local execution claimed.
 - Coverage: Not measured in this session.
+
+## TASK-060 Verification
+- Implementation commit: `17335d61eaca21614b50de963e7b08d3a655a063`.
+- Regression test commit: `cf3787509e951755eb082a783ddf531f164febda`.
+- The FullAnalysisEngine regression covers the DecisionEngine 0..100 score contract: 0/100 are symmetric extremes, 25/75 are symmetric mid-strength values, and 50 is neutral.
+- FullAnalysisEngine trade-quality calculation now uses the same neutral-centered directional-strength normalization as RiskEngine instead of `abs(decision.score)`.
+- Verification trigger commit `5e91e0e5771f6d81cec2f421dc51c8e51e8cd9e6` produced the required 7 GitHub Actions workflow runs; all completed successfully.
+- Production E2E Contract Gate run `34769557953`: `completed / success`.
+- Production Activation Validation run `34769558002`: `completed / success`.
+- Production Activation Gate run `34769558024`: `completed / success`.
+- Production Readiness run `34769557956`: `completed / success`.
+- Security Audit run `34769557966`: `completed / success`.
+- Test run `34769557993`: `completed / success`.
+- Final Integration Gate run `34769557961`: `completed / success`; compile, final runtime safety tests, full test suite, and production Docker image build all succeeded.
+- Railway commit status for the verification trigger commit is `success`.
+- Temporary CI trigger file is removed after persistent engineering state synchronization.
+- No local execution is claimed.
+- Checkpoint: Verified 2026-09-13.
 
 ## TASK-058 Verification
 - Implementation commit: `497076047e9b421ede7df2e80c89f61034d529fb`.
@@ -80,7 +98,7 @@
 - Post-restart Production Live Smoke run `34698134769`, job `103565063400`: `completed / success`.
 
 ## Verification Status
-Production readiness remains verified for the observed Railway deployment path. TASK-058 and TASK-059 are CI/activation/E2E/security/readiness verified; this does not claim a new live smoke or restart verification.
+Production readiness remains verified for the observed Railway deployment path. TASK-058, TASK-059, and TASK-060 are CI/activation/E2E/security/readiness verified; this does not claim a new live smoke or restart verification.
 
 ## Next Verification
 Continue the evidence-backed analysis/reliability audit. Do not invent speculative tasks. Preserve the Forex-only scope and do not reintroduce agent/Ollama/local coding-agent architecture.
