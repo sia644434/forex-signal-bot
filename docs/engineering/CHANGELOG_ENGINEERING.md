@@ -1,20 +1,13 @@
 # Engineering Changelog
 
 ## 2026-09-13
-- TASK-046: added focused Telegram user-state contract coverage for per-user state creation/reuse, `current_menu` mutation, and mutable `settings` isolation.
-- TASK-046: implementation commit `2970f7224a12db64353d0e70b9932d65c8e48a6c` passed Production Activation Validation `34742956007`, Security Audit `34742955998`, Production E2E Contract Gate `34742956014`, Test `34742956032`, Production Activation Gate `34742955996`, Production Readiness `34742956006`, and Final Integration Gate `34742955999`.
-- TASK-046: no production behavior change was required; this checkpoint strengthens the existing Telegram user-state contract through regression coverage.
-- TASK-045: completed the Telegram signal tracker contract audit and focused regression coverage.
-- TASK-045: aligned the tracker test notification callback with the production asynchronous callback contract after CI exposed a test-double mismatch; no production behavior change was required.
-- TASK-045: correction commit `276be55c75f54cdffbd82aadbb3e7f53fa97240a` passed the required Test, Security, Production Readiness, Activation, and E2E/Final Integration gates.
-- TASK-044: completed the scanner `ProviderManager` lifetime and readiness boundary audit.
-- TASK-044: confirmed the Telegram callback is the real application caller of `scan_market()` in the current code path; no scheduler/background scanner lifecycle was found that justified a separate manager design.
-- TASK-044: changed scanner manager lifetime from per-scan construction to application-scoped storage in `Application.bot_data`, preserving provider instances, cooldowns, and failure state without introducing process-global state.
-- TASK-044: preserved dynamic provider-readiness semantics by recalculating readiness on each manager retrieval and refreshing provider priority through `set_providers()`.
-- TASK-044: retained `_build_provider_manager()` as the direct/non-application fallback for `scan_market()`.
-- TASK-044: added regression coverage for application-scoped manager reuse and readiness changes.
-- TASK-044: implementation commits `680fc4cd447d770fb7013563d0d538a04e8cc4d2`, `99dc8679680590d96641e574b00716f637b4988d`, and `7180828f4c3b12e7bb30588b614941cc662c0154` passed Final Integration Gate `34721606858`, Production Activation Validation `34721606855`, and Production E2E Contract Gate `34721606841`.
-- Synchronized persistent engineering state after TASK-046 verification. Phase 2 remains active pending selection of the next evidence-backed architecture/reliability gap.
+- TASK-048: identified a real Telegram journal concurrency gap: `add_entry()` and `close_entry()` performed read-modify-write across separate `JournalStore` lock scopes, allowing overlapping callbacks to lose updates.
+- TASK-048: changed `journal.add_entry()` to use the store's atomic append path and added `JournalStore.update_at()` for atomic indexed mutation under one lock.
+- TASK-048: added concurrency regression coverage with 40 simultaneous additions across 8 workers and verified all entries remain present.
+- TASK-048: implementation head `b9157db60e52fb975c634f6f0abb2585f7f36de4` passed 7 successful GitHub Actions workflows: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate. Railway commit status is successful.
+- TASK-047: completed the Telegram journal ordering/persistence contract audit and corrected the chronological storage/public newest-first representation boundary, including close-by-index semantics.
+- TASK-047: implementation head `2e6bef7ec971501cd3573b21544c22f721253f99` passed the required CI/security/activation/readiness/E2E/deployment gates.
+- Synchronized persistent engineering state after TASK-048 verification. Phase 2 remains active pending selection of the next evidence-backed architecture/reliability gap.
 
 ## 2026-09-12
 - Established the first persistent engineering-memory checkpoint for the repository.
@@ -32,20 +25,12 @@
 - Removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture and aligned canonical analysis exports.
 - Audited the `ai/` package and classified it as dormant/unwired future Phase 6 capability. No production AI caller or AI service composition was introduced.
 - Consolidated production Telegram candle retrieval behind `services/market_data/service.py` (`MarketDataService`) while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing/fallback behavior.
-- Migrated signal, tracker, scanner, and callback candle retrieval to the service boundary. Scanner retains explicit provider-manager selection only to preserve provider-readiness semantics and injects it into the engine used by the service.
-- Verified TASK-036 implementation head `6174463174d8c6c4ad513896ad7ff96847e85edc` through completed CI gates and successful Railway commit status.
-- Added ADR-007 documenting the canonical application-facing market-data boundary.
-- TASK-037: repository-wide inspection found the dormant `get_latest_oanda_price` surface in `data/market_data.py` with no production caller.
-- TASK-037: removed the dormant direct OANDA price surface and its now-unused dependency while preserving the canonical OANDA candle path.
-- TASK-037: implementation commit `65ea6150fa23895ad5655e59dbc9349945e67f96` passed GitHub Actions run `34719290035`; Railway commit status was successful.
-- TASK-038: removed the unused lower-level `DataManager` / `ExplicitProviderManager` compatibility architecture after repository-wide reference inspection and successful CI verification.
-- TASK-039: removed unused provider-specific market-data adapter methods after repository-wide caller inspection.
-- TASK-040: verified ProviderManager lifecycle/state semantics and added regression coverage for injected provider retention and rebinding.
-- TASK-041: verified the MarketDataEngine output/compatibility surface and retained the tested DataFrame contract because repository evidence did not justify removal.
-- TASK-042: hardened the MarketDataService construction boundary so scanner no longer directly constructs MarketDataEngine; focused compatibility coverage and production gates passed.
-- TASK-043: audited Telegram market-data service lifetime and found repeated service construction would discard ProviderManager cache/cooldown/failure state between application calls.
-- TASK-043: changed Telegram signal, callback, and tracker paths to reuse one application-scoped MarketDataService while intentionally keeping scanner provider-readiness composition separate.
-- TASK-043: added application-lifetime/state regression coverage and recorded the decision in ADR-008.
-- TASK-043: implementation head `abe8e0db1d98e3c7ac3d6ffd09330604463656d9` passed Production Readiness run `34721145994`, Production Activation Validation run `34721150684`, and Production E2E Contract Gate run `34721147175`.
-- TASK-044: selected the next evidence-backed Phase 2 audit: scanner `ProviderManager` lifetime and provider-readiness boundary.
+- TASK-037 removed the dormant direct OANDA price surface and preserved the canonical OANDA candle path.
+- TASK-038 removed the unused lower-level `DataManager` / `ExplicitProviderManager` compatibility architecture.
+- TASK-039 removed unused provider-specific market-data adapter methods after repository-wide caller inspection.
+- TASK-040 verified ProviderManager lifecycle/state semantics and added regression coverage for injected provider retention and rebinding.
+- TASK-041 verified the MarketDataEngine output/compatibility surface and retained the tested DataFrame contract because repository evidence did not justify removal.
+- TASK-042 hardened the MarketDataService construction boundary so scanner no longer directly constructs MarketDataEngine.
+- TASK-043 changed Telegram signal, callback, and tracker paths to reuse one application-scoped MarketDataService.
+- TASK-044 changed scanner ProviderManager lifetime to application-scoped storage while preserving dynamic provider-readiness refresh.
 - Synchronized engineering state through TASK-044 selection.

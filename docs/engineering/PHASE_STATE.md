@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: Next evidence-backed Phase 2 task selection after TASK-046.
+Active Task: Next evidence-backed Phase 2 task selection after TASK-048.
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -21,30 +21,32 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-034 removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture.
 - TASK-035 audited the `ai/` package and established that it is dormant/unwired future Phase 6 capability and not an active trading architecture.
 - TASK-036 consolidated production Telegram market-data candle retrieval behind `MarketDataService` while preserving `MarketDataEngine` quality/freshness gates and `ProviderManager` routing.
-- TASK-037 removed the dormant direct OANDA price surface after repository-wide reference inspection found no production caller. CI and Railway status were successful for the verified implementation commit.
-- TASK-038 removed the unused lower-level `DataManager` / `ExplicitProviderManager` compatibility architecture after repository-wide reference inspection.
+- TASK-037 removed the dormant direct OANDA price surface after repository-wide reference inspection found no production caller.
+- TASK-038 removed the unused lower-level `DataManager` / `ExplicitProviderManager` compatibility architecture.
 - TASK-039 removed unused provider-specific market-data adapter methods while preserving the provider-neutral canonical path.
 - TASK-040 verified ProviderManager lifecycle and retained-injected-provider semantics with regression coverage.
 - TASK-041 verified the MarketDataEngine output surface and retained the DataFrame compatibility contract because focused tests still cover it.
 - TASK-042 hardened the MarketDataService construction boundary so scanner no longer constructs MarketDataEngine directly.
-- TASK-043 established application-scoped MarketDataService lifetime for Telegram signal, callback, and tracker paths so ProviderManager state is preserved across calls.
+- TASK-043 established application-scoped MarketDataService lifetime for Telegram signal, callback, and tracker paths.
 - TASK-044 established application-scoped scanner ProviderManager lifetime while preserving dynamic provider-readiness refresh.
-- TASK-045 added focused Telegram tracker lifecycle/behavior regression coverage and corrected the test callback to match the tracker's asynchronous notification contract.
-- TASK-046 added focused Telegram user-state contract coverage for per-user state reuse, menu mutation, and settings isolation.
+- TASK-045 added focused Telegram tracker lifecycle/behavior regression coverage.
+- TASK-046 added focused Telegram user-state contract coverage.
+- TASK-047 corrected Telegram journal ordering and persistence/index semantics.
+- TASK-048 made Telegram journal mutations atomic across the full read-modify-write boundary and added concurrency regression coverage.
 
-### TASK-045 — VERIFIED
-Telegram Signal Tracker Contract Audit.
-Evidence:
-- Focused regression coverage validates tracker replacement, idempotent stop, BUY stop-loss handling, BUY target handling, and signal-change update behavior.
-- CI exposed a test-double mismatch around asynchronous notification; the correction aligned the test callback with the production async contract without changing production behavior.
-- Production Activation Validation `34742847128`, Production Activation Gate `34742847126`, Production Readiness `34742847163`, Production E2E Contract Gate `34742847216`, Final Integration Gate `34742847153`, Security Audit `34742847130`, and Test `34742847146` all succeeded.
+### TASK-047 — VERIFIED
+Telegram Journal Ordering and Persistence Contract Audit.
+Evidence: Journal loading now converts the store's newest-first public read representation back to chronological mutation order; saving preserves the chronological representation; public listing reverses to newest-first. Regression coverage validates multiple-add ordering, reload ordering, close-by-index semantics, and invalid indexes. Final implementation head `2e6bef7ec971501cd3573b21544c22f721253f99` passed the required CI/security/activation/readiness/E2E/deployment gates.
 
-### TASK-046 — VERIFIED
-Telegram User State Contract Coverage.
+### TASK-048 — VERIFIED
+Telegram Journal Mutation Atomicity.
 Evidence:
-- `services/telegram/state.py` contract was covered for per-user state creation/reuse, `current_menu` mutation, and isolation of mutable `settings`.
-- Production Activation Validation `34742956007`, Security Audit `34742955998`, Production E2E Contract Gate `34742956014`, Test `34742956032`, Production Activation Gate `34742955996`, Production Readiness `34742956006`, and Final Integration Gate `34742955999` all succeeded.
-- No production behavior change was required; TASK-046 is a regression/contract-coverage hardening checkpoint.
+- `JournalStore.add()` provides atomic append under the store lock.
+- `JournalStore.update_at()` performs indexed read-modify-write under one lock and preserves the journal's chronological storage contract.
+- `journal.add_entry()` uses the atomic store append path.
+- `journal.close_entry()` uses the atomic indexed-update path.
+- Concurrent regression coverage submits 40 additions from 8 workers and verifies that all 40 entries remain present.
+- Implementation head `b9157db60e52fb975c634f6f0abb2585f7f36de4` passed 7 successful GitHub Actions workflows and Railway commit status.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -74,7 +76,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-046 regression coverage, lifecycle, activation, security, readiness, and E2E contract gates completed successfully.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-048 concurrency regression, lifecycle, activation, security, readiness, and E2E contract gates completed successfully.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
