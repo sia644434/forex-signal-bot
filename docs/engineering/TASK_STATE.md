@@ -137,6 +137,18 @@ Evidence:
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
+## TASK-049
+Phase: Phase 2 — Core Architecture / Telegram Reliability
+Title: Telegram Journal Corruption Fail-Closed Contract
+Implementation Status: VERIFIED
+Evidence:
+- `JournalStore._read()` no longer converts filesystem/JSON read failures into an empty journal.
+- Corrupt or unreadable journal storage raises `JournalStoreError` instead of allowing a later write to silently discard persisted data.
+- Regression coverage verifies that malformed JSON is rejected by both read/list and append paths and that the original corrupt file is not overwritten.
+- Implementation head `87dd8a5e827f6db30cbdec6f925be2ea091eed38` completed the required GitHub Actions workflow set successfully and has successful Railway commit status.
+- No local execution is claimed.
+Checkpoint: Verified 2026-09-13.
+
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
 - #45 — PC Worker readiness enforcement at job-dispatch boundary — implemented as TASK-030.
