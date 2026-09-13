@@ -2,10 +2,33 @@
 
 ## Baseline
 - Test inventory: VERIFIED from repository tree.
-- Latest verified executable architecture work: TASK-051.
+- Latest verified executable architecture work: TASK-059.
 - Result: PASS for the verified CI gates recorded below.
 - Local Execution: NOT_AVAILABLE through the GitHub Connector; no local execution claimed.
 - Coverage: Not measured in this session.
+
+## TASK-058 Verification
+- Implementation commit: `497076047e9b421ede7df2e80c89f61034d529fb`.
+- Regression test commit: `d2ca6aec69a8329f762211e06b101126c6bac148`.
+- The FreshnessPolicy explicit-zero regression verifies that warning, stale, and reject thresholds supplied as `timedelta(0)` are rejected rather than silently replaced by defaults.
+- Exact-head verification completed successfully across the required 7-workflow GitHub Actions gate set.
+- Railway commit status for the verified implementation path is `success`.
+- No local execution is claimed.
+- Checkpoint: Verified 2026-09-13.
+
+## TASK-059 Verification
+- Implementation commit: `a98411053c3433fe219b82abf82575547efc98b3`.
+- The RiskEngine regression covers the DecisionEngine 0..100 score contract: 0/100 are symmetric extremes, 25/75 are symmetric mid-strength values, and 50 is neutral.
+- Dynamic risk percentage, risk level, and trade-quality behavior are verified symmetrically for equivalent bullish/bearish score strength.
+- The required 7-workflow GitHub Actions gate set completed successfully after a push-based CI trigger sequence.
+- Final verification commit on `main`: `bb1e4464f0177fd612eeff2240aa096447275b2c`.
+- Production E2E Contract Gate run `34768560551`, job `103753838370`: `completed / success`; compile, production E2E contract tests, and full test suite succeeded.
+- Production Activation Validation run `34768560521`: `completed / success`.
+- The complete required workflow set reported successful completion for the final verification commit.
+- Railway commit status for the final verified `main` head is `success`.
+- Temporary CI trigger file was removed after verification.
+- No local execution is claimed.
+- Checkpoint: Verified 2026-09-13.
 
 ## TASK-047 Verification
 - Final implementation head: `2e6bef7ec971501cd3573b21544c22f721253f99`.
@@ -57,7 +80,7 @@
 - Post-restart Production Live Smoke run `34698134769`, job `103565063400`: `completed / success`.
 
 ## Verification Status
-Production readiness remains verified for the observed Railway deployment path. TASK-051 is CI/activation/E2E/security/readiness verified; it does not claim a new live smoke or restart verification.
+Production readiness remains verified for the observed Railway deployment path. TASK-058 and TASK-059 are CI/activation/E2E/security/readiness verified; this does not claim a new live smoke or restart verification.
 
 ## Next Verification
-A fresh repository audit after TASK-051 found no new concrete active Phase 2 gap strong enough to justify another implementation task. Continue evidence collection and do not invent speculative TASK-052 work. Preserve the Forex-only scope and do not reintroduce agent/Ollama/local coding-agent architecture.
+Continue the evidence-backed analysis/reliability audit. Do not invent speculative tasks. Preserve the Forex-only scope and do not reintroduce agent/Ollama/local coding-agent architecture.
