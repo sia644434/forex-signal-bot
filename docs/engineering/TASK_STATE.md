@@ -167,7 +167,7 @@ Phase: Phase 2 — Core Architecture / Telegram Reliability
 Title: Telegram Journal Entry Schema Validation
 Implementation Status: VERIFIED
 Evidence:
-- The journal boundary now validates required fields, optional/defaulted fields, accepted scalar types, and rejects unknown entry fields before constructing `JournalEntry`.
+- The journal boundary validates required fields, optional/defaulted fields, accepted scalar types, and rejects unknown entry fields before constructing `JournalEntry`.
 - Persisted invalid entry shapes fail closed with controlled `JournalStoreError` behavior instead of leaking `TypeError`/`AttributeError` from dataclass construction or later journal operations.
 - Legacy entries that omit optional fields continue to use the dataclass defaults.
 - Regression coverage verifies missing required fields, invalid numeric types, unknown fields, and legacy optional-field compatibility.
@@ -231,19 +231,23 @@ Evidence:
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
-## TASK-057 — REJECTED / FALSE POSITIVE
+## TASK-057
 Phase: Phase 2 — Core Architecture / Market Data Reliability
-Title: ProviderManager Provider-Rebinding State Consistency
-Implementation Status: NOT A BUG — NO IMPLEMENTATION
+Title: ProviderManager Cooldown State Consistency Across Reconfiguration
+Implementation Status: IMPLEMENTED — AWAITING GATE VERIFICATION
 Evidence:
-- The initial audit concern was that `set_providers()` retains injected provider objects after they are removed from the active priority tuple.
-- Repository contract tests explicitly establish that retaining injected instances is intentional: after switching active priority from `[first, second]` to `[second]`, both injected instances remain available for later re-selection, and switching back to `[first]` resolves the original injected instance.
-- The same test suite also explicitly verifies that rebinding the same provider name replaces the retained injected instance with the new object.
-- Therefore changing `set_providers()` to discard inactive injected instances would break an existing documented/tested retention contract rather than fix a correctness bug.
-- No implementation, regression patch, or production change was made for TASK-057.
+- The scanner retains an application-scoped `ProviderManager` but recalculates configured provider readiness on every scan and calls `set_providers()` with the current configured provider set.
+- A provider that fails is placed into cooldown. `set_providers()` previously retained that cooldown even after the provider was removed from the active configuration.
+- If the provider later became configured again, the stale cooldown could cause the newly re-enabled provider to be skipped until the old cooldown expired, delaying recovery after configuration/readiness changes.
+- The fix retains cooldowns only for provider names that remain in the active configuration and removes cooldown state for providers removed by reconfiguration.
+- Existing injected-provider retention/rebinding semantics are unchanged.
+- Regression coverage verifies cooldown removal on provider removal and immediate usable recovery when the provider is re-added.
+- Implementation commit: `705531c2f1e00a7fafbbca795a6844051c3b2235`.
+- Regression test commit: `3282aa0053e3b82e5434ca8906c7804d8bec5a5c`.
+- No local execution is claimed.
 
 ## Current Phase 2 Audit State
-Continue evidence-backed reliability auditing after TASK-056. ProviderManager cooldown/retry/fallback behavior is under review. Do not create a new task unless a concrete correctness, reliability, security, observability, deployment, or recovery gap is demonstrated by repository evidence.
+TASK-057 is implemented and awaits the required GitHub Actions verification gates. After verification, continue the evidence-backed ProviderManager/market-data reliability audit; do not create another task unless a concrete gap is demonstrated.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
