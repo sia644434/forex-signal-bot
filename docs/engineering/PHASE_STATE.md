@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Work: TASK-060 is verified; continue the evidence-backed analysis/reliability audit and create a new task only when a concrete repository-backed gap is demonstrated.
+Active Work: TASK-064 is verified; continue the evidence-backed analysis/reliability audit and create a new task only when a concrete repository-backed gap is demonstrated.
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -43,11 +43,16 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-058 fixed explicit-zero FreshnessPolicy threshold handling so omitted thresholds use defaults while supplied zero thresholds reach validation and are rejected; required verification passed.
 - TASK-059 fixed RiskEngine asymmetry caused by interpreting the DecisionEngine's 0..100 score as zero-centered; directional strength is now symmetric around neutral score 50 and required verification passed.
 - TASK-060 fixed the same score-contract asymmetry at the FullAnalysisEngine trade-quality boundary; symmetric score-pair regression coverage was added and the required verification set passed.
+- TASK-061 fixed the ConfidenceEngine/DecisionEngine signed score-contract mismatch; required verification passed.
+- TASK-062 fixed supply-demand confidence score aliasing by separating supply-demand from trend score; required verification passed.
+- TASK-063 wired the real SupplyDemandEngine score into AnalysisResult so the explicit supply-demand confidence contract is populated in the production FullAnalysisEngine path; required verification passed.
+- TASK-064 fixed DecisionEngine Supply/Demand consumption so it reads the explicit `supply_demand_score` contract rather than `trend_score`; regression coverage and production verification passed.
 
 ### Current Audit
-- TASK-058 is VERIFIED.
-- TASK-059 is VERIFIED.
-- TASK-060 is VERIFIED.
+- TASK-061 is VERIFIED.
+- TASK-062 is VERIFIED.
+- TASK-063 is VERIFIED.
+- TASK-064 is VERIFIED.
 - Continue the evidence-backed analysis/reliability audit.
 - No new task is created unless a concrete repository-backed correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
 
@@ -90,7 +95,3 @@ Status: NOT_STARTED
 
 ## Roadmap Rule
 Work phases sequentially. Completing Phase 1 does not skip directly to Phase 12 or Phase 13. Phase 2 must be completed before Phase 3, and so on, unless an explicit evidence-backed dependency requires a temporary cross-phase check.
-
-- TASK-061 fixed the ConfidenceEngine/DecisionEngine score-contract mismatch: signed analysis component scores are normalized around neutral 50 before confidence voting, while volatility remains a separate ratio contract. Required verification passed.
-- TASK-062 fixed supply-demand confidence score aliasing by separating the supply-demand component from trend score; required verification passed.
-- TASK-063 wired the real `SupplyDemandEngine` score into `AnalysisResult` so the explicit supply-demand confidence contract is populated in the production `FullAnalysisEngine` path; required verification passed.
