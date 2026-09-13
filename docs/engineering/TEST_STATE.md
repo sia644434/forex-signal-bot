@@ -2,7 +2,7 @@
 
 ## Baseline
 - Test inventory: VERIFIED from repository tree.
-- Latest verified executable architecture work: TASK-044.
+- Latest verified executable architecture work: TASK-046.
 - Result: PASS for the verified CI gates recorded below.
 - Local Execution: NOT_AVAILABLE through the GitHub Connector; no local execution claimed.
 - Coverage: Not measured in this session.
@@ -64,6 +64,30 @@
 - Regression coverage verifies application-scoped scanner manager reuse and dynamic provider-readiness updates.
 - No local execution is claimed.
 
+## TASK-045 Verification
+- Implementation correction commit: `276be55c75f54cdffbd82aadbb3e7f53fa97240a`.
+- Production Activation Validation run `34742847128`: `completed / success`.
+- Production Activation Gate run `34742847126`: `completed / success`.
+- Production Readiness run `34742847163`: `completed / success`.
+- Production E2E Contract Gate run `34742847216`: `completed / success`.
+- Final Integration Gate run `34742847153`: `completed / success`.
+- Security Audit run `34742847130`: `completed / success`.
+- Test run `34742847146`: `completed / success`.
+- Regression coverage validates tracker lifecycle and target/signal-change contracts; the follow-up correction aligned the test callback with the tracker's async notification contract.
+- No local execution is claimed.
+
+## TASK-046 Verification
+- Implementation commit: `2970f7224a12db64353d0e70b9932d65c8e48a6c`.
+- Production Activation Validation run `34742956007`, job `103685663171`: `completed / success`.
+- Security Audit run `34742955998`, job `103685663261`: `completed / success`.
+- Production E2E Contract Gate run `34742956014`, job `103685663284`: `completed / success`.
+- Test run `34742956032`, job `103685663329`: `completed / success`; lifecycle/persistence tests, full test suite, application health, Telegram import, signal lifecycle import, and syntax checks all succeeded.
+- Production Activation Gate run `34742955996`, job `103685663235`: `completed / success`.
+- Production Readiness run `34742956006`, job `103685663216`: `completed / success`.
+- Final Integration Gate run `34742955999`, job `103685663094`: `completed / success`; compile, runtime safety, full test suite, and production Docker build succeeded.
+- Focused regression coverage validates per-user state creation/reuse, `current_menu` mutation, and isolation of mutable `settings` between users.
+- No local execution is claimed.
+
 ## CI and Production Evidence
 - Existing production verification remains valid for the previously deployed commit `8bf2a77840b72add70b98f1b3a2187f85763f2`.
 - Production Live Smoke run `34697840749`, job `103564290648`: `completed / success`.
@@ -77,7 +101,7 @@ The previously deployed service returned a healthy readiness contract both befor
 - `services.telegram.critical = true`
 
 ## Verification Status
-Production readiness remains verified for the observed Railway deployment path. TASK-044 is CI/activation/E2E verified; it does not claim a new live smoke or restart verification.
+Production readiness remains verified for the observed Railway deployment path. TASK-046 is CI/activation/E2E verified; it does not claim a new live smoke or restart verification.
 
 ## Next Verification
 Select the next evidence-backed Phase 2 architecture/reliability gap from repository inspection. Do not assume a new task before evidence is collected. Preserve the Forex-only scope and do not reintroduce agent/Ollama/local coding-agent architecture.
