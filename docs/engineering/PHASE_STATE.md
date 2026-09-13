@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: Next evidence-backed Phase 2 task selection after TASK-044.
+Active Task: Next evidence-backed Phase 2 task selection after TASK-046.
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -29,16 +29,22 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-042 hardened the MarketDataService construction boundary so scanner no longer constructs MarketDataEngine directly.
 - TASK-043 established application-scoped MarketDataService lifetime for Telegram signal, callback, and tracker paths so ProviderManager state is preserved across calls.
 - TASK-044 established application-scoped scanner ProviderManager lifetime while preserving dynamic provider-readiness refresh.
+- TASK-045 added focused Telegram tracker lifecycle/behavior regression coverage and corrected the test callback to match the tracker's asynchronous notification contract.
+- TASK-046 added focused Telegram user-state contract coverage for per-user state reuse, menu mutation, and settings isolation.
 
-### TASK-044 — VERIFIED
-Scanner ProviderManager Lifetime and Readiness Boundary Audit.
+### TASK-045 — VERIFIED
+Telegram Signal Tracker Contract Audit.
 Evidence:
-- Repository-wide inspection confirmed the Telegram callback is the real application caller of `scan_market()`; no scheduler/background caller requiring a separate scanner-manager lifecycle was found in the current code path.
-- Repeated Telegram scans previously rebuilt `ProviderManager`, discarding provider instances, cooldowns, and failure state.
-- Scanner now retains the manager in `Application.bot_data`, preserving state without making it process-global.
-- Provider readiness is recalculated on every retrieval and `set_providers()` refreshes the active configured-provider order.
-- Regression coverage verifies manager identity reuse and provider-readiness changes across repeated application calls.
-- Final Integration Gate `34721606858`, Production Activation Validation `34721606855`, and Production E2E Contract Gate `34721606841` all succeeded.
+- Focused regression coverage validates tracker replacement, idempotent stop, BUY stop-loss handling, BUY target handling, and signal-change update behavior.
+- CI exposed a test-double mismatch around asynchronous notification; the correction aligned the test callback with the production async contract without changing production behavior.
+- Production Activation Validation `34742847128`, Production Activation Gate `34742847126`, Production Readiness `34742847163`, Production E2E Contract Gate `34742847216`, Final Integration Gate `34742847153`, Security Audit `34742847130`, and Test `34742847146` all succeeded.
+
+### TASK-046 — VERIFIED
+Telegram User State Contract Coverage.
+Evidence:
+- `services/telegram/state.py` contract was covered for per-user state creation/reuse, `current_menu` mutation, and isolation of mutable `settings`.
+- Production Activation Validation `34742956007`, Security Audit `34742955998`, Production E2E Contract Gate `34742956014`, Test `34742956032`, Production Activation Gate `34742955996`, Production Readiness `34742956006`, and Final Integration Gate `34742955999` all succeeded.
+- No production behavior change was required; TASK-046 is a regression/contract-coverage hardening checkpoint.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -68,7 +74,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-044 lifecycle regression, readiness, activation, and E2E contract gates completed successfully.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-046 regression coverage, lifecycle, activation, security, readiness, and E2E contract gates completed successfully.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
