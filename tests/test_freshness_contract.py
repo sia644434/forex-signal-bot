@@ -84,6 +84,32 @@ def test_custom_thresholds_are_supported():
     assert report.max_age == timedelta(minutes=20)
 
 
+def test_explicit_zero_thresholds_are_rejected_instead_of_defaulted():
+    with pytest.raises(ValueError, match="warning_after"):
+        FreshnessPolicy.assess(
+            ts(1),
+            now=NOW,
+            timeframe=INTERVAL,
+            warning_after=timedelta(0),
+        )
+
+    with pytest.raises(ValueError, match="stale_after"):
+        FreshnessPolicy.assess(
+            ts(1),
+            now=NOW,
+            timeframe=INTERVAL,
+            stale_after=timedelta(0),
+        )
+
+    with pytest.raises(ValueError, match="reject_after"):
+        FreshnessPolicy.assess(
+            ts(1),
+            now=NOW,
+            timeframe=INTERVAL,
+            reject_after=timedelta(0),
+        )
+
+
 def test_future_candle_is_rejected():
     with pytest.raises(ValueError, match="future"):
         FreshnessPolicy.assess(
