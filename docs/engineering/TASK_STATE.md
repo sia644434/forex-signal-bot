@@ -258,12 +258,13 @@ Test Status: PASS — implementation correction commit `276be55c75f54cdffbd82aad
 Evidence:
 - Focused regression coverage was added for tracker replacement, idempotent stop, BUY stop-loss handling, BUY target handling, and signal-change timestamp/update behavior.
 - CI exposed a test-double mismatch around the tracker's asynchronous notification callback; the correction changed the test callback to async without changing production behavior.
-- Production Activation Validation run `34742847128`, job `103685663171`: success.
+- Production Activation Validation run `34742847128`: success.
 - Production Activation Gate run `34742847126`: success.
 - Production Readiness run `34742847163`: success.
 - Production E2E Contract Gate run `34742847216`: success.
 - Final Integration Gate run `34742847153`: success.
-- Test run for the corrected head `276be55c75f54cdffbd82aadbb3e7f53fa97240a` completed successfully; Security Audit also passed.
+- Test run `34742847146`: success.
+- Security Audit run `34742847130`: success.
 Checkpoint: Verified 2026-09-13.
 
 ## TASK-046
