@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+
 from services.telegram import journal as journal_module
 from services.telegram.journal import JournalEntry
 from services.telegram.journal_store import JournalStore
@@ -63,3 +65,14 @@ def test_close_entry_rejects_invalid_index(tmp_path, monkeypatch) -> None:
         assert str(error) == "journal entry not found"
     else:
         raise AssertionError("expected close_entry to reject an invalid index")
+
+
+def test_concurrent_adds_do_not_lose_journal_entries(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(journal_module, "_STORE", JournalStore(str(tmp_path / "journal.json")))
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        list(executor.map(lambda index: journal_module.add_entry(15, _entry(f"PAIR{index}")), range(40)))
+
+    entries = journal_module.list_entries(15, limit=100)
+    assert len(entries) == 40
+    assert {entry.symbol for entry in entries} == {f"PAIR{index}" for index in range(40)}
