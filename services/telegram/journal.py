@@ -42,9 +42,10 @@ def _save(user_id: int, entries: list[JournalEntry]) -> None:
 def add_entry(user_id: int, entry: JournalEntry) -> JournalEntry:
     if not entry.created_at:
         entry.created_at = datetime.now(timezone.utc).isoformat()
-    entries = _load(user_id)
-    entries.append(entry)
-    _save(user_id, entries)
+    # JournalStore.add() performs the read/append/write while holding the
+    # store lock, so concurrent Telegram callbacks cannot overwrite each
+    # other's newly appended journal entry.
+    _STORE.add(user_id, asdict(entry))
     return entry
 
 
@@ -54,16 +55,16 @@ def list_entries(user_id: int, limit: int = 10) -> list[JournalEntry]:
 
 
 def close_entry(user_id: int, index: int, result: str) -> JournalEntry:
-    entries = _load(user_id)
-    if index < 0 or index >= len(entries):
-        raise IndexError("journal entry not found")
-    # close_entry's index contract follows the journal module's stable
-    # chronological representation. Closing an entry must not reorder it.
-    entry = entries[index]
-    entry.status = "CLOSED"
-    entry.result = result
-    _save(user_id, entries)
-    return entry
+    def _close(item: dict) -> dict:
+        item["status"] = "CLOSED"
+        item["result"] = result
+        return item
+
+    # The public close_entry index contract is chronological, matching the
+    # journal module's persisted representation. JournalStore.update_at()
+    # performs selection and mutation atomically under the store lock.
+    item = _STORE.update_at(user_id, index, _close)
+    return JournalEntry(**item)
 
 
 def format_journal(user_id: int, limit: int = 10) -> str:
