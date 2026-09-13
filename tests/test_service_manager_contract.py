@@ -44,7 +44,7 @@ def test_register_rejects_duplicate_service_names():
         manager.register(FakeService("telegram"))
 
 
-def test_start_all_stops_already_started_services_when_critical_service_fails():
+def test_start_all_stops_partially_started_critical_service_and_already_started_services():
     manager = ServiceManager()
     first = FakeService("first")
     failing = FakeService("critical", critical=True, fail_start=True)
@@ -55,10 +55,10 @@ def test_start_all_stops_already_started_services_when_critical_service_fails():
         run(manager.start_all())
 
     assert first.events == ["start", "stop"]
-    assert failing.events == ["start"]
+    assert failing.events == ["start", "stop"]
 
 
-def test_start_all_continues_when_noncritical_service_fails():
+def test_start_all_cleans_up_failed_noncritical_service_before_continuing():
     manager = ServiceManager()
     failing = FakeService("optional", fail_start=True)
     healthy = FakeService("healthy")
@@ -67,7 +67,7 @@ def test_start_all_continues_when_noncritical_service_fails():
 
     run(manager.start_all())
 
-    assert failing.events == ["start"]
+    assert failing.events == ["start", "stop"]
     assert healthy.events == ["start"]
 
 
