@@ -179,6 +179,27 @@ class ConfidenceEngine:
         )
 
     # ==================================================
+    # Normalize Signed Analysis Score
+    # ==================================================
+
+    @staticmethod
+    def normalize_signed_score(
+        score: float | None,
+    ) -> float:
+        """Convert signed analysis scores (-100..100) to 0..100."""
+
+        if score is None:
+            return 50.0
+
+        try:
+            value = float(score)
+        except (TypeError, ValueError):
+            return 50.0
+
+        value = max(-100.0, min(100.0, value))
+        return ((value + 100.0) / 200.0) * 100.0
+
+    # ==================================================
     # Normalize Confidence
     # ==================================================
 
@@ -335,7 +356,7 @@ class ConfidenceEngine:
 
         return {
 
-            "smart_money": self.normalize(
+            "smart_money": self.normalize_signed_score(
                 self._get(
                     analysis,
                     "smart_money_score",
@@ -343,7 +364,7 @@ class ConfidenceEngine:
                 )
             ),
 
-            "structure": self.normalize(
+            "structure": self.normalize_signed_score(
                 self._get(
                     analysis,
                     "structure_score",
@@ -351,7 +372,7 @@ class ConfidenceEngine:
                 )
             ),
 
-            "price_action": self.normalize(
+            "price_action": self.normalize_signed_score(
                 self._get(
                     analysis,
                     "price_action_score",
@@ -359,7 +380,7 @@ class ConfidenceEngine:
                 )
             ),
 
-            "momentum": self.normalize(
+            "momentum": self.normalize_signed_score(
                 self._get(
                     analysis,
                     "momentum_score",
@@ -367,7 +388,7 @@ class ConfidenceEngine:
                 )
             ),
 
-            "supply_demand": self.normalize(
+            "supply_demand": self.normalize_signed_score(
                 self._get(
                     analysis,
                     "trend_score",
@@ -375,7 +396,7 @@ class ConfidenceEngine:
                 )
             ),
 
-            "candlestick": self.normalize(
+            "candlestick": self.normalize_signed_score(
                 self._get(
                     analysis,
                     "candlestick_score",
@@ -383,7 +404,7 @@ class ConfidenceEngine:
                 )
             ),
 
-            "elliott": self.normalize(
+            "elliott": self.normalize_signed_score(
                 self._get(
                     analysis,
                     "elliott_score",
@@ -391,7 +412,7 @@ class ConfidenceEngine:
                 )
             ),
 
-            "harmonic": self.normalize(
+            "harmonic": self.normalize_signed_score(
                 self._get(
                     analysis,
                     "harmonic_score",
@@ -399,7 +420,7 @@ class ConfidenceEngine:
                 )
             ),
 
-            "brooks": self.normalize(
+            "brooks": self.normalize_signed_score(
                 self._get(
                     analysis,
                     "brooks_score",
@@ -407,7 +428,7 @@ class ConfidenceEngine:
                 )
             ),
 
-            "wyckoff": self.normalize(
+            "wyckoff": self.normalize_signed_score(
                 self._get(
                     analysis,
                     "wyckoff_score",
@@ -677,13 +698,18 @@ class ConfidenceEngine:
 
         uncertainty = 0.0
 
-        volatility_score = self.normalize(
-            self._get(
-                analysis,
-                "volatility_score",
-                0.0,
-            )
+        volatility_score = self._get(
+            analysis,
+            "volatility_score",
+            0.0,
         )
+
+        try:
+            volatility_score = float(volatility_score)
+        except (TypeError, ValueError):
+            volatility_score = 0.0
+
+        volatility_score = max(0.0, volatility_score)
 
         if volatility_score >= 2.0:
 
@@ -693,7 +719,7 @@ class ConfidenceEngine:
 
             uncertainty += 0.05
 
-        structure_score = self.normalize(
+        structure_score = self.normalize_signed_score(
             self._get(
                 analysis,
                 "structure_score",
@@ -705,7 +731,7 @@ class ConfidenceEngine:
 
             uncertainty += 0.15
 
-        momentum_score = self.normalize(
+        momentum_score = self.normalize_signed_score(
             self._get(
                 analysis,
                 "momentum_score",
