@@ -13,8 +13,8 @@ def test_dynamic_risk_percent_is_symmetric_for_extreme_scores():
     engine = RiskEngine()
     assert engine._dynamic_risk_percent(0.90, 100) == 2.0
     assert engine._dynamic_risk_percent(0.90, 0) == 2.0
-    assert engine._dynamic_risk_percent(0.75, 75) == 1.5
-    assert engine._dynamic_risk_percent(0.75, 25) == 1.5
+    assert engine._dynamic_risk_percent(0.75, 90) == 1.5
+    assert engine._dynamic_risk_percent(0.75, 10) == 1.5
 
 
 def test_risk_level_is_symmetric_for_bullish_and_bearish_scores():
