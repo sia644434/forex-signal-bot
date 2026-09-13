@@ -1,6 +1,11 @@
 # Engineering Changelog
 
 ## 2026-09-13
+- TASK-055: identified a concrete worker resource-lifecycle gap: `WorkerDispatcher.from_settings()` creates a durable SQLite-backed `WorkerQueue`, while `WorkerProcessingService.stop()` previously left the queue connection open during application shutdown.
+- TASK-055: added `WorkerDispatcher.close()` to release its queue resource and made it idempotent by clearing the owned queue reference after close.
+- TASK-055: changed `WorkerProcessingService.stop()` to delegate queue cleanup through the dispatcher lifecycle boundary.
+- TASK-055: added regression coverage for service shutdown queue release and idempotent dispatcher close.
+- TASK-055: implementation commits `d67a9a3a96c8bafd64978caa46dfa9af044c1a7f`, `4e2c0478284d0077aff587f4978c47eedc561bc2`, and `adfc8733105c8adbdc498d8ec8f3bd9f3e11acd3`.
 - TASK-053: identified a concrete application lifecycle gap in `ServiceManager.stop_all()`: it attempted to stop every registered service, including services that never started or had already been cleaned up after startup failure.
 - TASK-053: changed `ServiceManager` to track successfully started services explicitly and restrict shutdown to that lifecycle set.
 - TASK-053: successfully stopped services are removed from the tracked set, while services whose `stop()` fails remain tracked so a later shutdown attempt can retry cleanup.
@@ -23,7 +28,7 @@
 - TASK-049: identified a Telegram journal persistence safety gap: `JournalStore._read()` converted filesystem/JSON read failures into `{}`, so a later append could treat corrupted storage as empty and risk discarding persisted data.
 - TASK-049: changed `JournalStore._read()` to raise `JournalStoreError` on unreadable or malformed persisted JSON instead of silently returning an empty journal.
 - TASK-049: added regression coverage verifying corrupt storage is rejected by both list and append paths and that a failed append does not overwrite the original corrupt file.
-- TASK-049: implementation head `87dd8a5e827f6db30cbdec6f925be2ea091eed38` passed the required 7-workflow GitHub Actions set and Railway commit status.
+- TASK-049: implementation head `87dd8a5e827f6db30cbdec6f925be2ea091eed38` passed the required 7-workflow gate set and Railway commit status.
 - TASK-048: identified a real Telegram journal concurrency gap: `add_entry()` and `close_entry()` performed read-modify-write across separate `JournalStore` lock scopes, allowing overlapping callbacks to lose updates.
 - TASK-048: changed `journal.add_entry()` to use the store's atomic append path and added `JournalStore.update_at()` for atomic indexed mutation under one lock.
 - TASK-048: added concurrency regression coverage with 40 simultaneous additions across 8 workers and verified all entries remain present.
