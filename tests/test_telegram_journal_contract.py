@@ -115,3 +115,37 @@ def test_structurally_invalid_store_fails_closed(tmp_path, payload) -> None:
         store.list(16)
 
     assert path.read_text(encoding="utf-8") == payload
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        '{"18": [{"symbol": "EURUSD"}]}',
+        '{"18": [{"symbol": "EURUSD", "side": "BUY", "entry": "100", "stop_loss": 95, "take_profit": 105}]}',
+        '{"18": [{"symbol": "EURUSD", "side": "BUY", "entry": 100, "stop_loss": 95, "take_profit": 105, "unexpected": true}]}',
+    ],
+)
+def test_invalid_entry_schema_fails_closed(tmp_path, monkeypatch, payload) -> None:
+    path = tmp_path / "journal.json"
+    path.write_text(payload, encoding="utf-8")
+    monkeypatch.setattr(journal_module, "_STORE", JournalStore(str(path)))
+
+    with pytest.raises(JournalStoreError, match="invalid journal entry structure"):
+        journal_module.list_entries(18)
+
+    assert path.read_text(encoding="utf-8") == payload
+
+
+def test_legacy_entry_without_optional_fields_uses_dataclass_defaults(tmp_path, monkeypatch) -> None:
+    path = tmp_path / "journal.json"
+    payload = '{"19": [{"symbol": "EURUSD", "side": "BUY", "entry": 100, "stop_loss": 95, "take_profit": 105}]}'
+    path.write_text(payload, encoding="utf-8")
+    monkeypatch.setattr(journal_module, "_STORE", JournalStore(str(path)))
+
+    entries = journal_module.list_entries(19)
+
+    assert len(entries) == 1
+    assert entries[0].notes == ""
+    assert entries[0].status == "OPEN"
+    assert entries[0].result is None
+    assert entries[0].created_at == ""
