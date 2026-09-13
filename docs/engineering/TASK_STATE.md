@@ -171,7 +171,7 @@ Evidence:
 - Persisted invalid entry shapes fail closed with controlled `JournalStoreError` behavior instead of leaking `TypeError`/`AttributeError` from dataclass construction or later journal operations.
 - Legacy entries that omit optional fields continue to use the dataclass defaults.
 - Regression coverage verifies missing required fields, invalid numeric types, unknown fields, and legacy optional-field compatibility.
-- Implementation head `210922f91584c6d713d67bed192fa7b4f6796de1` passed all 7 required GitHub Actions workflows: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate.
+- Implementation head `210922f91584c6d713d67bed192fa7b4f6796de1` passed all 7 required GitHub Actions workflows.
 - Railway commit status for the exact implementation head is `success`.
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
@@ -191,29 +191,19 @@ Phase: Phase 2 — Core Architecture / Application Lifecycle Reliability
 Title: Started-Service Shutdown Tracking
 Implementation Status: VERIFIED
 Evidence:
-- `ServiceManager.stop_all()` previously attempted to stop every registered service, including services that never started or had already failed startup and been cleaned up.
-- This violated the lifecycle boundary and could invoke `stop()` on an uninitialized service or perform duplicate cleanup after startup failure.
-- `ServiceManager` now tracks successfully started services explicitly and `stop_all()` only targets that lifecycle set.
-- Successfully stopped services are removed from the tracked set; services whose `stop()` fails remain tracked so a later shutdown attempt can retry cleanup.
-- Regression coverage verifies reverse start-order shutdown, no shutdown of never-started services after critical failure, and retry after stop failure.
-- Implementation commits: `b82b5c5a31fc57f2b484849df9e397d67c446a93`, `98db3b8c0f6a0580212dbe93a11a71b346f50f32`.
-- Exact final implementation/docs head `15a85e37d866e2f4f6bf75e5c427ca394f3b3cd2` passed all 7 required GitHub Actions workflows: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate.
-- Railway commit status for the exact head is `success`.
+- `ServiceManager.stop_all()` now targets only successfully started services and retains failed stops for retry.
+- Regression coverage verifies reverse-order shutdown, no shutdown of never-started services, and retry after stop failure.
+- Exact final implementation/docs head `15a85e37d866e2f4f6bf75e5c427ca394f3b3cd2` passed all 7 required GitHub Actions workflows and Railway commit status was `success`.
 - No local execution is claimed.
-Checkpoint: Verified 2026-09-13.
 
 ## TASK-054
 Phase: Phase 2 — Core Architecture / Application Lifecycle Reliability
 Title: Failed-Start Cleanup Retry Tracking
 Implementation Status: VERIFIED
 Evidence:
-- Audit found that a service whose `start()` failed was cleaned up once, but if its `stop()` cleanup also failed, it was not retained in `_started_services` and therefore could never be retried by `stop_all()`.
-- `ServiceManager.start_all()` now retains a failed-start service in the lifecycle tracking set until its cleanup succeeds.
-- Critical-service startup failure still raises after cleanup of previously started services, while the failed service remains retryable if its own cleanup failed.
-- Regression coverage verifies a failed non-critical start with failed cleanup is retained and successfully retried during `stop_all()`.
-- Implementation commit: `689920a13f6ade3a41bea3d28fc3d1fd40c1a3e3`.
-- Test commit: `50d456f1cebd5e2bccc2789254894b683182ae94`.
-- Final docs head `4208e6d17fdbca79bdf30b5434d17607857ee7ad` passed all 7 required GitHub Actions checks successfully: `test`, `production-e2e-contract`, `final-gate`, `activation-validation`, `dependency-audit`, `readiness`, and `activation-gate`.
+- Failed-start services remain lifecycle-tracked when their cleanup also fails, allowing later `stop_all()` retry.
+- Regression coverage verifies retryable cleanup after failed startup.
+- Final docs head `4208e6d17fdbca79bdf30b5434d17607857ee7ad` passed all 7 required GitHub Actions checks successfully.
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
@@ -222,12 +212,9 @@ Phase: Phase 2 — Core Architecture / Worker Lifecycle Reliability
 Title: Worker Queue Resource Lifecycle
 Implementation Status: VERIFIED
 Evidence:
-- Audit found a concrete resource-lifecycle gap: `WorkerDispatcher.from_settings()` creates a durable `WorkerQueue`, but `WorkerProcessingService.stop()` previously did nothing, so the SQLite connection owned by the application service was not closed during normal application shutdown.
-- `WorkerDispatcher.close()` now closes and releases its owned queue resource; `WorkerProcessingService.stop()` delegates to that boundary.
-- Regression coverage verifies service shutdown releases the dispatcher queue and that dispatcher close is idempotent.
-- No production behavior or worker workload contract was changed; this is application resource cleanup only.
-- Implementation commits: `d67a9a3a96c8bafd64978caa46dfa9af044c1a7f`, `4e2c0478284d0077aff587f4978c47eedc561bc2`, `adfc8733105c8adbdc498d8ec8f3bd9f3e11acd3`.
-- Descendant exact head `d904bd4bbb37e0970fc9579b07e56bf6cddd2e95` passed all 7 required GitHub Actions workflows and has successful Railway commit status; these gates include the full test suite and production contract gates covering the TASK-055 implementation.
+- `WorkerDispatcher.close()` now closes/releases its owned durable queue and `WorkerProcessingService.stop()` delegates to that boundary.
+- Regression coverage verifies shutdown releases the queue and dispatcher close is idempotent.
+- Descendant exact head `d904bd4bbb37e0970fc9579b07e56bf6cddd2e95` passed all 7 required GitHub Actions workflows and has successful Railway commit status.
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
@@ -237,28 +224,26 @@ Title: ProviderManager Concurrent Failure-State Isolation
 Implementation Status: VERIFIED
 Evidence:
 - Audit found that `_last_failures` was a shared mutable list reset at the start of every `get_candles()` request, so overlapping asyncio requests could overwrite or mix failure diagnostics belonging to different requests.
-- Provider retry/fallback/cooldown behavior was otherwise preserved; the fix is limited to request-scoped failure diagnostics.
 - `ProviderManager` now stores `last_failures` in an asyncio task/context-local `ContextVar` and `_request_with_retry()` appends to a request-local failure list.
 - The final `ApplicationError.details["failures"]` is built from the same request-local list, so concurrent requests cannot report another request's failures.
-- Regression coverage in `tests/test_provider_manager_concurrency.py` overlaps two failing provider requests and verifies that each request retains only its own failure diagnostics.
-- Implementation commit: `8b74f42d9d5ae3d2ae12a317cc126310458ed396`.
-- Regression test commits: `13a5790b72463797ed4ebe2130cd64842c2a44f1`, `a91e8476c8924f229929011474921d4ad3431908`.
-- Exact head `d904bd4bbb37e0970fc9579b07e56bf6cddd2e95` passed all 7 required GitHub Actions workflows: Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, Test, Production Readiness, and Final Integration Gate.
-- Railway commit status for the exact head is `success`.
+- Regression coverage overlaps two failing provider requests and verifies that each request retains only its own failure diagnostics.
+- Exact head `d904bd4bbb37e0970fc9579b07e56bf6cddd2e95` passed all 7 required GitHub Actions workflows and Railway commit status was `success`.
 - No local execution is claimed.
 Checkpoint: Verified 2026-09-13.
 
-## TASK-057
+## TASK-057 — REJECTED / FALSE POSITIVE
 Phase: Phase 2 — Core Architecture / Market Data Reliability
 Title: ProviderManager Provider-Rebinding State Consistency
-Implementation Status: IDENTIFIED — IMPLEMENTATION PENDING
+Implementation Status: NOT A BUG — NO IMPLEMENTATION
 Evidence:
-- `set_providers()` replaces the active provider-priority tuple but only updates `_provider_objects` with newly injected instances; it does not remove injected instances that are no longer active.
-- Therefore, after an injected provider named `oanda` is configured, calling `set_providers(["oanda"])` can still resolve the previously injected object instead of the factory-created OANDA provider. The active configuration says provider-name reference, but stale injected-object state continues to take precedence in `_get_provider()`.
-- This is a concrete state-consistency violation in the provider configuration boundary, not a speculative concurrency concern.
-- Required fix: make `set_providers()` rebuild/retain injected-object state only for currently active provider names, while preserving same-name instance rebinding semantics and existing retention behavior for still-active injected instances.
-- Required regression coverage: injected instance → same provider name string must switch to factory resolution; removed injected providers must not remain in `status()["injected_instances"]`; same-name injected replacement must still win.
-- No implementation or local execution is claimed yet.
+- The initial audit concern was that `set_providers()` retains injected provider objects after they are removed from the active priority tuple.
+- Repository contract tests explicitly establish that retaining injected instances is intentional: after switching active priority from `[first, second]` to `[second]`, both injected instances remain available for later re-selection, and switching back to `[first]` resolves the original injected instance.
+- The same test suite also explicitly verifies that rebinding the same provider name replaces the retained injected instance with the new object.
+- Therefore changing `set_providers()` to discard inactive injected instances would break an existing documented/tested retention contract rather than fix a correctness bug.
+- No implementation, regression patch, or production change was made for TASK-057.
+
+## Current Phase 2 Audit State
+Continue evidence-backed reliability auditing after TASK-056. ProviderManager cooldown/retry/fallback behavior is under review. Do not create a new task unless a concrete correctness, reliability, security, observability, deployment, or recovery gap is demonstrated by repository evidence.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
