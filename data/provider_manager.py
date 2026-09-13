@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Iterable
 
@@ -228,9 +229,15 @@ class ProviderManager:
             float,
         ] = {}
 
-        self._last_failures: list[
-            ProviderFailure
-        ] = []
+        # Failure diagnostics belong to the current asyncio task/request.
+        # A shared mutable list allowed concurrent get_candles() calls to
+        # overwrite and mix each other's failure history.
+        self._last_failures: ContextVar[
+            tuple[ProviderFailure, ...]
+        ] = ContextVar(
+            "provider_manager_last_failures",
+            default=(),
+        )
 
     # ------------------------------------------------------------------
     # Validation helpers
@@ -627,12 +634,11 @@ class ProviderManager:
         self,
     ) -> tuple[ProviderFailure, ...]:
         """
-        Return failures from the latest request.
+        Return failures from the latest request in the current
+        asyncio task/context.
         """
 
-        return tuple(
-            self._last_failures
-        )
+        return self._last_failures.get()
 
     # ------------------------------------------------------------------
     # Retry logic
@@ -646,6 +652,7 @@ class ProviderManager:
         symbol: str,
         timeframe: str,
         limit: int,
+        failures: list[ProviderFailure],
     ) -> list[Candle]:
         """
         Execute one provider request with retry logic.
@@ -705,7 +712,7 @@ class ProviderManager:
                     message=str(error),
                 )
 
-                self._last_failures.append(
+                failures.append(
                     failure
                 )
 
@@ -927,7 +934,10 @@ class ProviderManager:
             timeframe.strip().upper()
         )
 
-        self._last_failures = []
+        request_failures: list[ProviderFailure] = []
+        self._last_failures.set(
+            tuple(request_failures)
+        )
 
         attempted_providers = 0
         skipped_providers = 0
@@ -960,6 +970,7 @@ class ProviderManager:
                     symbol=normalized_symbol,
                     timeframe=normalized_timeframe,
                     limit=limit,
+                    failures=request_failures,
                 )
 
                 candles = self._normalize_candles(
@@ -994,6 +1005,9 @@ class ProviderManager:
                     normalized_timeframe,
                 )
 
+                self._last_failures.set(
+                    tuple(request_failures)
+                )
                 return candles
 
             except Exception as error:
@@ -1008,6 +1022,10 @@ class ProviderManager:
                 )
 
                 continue
+
+        self._last_failures.set(
+            tuple(request_failures)
+        )
 
         raise ApplicationError(
             "All market data providers failed.",
@@ -1028,7 +1046,7 @@ class ProviderManager:
                         "message": failure.message,
                     }
                     for failure
-                    in self._last_failures
+                    in request_failures
                 ],
             },
         )
