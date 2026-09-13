@@ -409,6 +409,9 @@ class ProviderManager:
         Replace provider priority order.
 
         Existing provider instances are retained where possible.
+        Cooldown state is retained only for providers that remain in
+        the active configuration; removing a provider also removes
+        its obsolete cooldown state so a later re-add starts fresh.
         """
 
         raw_providers = list(providers)
@@ -483,6 +486,16 @@ class ProviderManager:
         self._provider_objects.update(
             new_objects
         )
+
+        active_provider_names = set(
+            self._providers
+        )
+        self._cooldowns = {
+            provider_name: expires_at
+            for provider_name, expires_at
+            in self._cooldowns.items()
+            if provider_name in active_provider_names
+        }
 
     # ------------------------------------------------------------------
     # Provider instances
@@ -1097,9 +1110,3 @@ class ProviderManager:
             "retry_delay": self.retry_delay,
             "cooldown_seconds": self.cooldown_seconds,
         }
-
-
-__all__ = [
-    "ProviderFailure",
-    "ProviderManager",
-]
