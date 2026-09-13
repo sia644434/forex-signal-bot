@@ -137,3 +137,11 @@ def test_full_engine_uses_canonical_candle_model() -> None:
     )
     assert candles[0].symbol == "EUR_USD"
     assert candles[0].timestamp.tzinfo is not None
+
+
+def test_full_engine_directional_strength_is_symmetric() -> None:
+    assert FullAnalysisEngine._directional_strength(0) == 100
+    assert FullAnalysisEngine._directional_strength(100) == 100
+    assert FullAnalysisEngine._directional_strength(25) == 50
+    assert FullAnalysisEngine._directional_strength(75) == 50
+    assert FullAnalysisEngine._directional_strength(50) == 0
