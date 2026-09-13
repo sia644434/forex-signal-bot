@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Task: TASK-044 — Scanner ProviderManager Lifetime and Readiness Boundary Audit
+Active Task: Next evidence-backed Phase 2 task selection after TASK-044.
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -28,24 +28,17 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-041 verified the MarketDataEngine output surface and retained the DataFrame compatibility contract because focused tests still cover it.
 - TASK-042 hardened the MarketDataService construction boundary so scanner no longer constructs MarketDataEngine directly.
 - TASK-043 established application-scoped MarketDataService lifetime for Telegram signal, callback, and tracker paths so ProviderManager state is preserved across calls.
+- TASK-044 established application-scoped scanner ProviderManager lifetime while preserving dynamic provider-readiness refresh.
 
-### TASK-043 — VERIFIED
-MarketDataService Lifetime and Application Composition Hardening.
-Evidence:
-- Repeated application-level `MarketDataService()` construction was identified as a state-lifetime reliability risk because it recreates the engine/manager state.
-- Telegram signal, callback, and tracker paths were changed to reuse the application-scoped service.
-- Scanner was intentionally kept separate because its provider-readiness selection is a distinct contract.
-- Regression coverage was added for application-scoped lifetime/state reuse.
-- Production Readiness run `34721145994`, Production Activation Validation run `34721150684`, and Production E2E Contract Gate run `34721147175` all completed successfully for implementation head `abe8e0db1d98e3c7ac3d6ffd09330604463656d9`.
-
-### TASK-044 — IN PROGRESS
+### TASK-044 — VERIFIED
 Scanner ProviderManager Lifetime and Readiness Boundary Audit.
-Objective: Determine whether the scanner's per-invocation `ProviderManager` construction is intentional and correct, or whether repeated scans unnecessarily discard provider cache/cooldown/failure state. Preserve runtime provider-readiness semantics and do not introduce shared state until repository evidence justifies it.
-Initial evidence:
-- `scan_market()` currently builds a fresh provider manager on each invocation.
-- `_build_provider_manager()` derives the configured provider list dynamically through `ProviderFactory`.
-- `callbacks.py` directly invokes `scan_market()`, so repeated user scans can create fresh manager state.
-- The audit must inspect all current callers, any scheduler/background lifecycle, provider configuration-change behavior, and existing ProviderManager cooldown/cache tests before implementation.
+Evidence:
+- Repository-wide inspection confirmed the Telegram callback is the real application caller of `scan_market()`; no scheduler/background caller requiring a separate scanner-manager lifecycle was found in the current code path.
+- Repeated Telegram scans previously rebuilt `ProviderManager`, discarding provider instances, cooldowns, and failure state.
+- Scanner now retains the manager in `Application.bot_data`, preserving state without making it process-global.
+- Provider readiness is recalculated on every retrieval and `set_providers()` refreshes the active configured-provider order.
+- Regression coverage verifies manager identity reuse and provider-readiness changes across repeated application calls.
+- Final Integration Gate `34721606858`, Production Activation Validation `34721606855`, and Production E2E Contract Gate `34721606841` all succeeded.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -75,7 +68,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-043 lifecycle regression, readiness, activation, and E2E contract gates completed successfully.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. TASK-044 lifecycle regression, readiness, activation, and E2E contract gates completed successfully.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
