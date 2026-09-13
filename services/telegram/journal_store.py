@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from threading import Lock
+from typing import Callable
 
 
 class JournalStore:
@@ -42,3 +43,16 @@ class JournalStore:
             data = self._read()
             data[str(user_id)] = entries
             self._write(data)
+
+    def update_at(self, user_id: int, index: int, updater: Callable[[dict], dict]) -> dict:
+        """Atomically update one chronological entry and return the stored value."""
+        with self._lock:
+            data = self._read()
+            entries = data.get(str(user_id), [])
+            if index < 0 or index >= len(entries):
+                raise IndexError("journal entry not found")
+            updated = updater(dict(entries[index]))
+            entries[index] = updated
+            data[str(user_id)] = entries
+            self._write(data)
+            return dict(updated)
