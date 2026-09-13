@@ -145,3 +145,29 @@ def test_full_engine_directional_strength_is_symmetric() -> None:
     assert FullAnalysisEngine._directional_strength(25) == 50
     assert FullAnalysisEngine._directional_strength(75) == 50
     assert FullAnalysisEngine._directional_strength(50) == 0
+
+
+def test_full_engine_wires_supply_demand_score_to_analysis_contract(monkeypatch) -> None:
+    engine = FullAnalysisEngine()
+    captured = {}
+
+    def capture(analysis):
+        captured["analysis"] = analysis
+        return engine.confidence_engine.evaluate.__wrapped__(analysis)
+
+    monkeypatch.setattr(engine.confidence_engine, "evaluate", capture)
+
+    engine.analyze(
+        make_candles(
+            [
+                1.0,
+                1.1,
+                1.2,
+                1.3,
+                1.4,
+                1.5,
+            ]
+        )
+    )
+
+    assert captured["analysis"].supply_demand_score == 20

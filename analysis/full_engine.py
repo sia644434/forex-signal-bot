@@ -517,6 +517,14 @@ class FullAnalysisEngine:
 
 
 
+            supply_demand_score=(
+
+                supply_demand_result.score
+
+            ),
+
+
+
             candlestick_score=(
 
                 candlestick_result.score

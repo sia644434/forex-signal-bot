@@ -164,6 +164,8 @@ class AnalysisResult:
 
     price_action_score: float = 0.0
 
+    supply_demand_score: float = 0.0
+
     # ==================================================
     # Pattern Scores
     # ==================================================
