@@ -1,6 +1,11 @@
 # Engineering Changelog
 
 ## 2026-09-13
+- TASK-053: identified a concrete application lifecycle gap in `ServiceManager.stop_all()`: it attempted to stop every registered service, including services that never started or had already been cleaned up after startup failure.
+- TASK-053: changed `ServiceManager` to track successfully started services explicitly and restrict shutdown to that lifecycle set.
+- TASK-053: successfully stopped services are removed from the tracked set, while services whose `stop()` fails remain tracked so a later shutdown attempt can retry cleanup.
+- TASK-053: added regression coverage for started-service reverse-order shutdown, never-started services after critical failure, and retry after stop failure.
+- TASK-053: implementation commits `b82b5c5a31fc57f2b484849df9e397d67c446a93` and `98db3b8c0f6a0580212dbe93a11a71b346f50f32`; gate verification pending.
 - TASK-052: identified a concrete application lifecycle gap in `ServiceManager.start_all()`: a service that partially started and then raised was not included in the cleanup path because it was appended to the started list only after successful startup.
 - TASK-052: hardened `ServiceManager.start_all()` to invoke the failed service's `stop()` lifecycle boundary before cleaning previously started services, covering both critical and non-critical startup failures.
 - TASK-052: added regression coverage verifying cleanup of failed critical/non-critical services and continued startup after non-critical cleanup.
@@ -23,7 +28,7 @@
 - TASK-048: implementation head `b9157db60e52fb975c634f6f0abb2585f7f36de4` passed 7 successful GitHub Actions workflows: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate. Railway commit status is successful.
 - TASK-047: completed the Telegram journal ordering/persistence contract audit and corrected the chronological storage/public newest-first representation boundary, including close-by-index semantics.
 - TASK-047: implementation head `2e6bef7ec971501cd3573b21544c22f721253f99` passed the required CI/security/activation/readiness/E2E/deployment gates.
-- Synchronized persistent engineering state after TASK-051 verification. Phase 2 remains active pending selection of the next evidence-backed architecture/reliability gap.
+- Synchronized persistent engineering state after TASK-053 implementation. Phase 2 remains active pending gate verification and selection of the next evidence-backed architecture/reliability gap.
 
 ## 2026-09-12
 - Established the first persistent engineering-memory checkpoint for the repository.
