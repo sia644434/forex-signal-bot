@@ -26,3 +26,49 @@ def test_trade_quality_is_symmetric_for_bullish_and_bearish_scores():
     bullish = RiskEngine._trade_quality(0.90, 100, "NORMAL")
     bearish = RiskEngine._trade_quality(0.90, 0, "NORMAL")
     assert bullish == bearish
+
+
+def test_custom_risk_reward_target_controls_take_profit_and_reported_ratio():
+    engine = RiskEngine(risk_reward_target=3.0)
+
+    result = engine.calculate(
+        signal="BUY",
+        current_price=100.0,
+        risk_distance=2.0,
+        confidence=0.90,
+        score=100.0,
+    )
+
+    assert result.stop_loss == 98.0
+    assert result.take_profit_1 == 102.0
+    assert result.take_profit_2 == 106.0
+    assert result.take_profit == 106.0
+    assert result.take_profit_3 == 106.0
+    assert result.risk_reward == 3.0
+
+
+def test_custom_risk_reward_target_is_applied_to_sell_setups():
+    engine = RiskEngine(risk_reward_target=2.5)
+
+    result = engine.calculate(
+        signal="SELL",
+        current_price=100.0,
+        risk_distance=2.0,
+        confidence=0.90,
+        score=0.0,
+    )
+
+    assert result.stop_loss == 102.0
+    assert result.take_profit_1 == 98.0
+    assert result.take_profit_2 == 95.0
+    assert result.take_profit == 95.0
+    assert result.risk_reward == 2.5
+
+
+def test_risk_reward_target_must_be_positive():
+    try:
+        RiskEngine(risk_reward_target=0)
+    except ValueError as exc:
+        assert "risk_reward_target" in str(exc)
+    else:
+        raise AssertionError("RiskEngine must reject a non-positive risk-reward target")
