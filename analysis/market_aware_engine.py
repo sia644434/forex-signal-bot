@@ -3,19 +3,16 @@ from __future__ import annotations
 from dataclasses import replace
 
 from analysis.atr_engine import ATREngine
+from analysis.currency import get_forex_currency_pair
 from analysis.full_engine import FullAnalysisEngine
+from analysis.risk_engine import RiskEngine
 from config.settings import Settings
 from services.market_data.currency_conversion import CurrencyConversionService
 from services.market_data.service import MarketDataService
 
 
 class MarketAwareAnalysisEngine:
-    """Bind a completed analysis to its real market/currency context.
-
-    FullAnalysisEngine remains synchronous and backward compatible. This boundary
-    enriches its risk calculation with the actual symbol, configured account
-    currency, and a provider-backed quote-to-account conversion rate.
-    """
+    """Bind completed analysis to its real market and currency context."""
 
     def __init__(
         self,
@@ -39,12 +36,20 @@ class MarketAwareAnalysisEngine:
             raise ValueError("symbol is required for market-aware analysis")
         if not timeframe or not timeframe.strip():
             raise ValueError("timeframe is required for market-aware analysis")
+        if not candles:
+            raise ValueError("candles are required for market-aware analysis")
+
+        normalized_symbol = symbol.strip().upper()
+        pair = get_forex_currency_pair(normalized_symbol)
 
         report = self.analysis_engine.analyze(candles)
-        report = replace(report, symbol=symbol.strip().upper(), timeframe=timeframe.strip())
+        report = replace(
+            report,
+            symbol=normalized_symbol,
+            timeframe=timeframe.strip(),
+        )
 
-        # A missing account currency is intentionally fail-closed by RiskEngine.
-        # Do not fabricate a conversion or silently assume USD.
+        # Missing account currency intentionally remains fail-closed.
         if not self.settings.account_currency:
             return report
 
@@ -53,21 +58,28 @@ class MarketAwareAnalysisEngine:
             return report
 
         conversion = await self.conversion_service.get_conversion(
-            source_currency=(
-                symbol.strip().upper()[-3:]
-            ),
+            source_currency=pair.quote_currency,
             target_currency=self.settings.account_currency,
         )
 
-        atr_result = ATREngine().calculate([float(c.close) for c in candles])
+        # Reuse the full OHLC candles so ATR remains consistent with the
+        # analysis engine instead of silently switching to close-only ATR.
+        atr_result = ATREngine().calculate(candles)
         atr_value = atr_result.atr if atr_result.atr is not None else 0.0
+
+        # FullAnalysisEngine is intentionally backward compatible and creates
+        # a unitless RiskEngine. Replace that boundary instance here with the
+        # same risk defaults plus the explicitly configured account currency.
+        self.analysis_engine.risk_engine = RiskEngine(
+            account_currency=self.settings.account_currency,
+        )
         risk_result = self.analysis_engine.risk_engine.calculate(
             signal=signal,
             current_price=float(candles[-1].close),
             atr=atr_value,
             confidence=report.confidence,
             score=report.score,
-            symbol=symbol,
+            symbol=normalized_symbol,
             quote_to_account_rate=conversion.rate,
         )
 
