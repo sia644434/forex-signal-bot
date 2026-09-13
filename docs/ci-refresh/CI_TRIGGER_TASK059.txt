@@ -1,0 +1,1 @@
+Temporary CI trigger for TASK-059 verification. No application logic.
