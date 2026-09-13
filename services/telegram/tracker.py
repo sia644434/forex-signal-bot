@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from typing import Awaitable, Callable
 
@@ -26,13 +26,13 @@ class TrackedSignal:
     updated_at: str = ""
 
 
-ACTIVE_TRACKS: dict[tuple[int, str, str], TrackedSignal] = {}
-
-
 def track_report(user_id: int, symbol: str, timeframe: str, report) -> TrackedSignal:
     item = TrackedSignal(user_id, symbol, timeframe, str(report.signal).upper(), report.entry_price, report.stop_loss, report.take_profit_1, report.take_profit_2, report.take_profit_3, last_signal=str(report.signal).upper(), updated_at=datetime.now(timezone.utc).isoformat())
     ACTIVE_TRACKS[(user_id, symbol, timeframe)] = item
     return item
+
+
+ACTIVE_TRACKS: dict[tuple[int, str, str], TrackedSignal] = {}
 
 
 def stop_tracking(user_id: int, symbol: str, timeframe: str) -> bool:
@@ -80,6 +80,7 @@ async def refresh_tracking(
         return item
 
     report = await asyncio.to_thread(FullAnalysisEngine().analyze, candles)
+    report = replace(report, symbol=item.symbol, timeframe=item.timeframe)
     new_signal = str(report.signal).upper()
     old_signal = item.last_signal
     item.last_signal = new_signal
