@@ -35,6 +35,16 @@ def test_collect_engines_uses_signed_component_contract():
     assert scores["smart_money"] == 60.0
     assert scores["structure"] == 40.0
     assert scores["price_action"] == 50.0
+    assert scores["supply_demand"] == 50.0
+
+
+def test_supply_demand_uses_explicit_score_when_available():
+    class ExplicitSupplyDemandAnalysis(SignedAnalysis):
+        supply_demand_score = -20
+
+    engine = ConfidenceEngine()
+    scores = engine._collect_engines(ExplicitSupplyDemandAnalysis())
+
     assert scores["supply_demand"] == 40.0
 
 

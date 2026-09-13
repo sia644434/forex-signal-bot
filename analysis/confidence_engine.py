@@ -391,7 +391,7 @@ class ConfidenceEngine:
             "supply_demand": self.normalize_signed_score(
                 self._get(
                     analysis,
-                    "trend_score",
+                    "supply_demand_score",
                     0.0,
                 )
             ),
