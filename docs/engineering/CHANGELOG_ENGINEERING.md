@@ -1,6 +1,15 @@
 # Engineering Changelog
 
 ## 2026-09-13
+- TASK-060: identified a concrete FullAnalysisEngine score-contract gap: DecisionEngine emits a 0..100 score centered on neutral 50, while FullAnalysisEngine used `abs(decision.score)` when calculating trade quality.
+- TASK-060: this made equivalent bearish and bullish score strengths receive different trade-quality contributions.
+- TASK-060: introduced neutral-centered directional strength `abs((score - 50) * 2)` at the FullAnalysisEngine trade-quality boundary.
+- TASK-060: added regression coverage for symmetric score pairs 0/100, 25/75, and neutral 50.
+- TASK-060: implementation commit `17335d61eaca21614b50de963e7b08d3a655a063`.
+- TASK-060: regression test commit `cf3787509e951755eb082a783ddf531f164febda`.
+- TASK-060: verification trigger commit `5e91e0e5771f6d81cec2f421dc51c8e51e8cd9e6` completed the required 7-workflow GitHub Actions gate set successfully.
+- TASK-060: Railway commit status for the verification trigger commit is successful.
+- TASK-060: persistent engineering state was synchronized before final temporary-trigger cleanup.
 - TASK-059: identified a concrete RiskEngine score-contract gap: DecisionEngine emits a 0..100 score centered on neutral 50, while RiskEngine used `abs(score)` as though the score were centered on zero.
 - TASK-059: introduced symmetric directional strength `abs((score - 50) * 2)` so equivalent bullish/bearish scores receive equivalent risk treatment.
 - TASK-059: applied the normalized strength consistently to dynamic risk percentage, risk level, and trade-quality calculations.
@@ -10,7 +19,7 @@
 - TASK-059: Railway commit status for the final verified `main` head is successful.
 - TASK-059: temporary CI trigger file was removed after verification.
 - TASK-058: verified the FreshnessPolicy explicit-zero threshold fix across the required CI gate set and Railway deployment/status path.
-- Synchronized persistent engineering state after TASK-058 and TASK-059 verification. Phase 2 remains active for continued evidence-backed analysis/reliability auditing.
+- Synchronized persistent engineering state after TASK-058, TASK-059, and TASK-060 verification. Phase 2 remains active for continued evidence-backed analysis/reliability auditing.
 - TASK-055: identified a concrete worker resource-lifecycle gap: `WorkerDispatcher.from_settings()` creates a durable SQLite-backed `WorkerQueue`, while `WorkerProcessingService.stop()` previously left the queue connection open during application shutdown.
 - TASK-055: added `WorkerDispatcher.close()` to release its queue resource and made it idempotent by clearing the owned queue reference after close.
 - TASK-055: changed `WorkerProcessingService.stop()` to delegate queue cleanup through the dispatcher lifecycle boundary.
