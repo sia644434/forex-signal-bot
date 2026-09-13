@@ -97,3 +97,23 @@ def test_bullish_bias():
 
 
     assert result.bias == "bullish"
+
+
+class SupplyDemandAnalysis(MockAnalysis):
+    supply_demand_score = -100
+    trend_score = 60
+
+
+class BullishSupplyDemandAnalysis(SupplyDemandAnalysis):
+    supply_demand_score = 100
+
+
+def test_supply_demand_uses_explicit_score_not_trend_score():
+    engine = DecisionEngine()
+
+    bearish = engine.decide(SupplyDemandAnalysis())
+    bullish = engine.decide(BullishSupplyDemandAnalysis())
+
+    assert bullish.score > bearish.score
+
+

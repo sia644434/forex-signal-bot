@@ -649,7 +649,7 @@ class DecisionEngine:
 
         score = self._read_component(
             analysis,
-            "trend_score",
+            "supply_demand_score",
         )
 
         supply_demand = getattr(
