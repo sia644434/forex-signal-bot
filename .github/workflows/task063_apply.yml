@@ -1,0 +1,52 @@
+name: TASK-063 apply
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor == 'siasoltoon'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply supply-demand confidence wiring
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          models = Path('analysis/models.py')
+          text = models.read_text()
+          old = '''    price_action_score: float = 0.0\n\n    # ==================================================\n    # Pattern Scores'''
+          new = '''    price_action_score: float = 0.0\n\n    supply_demand_score: float = 0.0\n\n    # ==================================================\n    # Pattern Scores'''
+          if old not in text:
+              raise SystemExit('AnalysisResult score insertion point not found')
+          models.write_text(text.replace(old, new, 1))
+
+          engine = Path('analysis/full_engine.py')
+          text = engine.read_text()
+          old = '''            price_action_score=(\n\n                price_action_result.score\n\n            ),\n\n\n\n            candlestick_score='''
+          new = '''            price_action_score=(\n\n                price_action_result.score\n\n            ),\n\n\n\n            supply_demand_score=(\n\n                supply_demand_result.score\n\n            ),\n\n\n\n            candlestick_score='''
+          if old not in text:
+              raise SystemExit('FullAnalysisEngine supply-demand insertion point not found')
+          engine.write_text(text.replace(old, new, 1))
+
+          test = Path('tests/test_full_engine.py')
+          text = test.read_text()
+          if 'test_full_engine_wires_supply_demand_score_to_analysis_contract' not in text:
+              addition = '''\n\ndef test_full_engine_wires_supply_demand_score_to_analysis_contract(monkeypatch) -> None:\n    engine = FullAnalysisEngine()\n    captured = {}\n\n    def capture(analysis):\n        captured["analysis"] = analysis\n        return engine.confidence_engine.evaluate.__wrapped__(analysis)\n\n    monkeypatch.setattr(engine.confidence_engine, "evaluate", capture)\n\n    engine.analyze(\n        make_candles(\n            [\n                1.0,\n                1.1,\n                1.2,\n                1.3,\n                1.4,\n                1.5,\n            ]\n        )\n    )\n\n    assert captured["analysis"].supply_demand_score == 20\n'''
+              text += addition
+              test.write_text(text)
+          PY
+
+          git diff --check
+          git diff -- analysis/models.py analysis/full_engine.py tests/test_full_engine.py
+          git config user.name 'siasoltoon'
+          git config user.email 'siyavashjahangiri105@gmail.com'
+          git add analysis/models.py analysis/full_engine.py tests/test_full_engine.py
+          git diff --cached --quiet && { echo 'No changes to commit'; exit 0; }
+          git commit -m 'fix: wire supply-demand score into confidence contract'
+          git push origin main
