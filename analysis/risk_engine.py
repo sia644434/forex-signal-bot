@@ -62,13 +62,21 @@ class RiskEngine:
         contract_size: float = 100000,
     ) -> None:
         self.risk_reward_target = float(risk_reward_target)
+        self.atr_multiplier = float(atr_multiplier)
+        self.account_balance = float(account_balance)
+        self.risk_percent = float(risk_percent)
+        self.contract_size = float(contract_size)
+
         if self.risk_reward_target <= 0:
             raise ValueError("risk_reward_target must be greater than zero.")
-
-        self.atr_multiplier = atr_multiplier
-        self.account_balance = account_balance
-        self.risk_percent = risk_percent
-        self.contract_size = contract_size
+        if self.atr_multiplier <= 0:
+            raise ValueError("atr_multiplier must be greater than zero.")
+        if self.account_balance <= 0:
+            raise ValueError("account_balance must be greater than zero.")
+        if self.risk_percent <= 0:
+            raise ValueError("risk_percent must be greater than zero.")
+        if self.contract_size <= 0:
+            raise ValueError("contract_size must be greater than zero.")
 
     @staticmethod
     def _directional_strength(score: float) -> float:
