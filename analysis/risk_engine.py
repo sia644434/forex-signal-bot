@@ -372,6 +372,9 @@ class RiskEngine:
         if current_price <= 0:
             raise ValueError("current_price must be greater than zero.")
 
+        if risk_distance is not None and risk_distance <= 0:
+            raise ValueError("risk distance must be greater than zero.")
+
         distance = self._calculate_risk_distance(
             price=current_price,
             atr=atr,
