@@ -179,7 +179,7 @@ Checkpoint: Verified 2026-09-12.
 Phase: Phase 2 — Core Architecture
 Title: Provider-Specific Market Data Adapter Surface Audit
 Implementation Status: VERIFIED
-Test Status: PASS — implementation commit `044ab88fb83f7f929887fb8823d67a811c67e8a5` has successful Railway commit status; provider-specific adapter methods and focused tests were removed and the canonical provider-neutral path remains intact.
+Test Status: PASS — implementation commit `044ab88fb83f7f929887fb8823d67a811c67e8a5` has successful Railway commit status; provider-specific market data methods and focused tests were removed and the canonical provider-neutral path remains intact.
 Evidence:
 - `get_finnhub_candles`, `get_oanda_candles`, and `get_alphavantage_intraday` were found only in `data/market_data.py` and focused contract tests; no production caller was found.
 - The canonical path remains provider-neutral: `MarketDataService → MarketDataEngine → ProviderManager`.
@@ -201,7 +201,7 @@ Checkpoint: Verified 2026-09-12.
 Phase: Phase 2 — Core Architecture / Reliability
 Title: MarketDataEngine Output-Surface and Compatibility Audit
 Implementation Status: VERIFIED
-Test Status: PASS — implementation was an evidence-backed compatibility audit; the existing DataFrame surface remains intentionally retained because focused contract tests cover it and no repository evidence justified removal.
+Test Status: PASS — implementation was an evidence-backed compatibility audit; the existing DataFrame surface remains intentionally retained because focused contract tests cover it and no safe evidence justified removal.
 Evidence:
 - Production `MarketDataService` uses the canonical `get_candles_list()` path.
 - `MarketDataEngine.get_candles()` remains covered by focused contract tests, so it was not removed merely because no current internal production caller was found.
@@ -211,7 +211,7 @@ Checkpoint: Verified 2026-09-12.
 
 ## TASK-042
 Phase: Phase 2 — Core Architecture / Reliability
-Title: Market Data Service Construction Boundary Hardening
+Title: MarketDataService Construction Boundary Hardening
 Implementation Status: VERIFIED
 Test Status: PASS — GitHub Actions `Test` run `34720757481`, job `103626042716`, completed successfully; Production Activation Validation run `34720757426` and Production E2E Contract Gate run `34720757376` completed successfully.
 Evidence:
@@ -238,13 +238,17 @@ Checkpoint: Verified 2026-09-12.
 ## TASK-044
 Phase: Phase 2 — Core Architecture / Reliability
 Title: Scanner ProviderManager Lifetime and Readiness Boundary Audit
-Implementation Status: IN PROGRESS
-Objective: Determine whether the scanner's per-invocation `ProviderManager` construction is intentional and correct, or whether repeated scans unnecessarily discard provider cache/cooldown/failure state. Preserve the scanner's runtime provider-readiness semantics and do not introduce shared state until repository call frequency, lifecycle, configuration-change behavior, and tests justify it.
-Initial Evidence:
-- `scan_market()` currently calls `_build_provider_manager()` on every invocation.
-- `_build_provider_manager()` derives configured providers through `ProviderFactory` and creates a fresh `ProviderManager`.
-- `callbacks.py` invokes `scan_market()` directly, so repeated user scans can create fresh manager state.
-- The next audit must verify all current `scan_market()` callers, scheduler/background usage, provider configuration lifecycle, and existing cooldown/cache contract tests before deciding on any code change.
+Implementation Status: VERIFIED
+Test Status: PASS — Final Integration Gate run `34721606858`, job `103628419256`; Production Activation Validation run `34721606855`, job `103628419303`; Production E2E Contract Gate run `34721606841`, job `103628419217` all completed successfully.
+Evidence:
+- Repository-wide inspection confirmed the Telegram callback is the real application caller of `scan_market()`; no scheduler/background caller requiring a separate scanner-manager lifecycle was found in the current code path.
+- Repeated Telegram scans previously rebuilt `ProviderManager`, discarding provider instances, cooldowns, and failure state.
+- Scanner now exposes `get_scanner_provider_manager(application)` and retains the manager in `Application.bot_data`, preserving state without making it process-global.
+- Provider readiness is recalculated on every retrieval, and `set_providers()` refreshes the active configured-provider order on the retained manager, preserving dynamic readiness behavior.
+- `scan_market()` accepts an optional manager for application composition while retaining `_build_provider_manager()` fallback for direct/non-application callers.
+- Regression coverage verifies manager identity reuse and provider-readiness changes across repeated application calls.
+- Implementation commits: `680fc4cd447d770fb7013563d0d538a04e8cc4d2`, `99dc8679680590d96641e574b00716f637b4988d`, `7180828f4c3b12e7bb30588b614941cc662c0154`.
+Checkpoint: Verified 2026-09-13.
 
 ## Deferred Roadmap Issues
 - #44 — PC Worker request hardening and endpoint contract audit — implemented as TASK-029 and closed.
