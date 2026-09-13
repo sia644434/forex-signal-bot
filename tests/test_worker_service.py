@@ -3,6 +3,8 @@ import asyncio
 from config.settings import Settings
 from services.worker.service import WorkerProcessingService
 from worker.contracts import JobRequest
+from worker.dispatcher import WorkerDispatcher
+from worker.queue import WorkerQueue
 
 
 def test_worker_service_without_transport_is_non_critical_and_controlled():
@@ -17,6 +19,26 @@ def test_worker_service_without_transport_is_non_critical_and_controlled():
     assert service.health()["readiness"] == "UNCONFIGURED"
     assert service.health()["dispatcher"]["queue_configured"] is True
     assert service.health()["dispatcher"]["queue"]["total"] == 0
+
+
+def test_worker_service_stop_closes_dispatcher_queue():
+    service = WorkerProcessingService.from_settings(Settings(worker_queue_database_path=":memory:"))
+
+    assert service.health()["dispatcher"]["queue_configured"] is True
+
+    service.stop()
+
+    assert service.health()["dispatcher"] == {"queue_configured": False}
+
+
+def test_worker_dispatcher_close_is_idempotent_and_releases_queue():
+    queue = WorkerQueue(":memory:")
+    dispatcher = WorkerDispatcher(queue=queue)
+
+    dispatcher.close()
+    dispatcher.close()
+
+    assert dispatcher.health() == {"queue_configured": False}
 
 
 def test_worker_service_uses_configured_transport(monkeypatch):
