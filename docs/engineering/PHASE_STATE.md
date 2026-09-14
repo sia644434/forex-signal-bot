@@ -5,9 +5,8 @@ Status: COMPLETE
 Evidence: Baseline contract regressions were fixed and production verification was completed through live health and restart/recovery evidence.
 
 ## Phase 2 — Core Architecture
-Status: IN_PROGRESS
-Active Work: Cross-layer provider/market-data/risk reliability audit through TASK-084; verification of the latest exact `main` HEAD remains the checkpoint before closure of the current task.
-Objective: Complete only architecture work that directly supports the multi-asset trading-intelligence platform and its heavy application processing path.
+Status: COMPLETE
+Evidence: The cross-layer architecture/reliability audit was completed through TASK-089 on exact current `main` HEAD `654944e059a3438e31e90aa7f4dc90b04b95110f`. TASK-084 through TASK-089 are implemented, regression-covered, and verified by the seven required GitHub Actions checks on that exact HEAD. No additional Phase-2 repository-backed gap was identified during the closure audit.
 
 ### Completed Evidence
 - TASK-004 through TASK-013 were verified and closed through GitHub Actions.
@@ -39,12 +38,17 @@ Objective: Complete only architecture work that directly supports the multi-asse
 - TASK-082 made ProviderManager reconfiguration replace the injected provider registry and prune removed instances/cooldowns while preserving active cache state.
 - TASK-083 made configured `risk_percent` an account-level ceiling for dynamic risk selection so confidence/score heuristics cannot silently exceed the production risk policy.
 - TASK-084 hardened the Telegram market-status contract with canonical statuses, timeframe-scaled stale detection, strict timezone-aware timestamps, future-timestamp rejection, and asset-aware weekend semantics; scanner propagation was updated accordingly.
+- TASK-085 hardened ProviderManager candle ordering/duplicate validation and failover behavior without silently repairing malformed provider output.
+- TASK-086 made WorkerRuntime timeout enforcement effective for synchronous heavy executors without blocking the event loop and bounded completed-job cache growth.
+- TASK-087 hardened Telegram tracker refresh ordering so fresh analysis precedes TP/SL evaluation and prevents stale risk plans from closing signals incorrectly.
+- TASK-088 hardened Telegram dynamic output escaping and restricted tracked signals to executable BUY/SELL decisions.
+- TASK-089 established centralized Telegram access control with production fail-closed behavior for missing/invalid allowlists and common authorization across commands/callbacks.
 
-### Current Audit
-- TASK-058 through TASK-083 are verified by the exact `main` HEAD `48b015525daf99b60294c8591cb8ed1c0fee2c35`, whose seven required workflows all succeeded and whose combined status is successful.
-- TASK-084 implementation and regression coverage are present; final exact-head verification is pending.
-- After TASK-084 verification, continue into Telegram/Scanner/Tracker/Callbacks, Worker/Queue/Persistence, Security/Production, and Final E2E.
-- Do not invent a task merely to advance the roadmap. Create the next task only after a concrete repository-backed gap is demonstrated.
+### Phase 2 Closure Verification
+- Exact `main` HEAD: `654944e059a3438e31e90aa7f4dc90b04b95110f`.
+- Required checks on that exact HEAD: `test`, `readiness`, `activation-validation`, `activation-gate`, `production-e2e-contract`, `dependency-audit`, and `final-gate` — all completed successfully.
+- Combined commit status is successful.
+- The prior pending-verification state is closed. Phase 2 is now formally COMPLETE.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -74,7 +78,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for previously verified implementation heads. The latest audit head remains pending until its exact required workflow set completes successfully.
+Evidence: Required CI verification gates are green on the exact current Phase-2 closure HEAD.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
@@ -84,4 +88,4 @@ Evidence: Railway live health and restart/recovery verification completed for th
 Status: NOT_STARTED
 
 ## Roadmap Rule
-Work phases sequentially. Completing Phase 1 does not skip directly to Phase 12 or Phase 13. Phase 2 must be completed before Phase 3, and so on, unless an explicit evidence-backed dependency requires a temporary cross-phase check.
+Work phases sequentially. Phase 2 is now closed. The next planned work is Phase 3, and later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
