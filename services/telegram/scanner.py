@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, replace
 from datetime import datetime
+import html
 import logging
 from typing import Any
 
@@ -63,14 +64,7 @@ def _build_provider_manager() -> ProviderManager:
 
 
 def get_scanner_provider_manager(application: Any) -> ProviderManager:
-    """
-    Return the application-scoped scanner ProviderManager.
-
-    Scanner readiness is recalculated on every scan so the active provider
-    set remains explicit and current. The manager itself is retained in
-    Application.bot_data so provider instances, cooldowns, and failure
-    state survive independent Telegram scans without becoming process-global.
-    """
+    """Return the application-scoped scanner ProviderManager."""
     bot_data = getattr(application, "bot_data", None)
     if not isinstance(bot_data, dict):
         raise TypeError("application must expose a mutable bot_data dictionary.")
@@ -108,11 +102,7 @@ async def scan_market(
             if not candles:
                 raise RuntimeError("empty market data")
 
-            status = evaluate_market_status(
-                candles,
-                timeframe,
-                symbol=symbol,
-            )
+            status = evaluate_market_status(candles, timeframe, symbol=symbol)
             if status.status != "OPEN":
                 return ScanResult(
                     symbol, "NO_TRADE", 0.0, 0.0, None, "UNKNOWN", "unknown", None,
@@ -153,24 +143,28 @@ def _status_text(status: str, language: str = "fa") -> str:
 
 
 def format_scan(results, timeframe, language="fa"):
-    lines = [t(language, "scan_title", timeframe=timeframe), ""]
+    lines = [t(language, "scan_title", timeframe=html.escape(str(timeframe), quote=False)), ""]
 
     for item in results:
+        symbol = html.escape(str(item.symbol), quote=False)
         if item.error:
-            lines.append(f"• <b>{item.symbol}</b> → {t(language, 'scan_unavailable')}")
+            lines.append(f"• <b>{symbol}</b> → {t(language, 'scan_unavailable')}")
             continue
 
         if item.market_status != "OPEN":
-            extra = f" | {t(language, 'scan_last_candle')}: {item.last_candle_time}" if item.last_candle_time else ""
-            lines.append(f"• <b>{item.symbol}</b> → ⚠️ {t(language, 'scan_market')} {_status_text(item.market_status, language)}{extra}")
+            extra = f" | {t(language, 'scan_last_candle')}: {html.escape(str(item.last_candle_time), quote=False)}" if item.last_candle_time else ""
+            lines.append(f"• <b>{symbol}</b> → ⚠️ {t(language, 'scan_market')} {_status_text(item.market_status, language)}{extra}")
             continue
 
+        signal = html.escape(str(item.signal), quote=False)
+        trade_grade = html.escape(str(item.trade_grade), quote=False)
+        trend = html.escape(str(item.trend), quote=False)
         confidence = max(0, min(1, item.confidence)) * 100
         quality = "—" if item.trade_quality is None else f"{item.trade_quality:.0f}"
         rr = "—" if item.risk_reward is None else f"{item.risk_reward:.2f}"
         lines.append(
-            f"• <b>{item.symbol}</b> → {item.signal} | {t(language, 'scan_confidence')} {confidence:.0f}% | "
-            f"{t(language, 'scan_quality')} {quality} | RR {rr} | {t(language, 'scan_trend')} {item.trend}"
+            f"• <b>{symbol}</b> → {signal} | {t(language, 'scan_confidence')} {confidence:.0f}% | "
+            f"{t(language, 'scan_quality')} {quality} | RR {rr} | {t(language, 'scan_trend')} {trend} | {trade_grade}"
         )
 
     lines.extend(["", t(language, "scan_note")])
@@ -178,10 +172,6 @@ def format_scan(results, timeframe, language="fa"):
 
 
 __all__ = [
-    "ScanResult",
-    "ScanReadiness",
-    "scan_market",
-    "format_scan",
-    "get_scanner_provider_manager",
-    "DEFAULT_SCAN_SYMBOLS",
+    "ScanResult", "ScanReadiness", "scan_market", "format_scan",
+    "get_scanner_provider_manager", "DEFAULT_SCAN_SYMBOLS",
 ]
