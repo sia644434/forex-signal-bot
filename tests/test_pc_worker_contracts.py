@@ -2,6 +2,7 @@ import asyncio
 
 from worker.contracts import HEAVY_JOB_TYPES, JobRequest, WorkerCapabilities
 from worker.dispatcher import WorkerDispatcher
+from worker.queue import WorkerQueue
 from worker.runtime import WorkerRuntime
 
 
@@ -92,5 +93,58 @@ def test_cancelled_job_is_not_cached_as_completed():
         except asyncio.CancelledError:
             pass
         assert "job-3" not in runtime._completed_jobs
+
+    asyncio.run(run())
+
+
+def test_concurrent_dispatches_execute_their_own_jobs():
+    calls: list[str] = []
+
+    async def submit(request: JobRequest):
+        calls.append(request.job_id)
+        await asyncio.sleep(0)
+        return type("Result", (), {
+            "status": "COMPLETED",
+            "error": None,
+            "output": {"job_id": request.job_id},
+        })()
+
+    async def run():
+        queue = WorkerQueue()
+        dispatcher = WorkerDispatcher(submit=submit, queue=queue)
+        low = JobRequest("low", "backtest", priority=10)
+        high = JobRequest("high", "backtest", priority=90)
+        results = await asyncio.gather(dispatcher.submit(low), dispatcher.submit(high))
+        assert [result.status for result in results] == ["COMPLETED", "COMPLETED"]
+        assert set(calls) == {"low", "high"}
+        assert queue.get("low").status == "COMPLETED"
+        assert queue.get("high").status == "COMPLETED"
+        dispatcher.close()
+
+    asyncio.run(run())
+
+
+def test_dispatcher_cancellation_does_not_strand_running_job():
+    started = asyncio.Event()
+
+    async def submit(_request: JobRequest):
+        started.set()
+        await asyncio.sleep(60)
+        return type("Result", (), {"status": "COMPLETED", "error": None, "output": {}})()
+
+    async def run():
+        queue = WorkerQueue()
+        dispatcher = WorkerDispatcher(submit=submit, queue=queue)
+        task = asyncio.create_task(dispatcher.submit(JobRequest("cancelled", "backtest")))
+        await started.wait()
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+        record = queue.get("cancelled")
+        assert record is not None
+        assert record.status == "CANCELLED"
+        dispatcher.close()
 
     asyncio.run(run())
