@@ -15,7 +15,7 @@ from .i18n import t
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_SCAN_SYMBOLS = ("EURUSD", "GBPUSD", "USDJPY", "XAUUSD")
+DEFAULT_SCAN_SYMBOLS = ("EURUSD", "GBPUSD", "USDJPY", "EURJPY")
 DEFAULT_TIMEFRAME = "M15"
 DEFAULT_LIMIT = 300
 SCANNER_PROVIDER_MANAGER_KEY = "scanner_provider_manager"
