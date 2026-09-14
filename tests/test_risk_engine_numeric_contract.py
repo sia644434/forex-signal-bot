@@ -9,65 +9,41 @@ from analysis.risk_engine import RiskEngine
 def test_current_price_rejects_non_finite(value: float) -> None:
     engine = RiskEngine()
     with pytest.raises(ValueError, match="current_price"):
-        engine.calculate(
-            signal="BUY",
-            current_price=value,
-            risk_distance=1.0,
-            confidence=0.90,
-            score=100.0,
-        )
+        engine.calculate(signal="BUY", current_price=value, risk_distance=1.0, confidence=0.90, score=100.0)
 
 
 @pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
 def test_risk_distance_rejects_non_finite(value: float) -> None:
     engine = RiskEngine()
     with pytest.raises(ValueError, match="risk distance"):
-        engine.calculate(
-            signal="BUY",
-            current_price=100.0,
-            risk_distance=value,
-            confidence=0.90,
-            score=100.0,
-        )
+        engine.calculate(signal="BUY", current_price=100.0, risk_distance=value, confidence=0.90, score=100.0)
 
 
 @pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
 def test_atr_rejects_non_finite(value: float) -> None:
     engine = RiskEngine()
     with pytest.raises(ValueError, match="atr"):
-        engine.calculate(
-            signal="BUY",
-            current_price=100.0,
-            atr=value,
-            confidence=0.90,
-            score=100.0,
-        )
+        engine.calculate(signal="BUY", current_price=100.0, atr=value, confidence=0.90, score=100.0)
+
+
+def test_negative_atr_is_rejected_instead_of_falling_back_to_price_distance() -> None:
+    engine = RiskEngine()
+    with pytest.raises(ValueError, match="atr must be greater than or equal to zero"):
+        engine.calculate(signal="BUY", current_price=100.0, atr=-1.0, confidence=0.90, score=100.0)
 
 
 @pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
 def test_confidence_rejects_non_finite(value: float) -> None:
     engine = RiskEngine()
     with pytest.raises(ValueError, match="confidence"):
-        engine.calculate(
-            signal="BUY",
-            current_price=100.0,
-            risk_distance=1.0,
-            confidence=value,
-            score=100.0,
-        )
+        engine.calculate(signal="BUY", current_price=100.0, risk_distance=1.0, confidence=value, score=100.0)
 
 
 @pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
 def test_score_rejects_non_finite(value: float) -> None:
     engine = RiskEngine()
     with pytest.raises(ValueError, match="score"):
-        engine.calculate(
-            signal="BUY",
-            current_price=100.0,
-            risk_distance=1.0,
-            confidence=0.90,
-            score=value,
-        )
+        engine.calculate(signal="BUY", current_price=100.0, risk_distance=1.0, confidence=0.90, score=value)
 
 
 @pytest.mark.parametrize(
@@ -98,15 +74,7 @@ def test_constructor_rejects_non_finite_numeric_configuration(field: str, value:
 def test_non_finite_conversion_rate_remains_fail_closed() -> None:
     engine = RiskEngine(account_balance=1000, account_currency="USD")
     for rate in (math.nan, math.inf, -math.inf):
-        result = engine.calculate(
-            signal="BUY",
-            current_price=150.0,
-            risk_distance=1.0,
-            confidence=0.90,
-            score=100.0,
-            symbol="USDJPY",
-            quote_to_account_rate=rate,
-        )
+        result = engine.calculate(signal="BUY", current_price=150.0, risk_distance=1.0, confidence=0.90, score=100.0, symbol="USDJPY", quote_to_account_rate=rate)
         assert result.position_size is None
         assert result.lot_size is None
         assert result.risk_amount is None
