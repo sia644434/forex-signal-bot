@@ -162,6 +162,24 @@ def test_manager_rejects_unknown_provider_name():
     assert exc_info.value.details["provider"] == "definitely-unknown-provider"
 
 
+def test_manager_rejects_duplicate_provider_identity():
+    first = FakeProvider("first", [candle(1)])
+    with pytest.raises(ValueError, match="Duplicate provider identity: first"):
+        ProviderManager(providers=[first, first])
+
+
+def test_manager_rejects_duplicate_normalized_provider_names():
+    with pytest.raises(ValueError, match="Duplicate provider identity: oanda"):
+        ProviderManager(providers=["OANDA", "oanda"])
+
+
+def test_set_providers_rejects_duplicate_provider_identity():
+    first = FakeProvider("first", [candle(1)])
+    manager = ProviderManager(providers=[first])
+    with pytest.raises(ValueError, match="Duplicate provider identity: first"):
+        manager.set_providers([first, first])
+
+
 def test_set_providers_replaces_active_priority_and_prunes_removed_instances():
     first = FakeProvider("first", [candle(1)])
     second = FakeProvider("second", [candle(2)])
