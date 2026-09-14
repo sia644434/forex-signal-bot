@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import asyncio
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Awaitable, Callable
 
@@ -27,7 +26,20 @@ class TrackedSignal:
 
 
 def track_report(user_id: int, symbol: str, timeframe: str, report) -> TrackedSignal:
-    item = TrackedSignal(user_id, symbol, timeframe, str(report.signal).upper(), report.entry_price, report.stop_loss, report.take_profit_1, report.take_profit_2, report.take_profit_3, last_signal=str(report.signal).upper(), updated_at=datetime.now(timezone.utc).isoformat())
+    signal = str(report.signal).upper()
+    item = TrackedSignal(
+        user_id,
+        symbol,
+        timeframe,
+        signal,
+        report.entry_price,
+        report.stop_loss,
+        report.take_profit_1,
+        report.take_profit_2,
+        report.take_profit_3,
+        last_signal=signal,
+        updated_at=datetime.now(timezone.utc).isoformat(),
+    )
     ACTIVE_TRACKS[(user_id, symbol, timeframe)] = item
     return item
 
@@ -61,6 +73,36 @@ def _target_event(item: TrackedSignal, high: float, low: float) -> str | None:
     return None
 
 
+def _apply_report(item: TrackedSignal, report) -> tuple[str, str]:
+    """Synchronize the tracked risk plan with the newest valid analysis."""
+    new_signal = str(report.signal).upper()
+    old_signal = item.last_signal
+    item.last_signal = new_signal
+    item.updated_at = datetime.now(timezone.utc).isoformat()
+
+    if new_signal in {"BUY", "SELL", "STRONG_BUY", "STRONG_SELL"}:
+        item.signal = new_signal
+        item.entry = report.entry_price
+        item.stop_loss = report.stop_loss
+        item.take_profit_1 = report.take_profit_1
+        item.take_profit_2 = report.take_profit_2
+        item.take_profit_3 = report.take_profit_3
+        item.status = "CHANGED" if new_signal != old_signal else "ACTIVE"
+    else:
+        # WAIT/NO_TRADE must not retain an executable plan from the previous
+        # direction; otherwise the next refresh could evaluate stale TP/SL
+        # levels against the wrong market state.
+        item.signal = new_signal
+        item.entry = None
+        item.stop_loss = None
+        item.take_profit_1 = None
+        item.take_profit_2 = None
+        item.take_profit_3 = None
+        item.status = "INVALIDATED"
+
+    return old_signal, new_signal
+
+
 async def refresh_tracking(
     item: TrackedSignal,
     notify: Callable[[str], Awaitable[None]],
@@ -82,12 +124,8 @@ async def refresh_tracking(
     report = await MarketAwareAnalysisEngine(market_data=market_data).analyze(
         candles, symbol=item.symbol, timeframe=item.timeframe
     )
-    new_signal = str(report.signal).upper()
-    old_signal = item.last_signal
-    item.last_signal = new_signal
-    item.updated_at = datetime.now(timezone.utc).isoformat()
+    old_signal, new_signal = _apply_report(item, report)
     if new_signal != old_signal:
-        item.status = "CHANGED" if new_signal != "NO_TRADE" else "INVALIDATED"
         await notify(f"📢 <b>به‌روزرسانی سیگنال {item.symbol}</b>\n\nسیگنال قبلی: <b>{old_signal}</b>\nسیگنال فعلی: <b>{new_signal}</b>\nقیمت: <b>{close}</b>")
     return item
 
