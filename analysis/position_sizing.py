@@ -31,7 +31,7 @@ def calculate_position_size(
     quote_currency: str,
     quote_to_account_rate: float | None = None,
 ) -> PositionSizingResult:
-    """Calculate position size while making currency conversion explicit.
+    """Calculate an executable position size with explicit currency units.
 
     ``risk_distance_quote`` is the price distance denominated in the
     instrument's quote currency per unit of the base asset.
@@ -39,6 +39,11 @@ def calculate_position_size(
     If quote and account currencies differ, ``quote_to_account_rate`` must
     convert one quote-currency unit into account-currency units. No implicit
     USD assumption or market-rate lookup is performed here.
+
+    The requested monetary risk is treated as a ceiling. Because the broker
+    lot precision is 0.001 lots, the executable lot is floored rather than
+    rounded upward. ``position_size`` is then derived from that executable
+    lot so the two values always describe the same executable quantity.
     """
     if not isinstance(account_currency, str) or not isinstance(quote_currency, str):
         raise TypeError("account_currency and quote_currency must be strings.")
@@ -95,9 +100,7 @@ def calculate_position_size(
         if not math.isfinite(conversion_rate):
             raise ValueError("quote_to_account_rate must be finite.")
         if conversion_rate <= 0:
-            raise ValueError(
-                "quote_to_account_rate must be greater than zero."
-            )
+            raise ValueError("quote_to_account_rate must be greater than zero.")
 
     risk_amount_account = account_balance * (risk_percent / 100.0)
     risk_per_unit_account = risk_distance_quote * conversion_rate
@@ -107,18 +110,22 @@ def calculate_position_size(
     if risk_per_unit_account <= 0:
         raise ValueError("converted risk per unit must be greater than zero.")
 
-    position_size = risk_amount_account / risk_per_unit_account
-    raw_lot_size = position_size / contract_size
-    if not math.isfinite(position_size) or not math.isfinite(raw_lot_size):
+    raw_position_size = risk_amount_account / risk_per_unit_account
+    raw_lot_size = raw_position_size / contract_size
+    if not math.isfinite(raw_position_size) or not math.isfinite(raw_lot_size):
         raise ValueError("calculated position size must be finite.")
 
     # Broker lot precision must never round upward: doing so could make the
-    # executable lot exceed the requested monetary risk. Keep the calculated
-    # position size independently rounded for reporting, while flooring the
-    # executable lot to the supported 0.001-lot precision.
+    # executable lot exceed the requested monetary risk.
     lot_size = math.floor(raw_lot_size * 1000.0) / 1000.0
     if lot_size <= 0:
         raise ValueError("calculated lot size is below the supported precision.")
+
+    # Derive position_size from the executable lot. This prevents the public
+    # position_size and lot_size fields from describing different quantities.
+    position_size = lot_size * contract_size
+    if not math.isfinite(position_size):
+        raise ValueError("executable position size must be finite.")
 
     return PositionSizingResult(
         position_size=round(position_size, 4),
