@@ -3,10 +3,20 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 import math
+from typing import Protocol
 
 from config.symbols import FOREX_SYMBOLS
 from data.models import Candle
 from services.market_data.service import MarketDataService
+
+
+class MarketDataReader(Protocol):
+    async def get_candles_list(
+        self,
+        symbol: str,
+        timeframe: str,
+        limit: int = 100,
+    ) -> list[Candle]: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,9 +44,9 @@ class CurrencyConversionService:
     _CONVERSION_TIMEFRAME = "1m"
     _USD_EQUIVALENT_CURRENCIES = frozenset({"USDT", "USDC"})
 
-    def __init__(self, market_data_service: MarketDataService) -> None:
-        if not isinstance(market_data_service, MarketDataService):
-            raise TypeError("market_data_service must be a MarketDataService.")
+    def __init__(self, market_data_service: MarketDataReader) -> None:
+        if not callable(getattr(market_data_service, "get_candles_list", None)):
+            raise TypeError("market_data_service must provide get_candles_list().")
         self.market_data_service = market_data_service
 
     @classmethod
