@@ -42,7 +42,7 @@ class TelegramClient:
         logger.info("Telegram tracker refresh scheduled every %s seconds.", interval)
 
     async def start(self) -> None:
-        """Initialize the bot, validate the token and start polling."""
+        """Initialize the bot, validate startup dependencies, then start polling."""
         logger.info("Starting Telegram client...")
 
         await self.application.initialize()
@@ -65,13 +65,17 @@ class TelegramClient:
         ])
         logger.info("Telegram commands registered.")
 
-        await self.application.start()
-        logger.info("Telegram application runtime started.")
-        self._schedule_tracker_refresh()
-
         updater = self.application.updater
         if updater is None:
             raise RuntimeError("Telegram updater is unavailable; polling cannot start.")
+
+        # Validate and schedule background tracking before the application is
+        # marked running. A startup dependency failure must not leave a
+        # partially-started Telegram runtime behind.
+        self._schedule_tracker_refresh()
+
+        await self.application.start()
+        logger.info("Telegram application runtime started.")
 
         await updater.start_polling()
         logger.info("Telegram polling started successfully.")
