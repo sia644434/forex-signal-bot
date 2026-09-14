@@ -44,14 +44,19 @@ class FullAnalysisEngine:
         self.atr_engine = ATREngine()
 
     @staticmethod
+    def _require_finite(value: object, name: str) -> float:
+        try:
+            numeric_value = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{name} must be numeric and finite.") from exc
+        if not math.isfinite(numeric_value):
+            raise ValueError(f"{name} must be numeric and finite.")
+        return numeric_value
+
+    @staticmethod
     def _directional_strength(score: float) -> float:
         """Convert a finite 0..100 decision score to symmetric strength."""
-        try:
-            numeric_score = float(score)
-        except (TypeError, ValueError) as exc:
-            raise ValueError("decision score must be numeric and finite.") from exc
-        if not math.isfinite(numeric_score):
-            raise ValueError("decision score must be numeric and finite.")
+        numeric_score = FullAnalysisEngine._require_finite(score, "decision score")
         return abs((numeric_score - 50.0) * 2.0)
 
     @staticmethod
@@ -69,7 +74,12 @@ class FullAnalysisEngine:
         if isinstance(first, Candle):
             if not all(isinstance(candle, Candle) for candle in candles):
                 raise TypeError("Input candle collection must contain only Candle objects.")
-            return list(candles), [float(candle.close) for candle in candles]
+            closes: list[float] = []
+            for index, candle in enumerate(candles):
+                closes.append(FullAnalysisEngine._require_finite(candle.close, f"Candle close at index {index}"))
+                if closes[-1] <= 0:
+                    raise ValueError(f"Candle close at index {index} must be greater than zero.")
+            return list(candles), closes
 
         closes: list[float] = []
         for index, price in enumerate(candles):
@@ -102,8 +112,13 @@ class FullAnalysisEngine:
         candle_data, closes = self._normalize_candles(candles)
 
         atr_result = self.atr_engine.calculate(closes)
-        atr_value = atr_result.atr if atr_result.atr is not None else 0.0
-        atr_percentage = atr_result.atr_percentage if atr_result.atr_percentage is not None else 0.0
+        atr_value = self._require_finite(atr_result.atr if atr_result.atr is not None else 0.0, "ATR")
+        atr_percentage = self._require_finite(
+            atr_result.atr_percentage if atr_result.atr_percentage is not None else 0.0,
+            "ATR percentage",
+        )
+        if atr_value < 0 or atr_percentage < 0:
+            raise ValueError("ATR metrics must be non-negative.")
 
         structure = self.structure_detector.analyze(closes)
         indicator_snapshot = self.indicator_engine.calculate(closes)
@@ -117,24 +132,41 @@ class FullAnalysisEngine:
         wyckoff_result = self.wyckoff_engine.analyze(closes)
         smc_result = self.smc_engine.analyze(closes)
 
+        component_scores = {
+            "trend_score": 20 if structure.trend == "bullish" else -20 if structure.trend == "bearish" else 0,
+            "momentum_score": momentum_result.score,
+            "structure_score": 20 if structure.bos else 0,
+            "volatility_score": atr_percentage,
+            "price_action_score": price_action_result.score,
+            "supply_demand_score": supply_demand_result.score,
+            "candlestick_score": candlestick_result.score,
+            "elliott_score": elliott_result.score,
+            "harmonic_score": harmonic_result.score,
+            "brooks_score": brooks_result.score,
+            "wyckoff_score": wyckoff_result.score,
+            "smart_money_score": smc_result.score,
+        }
+        for name, value in component_scores.items():
+            self._require_finite(value, name)
+
         analysis_result = AnalysisResult(
             trend=structure.trend,
             momentum=momentum_result.state,
             indicators=indicator_snapshot.values,
             candles=candle_data,
             supply_demand=supply_demand_result.zone,
-            trend_score=20 if structure.trend == "bullish" else -20 if structure.trend == "bearish" else 0,
-            momentum_score=momentum_result.score,
-            structure_score=20 if structure.bos else 0,
-            volatility_score=atr_percentage,
-            price_action_score=price_action_result.score,
-            supply_demand_score=supply_demand_result.score,
-            candlestick_score=candlestick_result.score,
-            elliott_score=elliott_result.score,
-            harmonic_score=harmonic_result.score,
-            brooks_score=brooks_result.score,
-            wyckoff_score=wyckoff_result.score,
-            smart_money_score=smc_result.score,
+            trend_score=component_scores["trend_score"],
+            momentum_score=component_scores["momentum_score"],
+            structure_score=component_scores["structure_score"],
+            volatility_score=component_scores["volatility_score"],
+            price_action_score=component_scores["price_action_score"],
+            supply_demand_score=component_scores["supply_demand_score"],
+            candlestick_score=component_scores["candlestick_score"],
+            elliott_score=component_scores["elliott_score"],
+            harmonic_score=component_scores["harmonic_score"],
+            brooks_score=component_scores["brooks_score"],
+            wyckoff_score=component_scores["wyckoff_score"],
+            smart_money_score=component_scores["smart_money_score"],
             smc_bias=smc_result.bias,
             smc_structure=smc_result.structure,
             order_block=smc_result.order_block,
@@ -166,13 +198,26 @@ class FullAnalysisEngine:
             score=decision.score,
         )
 
-        if confidence_result.confidence >= 0.85:
+        confidence_value = self._require_finite(confidence_result.confidence, "confidence")
+        decision_score = self._require_finite(decision.score, "decision score")
+        risk_values = {
+            "entry_price": risk_result.entry_price,
+            "stop_loss": risk_result.stop_loss,
+            "take_profit": risk_result.take_profit,
+            "risk_reward": risk_result.risk_reward,
+            "position_size": risk_result.position_size,
+            "risk_amount": risk_result.risk_amount,
+        }
+        for name, value in risk_values.items():
+            self._require_finite(value, name)
+
+        if confidence_value >= 0.85:
             confidence_grade = "VERY_HIGH"
-        elif confidence_result.confidence >= 0.70:
+        elif confidence_value >= 0.70:
             confidence_grade = "HIGH"
-        elif confidence_result.confidence >= 0.50:
+        elif confidence_value >= 0.50:
             confidence_grade = "MEDIUM"
-        elif confidence_result.confidence >= 0.30:
+        elif confidence_value >= 0.30:
             confidence_grade = "LOW"
         else:
             confidence_grade = "VERY_LOW"
@@ -183,8 +228,8 @@ class FullAnalysisEngine:
             max(
                 0,
                 int(
-                    (confidence_result.confidence * 50)
-                    + (self._directional_strength(decision.score) * 0.5)
+                    (confidence_value * 50)
+                    + (self._directional_strength(decision_score) * 0.5)
                 ),
             ),
         )
@@ -203,9 +248,9 @@ class FullAnalysisEngine:
         return AnalysisReport(
             trend=structure.trend,
             structure=structure_name,
-            score=decision.score,
+            score=decision_score,
             signal=decision.signal,
-            confidence=confidence_result.confidence,
+            confidence=confidence_value,
             agreement=confidence_result.agreement,
             bullish_votes=confidence_result.bullish_votes,
             bearish_votes=confidence_result.bearish_votes,
