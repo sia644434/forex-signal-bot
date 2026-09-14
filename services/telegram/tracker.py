@@ -122,7 +122,11 @@ async def refresh_tracking(
     )
     old_signal, new_signal = _apply_report(item, report)
 
-    if new_signal in {"BUY", "SELL", "STRONG_BUY", "STRONG_SELL"}:
+    # A newly changed signal is not evaluated against TP/SL using the same
+    # candle that produced the new analysis. Its high/low may have contributed
+    # to the newly calculated levels, which could otherwise cause an immediate
+    # false stop/target event. The next refresh evaluates the new plan normally.
+    if new_signal in {"BUY", "SELL", "STRONG_BUY", "STRONG_SELL"} and new_signal == old_signal:
         target_event = _target_event(item, high, low)
         if target_event:
             item.status = "TARGET_REACHED" if "TP" in target_event else "STOPPED"
