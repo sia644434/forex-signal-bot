@@ -81,7 +81,7 @@ def test_exact_lot_boundary_is_not_lost_to_float_rounding():
         contract_size=100000,
         account_currency="USD",
         quote_currency="JPY",
-        quote_to_account_rate=0.0066666667,
+        quote_to_account_rate=0.006666666666666666,
     )
 
     assert result.lot_size == pytest.approx(0.02)
