@@ -56,11 +56,13 @@ def _price_candles(symbol: str, price: float = 150.0) -> list[Candle]:
 
 
 @pytest.mark.parametrize(
-    ("symbol", "conversion_symbol", "conversion_price", "expected_rate"),
+    ("symbol", "conversion_symbol", "conversion_price", "expected_rate", "expected_position_size"),
     [
-        ("USDJPY", "USDJPY", 150.0, 1.0 / 150.0),
+        # The conversion service returns a binary-float approximation of the
+        # inverse. Executable 0.001-lot precision must floor conservatively.
+        ("USDJPY", "USDJPY", 150.0, 1.0 / 150.0, 1900.0),
         # EURJPY is quoted in JPY, so JPY->USD still resolves through USDJPY.
-        ("EURJPY", "USDJPY", 150.0, 1.0 / 150.0),
+        ("EURJPY", "USDJPY", 150.0, 1.0 / 150.0, 1900.0),
     ],
 )
 def test_market_aware_engine_uses_real_inverse_conversion_for_jpy_quotes(
@@ -69,6 +71,7 @@ def test_market_aware_engine_uses_real_inverse_conversion_for_jpy_quotes(
     conversion_symbol: str,
     conversion_price: float,
     expected_rate: float,
+    expected_position_size: float,
 ) -> None:
     market_data = FakeMarketDataService(conversion_symbol, conversion_price)
     settings = Settings(account_currency="USD")
@@ -100,7 +103,8 @@ def test_market_aware_engine_uses_real_inverse_conversion_for_jpy_quotes(
     assert report.position_size is not None
     assert report.lot_size is not None
     assert report.risk_amount == pytest.approx(20.0)
-    assert report.position_size == pytest.approx(20.0 / (1.5 * expected_rate))
+    assert report.position_size == pytest.approx(expected_position_size)
+    assert report.position_size <= 20.0 / (1.5 * expected_rate)
     assert report.lot_size == pytest.approx(report.position_size / 100000, abs=0.0005)
     assert f"via {conversion_symbol}" in report.reasons[-1]
 
