@@ -10,18 +10,43 @@ def test_directional_strength_is_symmetric_for_decision_scores():
 
 
 def test_dynamic_risk_percent_is_symmetric_for_extreme_scores():
-    # Explicit 2% ceiling preserves the legacy dynamic tiers for callers that
-    # intentionally allow that maximum.
-    engine = RiskEngine(risk_percent=2.0)
+    engine = RiskEngine()
     assert engine._dynamic_risk_percent(0.90, 100) == 2.0
     assert engine._dynamic_risk_percent(0.90, 0) == 2.0
     assert engine._dynamic_risk_percent(0.75, 90) == 1.5
     assert engine._dynamic_risk_percent(0.75, 10) == 1.5
 
 
-def test_configured_risk_percent_caps_dynamic_risk():
-    engine = RiskEngine(risk_percent=0.5)
-    assert engine._dynamic_risk_percent(0.90, 100) == 0.5
+def test_calculate_accepts_explicit_risk_policy_override():
+    engine = RiskEngine(account_balance=1000, account_currency="USD")
+    result = engine.calculate(
+        signal="BUY",
+        current_price=150.0,
+        risk_distance=1.5,
+        confidence=0.90,
+        score=100.0,
+        symbol="USDJPY",
+        quote_to_account_rate=0.0065,
+        risk_percent=0.5,
+    )
+    assert result.risk_percent == 0.5
+    assert result.risk_amount == 5.0
+
+
+def test_calculate_rejects_invalid_risk_policy_override():
+    engine = RiskEngine()
+    for value in (0.0, -1.0, float("nan"), float("inf")):
+        try:
+            engine.calculate(
+                signal="BUY",
+                current_price=100.0,
+                risk_distance=1.0,
+                risk_percent=value,
+            )
+        except ValueError as exc:
+            assert "risk_percent" in str(exc)
+        else:
+            raise AssertionError("RiskEngine must reject invalid risk_percent overrides")
 
 
 def test_risk_level_is_symmetric_for_bullish_and_bearish_scores():
