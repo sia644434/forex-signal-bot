@@ -54,7 +54,7 @@ class ProviderManager:
                     raise TypeError("Each provider must be either a provider name string or an object implementing get_candles().")
                 name = self._provider_instance_name(instance, index)
             if name in names:
-                continue
+                raise ValueError(f"Duplicate provider identity: {name}")
             names.append(name)
             if instance is not None:
                 self._provider_objects[name] = instance
@@ -121,8 +121,9 @@ class ProviderManager:
                     raise TypeError("Each provider must be either a provider name string or an object implementing get_candles().")
                 name = self._provider_instance_name(reference, index)
                 objects[name] = reference
-            if name not in names:
-                names.append(name)
+            if name in names:
+                raise ValueError(f"Duplicate provider identity: {name}")
+            names.append(name)
         active = set(names)
         self._providers = tuple(names)
         self._provider_objects = objects
@@ -196,7 +197,6 @@ class ProviderManager:
 
     @staticmethod
     def _canonical_symbol_for_validation(symbol: str) -> str:
-        """Compare provider symbols by semantic identity, not formatting."""
         return "".join(character for character in symbol.strip().upper() if character not in "_/ -")
 
     @staticmethod
@@ -212,19 +212,12 @@ class ProviderManager:
             if actual != expected:
                 raise ApplicationError("Provider returned candles for an unexpected symbol.", {"provider": provider_name, "symbol": symbol, "index": index, "actual_symbol": candle.symbol})
             if previous_timestamp is not None and candle.timestamp <= previous_timestamp:
-                raise ApplicationError(
-                    "Provider returned non-chronological or duplicate candles.",
-                    {"provider": provider_name, "symbol": symbol, "index": index},
-                )
+                raise ApplicationError("Provider returned non-chronological or duplicate candles.", {"provider": provider_name, "symbol": symbol, "index": index})
             previous_timestamp = candle.timestamp
         return list(candles)
 
     @staticmethod
     def _normalize_candles(candles: list[Candle], *, limit: int) -> list[Candle]:
-        # Do not sort or deduplicate provider output here. Doing so would hide
-        # upstream ordering/duplicate defects from the canonical DataQuality
-        # boundary. Sequence validity is checked in _validate_result(); this
-        # method only applies the caller's requested result limit.
         return candles[-limit:] if len(candles) > limit else candles
 
     async def get_candles(self, symbol: str, timeframe: str, limit: int = 100) -> list[Candle]:
@@ -270,15 +263,7 @@ class ProviderManager:
 
     def status(self) -> dict[str, object]:
         now = time.monotonic()
-        return {
-            "providers": list(self._providers),
-            "cached_instances": list(self._provider_instances.keys()),
-            "injected_instances": list(self._provider_objects.keys()),
-            "cooldowns": {name: max(0.0, expiry - now) for name, expiry in self._cooldowns.items()},
-            "retries": self.retries,
-            "retry_delay": self.retry_delay,
-            "cooldown_seconds": self.cooldown_seconds,
-        }
+        return {"providers": list(self._providers), "cached_instances": list(self._provider_instances.keys()), "injected_instances": list(self._provider_objects.keys()), "cooldowns": {name: max(0.0, expiry - now) for name, expiry in self._cooldowns.items()}, "retries": self.retries, "retry_delay": self.retry_delay, "cooldown_seconds": self.cooldown_seconds}
 
 
 __all__ = ["ProviderFailure", "ProviderManager"]
