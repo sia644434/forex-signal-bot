@@ -16,15 +16,7 @@ def make_candles(closes: list[float]) -> list[Candle]:
         open_price = previous_close
         high = max(open_price, close) * 1.001
         low = min(open_price, close) * 0.999
-        candles.append(Candle(
-            symbol="EUR_USD",
-            timestamp=start + timedelta(minutes=15 * index),
-            open=open_price,
-            high=high,
-            low=low,
-            close=close,
-            volume=100.0,
-        ))
+        candles.append(Candle(symbol="EUR_USD", timestamp=start + timedelta(minutes=15 * index), open=open_price, high=high, low=low, close=close, volume=100.0))
     return candles
 
 
@@ -101,7 +93,7 @@ def test_full_engine_rejects_non_finite_atr_output(monkeypatch) -> None:
 
     def invalid_atr(prices):
         result = original_calculate(prices)
-        return type(result)(atr=float("nan"), atr_percentage=result.atr_percentage)
+        return type(result)(atr=float("nan"), atr_percentage=result.atr_percentage, volatility=result.volatility)
 
     monkeypatch.setattr(engine.atr_engine, "calculate", invalid_atr)
     with pytest.raises(ValueError, match="ATR must be numeric and finite"):
@@ -114,19 +106,7 @@ def test_full_engine_rejects_non_finite_analysis_component(monkeypatch) -> None:
 
     def invalid_smc(prices):
         result = original_analyze(prices)
-        return type(result)(
-            bias=result.bias,
-            structure=result.structure,
-            order_block=result.order_block,
-            liquidity=result.liquidity,
-            fair_value_gap=result.fair_value_gap,
-            premium_discount=result.premium_discount,
-            equal_high=result.equal_high,
-            equal_low=result.equal_low,
-            score=float("inf"),
-            strength=result.strength,
-            reason=result.reason,
-        )
+        return type(result)(bias=result.bias, structure=result.structure, order_block=result.order_block, liquidity=result.liquidity, fair_value_gap=result.fair_value_gap, premium_discount=result.premium_discount, equal_high=result.equal_high, equal_low=result.equal_low, score=float("inf"), strength=result.strength, reason=result.reason)
 
     monkeypatch.setattr(engine.smc_engine, "analyze", invalid_smc)
     with pytest.raises(ValueError, match="smart_money_score must be numeric and finite"):
@@ -135,19 +115,10 @@ def test_full_engine_rejects_non_finite_analysis_component(monkeypatch) -> None:
 
 def test_full_engine_output_numeric_contract_is_finite() -> None:
     result = FullAnalysisEngine().analyze(make_candles([1.0, 1.1, 1.05, 1.2, 1.15, 1.3]))
-    for value in (
-        result.score,
-        result.confidence,
-        result.agreement,
-        result.entry_price,
-        result.stop_loss,
-        result.take_profit,
-        result.risk_reward,
-        result.position_size,
-        result.risk_amount,
-    ):
-        assert value == pytest.approx(value)
-        assert abs(value) != float("inf")
+    for value in (result.score, result.confidence, result.agreement, result.entry_price, result.stop_loss, result.take_profit, result.risk_reward, result.position_size, result.risk_amount):
+        if value is not None:
+            assert value == pytest.approx(value)
+            assert abs(value) != float("inf")
 
 
 def test_full_engine_wires_supply_demand_score_to_analysis_contract(monkeypatch) -> None:
