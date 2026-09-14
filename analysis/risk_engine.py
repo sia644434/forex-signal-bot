@@ -91,12 +91,18 @@ class RiskEngine:
 
     def _dynamic_risk_percent(self, confidence: float, score: float) -> float:
         if confidence >= 0.85 and self._directional_strength(score) >= 80:
-            return 2.0
-        if confidence >= 0.70 and self._directional_strength(score) >= 60:
-            return 1.5
-        if confidence >= 0.50:
-            return 1.0
-        return 0.5
+            dynamic_percent = 2.0
+        elif confidence >= 0.70 and self._directional_strength(score) >= 60:
+            dynamic_percent = 1.5
+        elif confidence >= 0.50:
+            dynamic_percent = 1.0
+        else:
+            dynamic_percent = 0.5
+
+        # risk_percent is the configured maximum risk per trade. Dynamic
+        # confidence tiers may reduce risk, but must never override the
+        # configured account-level ceiling.
+        return min(dynamic_percent, self.risk_percent)
 
     @staticmethod
     def _calculate_risk_level(confidence: float, score: float) -> str:
