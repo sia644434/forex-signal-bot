@@ -31,6 +31,33 @@ def test_claims_highest_priority_pending_job():
     queue.close()
 
 
+def test_targeted_claim_does_not_steal_another_pending_job():
+    queue = WorkerQueue()
+    queue.enqueue(JobRequest("low", "backtest", priority=10))
+    queue.enqueue(JobRequest("high", "backtest", priority=90))
+
+    claimed = queue.claim("low")
+
+    assert claimed is not None
+    assert claimed.job_id == "low"
+    assert claimed.status == "RUNNING"
+    other = queue.get("high")
+    assert other is not None
+    assert other.status == "PENDING"
+    queue.close()
+
+
+def test_targeted_claim_is_idempotent_for_non_pending_job():
+    queue = WorkerQueue()
+    queue.enqueue(JobRequest("job", "backtest"))
+    first = queue.claim("job")
+    second = queue.claim("job")
+
+    assert first is not None
+    assert second is None
+    queue.close()
+
+
 def test_queue_metrics_report_state_counts_without_payloads():
     queue = WorkerQueue()
     assert queue.metrics() == {
