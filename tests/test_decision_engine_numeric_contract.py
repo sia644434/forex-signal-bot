@@ -44,8 +44,17 @@ class NonFiniteAnalysis:
     momentum_score = 0.0
 
 
-def test_non_finite_analysis_components_fail_closed_to_neutral_defaults():
-    result = DecisionEngine().decide(NonFiniteAnalysis())
+def test_present_non_finite_analysis_components_raise_value_error():
+    with pytest.raises(ValueError, match="finite"):
+        DecisionEngine().decide(NonFiniteAnalysis())
+
+
+def test_missing_analysis_components_keep_neutral_defaults():
+    class SparseAnalysis:
+        trend_score = 0.0
+        momentum_score = 0.0
+
+    result = DecisionEngine().decide(SparseAnalysis())
 
     assert math.isfinite(result.score)
     assert 0.0 <= result.score <= 100.0
