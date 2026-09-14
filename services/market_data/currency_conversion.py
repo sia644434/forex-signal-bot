@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import math
 
-from config.symbols import FOREX_SYMBOLS, normalize_symbol
+from config.symbols import FOREX_SYMBOLS
 from data.models import Candle
 from services.market_data.service import MarketDataService
 
@@ -70,12 +71,14 @@ class CurrencyConversionService:
         target = self._normalize_currency(target_currency, "target_currency")
 
         if source == target:
-            # Identity conversion has no market dependency and is always exact.
+            # Identity conversion has no market dependency and therefore no pair
+            # or market timestamp. An empty pair avoids inventing symbols such as
+            # USDUSD, which are not valid Forex instruments.
             return CurrencyConversion(
                 source_currency=source,
                 target_currency=target,
                 rate=1.0,
-                pair_symbol=normalize_symbol(f"{source}{target}"),
+                pair_symbol="",
                 inverted=False,
                 as_of=datetime.now().astimezone(),
             )
@@ -92,11 +95,12 @@ class CurrencyConversionService:
                     raise ValueError(f"No conversion market data for {pair_symbol}.")
 
                 candle: Candle = candles[-1]
-                if candle.close <= 0:
+                price = float(candle.close)
+                if not math.isfinite(price) or price <= 0:
                     raise ValueError(f"Invalid conversion price for {pair_symbol}.")
 
-                rate = 1.0 / candle.close if inverted else candle.close
-                if rate <= 0:
+                rate = 1.0 / price if inverted else price
+                if not math.isfinite(rate) or rate <= 0:
                     raise ValueError(f"Invalid conversion rate for {pair_symbol}.")
 
                 return CurrencyConversion(
