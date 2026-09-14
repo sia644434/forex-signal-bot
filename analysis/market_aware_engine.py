@@ -83,12 +83,15 @@ class MarketAwareAnalysisEngine:
         current_price = self._current_price(candles)
 
         configured_risk_percent = self.settings.risk_per_trade * 100.0
-        self.analysis_engine.risk_engine = RiskEngine(
+        # RiskEngine carries per-analysis market/account context. Keep it local
+        # instead of mutating the shared FullAnalysisEngine instance; callers may
+        # reuse one MarketAwareAnalysisEngine concurrently for different symbols.
+        risk_engine = RiskEngine(
             account_balance=self.settings.account_balance,
             account_currency=self.settings.account_currency,
             contract_size=contract_size,
         )
-        risk_result = self.analysis_engine.risk_engine.calculate(
+        risk_result = risk_engine.calculate(
             signal=signal,
             current_price=current_price,
             atr=atr_value,
