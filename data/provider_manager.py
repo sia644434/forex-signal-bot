@@ -125,11 +125,7 @@ class ProviderManager:
                 names.append(name)
         active = set(names)
         self._providers = tuple(names)
-        # Reconfiguration is a replacement, not an additive merge. Retaining
-        # removed injected objects could make a later string-only configuration
-        # silently resurrect an object from an older lifecycle.
         self._provider_objects = objects
-        # Cached factory instances belong to the active provider set only.
         self._provider_instances = {
             name: instance
             for name, instance in self._provider_instances.items()
@@ -205,25 +201,31 @@ class ProviderManager:
 
     @staticmethod
     def _validate_result(provider_name: str, candles: object, symbol: str) -> list[Candle]:
-        # Provider adapters historically returned either list or tuple. Keep
-        # that compatibility at the boundary, then canonicalize to list for
-        # all downstream consumers.
         if not isinstance(candles, (list, tuple)):
             raise ApplicationError("Provider returned an invalid candle collection.", {"provider": provider_name, "symbol": symbol, "expected": "list[Candle]", "actual": type(candles).__name__})
         expected = ProviderManager._canonical_symbol_for_validation(symbol)
+        previous_timestamp = None
         for index, candle in enumerate(candles):
             if not isinstance(candle, Candle):
                 raise ApplicationError("Provider returned invalid candle data.", {"provider": provider_name, "symbol": symbol, "index": index, "expected": "Candle", "actual": type(candle).__name__})
             actual = ProviderManager._canonical_symbol_for_validation(candle.symbol)
             if actual != expected:
                 raise ApplicationError("Provider returned candles for an unexpected symbol.", {"provider": provider_name, "symbol": symbol, "index": index, "actual_symbol": candle.symbol})
+            if previous_timestamp is not None and candle.timestamp <= previous_timestamp:
+                raise ApplicationError(
+                    "Provider returned non-chronological or duplicate candles.",
+                    {"provider": provider_name, "symbol": symbol, "index": index},
+                )
+            previous_timestamp = candle.timestamp
         return list(candles)
 
     @staticmethod
     def _normalize_candles(candles: list[Candle], *, limit: int) -> list[Candle]:
-        unique = {(candle.symbol, candle.timestamp): candle for candle in candles}
-        normalized = sorted(unique.values(), key=lambda candle: candle.timestamp)
-        return normalized[-limit:] if len(normalized) > limit else normalized
+        # Do not sort or deduplicate provider output here. Doing so would hide
+        # upstream ordering/duplicate defects from the canonical DataQuality
+        # boundary. Sequence validity is checked in _validate_result(); this
+        # method only applies the caller's requested result limit.
+        return candles[-limit:] if len(candles) > limit else candles
 
     async def get_candles(self, symbol: str, timeframe: str, limit: int = 100) -> list[Candle]:
         if not isinstance(symbol, str):
