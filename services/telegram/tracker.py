@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Awaitable, Callable
@@ -89,9 +90,6 @@ def _apply_report(item: TrackedSignal, report) -> tuple[str, str]:
         item.take_profit_3 = report.take_profit_3
         item.status = "CHANGED" if new_signal != old_signal else "ACTIVE"
     else:
-        # WAIT/NO_TRADE must not retain an executable plan from the previous
-        # direction; otherwise the next refresh could evaluate stale TP/SL
-        # levels against the wrong market state.
         item.signal = new_signal
         item.entry = None
         item.stop_loss = None
@@ -111,22 +109,37 @@ async def refresh_tracking(
     candles = await market_data.get_candles_list(item.symbol, item.timeframe, 300)
     if not candles:
         return item
+
     latest = candles[-1]
     high, low, close = float(latest.high), float(latest.low), float(latest.close)
     item.last_price = close
-    target_event = _target_event(item, high, low)
-    if target_event:
-        item.status = "TARGET_REACHED" if "TP" in target_event else "STOPPED"
-        await notify(f"📢 <b>به‌روزرسانی {item.symbol}</b>\n\n{target_event}\nقیمت فعلی: <b>{close}</b>")
-        ACTIVE_TRACKS.pop((item.user_id, item.symbol, item.timeframe), None)
-        return item
 
+    # Re-analyze before evaluating TP/SL. Otherwise a direction change in the
+    # newest analysis could still be incorrectly closed by the previous plan's
+    # levels on the same candle.
     report = await MarketAwareAnalysisEngine(market_data=market_data).analyze(
         candles, symbol=item.symbol, timeframe=item.timeframe
     )
     old_signal, new_signal = _apply_report(item, report)
+
+    if new_signal in {"BUY", "SELL", "STRONG_BUY", "STRONG_SELL"}:
+        target_event = _target_event(item, high, low)
+        if target_event:
+            item.status = "TARGET_REACHED" if "TP" in target_event else "STOPPED"
+            await notify(
+                f"📢 <b>به‌روزرسانی {html.escape(item.symbol, quote=False)}</b>\n\n"
+                f"{target_event}\nقیمت فعلی: <b>{close}</b>"
+            )
+            ACTIVE_TRACKS.pop((item.user_id, item.symbol, item.timeframe), None)
+            return item
+
     if new_signal != old_signal:
-        await notify(f"📢 <b>به‌روزرسانی سیگنال {item.symbol}</b>\n\nسیگنال قبلی: <b>{old_signal}</b>\nسیگنال فعلی: <b>{new_signal}</b>\nقیمت: <b>{close}</b>")
+        await notify(
+            f"📢 <b>به‌روزرسانی {html.escape(item.symbol, quote=False)}</b>\n\n"
+            f"سیگنال قبلی: <b>{html.escape(old_signal, quote=False)}</b>\n"
+            f"سیگنال فعلی: <b>{html.escape(new_signal, quote=False)}</b>\n"
+            f"قیمت: <b>{close}</b>"
+        )
     return item
 
 
