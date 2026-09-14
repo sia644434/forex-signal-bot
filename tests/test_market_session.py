@@ -27,12 +27,9 @@ def test_empty_candles_return_no_data() -> None:
     assert evaluate_market_status([], now=NOW).status == NO_DATA
 
 
-def test_naive_timestamp_is_not_assumed_to_be_utc() -> None:
-    result = evaluate_market_status(
-        [candle(datetime(2026, 9, 14, 11, 0))],
-        now=NOW,
-    )
-    assert result.status == NO_DATA
+def test_naive_timestamp_is_rejected_at_canonical_candle_boundary() -> None:
+    with pytest.raises(ValueError, match="timezone-aware"):
+        candle(datetime(2026, 9, 14, 11, 0))
 
 
 def test_invalid_timestamp_string_returns_no_data() -> None:
