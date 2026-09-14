@@ -96,3 +96,40 @@ def test_atr_derived_risk_distance_is_used_consistently() -> None:
     )
     assert result.position_size == pytest.approx(1300.0)
     assert result.risk_amount == pytest.approx(20.0)
+
+
+@pytest.mark.parametrize("signal", ["BUY", "SELL"])
+@pytest.mark.parametrize("symbol", ["USDJPY", "EURJPY"])
+def test_jpy_quote_conversion_never_exceeds_account_risk(
+    signal: str,
+    symbol: str,
+) -> None:
+    engine = RiskEngine(
+        account_balance=1000,
+        account_currency="USD",
+        risk_reward_target=2.0,
+    )
+
+    result = engine.calculate(
+        signal=signal,
+        current_price=150.0 if symbol == "USDJPY" else 160.0,
+        risk_distance=1.5,
+        confidence=0.90,
+        score=100.0 if signal == "BUY" else 0.0,
+        symbol=symbol,
+        quote_to_account_rate=0.0065,
+    )
+
+    assert result.position_size is not None
+    assert result.lot_size is not None
+    assert result.risk_amount == pytest.approx(20.0)
+    assert result.position_size == pytest.approx(result.lot_size * 100000)
+
+    # risk_distance is denominated in JPY for these pairs, so convert the
+    # executable quote-currency loss back into the USD account currency.
+    executable_risk_usd = (
+        result.position_size
+        * abs(result.entry_price - result.stop_loss)
+        * 0.0065
+    )
+    assert executable_risk_usd <= result.risk_amount + 1e-9
