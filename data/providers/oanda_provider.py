@@ -6,11 +6,9 @@ from typing import Final, Any
 
 from core.errors import ApplicationError
 from core.logger import setup_logger
-
 from data.base import MarketDataProvider
 from data.models import Candle
 from data.providers.clients.oanda import OandaClient
-
 
 logger = setup_logger()
 
@@ -39,8 +37,15 @@ class OandaProvider(MarketDataProvider):
         self.client = client if client is not None else OandaClient()
 
     def is_configured(self) -> bool:
-        """Report local OANDA credential readiness without making a network call."""
         return bool(getattr(self.client, "api_key", None))
+
+    @classmethod
+    def supports_symbol(cls, symbol: str) -> bool:
+        try:
+            cls._normalize_symbol(symbol)
+            return True
+        except (TypeError, ValueError):
+            return False
 
     @classmethod
     def _normalize_symbol(cls, symbol: str) -> str:
