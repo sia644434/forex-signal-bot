@@ -123,10 +123,23 @@ class ProviderManager:
                 objects[name] = reference
             if name not in names:
                 names.append(name)
+        active = set(names)
         self._providers = tuple(names)
-        self._provider_objects.update(objects)
-        active = set(self._providers)
-        self._cooldowns = {name: expiry for name, expiry in self._cooldowns.items() if name in active}
+        # Reconfiguration is a replacement, not an additive merge. Retaining
+        # removed injected objects could make a later string-only configuration
+        # silently resurrect an object from an older lifecycle.
+        self._provider_objects = objects
+        # Cached factory instances belong to the active provider set only.
+        self._provider_instances = {
+            name: instance
+            for name, instance in self._provider_instances.items()
+            if name in active
+        }
+        self._cooldowns = {
+            name: expiry
+            for name, expiry in self._cooldowns.items()
+            if name in active
+        }
 
     def _get_provider(self, provider_name: str) -> MarketDataProvider:
         if provider_name in self._provider_objects:
