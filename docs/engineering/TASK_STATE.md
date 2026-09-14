@@ -57,7 +57,7 @@ Evidence:
 - Standalone PositionSizing and RiskEngine accepted risk policies above 100%.
 - RiskEngine account_currency could defer malformed values into later sizing failures.
 - PositionSizing and RiskEngine now enforce `0 < risk_percent <= 100` and validate account currency at the boundary.
-- Implementation commits: `39464db41d3b3478ec79322e455bf188607f7743` and `6d3eb873f6beb664ffe135002a9fba7a91f976a3`.
+- Implementation commits: `39464db41d3b3478ec79322e455bf188607f7743` and `6d3eb873f6beb664ffe135002a9f976a3`.
 - Regression commits: `917c8690331083a2cebc8d806b9c3849ec431322` and `24350c2eaf3de319d55a1dfd440e5daa3a16b901`.
 
 ## TASK-071
@@ -65,7 +65,7 @@ Phase: Phase 2 — Core Architecture / Market Data Reliability
 Title: Timestamp and Provider Timing Boundary Hardening
 Implementation Status: IMPLEMENTED — VERIFICATION PENDING
 Evidence:
-- `Candle` previously treated `tzinfo is not None` as sufficient timezone awareness. A custom `tzinfo` can still return `utcoffset() is None`, leaving an effectively naive timestamp that can fail later during market-data timestamp arithmetic.
+- `Candle` previously treated `tzinfo is not None` as sufficient timezone awareness. A custom `tzinfo` can still return None from `utcoffset()`, leaving an effectively naive timestamp that can fail later during market-data timestamp arithmetic.
 - The canonical Candle boundary now requires both `tzinfo` and a non-None `utcoffset()`.
 - ProviderManager timing configuration previously accepted NaN/Infinity because ordinary non-negative comparisons do not reject non-finite floats. NaN could silently disable retry/cooldown timing checks and Infinity could create an effectively permanent cooldown.
 - ProviderManager now requires finite, non-negative retry delay and cooldown values.
@@ -89,21 +89,38 @@ Evidence:
 
 ## TASK-073
 Phase: Phase 3 — Telegram / Scanner / Tracker Reliability
-Title: Forex Scope and Tracked Risk-Plan Synchronization
+Title: Tracker Risk-Plan Synchronization
 Implementation Status: IMPLEMENTED — VERIFICATION PENDING
 Evidence:
-- Telegram settings exposed `XAUUSD` and the default scanner included `XAUUSD`, contradicting the repository's Forex-only production scope and the currency metadata/risk path, which accepts only supported six-letter Forex symbols.
-- The Telegram market settings and scanner defaults now use `EURJPY` instead of `XAUUSD`.
-- Tracker refresh previously changed only `last_signal` when analysis flipped direction. The persisted `signal`, entry, stop-loss, and take-profit levels therefore remained from the old direction and could be evaluated against the wrong side of the market on later refreshes.
-- Tracker refresh now synchronizes the complete executable risk plan whenever the new analysis remains tradable. `WAIT`/`NO_TRADE` clears executable levels and marks the tracked item `INVALIDATED` so stale TP/SL levels cannot survive an invalidated signal.
-- Regression coverage verifies Forex-only scanner defaults, BUY→SELL risk-plan synchronization, and clearing of executable levels on `NO_TRADE`.
-- Implementation commits: `b26b50dcd82b48ea089d3807905c863fc6ac0269` and `d5cde1a44844eb5d2dd0041caebac4aa9de4caba` and `1b3a9cf1b80ac7daae5afd3c55f86d83419ce2fd`.
+- Tracker refresh previously changed only `last_signal` when analysis flipped direction. Persisted signal, entry, stop-loss, and take-profit levels could therefore remain from the old direction.
+- Tracker refresh now synchronizes the complete executable risk plan whenever the new analysis remains tradable. `WAIT`/`NO_TRADE` clears executable levels and marks the tracked item `INVALIDATED`.
+- Regression coverage verifies BUY→SELL risk-plan synchronization and clearing executable levels on `NO_TRADE`.
+- Implementation commits: `1b3a9cf1b80ac7daae5afd3c55f86d83419ce2fd` and related Telegram changes from the same audit step.
 - Regression test commit: `4288ee926365af25d593d06b683e2d2bbaf1e8e6`.
 - Verification is pending on the resulting head; no green claim is made until the required gates finish.
 
-## Current Phase 2 Audit Frontier
+## TASK-074
+Phase: Phase 2/3 — Multi-Asset Market and Risk Architecture
+Title: Remove Forex-Only Assumptions from Market-Aware Risk Path
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- Repository configuration already defines Forex, Crypto, Stocks, Indices, and Commodities, but `MarketAwareAnalysisEngine` and `RiskEngine` still called `get_forex_currency_pair()` for every symbol.
+- This made supported non-Forex instruments such as `XAUUSD`, `BTCUSDT`, `AAPL`, and `SPX` fail before risk sizing even though they were explicitly declared supported markets.
+- Added asset-aware quote-currency metadata and default contract-size metadata. Forex retains 100,000 base units; the current spot-like crypto/stock/index/commodity universe uses one underlying unit by default, preventing the Forex lot-size default from leaking into unrelated assets.
+- MarketAwareAnalysisEngine now obtains quote currency and contract size from instrument metadata and passes the contract size into RiskEngine.
+- RiskEngine now uses generic quote-currency metadata instead of Forex-only parsing.
+- CurrencyConversionService now supports the repository's USDT-quoted crypto universe through an explicit USDT/USDC-to-USD equivalent policy and can bridge that quote to supported FX account currencies. Other unsupported conversions continue to fail closed.
+- Regression coverage added for quote currency and contract-size metadata plus stablecoin conversion and bridging.
+- Implementation commits: `094038f857f7d9f00cf492b071a540872f18b85d`, `33a070bbe4ffed6f1ad33eae60b37a24cb109732`, `c5cf2c9628dc3049cc3d071a8f18aaacf4deab17`, `d999fe3aef82fa11e1082792df3106a4eba74080`.
+- Regression commits: `a10de135f2d9d4fd1a3c387e4b167525f5733832` and `fa77800d52d22578914630235a1d3cec777ff48f`.
+- Verification is pending on the resulting head; no green claim is made until the required gates finish.
+
+## Multi-Asset Architecture Contract
+The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
+
+## Current Audit Frontier
 Continue the evidence-backed audit from:
-`ProviderManager → MarketDataService → Freshness/DataQuality → CurrencyConversion → MarketAwareAnalysisEngine`
+`ProviderManager → MarketDataService → Freshness/DataQuality → Symbol/Asset Metadata → CurrencyConversion → MarketAwareAnalysisEngine → RiskEngine → PositionSizing`
 then proceed outward into Telegram/Scanner/Tracker/Callbacks and Worker/Queue/Persistence.
 
 Required checks:
@@ -111,12 +128,14 @@ Required checks:
 - retry/cooldown finite and overflow boundaries
 - concurrency isolation of provider state and failure diagnostics
 - freshness and stale-data fail-closed behavior
-- weekend/market-closure gap semantics without masking intraday missing data
+- market-specific session/closure semantics
+- symbol normalization and asset classification
+- quote-currency and contract-size metadata
 - account-currency versus quote-currency unit semantics
 - conversion-rate direction and pair orientation
 - configured risk policy versus effective dynamic risk percentage
 - risk amount versus risk-per-unit units
-- lot-size and contract-size semantics
+- lot/contract semantics per asset class
 - rounding/precision behavior
 - finite/positive/overflow/underflow boundaries
 - missing/invalid/stale/unavailable conversion data
@@ -138,12 +157,12 @@ Then:
 1. Determine the exact current `main` HEAD.
 2. Inspect GitHub Actions for that exact HEAD.
 3. Resolve every pending or failed verification before moving deeper.
-4. Do not repeat TASK-058 through TASK-073 unless verification evidence is missing or contradicted.
+4. Do not repeat TASK-058 through TASK-074 unless verification evidence is missing or contradicted.
 5. Continue from the first unresolved audit frontier recorded above.
 6. Inspect more architecture than the previous step and only implement concrete repository-backed gaps.
 7. Add focused regression coverage for every confirmed defect.
 8. Verify the required GitHub Actions gate set before marking a task VERIFIED.
-9. Keep the repository Forex-only; do not introduce Data Analysis, local coding-agent/Ollama architecture, speculative features, or unrelated agent architecture.
+9. Treat the repository as a Multi-Asset Trading Intelligence Platform; do not reintroduce Forex-only assumptions. Do not introduce Data Analysis, local coding-agent/Ollama architecture, speculative features, or unrelated agent architecture.
 10. Use GitHub Connector only for repository inspection and modification.
 
 ## Active Task Selection Rule
