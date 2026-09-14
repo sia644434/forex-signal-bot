@@ -93,19 +93,45 @@ Phase: Phase 3 — Worker / Queue / Recovery Reliability
 Title: Lease Fencing for Stale Worker Completions
 Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
 Evidence:
-- Concrete race found during cross-layer Worker/Queue audit: a running queue record could be recovered to `PENDING` after its lease expired while the original worker was still alive.
-- That original worker could subsequently call `finish`, `fail`, `timeout`, or `cancel` against the same job and overwrite the newer execution's state. This creates a duplicate-execution/state-corruption window during crash recovery.
-- Queue claims now receive a unique `claim_token`; recovery clears the old token, and terminal transitions from the dispatcher are fenced by the token.
-- SQLite now uses a bounded busy timeout to reduce transient lock failures across durable queue connections.
-- Regression coverage verifies that a stale worker token cannot complete a re-claimed job.
-- Implementation commits: `ded71064cba94adce123830ff55d20e65cd7218c`, `2963ee306c4efd47de56a7482164006884257280`.
-- Regression commit: `d1ff77a428b09a065f6358f8abc3c83237833b49`.
+- Concrete recovery race: an expired `RUNNING` job could be recovered to `PENDING`, re-claimed, and then have its original stale worker overwrite the newer execution.
+- Queue claims now receive unique `claim_token` values; recovery clears the old token and terminal dispatcher transitions are fenced by the current token.
+- SQLite uses bounded connection/busy timeouts.
+- Regression coverage verifies stale-worker completion is rejected after recovery/re-claim.
+
+## TASK-097
+Phase: Phase 3 — Worker / Queue / Recovery Reliability
+Title: Renewable Worker Queue Leases
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Evidence:
+- Concrete remaining lease gap: a legitimate long-running dispatcher claim could expire solely because `claimed_at` was never renewed while the worker was still executing.
+- `WorkerQueue.renew_lease()` now refreshes only the matching `job_id + claim_token` pair.
+- `WorkerDispatcher` runs a bounded heartbeat (maximum 30 seconds, approximately one-third of the requested timeout) while the worker submission is in flight.
+- A failed heartbeat is fail-closed: it cannot overwrite a newer claim because terminal transitions remain token-fenced.
+- Regression coverage verifies lease renewal and rejection of a stale token after re-claim.
+
+## TASK-098
+Phase: Phase 3 — Worker / Runtime Reliability
+Title: Synchronous Worker Timeout Fencing
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Evidence:
+- Concrete runtime gap: `asyncio.wait_for(asyncio.to_thread(...))` cannot terminate the underlying OS thread. A timed-out synchronous handler could therefore continue executing after the runtime had forgotten it was active.
+- Timed-out synchronous jobs now keep their underlying thread task tracked until it actually finishes.
+- A duplicate request with the same job ID returns `RUNNING` while the original thread is still in flight, then receives the cached completed result exactly once when it finishes.
+- Regression coverage verifies no duplicate execution after a synchronous timeout.
+
+## TASK-099
+Phase: Phase 3 — Telegram / Startup Reliability
+Title: Preflight Background-Service Dependencies Before Runtime Start
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Evidence:
+- Concrete startup gap: tracker scheduling and updater availability were validated after `Application.start()`, allowing a dependency failure to leave a partially-started Telegram runtime.
+- Startup now validates the updater and schedules the durable tracker job before marking the application runtime as started.
 
 ## Multi-Asset Architecture Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
 
 ## Current Audit Frontier
-Phase 3 remains active. TASK-090 is verified. TASK-091 through TASK-096 are implemented and pending exact-head CI verification. The audit has now crossed into Worker/Queue/Recovery reliability. Continue into WorkerRuntime cancellation/timeout semantics, queue lifecycle/concurrency, persistence recovery, provider capability boundaries, and production health before moving to later roadmap phases. Do not create a task merely to advance the roadmap; create the next task only after a concrete repository-backed gap is demonstrated.
+Phase 3 remains active. TASK-090 is verified. TASK-091 through TASK-099 are implemented and pending exact-head CI verification. The current audit has covered durable Telegram state/tracking, callback identity, multi-asset scanning, queue lease fencing/renewal, synchronous worker timeout semantics, and Telegram startup preflight. The remaining concrete frontier is Telegram multi-asset settings, provider capability boundaries, queue/runtime shutdown and persistence recovery, production health, and final end-to-end lifecycle. Do not create a task merely to advance the roadmap; create the next task only after a concrete repository-backed gap is demonstrated.
 
 ## New-chat Continuation Contract
 When a new chat starts work on this repository, first read:
