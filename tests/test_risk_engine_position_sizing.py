@@ -13,10 +13,10 @@ def test_risk_engine_uses_explicit_currency_context_for_eurusd() -> None:
         symbol="EURUSD",
     )
 
-    assert result.position_size == 1300.0
-    assert result.lot_size == 0.013
+    assert result.position_size == 600.0
+    assert result.lot_size == 0.006
     assert result.position_size == result.lot_size * 100000
-    assert result.risk_amount == 20.0
+    assert result.risk_amount == 10.0
     assert "Position sizing unavailable" not in result.reason
 
 
@@ -32,10 +32,10 @@ def test_risk_engine_uses_asset_metadata_for_crypto_when_contract_size_is_omitte
         symbol="BTCUSDT",
     )
 
-    assert result.position_size == 0.013
-    assert result.lot_size == 0.013
+    assert result.position_size == 0.006
+    assert result.lot_size == 0.006
     assert result.position_size == result.lot_size
-    assert result.risk_amount == 20.0
+    assert result.risk_amount == 10.0
     assert "Position sizing unavailable" not in result.reason
 
 
@@ -52,8 +52,8 @@ def test_risk_engine_supports_crypto_quote_to_usd_account_conversion() -> None:
         quote_to_account_rate=1.0,
     )
 
-    assert result.position_size == 0.013
-    assert result.risk_amount == 20.0
+    assert result.position_size == 0.006
+    assert result.risk_amount == 10.0
     assert "Position sizing unavailable" not in result.reason
 
 
@@ -106,8 +106,8 @@ def test_risk_engine_applies_explicit_jpy_to_usd_conversion_without_risk_overrun
         quote_to_account_rate=0.0066666667,
     )
 
-    assert result.position_size == 1900.0
-    assert result.lot_size == 0.019
+    assert result.position_size == 900.0
+    assert result.lot_size == 0.009
     assert result.position_size == result.lot_size * 100000
-    assert result.risk_amount == 20.0
+    assert result.risk_amount == 10.0
     assert "Position sizing unavailable" not in result.reason
