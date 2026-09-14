@@ -12,7 +12,7 @@ JobHandler = Callable[[dict[str, Any]], Any]
 
 
 class WorkerDispatcher:
-    """Queue-backed dispatcher for heavy Forex worker jobs."""
+    """Queue-backed dispatcher for heavy worker jobs."""
 
     def __init__(
         self,
@@ -33,7 +33,7 @@ class WorkerDispatcher:
         submit: Callable[[JobRequest], Awaitable[JobResult]] | None = None,
         settings: Settings | None = None,
     ) -> "WorkerDispatcher":
-        """Build a queue-backed dispatcher from the central Forex settings boundary."""
+        """Build a queue-backed dispatcher from the central worker settings boundary."""
         resolved = settings or Settings.load()
         queue = WorkerQueue(resolved.worker_queue_database_path)
         return cls(
@@ -58,8 +58,11 @@ class WorkerDispatcher:
         if record.status == "RUNNING":
             return JobResult(request.job_id, "RUNNING", request.job_type)
 
-        claimed = self._queue.claim_next()
-        if claimed is None or claimed.job_id != request.job_id:
+        # Claim the exact request that this coroutine enqueued. Using claim_next()
+        # here allowed a concurrent submitter with a higher-priority job to steal
+        # the claim and left the original caller with a misleading PENDING result.
+        claimed = self._queue.claim(request.job_id)
+        if claimed is None:
             current = self._queue.get(request.job_id)
             return JobResult(request.job_id, current.status if current else "PENDING", request.job_type)
 
@@ -70,6 +73,9 @@ class WorkerDispatcher:
         try:
             result = await self._submit(request)
         except asyncio.CancelledError:
+            # Cancellation is a terminal caller-owned outcome; do not strand the
+            # durable record in RUNNING until crash-recovery eventually fires.
+            self._queue.cancel(request.job_id)
             raise
         except asyncio.TimeoutError as exc:
             self._queue.timeout(request.job_id, str(exc) or "Worker job timeout")
