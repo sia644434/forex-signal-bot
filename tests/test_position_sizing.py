@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from analysis.position_sizing import calculate_position_size
@@ -60,3 +62,38 @@ def test_conversion_rate_must_be_positive():
                 quote_currency="JPY",
                 quote_to_account_rate=rate,
             )
+
+
+def test_position_sizing_rejects_non_finite_numeric_inputs():
+    base = {
+        "account_balance": 1000,
+        "risk_percent": 1,
+        "risk_distance_quote": 0.20,
+        "contract_size": 100000,
+        "account_currency": "USD",
+        "quote_currency": "JPY",
+        "quote_to_account_rate": 0.0065,
+    }
+    for field in (
+        "account_balance",
+        "risk_percent",
+        "risk_distance_quote",
+        "contract_size",
+        "quote_to_account_rate",
+    ):
+        for value in (math.nan, math.inf, -math.inf):
+            kwargs = {**base, field: value}
+            with pytest.raises(ValueError, match="finite"):
+                calculate_position_size(**kwargs)
+
+
+def test_position_sizing_rejects_non_string_currency_context():
+    with pytest.raises(TypeError, match="must be strings"):
+        calculate_position_size(
+            account_balance=1000,
+            risk_percent=1,
+            risk_distance_quote=0.20,
+            contract_size=100000,
+            account_currency=None,
+            quote_currency="USD",
+        )
