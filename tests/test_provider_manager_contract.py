@@ -172,7 +172,8 @@ def test_set_providers_replaces_active_priority_and_prunes_removed_instances():
     manager.set_providers([first])
     assert manager.providers == ("first",)
     assert manager.status()["injected_instances"] == ["first"]
-    assert manager._get_provider("second") is not second
+    assert "second" not in manager._provider_objects
+    assert "second" not in manager._provider_instances
 
 
 def test_set_providers_replaces_injected_instance_when_same_provider_name_is_rebound():
