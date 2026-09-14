@@ -6,6 +6,7 @@ from telegram.ext import Application
 from core.logger import setup_logger
 from services.market_data.service import install_market_data_service
 from services.telegram.router import register_routes
+from services.telegram.tracker_job import refresh_all_tracked_signals, tracker_refresh_interval_seconds
 
 
 logger = setup_logger()
@@ -25,6 +26,20 @@ class TelegramClient:
         self.market_data_service = install_market_data_service(self.application)
         register_routes(self.application)
         logger.info("Telegram client configured and routes registered.")
+
+    def _schedule_tracker_refresh(self) -> None:
+        """Start the durable active-signal refresh loop required by tracking."""
+        job_queue = self.application.job_queue
+        if job_queue is None:
+            raise RuntimeError("Telegram JobQueue is unavailable; active signal tracking cannot run.")
+        interval = tracker_refresh_interval_seconds()
+        job_queue.run_repeating(
+            refresh_all_tracked_signals,
+            interval=interval,
+            first=interval,
+            name="telegram-tracker-refresh",
+        )
+        logger.info("Telegram tracker refresh scheduled every %s seconds.", interval)
 
     async def start(self) -> None:
         """Initialize the bot, validate the token and start polling."""
@@ -52,6 +67,7 @@ class TelegramClient:
 
         await self.application.start()
         logger.info("Telegram application runtime started.")
+        self._schedule_tracker_refresh()
 
         updater = self.application.updater
         if updater is None:
