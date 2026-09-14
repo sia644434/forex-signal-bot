@@ -100,6 +100,31 @@ async def test_manager_uses_first_provider(
 
 
 @pytest.mark.asyncio
+async def test_manager_accepts_tuple_provider_result() -> None:
+    candles = (
+        make_candle(1),
+        make_candle(2),
+    )
+    provider = FakeProvider([candles])
+    manager = ProviderManager(providers=[provider], retries=0, retry_delay=0)
+
+    result = await manager.get_candles("EUR_USD", "M15", 10)
+
+    assert result == list(candles)
+    assert isinstance(result, list)
+    assert provider.calls == 1
+
+
+def test_validate_result_accepts_tuple_directly() -> None:
+    candles = (make_candle(1),)
+
+    result = ProviderManager._validate_result("fake", candles, "EUR_USD")
+
+    assert result == list(candles)
+    assert isinstance(result, list)
+
+
+@pytest.mark.asyncio
 async def test_manager_retries_failed_provider(
     monkeypatch,
 ) -> None:
