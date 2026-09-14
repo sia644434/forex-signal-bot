@@ -1,13 +1,19 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
+from data.market_data import MarketDataEngine
 from data.models import Candle
+from data.provider_manager import ProviderManager
 from services.market_data.currency_conversion import CurrencyConversionService
 from services.market_data.service import MarketDataService
+
+
+NOW = datetime(2026, 9, 14, 12, 0, tzinfo=timezone.utc)
 
 
 class FakeMarketDataEngine:
@@ -23,16 +29,23 @@ class FakeMarketDataEngine:
         return list(self.candles)
 
 
-def candle(symbol: str, close: float) -> Candle:
+def candle(symbol: str, close: float, *, timestamp: datetime | None = None) -> Candle:
     return Candle(
         symbol=symbol,
-        timestamp=datetime(2026, 9, 13, 20, 0, tzinfo=timezone.utc),
+        timestamp=timestamp or datetime(2026, 9, 13, 20, 0, tzinfo=timezone.utc),
         open=close,
         high=close,
         low=close,
         close=close,
         volume=1.0,
     )
+
+
+def canonical_service_with_clock(candles: list[Candle], clock: datetime) -> CurrencyConversionService:
+    manager = ProviderManager()
+    manager.get_candles = AsyncMock(return_value=candles)
+    engine = MarketDataEngine(provider_manager=manager, clock=lambda: clock)
+    return CurrencyConversionService(MarketDataService(engine=engine))
 
 
 @pytest.mark.asyncio
@@ -108,6 +121,15 @@ async def test_provider_exception_fails_closed() -> None:
         await service.get_conversion(source_currency="JPY", target_currency="USD")
 
     assert engine.requests == [("USDJPY", "1m", 1)]
+
+
+@pytest.mark.asyncio
+async def test_stale_conversion_data_is_rejected_by_canonical_market_data_path() -> None:
+    stale = candle("USDJPY", 150.0, timestamp=NOW - timedelta(minutes=7))
+    service = canonical_service_with_clock([stale], NOW)
+
+    with pytest.raises(ValueError, match="Unable to resolve fresh currency conversion JPY->USD"):
+        await service.get_conversion(source_currency="JPY", target_currency="USD")
 
 
 @pytest.mark.asyncio
