@@ -86,6 +86,7 @@ class MarketAwareAnalysisEngine:
         # while RiskEngine expresses risk_percent in percentage points.
         configured_risk_percent = self.settings.risk_per_trade * 100.0
         self.analysis_engine.risk_engine = RiskEngine(
+            account_balance=self.settings.account_balance,
             account_currency=self.settings.account_currency,
         )
         risk_result = self.analysis_engine.risk_engine.calculate(
