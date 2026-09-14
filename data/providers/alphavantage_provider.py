@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Final
 from core.errors import ApplicationError
 from core.logger import setup_logger
+from config.symbols import get_market_type
 from data.base import MarketDataProvider
 from data.models import Candle
 from data.providers.clients.alphavantage import AlphaVantageClient
@@ -25,6 +26,12 @@ class AlphaVantageProvider(MarketDataProvider):
 
     def is_configured(self) -> bool:
         return self.client.is_configured()
+
+    def supports_symbol(self, symbol: str) -> bool:
+        try:
+            return get_market_type(symbol) == "forex"
+        except (TypeError, ValueError):
+            return False
 
     @classmethod
     def _normalize_timeframe(cls, timeframe: str) -> str:
