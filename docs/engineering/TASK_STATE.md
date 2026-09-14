@@ -57,7 +57,7 @@ Evidence:
 - Standalone PositionSizing and RiskEngine accepted risk policies above 100%.
 - RiskEngine account_currency could defer malformed values into later sizing failures.
 - PositionSizing and RiskEngine now enforce `0 < risk_percent <= 100` and validate account currency at the boundary.
-- Implementation commits: `39464db41d3b3478ec79322e455bf188607f7743` and `6d3eb873f6beb664ffe135002a9f976a3`.
+- Implementation commits: `39464db41d3b3478ec79322e455bf188607f7743` and `6d3eb873f6beb664ffe135002a9fba7a91f976a3`.
 - Regression commits: `917c8690331083a2cebc8d806b9c3849ec431322` and `24350c2eaf3de319d55a1dfd440e5daa3a16b901`.
 
 ## TASK-071
@@ -85,6 +85,20 @@ Evidence:
 - Focused regression coverage verifies a genuine Friday→Monday closure remains valid while large intraday Friday and Monday gaps remain invalid.
 - Implementation commit: `7a322723e8bd1154ae7aaab5a8d8f48bf2790f3f`.
 - Regression test commit: `32815e720c22197248b817a1d45f01182ed096eb`.
+- Verification is pending on the resulting head; no green claim is made until the required gates finish.
+
+## TASK-073
+Phase: Phase 3 — Telegram / Scanner / Tracker Reliability
+Title: Forex Scope and Tracked Risk-Plan Synchronization
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- Telegram settings exposed `XAUUSD` and the default scanner included `XAUUSD`, contradicting the repository's Forex-only production scope and the currency metadata/risk path, which accepts only supported six-letter Forex symbols.
+- The Telegram market settings and scanner defaults now use `EURJPY` instead of `XAUUSD`.
+- Tracker refresh previously changed only `last_signal` when analysis flipped direction. The persisted `signal`, entry, stop-loss, and take-profit levels therefore remained from the old direction and could be evaluated against the wrong side of the market on later refreshes.
+- Tracker refresh now synchronizes the complete executable risk plan whenever the new analysis remains tradable. `WAIT`/`NO_TRADE` clears executable levels and marks the tracked item `INVALIDATED` so stale TP/SL levels cannot survive an invalidated signal.
+- Regression coverage verifies Forex-only scanner defaults, BUY→SELL risk-plan synchronization, and clearing of executable levels on `NO_TRADE`.
+- Implementation commits: `b26b50dcd82b48ea089d3807905c863fc6ac0269` and `d5cde1a44844eb5d2dd0041caebac4aa9de4caba` and `1b3a9cf1b80ac7daae5afd3c55f86d83419ce2fd`.
+- Regression test commit: `4288ee926365af25d593d06b683e2d2bbaf1e8e6`.
 - Verification is pending on the resulting head; no green claim is made until the required gates finish.
 
 ## Current Phase 2 Audit Frontier
@@ -124,7 +138,7 @@ Then:
 1. Determine the exact current `main` HEAD.
 2. Inspect GitHub Actions for that exact HEAD.
 3. Resolve every pending or failed verification before moving deeper.
-4. Do not repeat TASK-058 through TASK-072 unless verification evidence is missing or contradicted.
+4. Do not repeat TASK-058 through TASK-073 unless verification evidence is missing or contradicted.
 5. Continue from the first unresolved audit frontier recorded above.
 6. Inspect more architecture than the previous step and only implement concrete repository-backed gaps.
 7. Add focused regression coverage for every confirmed defect.
