@@ -129,6 +129,33 @@ Evidence:
 - Regression commits: `04d870ed8bac9e198427516c474c609b5a46e5d8` and `2e20055af86a31160a323a9656bb49b26fa3146a`.
 - Verification is pending on the resulting head; no green claim is made until the required gates finish.
 
+## TASK-076
+Phase: Phase 2 — Core Architecture / Market Data Reliability
+Title: Provider Result Compatibility Boundary
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- The ProviderManager rewrite narrowed `_validate_result()` from the previously supported `list`/`tuple` provider-result contract to `list` only.
+- That was a behavioral regression at the provider boundary because adapters and direct callers may legitimately return tuples before canonicalization.
+- `_validate_result()` now accepts both list and tuple results and canonicalizes the validated result to a list before downstream normalization.
+- Regression coverage verifies both the asynchronous manager path and direct `_validate_result()` compatibility.
+- Implementation commit: `b495c9ddbdc42881542df190cacbdc660bf72f0b`.
+- Regression test commit: `f8721317fa34a3551bf89ebaa70f1a3fdd4a520e`.
+- Verification is pending on the resulting head; no green claim is made until the required gates finish.
+
+## TASK-077
+Phase: Phase 2 — Core Architecture / Market Data Reliability
+Title: Asset-Aware Weekend Gap Semantics
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- The weekend-gap exception in `DataQuality` was globally applied even though the repository explicitly supports Crypto alongside weekend-closed markets.
+- Crypto markets are 24/7, so a Friday→Monday gap cannot be assumed to be an expected closure and must remain a detectable data-quality gap.
+- The gap policy now receives an explicit market type. Weekend closure handling remains available for Forex, Stocks, Indices, and Commodities, while Crypto is fail-closed for the same Friday→Monday gap.
+- `MarketDataEngine` propagates the symbol's centralized asset classification into `DataQuality`, making the production path use the correct policy instead of relying on a Forex default.
+- Regression coverage verifies Crypto Friday→Monday gaps are invalid while the existing Forex closure contract remains valid.
+- Implementation commits: `228a613a5452521574b1204bbaf4699e070f2d4e` and `866ca9e30473b75ddd6d628cfbcc1ebd5b97282d`.
+- Regression test commit: `c3d885443271ab6c9b9066cfc1757ff3960cfe40`.
+- Verification is pending on the resulting head; no green claim is made until the required gates finish.
+
 ## Multi-Asset Architecture Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
 
@@ -171,7 +198,7 @@ Then:
 1. Determine the exact current `main` HEAD.
 2. Inspect GitHub Actions for that exact HEAD.
 3. Resolve every pending or failed verification before moving deeper.
-4. Do not repeat TASK-058 through TASK-075 unless verification evidence is missing or contradicted.
+4. Do not repeat TASK-058 through TASK-077 unless verification evidence is missing or contradicted.
 5. Continue from the first unresolved audit frontier recorded above.
 6. Inspect more architecture than the previous step and only implement concrete repository-backed gaps.
 7. Add focused regression coverage for every confirmed defect.
