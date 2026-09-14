@@ -205,11 +205,25 @@ class RiskEngine:
             return position_size, lot_size, risk_amount, f"Position sizing unavailable: {sizing_error}"
         return position_size, lot_size, risk_amount, ""
 
+    @staticmethod
+    def _validate_setup_levels(
+        entry_price: float,
+        stop_loss: float,
+        tp1: float,
+        tp2: float,
+        tp3: float,
+        risk_reward: float,
+    ) -> None:
+        for value in (entry_price, stop_loss, tp1, tp2, tp3, risk_reward):
+            if not math.isfinite(value):
+                raise ValueError("risk plan output must be finite")
+
     def _buy_setup(self, price: float, risk_distance: float, risk_level: str, market_condition: str, confidence: float, score: float, risk_percent: float, *, symbol: str | None, quote_to_account_rate: float | None) -> RiskResult:
         stop_loss = price - risk_distance
         tp1 = price + risk_distance
         tp2 = price + (risk_distance * self.risk_reward_target)
         tp3 = price + (risk_distance * 3)
+        self._validate_setup_levels(price, stop_loss, tp1, tp2, tp3, self.risk_reward_target)
         position_size, lot_size, risk_amount, sizing_reason = self._build_sizing(risk_distance, risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
         trade_quality, trade_grade = self._trade_quality(confidence, score, market_condition)
         reason = "Professional bullish risk plan generated"
@@ -222,6 +236,7 @@ class RiskEngine:
         tp1 = price - risk_distance
         tp2 = price - (risk_distance * self.risk_reward_target)
         tp3 = price - (risk_distance * 3)
+        self._validate_setup_levels(price, stop_loss, tp1, tp2, tp3, self.risk_reward_target)
         position_size, lot_size, risk_amount, sizing_reason = self._build_sizing(risk_distance, risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
         trade_quality, trade_grade = self._trade_quality(confidence, score, market_condition)
         reason = "Professional bearish risk plan generated"
