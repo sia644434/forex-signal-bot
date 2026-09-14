@@ -57,6 +57,27 @@ def test_duplicate_job_id_does_not_execute_completed_work_twice():
     assert calls == 1
 
 
+def test_sync_handler_is_bounded_by_timeout_without_blocking_event_loop():
+    async def run():
+        started = asyncio.Event()
+
+        def handler(_payload):
+            import time
+            started.set()
+            time.sleep(0.2)
+            return {"ok": True}
+
+        runtime = WorkerRuntime("worker-1", WorkerCapabilities(), {})
+        runtime.register("backtest", handler)
+        task = asyncio.create_task(runtime.execute(JobRequest("job-sync-timeout", "backtest", timeout_seconds=0.05)))
+        await started.wait()
+        result = await task
+        assert result.status == "TIMEOUT"
+        assert "job-sync-timeout" not in runtime._completed_jobs
+
+    asyncio.run(run())
+
+
 def test_invalid_job_timeout_is_rejected_before_execution():
     calls = 0
 
