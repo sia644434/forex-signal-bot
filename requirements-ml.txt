@@ -1,0 +1,4 @@
+# Optional PC-worker ML backends.
+# Install these only on workers that execute the corresponding ML workloads.
+xgboost>=2.1,<4.0
+lightgbm>=4.5,<5.0
