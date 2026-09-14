@@ -47,7 +47,35 @@ def test_non_usd_quote_applies_explicit_conversion_rate():
     assert result.risk_amount_account == 10.0
     assert result.risk_per_unit_account == 0.0013
     assert result.position_size == pytest.approx(7692.3077)
+    assert result.lot_size == pytest.approx(0.076)
+
+
+def test_lot_precision_floors_instead_of_rounding_up_into_higher_risk():
+    result = calculate_position_size(
+        account_balance=1000,
+        risk_percent=1,
+        risk_distance_quote=0.20,
+        contract_size=100000,
+        account_currency="USD",
+        quote_currency="JPY",
+        quote_to_account_rate=0.00649,
+    )
+
+    raw_lot_size = result.position_size / 100000
     assert result.lot_size == pytest.approx(0.077)
+    assert result.lot_size <= raw_lot_size
+
+
+def test_lot_below_supported_precision_fails_closed():
+    with pytest.raises(ValueError, match="below the supported precision"):
+        calculate_position_size(
+            account_balance=100,
+            risk_percent=0.1,
+            risk_distance_quote=10,
+            contract_size=100000,
+            account_currency="USD",
+            quote_currency="USD",
+        )
 
 
 def test_conversion_rate_must_be_positive():
