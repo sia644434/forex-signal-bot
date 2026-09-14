@@ -28,6 +28,24 @@ class WorkerDispatcher:
         queue = WorkerQueue(resolved.worker_queue_database_path)
         return cls(submit=submit, queue=queue, recovery_grace_seconds=resolved.worker_queue_recovery_grace_seconds)
 
+    async def _renew_claim_lease(self, job_id: str, claim_token: str, timeout_seconds: int) -> None:
+        """Keep a live queue claim from being mistaken for a dead worker."""
+        if self._queue is None:
+            return
+        interval = min(30.0, max(1.0, float(timeout_seconds) / 3.0))
+        try:
+            while True:
+                await asyncio.sleep(interval)
+                record = self._queue.renew_lease(job_id, claim_token)
+                if record.status != "RUNNING" or record.claim_token != claim_token:
+                    return
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # The terminal transition remains fenced by the claim token. A failed
+            # heartbeat must never overwrite a newer worker's result.
+            return
+
     async def submit(self, request: JobRequest) -> JobResult:
         if request.job_type not in HEAVY_JOB_TYPES:
             raise ValueError(f"Unsupported PC worker job type: {request.job_type}")
@@ -54,6 +72,7 @@ class WorkerDispatcher:
             self._queue.fail(request.job_id, "PC worker transport is not configured", claim_token=claim_token)
             return JobResult(request.job_id, "WORKER_OFFLINE", request.job_type, error="PC worker transport is not configured")
 
+        lease_task = asyncio.create_task(self._renew_claim_lease(request.job_id, claim_token, request.timeout_seconds))
         try:
             result = await self._submit(request)
         except asyncio.CancelledError:
@@ -65,6 +84,9 @@ class WorkerDispatcher:
         except Exception as exc:
             self._queue.fail(request.job_id, str(exc), claim_token=claim_token)
             raise
+        finally:
+            lease_task.cancel()
+            await asyncio.gather(lease_task, return_exceptions=True)
 
         if result.status == "COMPLETED":
             self._queue.finish(request.job_id, result=result.output, claim_token=claim_token)
