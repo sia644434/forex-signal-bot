@@ -78,7 +78,13 @@ class MarketAwareAnalysisEngine:
         atr_value = atr_result.atr if atr_result.atr is not None else 0.0
         current_price = self._current_price(candles)
 
-        self.analysis_engine.risk_engine = RiskEngine(account_currency=self.settings.account_currency)
+        # Settings stores RISK_PER_TRADE as a decimal fraction (0.01 = 1%),
+        # while RiskEngine expresses risk_percent in percentage points.
+        configured_risk_percent = self.settings.risk_per_trade * 100.0
+        self.analysis_engine.risk_engine = RiskEngine(
+            account_currency=self.settings.account_currency,
+            risk_percent=configured_risk_percent,
+        )
         risk_result = self.analysis_engine.risk_engine.calculate(
             signal=signal,
             current_price=current_price,
