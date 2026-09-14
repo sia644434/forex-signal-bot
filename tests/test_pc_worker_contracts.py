@@ -78,6 +78,39 @@ def test_sync_handler_is_bounded_by_timeout_without_blocking_event_loop():
     asyncio.run(run())
 
 
+def test_timed_out_sync_job_stays_inflight_until_underlying_thread_finishes():
+    async def run():
+        finished = asyncio.Event()
+        calls = 0
+
+        def handler(_payload):
+            nonlocal calls
+            import time
+            calls += 1
+            time.sleep(0.08)
+            finished.set()
+            return {"ok": True}
+
+        runtime = WorkerRuntime("worker-1", WorkerCapabilities(), {})
+        runtime.register("backtest", handler)
+        request = JobRequest("job-sync-fenced", "backtest", timeout_seconds=0.01)
+        first = await runtime.execute(request)
+        assert first.status == "TIMEOUT"
+
+        duplicate = await runtime.execute(request)
+        assert duplicate.status == "RUNNING"
+        assert calls == 1
+
+        await finished.wait()
+        await asyncio.sleep(0)
+        cached = await runtime.execute(request)
+        assert cached.status == "COMPLETED"
+        assert cached.output == {"ok": True}
+        assert calls == 1
+
+    asyncio.run(run())
+
+
 def test_invalid_job_timeout_is_rejected_before_execution():
     calls = 0
 
