@@ -39,9 +39,9 @@ class WorkerRuntime:
         return {"worker_id": self.worker_id, "status": "READY", "hostname": socket.gethostname(), "platform": platform.platform(), "python": platform.python_version(), "cpu": self.capabilities.cpu, "gpu": self.capabilities.gpu, "max_ram_gb": self.capabilities.max_ram_gb, "registered_jobs": sorted(self.handlers), "active_jobs": sorted(self._active_jobs), "completed_jobs": len(self._completed_jobs), "limited_jobs": sorted(self.capabilities.limited_jobs)}
 
     async def execute(self, request: JobRequest) -> JobResult:
-        if not request.job_id.strip():
+        if not isinstance(request.job_id, str) or not request.job_id.strip():
             return JobResult(request.job_id, "INVALID", request.job_type, error="Job ID must not be empty", worker_id=self.worker_id)
-        if request.timeout_seconds <= 0:
+        if not isinstance(request.timeout_seconds, (int, float)) or isinstance(request.timeout_seconds, bool) or request.timeout_seconds <= 0:
             return JobResult(request.job_id, "INVALID", request.job_type, error="Job timeout must be greater than zero", worker_id=self.worker_id)
         if request.job_type not in self.capabilities.supported_jobs:
             return JobResult(request.job_id, "UNSUPPORTED", request.job_type, error="Unsupported job type", worker_id=self.worker_id)
@@ -65,10 +65,28 @@ class WorkerRuntime:
 
     async def _run_job(self, request: JobRequest, handler: Handler) -> JobResult:
         try:
-            result = handler(request.payload)
-            if asyncio.iscoroutine(result):
-                result = await asyncio.wait_for(result, timeout=request.timeout_seconds)
-            completed = JobResult(request.job_id, "COMPLETED", request.job_type, output=dict(result or {}), worker_id=self.worker_id)
+            # Heavy executors are predominantly synchronous CPU-bound functions.
+            # Running them directly would block the event loop, so their timeout
+            # boundary would not become effective until the handler returned.
+            if asyncio.iscoroutinefunction(handler):
+                result = await asyncio.wait_for(
+                    handler(request.payload),
+                    timeout=request.timeout_seconds,
+                )
+            else:
+                result = await asyncio.wait_for(
+                    asyncio.to_thread(handler, request.payload),
+                    timeout=request.timeout_seconds,
+                )
+            if not isinstance(result, dict):
+                raise TypeError("Worker handler must return a dictionary.")
+            completed = JobResult(
+                request.job_id,
+                "COMPLETED",
+                request.job_type,
+                output=result,
+                worker_id=self.worker_id,
+            )
             self._completed_jobs[request.job_id] = completed
             return completed
         except asyncio.TimeoutError:
