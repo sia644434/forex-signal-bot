@@ -66,6 +66,16 @@ def test_position_sizing_rejects_non_finite_numeric_inputs():
                 calculate_position_size(**kwargs)
 
 
+def test_position_sizing_rejects_risk_percent_above_account_balance():
+    with pytest.raises(ValueError, match="at most 100"):
+        calculate_position_size(account_balance=1000, risk_percent=100.0001, risk_distance_quote=0.20, contract_size=100000, account_currency="USD", quote_currency="USD")
+
+
+def test_position_sizing_accepts_exactly_100_percent_risk_policy():
+    result = calculate_position_size(account_balance=1000, risk_percent=100, risk_distance_quote=0.20, contract_size=100000, account_currency="USD", quote_currency="USD")
+    assert result.risk_amount_account == 1000.0
+
+
 def test_position_sizing_rejects_non_string_currency_context():
     with pytest.raises(TypeError, match="must be strings"):
         calculate_position_size(account_balance=1000, risk_percent=1, risk_distance_quote=0.20, contract_size=100000, account_currency=None, quote_currency="USD")
