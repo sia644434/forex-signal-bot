@@ -12,6 +12,15 @@ from decimal import Decimal, DecimalException, ROUND_FLOOR
 import math
 
 
+_SUPPORTED_STABLECOINS = frozenset({"USDT", "USDC"})
+
+
+def _is_supported_currency_code(currency: str) -> bool:
+    return (
+        len(currency) == 3 and currency.isalpha()
+    ) or currency in _SUPPORTED_STABLECOINS
+
+
 @dataclass(frozen=True, slots=True)
 class PositionSizingResult:
     """Position sizing values expressed in explicit monetary units."""
@@ -40,8 +49,8 @@ def calculate_position_size(
     quote_currency = quote_currency.strip().upper()
 
     for name, currency in (("account_currency", account_currency), ("quote_currency", quote_currency)):
-        if len(currency) != 3 or not currency.isalpha():
-            raise ValueError(f"{name} must be a 3-letter currency code.")
+        if not _is_supported_currency_code(currency):
+            raise ValueError(f"{name} must be a supported currency code (3-letter ISO code or USDT/USDC).")
 
     numeric_inputs = {
         "account_balance": account_balance,
