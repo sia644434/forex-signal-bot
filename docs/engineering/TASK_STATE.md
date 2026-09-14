@@ -1,79 +1,59 @@
 # Task State
 
-## TASK-001 through TASK-060
-Phase 1/2 reliability and architecture tasks through FullAnalysis trade-quality symmetry remain VERIFIED according to the persistent engineering history in this file.
-
-## TASK-061
-Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
-Title: ConfidenceEngine Signed Analysis Score Contract Alignment
-Implementation Status: VERIFIED
-Evidence:
-- `ConfidenceEngine` converts signed analysis component scores from `-100..100` to the shared `0..100` directional score contract, preserving `0 -> 50` neutral semantics.
-- Required verification passed on the verified implementation head.
-
-## TASK-062
-Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
-Title: ConfidenceEngine Supply-Demand Score Contract
-Implementation Status: VERIFIED
-Evidence:
-- `ConfidenceEngine._collect_engines()` consumes the explicit `supply_demand_score` field rather than `trend_score`.
-- Regression coverage verifies the explicit field and neutral missing-field behavior.
-
-## TASK-063
-Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
-Title: Supply-Demand Score Wiring into Confidence Contract
-Implementation Status: VERIFIED
-Evidence:
-- `FullAnalysisEngine` passes `supply_demand_result.score` into `AnalysisResult.supply_demand_score`.
-- Production E2E Contract Gate and full test suite passed on the verified trigger head.
-
-## TASK-064
-Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
-Title: DecisionEngine Supply-Demand Score Consumption
-Implementation Status: VERIFIED
-Evidence:
-- DecisionEngine reads `supply_demand_score` directly.
-- Regression coverage and production verification passed.
+## TASK-001 through TASK-064
+Phase 1/2 reliability and architecture tasks through DecisionEngine Supply/Demand consumption remain VERIFIED according to the persistent engineering history.
 
 ## TASK-065
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: ConfidenceEngine Numeric Boundary Hardening
 Implementation Status: IMPLEMENTED — VERIFICATION PENDING
 Evidence:
-- Hardened ConfidenceEngine normalization and aggregation boundaries against non-finite values.
-- Present-invalid numeric fields are rejected instead of being silently converted to neutral/default values; genuinely missing fields retain intended defaults.
-- Weight validation requires finite, non-negative values.
-- Data-quality and market-uncertainty calculations reject non-finite inputs.
+- Hardened ConfidenceEngine normalization, weights, data-quality, uncertainty, and present-invalid field handling against non-finite values.
 - Regression coverage was added for NaN/Inf, invalid weights, missing fields, and bounded finite output behavior.
-- Implementation/test changes are present on `main`; final required GitHub Actions verification is pending.
-- No local execution is claimed.
+- Final verification remains pending on the current moving `main` head.
 
 ## TASK-066
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: FullAnalysisEngine Numeric Boundary Hardening
 Implementation Status: IMPLEMENTED — VERIFICATION PENDING
 Evidence:
-- Hardened the FullAnalysisEngine boundary so non-finite analysis/ATR values cannot silently enter Decision/Confidence/Risk calculations.
-- Preserved the existing legacy price-list and Candle collection contracts.
-- Added regression coverage for numeric boundary failures and finite downstream behavior.
-- Implementation/test changes are present on `main`; final required GitHub Actions verification is pending.
+- Hardened FullAnalysisEngine numeric boundaries so invalid ATR/analysis values cannot silently enter downstream calculations.
+- Preserved the legacy price-list and canonical Candle input contracts.
+- Regression coverage was added for numeric boundary failures and downstream finite behavior.
+- The first verification run exposed two genuine test-contract issues: legitimate `None` NO-TRADE risk outputs were being rejected, and the ATR regression fixture omitted the required `volatility` field. Both were corrected.
+- Final verification remains pending on the current moving `main` head.
+
+## TASK-067
+Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
+Title: PositionSizing Decimal Numeric-Range Hardening
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- Audit of `RiskEngine → PositionSizing → CurrencyConversion` found that float-level finite checks were present, but the later Decimal quantization step could still raise a raw `DecimalException` for values that were finite as Python floats but exceeded the active Decimal precision during quantization.
+- This leaked a lower-level numeric exception instead of preserving the public fail-closed `ValueError` contract expected by the position-sizing boundary and RiskEngine's error handling.
+- Position sizing now catches `DecimalException` around Decimal risk/lot calculations and converts it to a controlled `ValueError`.
+- Regression coverage verifies the oversized-but-finite numeric-range case.
+- Implementation commit: `5967f1741e6e381fa83328d93f4f1b65d871b5dd`.
+- Regression test commit: `307576dfddc63c079bed0c1fdeed16595fd7ad54`.
+- Current required GitHub Actions verification is pending.
 - No local execution is claimed.
 
 ## Current Phase 2 Audit Frontier
-The next concrete audit frontier after verification of TASK-065/TASK-066 is:
-`RiskEngine → PositionSizing → CurrencyConversion`.
+After TASK-065 through TASK-067 verification, continue the evidence-backed audit of:
+`RiskEngine → PositionSizing → CurrencyConversion → MarketAwareAnalysisEngine`.
 
 Required checks:
 - account-currency versus quote-currency unit semantics
 - conversion-rate direction and pair orientation
+- configured risk policy versus effective dynamic risk percentage
 - risk amount versus risk-per-unit units
 - lot-size and contract-size semantics
 - rounding/precision behavior
-- finite/positive/overflow boundaries
+- finite/positive/overflow/underflow boundaries
 - fail-closed behavior when conversion data is missing, stale, invalid, or unavailable
+- whether configured `RISK_PER_TRADE` actually influences effective risk
 - end-to-end consistency between MarketAwareEngine, RiskEngine, PositionSizing, and CurrencyConversionService
 
-Do not create the next task until a concrete repository-backed gap is demonstrated.
+Do not create another task until a concrete repository-backed gap is demonstrated.
 
 ## New-chat Continuation Contract
 When a new chat starts work on this repository, first read:
@@ -86,10 +66,10 @@ When a new chat starts work on this repository, first read:
 - `docs/engineering/CHANGELOG_ENGINEERING.md`
 
 Then:
-1. Determine the exact `main` HEAD.
+1. Determine the exact current `main` HEAD.
 2. Inspect GitHub Actions for that exact HEAD.
-3. Resolve any pending CI failure before starting another audit frontier.
-4. Do not repeat TASK-058 through TASK-066 unless their verification evidence is missing or contradicted.
+3. Resolve every pending or failed verification before moving deeper.
+4. Do not repeat TASK-058 through TASK-067 unless their verification evidence is missing or contradicted.
 5. Continue from the first unresolved audit frontier recorded above.
 6. Inspect more architecture than the previous step and only implement concrete repository-backed gaps.
 7. Add focused regression coverage for every confirmed defect.
