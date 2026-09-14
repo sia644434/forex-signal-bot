@@ -83,7 +83,6 @@ class MarketAwareAnalysisEngine:
         configured_risk_percent = self.settings.risk_per_trade * 100.0
         self.analysis_engine.risk_engine = RiskEngine(
             account_currency=self.settings.account_currency,
-            risk_percent=configured_risk_percent,
         )
         risk_result = self.analysis_engine.risk_engine.calculate(
             signal=signal,
@@ -93,6 +92,7 @@ class MarketAwareAnalysisEngine:
             score=report.score,
             symbol=normalized_symbol,
             quote_to_account_rate=conversion.rate,
+            risk_percent=configured_risk_percent,
         )
 
         return replace(
