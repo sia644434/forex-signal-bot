@@ -13,8 +13,9 @@ def test_risk_engine_uses_explicit_currency_context_for_eurusd() -> None:
         symbol="EURUSD",
     )
 
-    assert result.position_size == 1333.3333
+    assert result.position_size == 1300.0
     assert result.lot_size == 0.013
+    assert result.position_size == result.lot_size * 100000
     assert result.risk_amount == 20.0
     assert "Position sizing unavailable" not in result.reason
 
@@ -70,5 +71,6 @@ def test_risk_engine_applies_explicit_jpy_to_usd_conversion() -> None:
 
     assert result.position_size == 2000.0
     assert result.lot_size == 0.02
+    assert result.position_size == result.lot_size * 100000
     assert result.risk_amount == 20.0
     assert "Position sizing unavailable" not in result.reason
