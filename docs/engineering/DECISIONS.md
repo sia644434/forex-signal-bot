@@ -90,6 +90,14 @@ Chosen Solution: Treat configured `risk_percent` as an account-level ceiling for
 Reason: Risk policy must be enforceable at the production boundary, not merely advisory to a heuristic.
 Affected Components: `analysis/risk_engine.py`, risk sizing regression tests.
 
+## ADR-013 — Canonical Telegram market-status contract
+Date: 2026-09-14
+Problem: The Telegram market-session helper emitted `STALE_DATA` instead of the platform's canonical `STALE` state, used a fixed stale threshold despite receiving a timeframe, assumed naive timestamps were UTC, and applied weekend closure globally.
+Chosen Solution: Keep market status limited to `OPEN`, `CLOSED`, `STALE`, and `NO_DATA`; scale stale detection to six timeframe intervals; require timezone-aware timestamps and reject future timestamps; apply weekend closure only to non-crypto markets; pass symbol context from Scanner.
+Reason: Status is a safety boundary for scan decisions and must remain consistent with the canonical market-data freshness model and centralized asset semantics.
+Consequences: Invalid timestamp input fails closed as `NO_DATA`; scanner maps stale data through the canonical `STALE` status; 24/7 Crypto is not closed solely by calendar weekend.
+Affected Components: `services/telegram/market_session.py`, `services/telegram/scanner.py`, `tests/test_market_session.py`.
+
 ## TASK-061 — Analysis Score Contract Boundary
 The analysis layer's directional component scores are signed (`-100..100`), while DecisionEngine consumes a normalized `0..100` representation centered on neutral `50`. ConfidenceEngine must normalize directional analysis components at its input boundary using the same mapping. `volatility_score` is explicitly excluded because it is a non-directional ratio.
 
@@ -99,4 +107,5 @@ The analysis layer's directional component scores are signed (`-100..100`), whil
 - Missing or unsupported conversion data must fail closed.
 - Configured account risk is a hard ceiling for dynamic risk selection.
 - Provider lifecycle state must reflect only the active provider configuration.
+- Market status uses canonical `OPEN/CLOSED/STALE/NO_DATA` semantics.
 - Exact-head GitHub Actions evidence is required before marking implementation checkpoints VERIFIED.
