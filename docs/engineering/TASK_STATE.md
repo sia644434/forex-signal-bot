@@ -74,6 +74,19 @@ Evidence:
 - Regression commits: `8a857af7a87c68566425a4ec34416b4ad68d1f35` and `89bbdf16c010de7de0ca333b332a6da21fd168f9`.
 - Verification is pending on the resulting head; no green claim is made until the required gates finish.
 
+## TASK-072
+Phase: Phase 2 — Core Architecture / Market Data Reliability
+Title: Weekend Gap Detection Boundary Hardening
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- `DataQuality._is_expected_market_closure_gap()` treated any gap whose previous candle was Friday or whose current candle was Monday as a normal Forex closure.
+- This could incorrectly mark large intraday Friday/Monday gaps as acceptable and suppress a real missing-data signal.
+- The closure exception is now limited to an actual Friday-to-Monday date transition within the existing maximum weekend window.
+- Focused regression coverage verifies a genuine Friday→Monday closure remains valid while large intraday Friday and Monday gaps remain invalid.
+- Implementation commit: `7a322723e8bd1154ae7aaab5a8d8f48bf2790f3f`.
+- Regression test commit: `32815e720c22197248b817a1d45f01182ed096eb`.
+- Verification is pending on the resulting head; no green claim is made until the required gates finish.
+
 ## Current Phase 2 Audit Frontier
 Continue the evidence-backed audit from:
 `ProviderManager → MarketDataService → Freshness/DataQuality → CurrencyConversion → MarketAwareAnalysisEngine`
@@ -84,6 +97,7 @@ Required checks:
 - retry/cooldown finite and overflow boundaries
 - concurrency isolation of provider state and failure diagnostics
 - freshness and stale-data fail-closed behavior
+- weekend/market-closure gap semantics without masking intraday missing data
 - account-currency versus quote-currency unit semantics
 - conversion-rate direction and pair orientation
 - configured risk policy versus effective dynamic risk percentage
@@ -110,7 +124,7 @@ Then:
 1. Determine the exact current `main` HEAD.
 2. Inspect GitHub Actions for that exact HEAD.
 3. Resolve every pending or failed verification before moving deeper.
-4. Do not repeat TASK-058 through TASK-071 unless verification evidence is missing or contradicted.
+4. Do not repeat TASK-058 through TASK-072 unless verification evidence is missing or contradicted.
 5. Continue from the first unresolved audit frontier recorded above.
 6. Inspect more architecture than the previous step and only implement concrete repository-backed gaps.
 7. Add focused regression coverage for every confirmed defect.
