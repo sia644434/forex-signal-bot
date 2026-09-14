@@ -7,39 +7,41 @@ Phase 1/2 reliability and architecture tasks through DecisionEngine Supply/Deman
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: ConfidenceEngine Numeric Boundary Hardening
 Implementation Status: IMPLEMENTED — VERIFICATION PENDING
-Evidence:
-- Hardened ConfidenceEngine normalization, weights, data-quality, uncertainty, and present-invalid field handling against non-finite values.
-- Regression coverage was added for NaN/Inf, invalid weights, missing fields, and bounded finite output behavior.
-- Final verification remains pending on the current moving `main` head.
 
 ## TASK-066
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: FullAnalysisEngine Numeric Boundary Hardening
 Implementation Status: IMPLEMENTED — VERIFICATION PENDING
-Evidence:
-- Hardened FullAnalysisEngine numeric boundaries so invalid ATR/analysis values cannot silently enter downstream calculations.
-- Preserved the legacy price-list and canonical Candle input contracts.
-- Regression coverage was added for numeric boundary failures and downstream finite behavior.
-- The first verification run exposed two genuine test-contract issues: legitimate `None` NO-TRADE risk outputs were being rejected, and the ATR regression fixture omitted the required `volatility` field. Both were corrected.
-- Final verification remains pending on the current moving `main` head.
 
 ## TASK-067
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: PositionSizing Decimal Numeric-Range Hardening
 Implementation Status: IMPLEMENTED — VERIFICATION PENDING
 Evidence:
-- Audit of `RiskEngine → PositionSizing → CurrencyConversion` found that float-level finite checks were present, but the later Decimal quantization step could still raise a raw `DecimalException` for values that were finite as Python floats but exceeded the active Decimal precision during quantization.
-- This leaked a lower-level numeric exception instead of preserving the public fail-closed `ValueError` contract expected by the position-sizing boundary and RiskEngine's error handling.
-- Position sizing now catches `DecimalException` around Decimal risk/lot calculations and converts it to a controlled `ValueError`.
-- Regression coverage verifies the oversized-but-finite numeric-range case.
+- Float-level finite validation was followed by Decimal quantization that could leak DecimalException for finite values exceeding active Decimal precision.
+- PositionSizing converts that numeric-range failure to the public fail-closed ValueError contract.
+- Regression coverage was added for the oversized-but-finite case.
 - Implementation commit: `5967f1741e6e381fa83328d93f4f1b65d871b5dd`.
 - Regression test commit: `307576dfddc63c079bed0c1fdeed16595fd7ad54`.
-- Current required GitHub Actions verification is pending.
-- No local execution is claimed.
+
+## TASK-068
+Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
+Title: RiskEngine Directional Price-Level Safety
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- Deeper audit of `RiskEngine → PositionSizing → CurrencyConversion → MarketAwareAnalysisEngine` found that finite risk distances could still produce economically invalid trade levels.
+- A BUY setup could produce a zero/negative stop-loss when risk distance crossed the entry price; a SELL setup could produce non-positive take-profit levels.
+- The output contract now rejects non-positive risk levels and enforces directional ordering for BUY and SELL plans before position sizing output is emitted.
+- The validator preserves the existing custom risk-reward contract where TP2 and TP3 may legitimately coincide at a 3R target.
+- Regression coverage added for zero-crossing, non-positive SELL targets, overflow, and normal directional ordering.
+- Implementation commit: `b11d6429698aa749c1263f9fe65e6b4a0bac42dd`.
+- Regression test commit: `131f0a656c694a9b6e4e88e4b1f7326032f91074`.
+- The first gate exposed an overly strict TP2/TP3 ordering assertion and a test fixture that incorrectly expected a BUY failure where only SELL could cross zero. Both were corrected before final verification.
 
 ## Current Phase 2 Audit Frontier
-After TASK-065 through TASK-067 verification, continue the evidence-backed audit of:
-`RiskEngine → PositionSizing → CurrencyConversion → MarketAwareAnalysisEngine`.
+After TASK-065 through TASK-068 verification, continue the evidence-backed audit of:
+`RiskEngine → PositionSizing → CurrencyConversion → MarketAwareAnalysisEngine`
+then proceed outward into the Telegram/Scanner/Tracker/Callbacks and Worker/Queue/Persistence paths.
 
 Required checks:
 - account-currency versus quote-currency unit semantics
@@ -69,7 +71,7 @@ Then:
 1. Determine the exact current `main` HEAD.
 2. Inspect GitHub Actions for that exact HEAD.
 3. Resolve every pending or failed verification before moving deeper.
-4. Do not repeat TASK-058 through TASK-067 unless their verification evidence is missing or contradicted.
+4. Do not repeat TASK-058 through TASK-068 unless their verification evidence is missing or contradicted.
 5. Continue from the first unresolved audit frontier recorded above.
 6. Inspect more architecture than the previous step and only implement concrete repository-backed gaps.
 7. Add focused regression coverage for every confirmed defect.
