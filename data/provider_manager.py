@@ -236,14 +236,15 @@ class ProviderManager:
             if self._is_in_cooldown(provider_name):
                 skipped += 1
                 continue
-            attempted += 1
             try:
                 provider = self._get_provider(provider_name)
-                if not provider.supports_symbol(normalized_symbol):
+                supports_symbol = getattr(provider, "supports_symbol", None)
+                if callable(supports_symbol) and not supports_symbol(normalized_symbol):
                     skipped += 1
                     failures.append(ProviderFailure(provider_name, 0, "UnsupportedSymbol", f"Provider {provider_name} does not support symbol {normalized_symbol}"))
                     logger.info("Skipping provider %s: symbol %s is outside its declared capability.", provider_name, normalized_symbol)
                     continue
+                attempted += 1
                 candles = await self._request_with_retry(provider_name, provider, symbol=normalized_symbol, timeframe=normalized_timeframe, limit=limit, failures=failures)
                 candles = self._normalize_candles(candles, limit=limit)
                 if not candles:
