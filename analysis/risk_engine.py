@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 from analysis.currency import get_forex_currency_pair
 from analysis.position_sizing import calculate_position_size
@@ -60,6 +61,17 @@ class RiskEngine:
             else None
         )
 
+        numeric_config = {
+            "risk_reward_target": self.risk_reward_target,
+            "atr_multiplier": self.atr_multiplier,
+            "account_balance": self.account_balance,
+            "risk_percent": self.risk_percent,
+            "contract_size": self.contract_size,
+        }
+        for name, value in numeric_config.items():
+            if not math.isfinite(value):
+                raise ValueError(f"{name} must be finite.")
+
         if self.risk_reward_target <= 0:
             raise ValueError("risk_reward_target must be greater than zero.")
         if self.atr_multiplier <= 0:
@@ -70,6 +82,16 @@ class RiskEngine:
             raise ValueError("risk_percent must be greater than zero.")
         if self.contract_size <= 0:
             raise ValueError("contract_size must be greater than zero.")
+
+    @staticmethod
+    def _require_finite(value: float, name: str) -> float:
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f"{name} must be a finite number.") from error
+        if not math.isfinite(numeric):
+            raise ValueError(f"{name} must be finite.")
+        return numeric
 
     @staticmethod
     def _directional_strength(score: float) -> float:
@@ -125,12 +147,7 @@ class RiskEngine:
         symbol: str | None,
         quote_to_account_rate: float | None,
     ) -> tuple[float | None, float | None, float | None, str | None]:
-        """Calculate size only when currency context is explicit.
-
-        Missing account currency or required FX conversion never falls back to
-        the historical unitless formula. The setup can still be reported, but
-        position sizing is withheld rather than presenting an incorrect size.
-        """
+        """Calculate size only when currency context is explicit."""
         if not self.account_currency:
             return None, None, None, "account currency is not configured"
         if not symbol:
@@ -196,123 +213,47 @@ class RiskEngine:
             return position_size, lot_size, risk_amount, f"Position sizing unavailable: {sizing_error}"
         return position_size, lot_size, risk_amount, ""
 
-    def _buy_setup(
-        self,
-        price: float,
-        risk_distance: float,
-        risk_level: str,
-        market_condition: str,
-        confidence: float,
-        score: float,
-        risk_percent: float,
-        *,
-        symbol: str | None,
-        quote_to_account_rate: float | None,
-    ) -> RiskResult:
+    def _buy_setup(self, price: float, risk_distance: float, risk_level: str, market_condition: str, confidence: float, score: float, risk_percent: float, *, symbol: str | None, quote_to_account_rate: float | None) -> RiskResult:
         stop_loss = price - risk_distance
         tp1 = price + risk_distance
         tp2 = price + (risk_distance * self.risk_reward_target)
         tp3 = price + (risk_distance * 3)
-        position_size, lot_size, risk_amount, sizing_reason = self._build_sizing(
-            risk_distance,
-            risk_percent,
-            symbol=symbol,
-            quote_to_account_rate=quote_to_account_rate,
-        )
+        position_size, lot_size, risk_amount, sizing_reason = self._build_sizing(risk_distance, risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
         trade_quality, trade_grade = self._trade_quality(confidence, score, market_condition)
         reason = "Professional bullish risk plan generated"
         if sizing_reason:
             reason += f"; {sizing_reason}"
-        return RiskResult(
-            entry_price=round(price, 5),
-            stop_loss=round(stop_loss, 5),
-            take_profit=round(tp2, 5),
-            take_profit_1=round(tp1, 5),
-            take_profit_2=round(tp2, 5),
-            take_profit_3=round(tp3, 5),
-            risk_reward=self.risk_reward_target,
-            position_size=position_size,
-            lot_size=lot_size,
-            risk_amount=risk_amount,
-            risk_percent=risk_percent,
-            trailing_stop=round(tp1, 5),
-            trade_quality=trade_quality,
-            trade_grade=trade_grade,
-            risk_level=risk_level,
-            market_condition=market_condition,
-            reason=reason,
-        )
+        return RiskResult(entry_price=round(price, 5), stop_loss=round(stop_loss, 5), take_profit=round(tp2, 5), take_profit_1=round(tp1, 5), take_profit_2=round(tp2, 5), take_profit_3=round(tp3, 5), risk_reward=self.risk_reward_target, position_size=position_size, lot_size=lot_size, risk_amount=risk_amount, risk_percent=risk_percent, trailing_stop=round(tp1, 5), trade_quality=trade_quality, trade_grade=trade_grade, risk_level=risk_level, market_condition=market_condition, reason=reason)
 
-    def _sell_setup(
-        self,
-        price: float,
-        risk_distance: float,
-        risk_level: str,
-        market_condition: str,
-        confidence: float,
-        score: float,
-        risk_percent: float,
-        *,
-        symbol: str | None,
-        quote_to_account_rate: float | None,
-    ) -> RiskResult:
+    def _sell_setup(self, price: float, risk_distance: float, risk_level: str, market_condition: str, confidence: float, score: float, risk_percent: float, *, symbol: str | None, quote_to_account_rate: float | None) -> RiskResult:
         stop_loss = price + risk_distance
         tp1 = price - risk_distance
         tp2 = price - (risk_distance * self.risk_reward_target)
         tp3 = price - (risk_distance * 3)
-        position_size, lot_size, risk_amount, sizing_reason = self._build_sizing(
-            risk_distance,
-            risk_percent,
-            symbol=symbol,
-            quote_to_account_rate=quote_to_account_rate,
-        )
+        position_size, lot_size, risk_amount, sizing_reason = self._build_sizing(risk_distance, risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
         trade_quality, trade_grade = self._trade_quality(confidence, score, market_condition)
         reason = "Professional bearish risk plan generated"
         if sizing_reason:
             reason += f"; {sizing_reason}"
-        return RiskResult(
-            entry_price=round(price, 5),
-            stop_loss=round(stop_loss, 5),
-            take_profit=round(tp2, 5),
-            take_profit_1=round(tp1, 5),
-            take_profit_2=round(tp2, 5),
-            take_profit_3=round(tp3, 5),
-            risk_reward=self.risk_reward_target,
-            position_size=position_size,
-            lot_size=lot_size,
-            risk_amount=risk_amount,
-            risk_percent=risk_percent,
-            trailing_stop=round(tp1, 5),
-            trade_quality=trade_quality,
-            trade_grade=trade_grade,
-            risk_level=risk_level,
-            market_condition=market_condition,
-            reason=reason,
-        )
+        return RiskResult(entry_price=round(price, 5), stop_loss=round(stop_loss, 5), take_profit=round(tp2, 5), take_profit_1=round(tp1, 5), take_profit_2=round(tp2, 5), take_profit_3=round(tp3, 5), risk_reward=self.risk_reward_target, position_size=position_size, lot_size=lot_size, risk_amount=risk_amount, risk_percent=risk_percent, trailing_stop=round(tp1, 5), trade_quality=trade_quality, trade_grade=trade_grade, risk_level=risk_level, market_condition=market_condition, reason=reason)
 
-    def calculate(
-        self,
-        signal: str,
-        current_price: float,
-        atr: float | None = None,
-        confidence: float = 0.0,
-        score: float = 0.0,
-        risk_distance: float | None = None,
-        *,
-        symbol: str | None = None,
-        quote_to_account_rate: float | None = None,
-    ) -> RiskResult:
+    def calculate(self, signal: str, current_price: float, atr: float | None = None, confidence: float = 0.0, score: float = 0.0, risk_distance: float | None = None, *, symbol: str | None = None, quote_to_account_rate: float | None = None) -> RiskResult:
         """Calculate a risk plan with unit-aware position sizing."""
+        current_price = self._require_finite(current_price, "current_price")
+        confidence = self._require_finite(confidence, "confidence")
+        score = self._require_finite(score, "score")
+        if atr is not None:
+            atr = self._require_finite(atr, "atr")
+        if risk_distance is not None:
+            risk_distance = self._require_finite(risk_distance, "risk distance")
+
         if current_price <= 0:
             raise ValueError("current_price must be greater than zero.")
         if risk_distance is not None and risk_distance <= 0:
             raise ValueError("risk distance must be greater than zero.")
 
-        distance = self._calculate_risk_distance(
-            price=current_price,
-            atr=atr,
-            risk_distance=risk_distance,
-        )
+        distance = self._calculate_risk_distance(price=current_price, atr=atr, risk_distance=risk_distance)
+        distance = self._require_finite(distance, "risk distance")
         if distance <= 0:
             raise ValueError("risk distance must be greater than zero.")
 
@@ -322,48 +263,9 @@ class RiskEngine:
         dynamic_risk_percent = self._dynamic_risk_percent(confidence, score)
 
         if signal == "BUY":
-            return self._buy_setup(
-                price=current_price,
-                risk_distance=distance,
-                risk_level=risk_level,
-                market_condition=market_condition,
-                confidence=confidence,
-                score=score,
-                risk_percent=dynamic_risk_percent,
-                symbol=symbol,
-                quote_to_account_rate=quote_to_account_rate,
-            )
-
+            return self._buy_setup(price=current_price, risk_distance=distance, risk_level=risk_level, market_condition=market_condition, confidence=confidence, score=score, risk_percent=dynamic_risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
         if signal == "SELL":
-            return self._sell_setup(
-                price=current_price,
-                risk_distance=distance,
-                risk_level=risk_level,
-                market_condition=market_condition,
-                confidence=confidence,
-                score=score,
-                risk_percent=dynamic_risk_percent,
-                symbol=symbol,
-                quote_to_account_rate=quote_to_account_rate,
-            )
+            return self._sell_setup(price=current_price, risk_distance=distance, risk_level=risk_level, market_condition=market_condition, confidence=confidence, score=score, risk_percent=dynamic_risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
 
         trade_quality, trade_grade = self._trade_quality(confidence, score, market_condition)
-        return RiskResult(
-            entry_price=None,
-            stop_loss=None,
-            take_profit=None,
-            take_profit_1=None,
-            take_profit_2=None,
-            take_profit_3=None,
-            risk_reward=None,
-            position_size=None,
-            lot_size=None,
-            risk_amount=None,
-            risk_percent=dynamic_risk_percent,
-            trailing_stop=None,
-            trade_quality=trade_quality,
-            trade_grade=trade_grade,
-            risk_level="NONE",
-            market_condition=market_condition,
-            reason="No valid trade setup available",
-        )
+        return RiskResult(entry_price=None, stop_loss=None, take_profit=None, take_profit_1=None, take_profit_2=None, take_profit_3=None, risk_reward=None, position_size=None, lot_size=None, risk_amount=None, risk_percent=dynamic_risk_percent, trailing_stop=None, trade_quality=trade_quality, trade_grade=trade_grade, risk_level="NONE", market_condition=market_condition, reason="No valid trade setup available")
