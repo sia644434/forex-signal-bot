@@ -50,6 +50,17 @@ async def collect_notification(notifications: list[str], message: str) -> None:
     notifications.append(message)
 
 
+def _patch_stable_buy_analysis(monkeypatch) -> None:
+    class FakeEngine:
+        def __init__(self, **kwargs) -> None:
+            self.market_data = kwargs["market_data"]
+
+        async def analyze(self, candles, *, symbol: str, timeframe: str):
+            return Report("BUY")
+
+    monkeypatch.setattr(tracker_module, "MarketAwareAnalysisEngine", FakeEngine)
+
+
 def test_track_report_replaces_same_user_symbol_timeframe_and_lists_it() -> None:
     first = track_report(1, "EURUSD", "M15", Report("BUY"))
     second = track_report(1, "EURUSD", "M15", Report("SELL"))
@@ -67,7 +78,8 @@ def test_stop_tracking_removes_existing_track_and_is_idempotent() -> None:
     assert list_tracking(1) == []
 
 
-def test_refresh_tracking_stops_buy_when_stop_loss_is_touched() -> None:
+def test_refresh_tracking_stops_buy_when_stop_loss_is_touched(monkeypatch) -> None:
+    _patch_stable_buy_analysis(monkeypatch)
     item = track_report(1, "EURUSD", "M15", Report("BUY"))
     notifications: list[str] = []
 
@@ -84,7 +96,8 @@ def test_refresh_tracking_stops_buy_when_stop_loss_is_touched() -> None:
     assert list_tracking(1) == []
 
 
-def test_refresh_tracking_marks_buy_target_and_removes_track() -> None:
+def test_refresh_tracking_marks_buy_target_and_removes_track(monkeypatch) -> None:
+    _patch_stable_buy_analysis(monkeypatch)
     item = track_report(1, "EURUSD", "M15", Report("BUY"))
     notifications: list[str] = []
 
