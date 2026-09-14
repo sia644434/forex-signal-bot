@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import os
 from dataclasses import dataclass
 from typing import Optional
@@ -99,6 +100,7 @@ class Settings:
     default_symbol: str = "EURUSD"
     default_timeframe: str = "1h"
     account_currency: Optional[str] = None
+    account_balance: float = 1000.0
     risk_per_trade: float = 0.01
     max_open_positions: int = 5
     timezone: str = "UTC"
@@ -123,12 +125,17 @@ class Settings:
             raise ValueError("APP_NAME cannot be empty.")
         if self.environment.lower() not in {"development", "testing", "staging", "production"}:
             raise ValueError("ENVIRONMENT must be development, testing, staging, or production.")
-        if self.account_currency is not None and not self.account_currency.strip():
-            raise ValueError("ACCOUNT_CURRENCY cannot be empty when configured.")
-        if self.account_currency is not None and len(self.account_currency.strip()) != 3:
-            raise ValueError("ACCOUNT_CURRENCY must be a 3-letter ISO currency code.")
-        if not 0 < self.risk_per_trade <= 1:
-            raise ValueError("RISK_PER_TRADE must be greater than 0 and at most 1.")
+        if self.account_currency is not None:
+            currency = self.account_currency.strip().upper()
+            if not currency:
+                raise ValueError("ACCOUNT_CURRENCY cannot be empty when configured.")
+            if len(currency) != 3 or not currency.isalpha():
+                raise ValueError("ACCOUNT_CURRENCY must be a 3-letter ISO currency code.")
+            object.__setattr__(self, "account_currency", currency)
+        if not math.isfinite(self.account_balance) or self.account_balance <= 0:
+            raise ValueError("ACCOUNT_BALANCE must be finite and greater than 0.")
+        if not math.isfinite(self.risk_per_trade) or not 0 < self.risk_per_trade <= 1:
+            raise ValueError("RISK_PER_TRADE must be finite, greater than 0, and at most 1.")
         if self.max_open_positions < 1:
             raise ValueError("MAX_OPEN_POSITIONS must be at least 1.")
         if not self.timezone.strip():
@@ -179,6 +186,7 @@ class Settings:
             default_symbol=_get_env("DEFAULT_SYMBOL", "EURUSD"),
             default_timeframe=_get_env("DEFAULT_TIMEFRAME", "1h"),
             account_currency=_get_env("ACCOUNT_CURRENCY"),
+            account_balance=_get_float("ACCOUNT_BALANCE", 1000.0),
             risk_per_trade=_get_float("RISK_PER_TRADE", 0.01),
             max_open_positions=_get_int("MAX_OPEN_POSITIONS", 5),
             timezone=_get_env("TIMEZONE", "UTC"),
