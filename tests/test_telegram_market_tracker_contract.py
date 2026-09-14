@@ -17,10 +17,27 @@ def _report(signal: str, base: float = 1.1):
     )
 
 
-def test_telegram_scanner_defaults_are_forex_only():
-    assert DEFAULT_SCAN_SYMBOLS == ("EURUSD", "GBPUSD", "USDJPY", "EURJPY")
-    assert all(len(symbol) == 6 for symbol in DEFAULT_SCAN_SYMBOLS)
-    assert "XAUUSD" not in DEFAULT_SCAN_SYMBOLS
+def test_telegram_scanner_defaults_cover_multiple_asset_classes():
+    assert DEFAULT_SCAN_SYMBOLS == (
+        "EURUSD",
+        "GBPUSD",
+        "USDJPY",
+        "BTCUSDT",
+        "ETHUSDT",
+        "AAPL",
+        "NVDA",
+        "SPX",
+        "NDX",
+        "XAUUSD",
+        "XAGUSD",
+        "WTI",
+    )
+    assert "EURUSD" in DEFAULT_SCAN_SYMBOLS
+    assert "BTCUSDT" in DEFAULT_SCAN_SYMBOLS
+    assert "AAPL" in DEFAULT_SCAN_SYMBOLS
+    assert "SPX" in DEFAULT_SCAN_SYMBOLS
+    assert "XAUUSD" in DEFAULT_SCAN_SYMBOLS
+    assert "WTI" in DEFAULT_SCAN_SYMBOLS
 
 
 def test_tracker_updates_direction_and_risk_levels_after_signal_flip():
