@@ -127,16 +127,8 @@ class ProviderManager:
         active = set(names)
         self._providers = tuple(names)
         self._provider_objects = objects
-        self._provider_instances = {
-            name: instance
-            for name, instance in self._provider_instances.items()
-            if name in active
-        }
-        self._cooldowns = {
-            name: expiry
-            for name, expiry in self._cooldowns.items()
-            if name in active
-        }
+        self._provider_instances = {name: instance for name, instance in self._provider_instances.items() if name in active}
+        self._cooldowns = {name: expiry for name, expiry in self._cooldowns.items() if name in active}
 
     def _get_provider(self, provider_name: str) -> MarketDataProvider:
         if provider_name in self._provider_objects:
@@ -247,6 +239,11 @@ class ProviderManager:
             attempted += 1
             try:
                 provider = self._get_provider(provider_name)
+                if not provider.supports_symbol(normalized_symbol):
+                    skipped += 1
+                    failures.append(ProviderFailure(provider_name, 0, "UnsupportedSymbol", f"Provider {provider_name} does not support symbol {normalized_symbol}"))
+                    logger.info("Skipping provider %s: symbol %s is outside its declared capability.", provider_name, normalized_symbol)
+                    continue
                 candles = await self._request_with_retry(provider_name, provider, symbol=normalized_symbol, timeframe=normalized_timeframe, limit=limit, failures=failures)
                 candles = self._normalize_candles(candles, limit=limit)
                 if not candles:
