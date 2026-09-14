@@ -58,10 +58,7 @@ def _price_candles(symbol: str, price: float = 150.0) -> list[Candle]:
 @pytest.mark.parametrize(
     ("symbol", "conversion_symbol", "conversion_price", "expected_rate", "expected_position_size"),
     [
-        # The conversion service returns a binary-float approximation of the
-        # inverse. Executable 0.001-lot precision must floor conservatively.
         ("USDJPY", "USDJPY", 150.0, 1.0 / 150.0, 900.0),
-        # EURJPY is quoted in JPY, so JPY->USD still resolves through USDJPY.
         ("EURJPY", "USDJPY", 150.0, 1.0 / 150.0, 900.0),
     ],
 )
@@ -132,8 +129,6 @@ def test_market_aware_engine_uses_configured_account_balance(
 
     assert report.risk_percent == pytest.approx(2.0)
     assert report.risk_amount == pytest.approx(500.0)
-    # 500 account-currency risk / (1.5 quote units * 1/150 account/quote)
-    # = 50,000 units, then executable 0.001-lot flooring yields 49,900.
     assert report.position_size == pytest.approx(49900.0)
 
 
@@ -159,6 +154,32 @@ def test_market_aware_engine_honors_non_default_risk_per_trade(
 
     assert report.risk_percent == pytest.approx(5.0)
     assert report.risk_amount == pytest.approx(50.0)
+
+
+def test_market_aware_engine_does_not_mutate_shared_risk_engine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    market_data = FakeMarketDataService("USDJPY", 150.0)
+    engine = MarketAwareAnalysisEngine(
+        market_data=market_data,
+        settings=Settings(account_currency="USD", risk_per_trade=0.01),
+    )
+    original_risk_engine = engine.analysis_engine.risk_engine
+    monkeypatch.setattr(
+        engine.analysis_engine,
+        "analyze",
+        lambda candles: AnalysisReport(score=100.0, signal="BUY", confidence=0.90),
+    )
+    monkeypatch.setattr(
+        "analysis.market_aware_engine.ATREngine.calculate",
+        lambda self, candles: type("ATRResult", (), {"atr": 1.0})(),
+    )
+
+    __import__("asyncio").run(
+        engine.analyze(_price_candles("USDJPY"), symbol="USDJPY", timeframe="1h")
+    )
+
+    assert engine.analysis_engine.risk_engine is original_risk_engine
 
 
 def test_market_aware_engine_fails_closed_when_atr_is_missing(
@@ -196,11 +217,7 @@ def test_market_aware_engine_fails_closed_without_account_currency(
     monkeypatch.setattr(
         engine.analysis_engine,
         "analyze",
-        lambda candles: AnalysisReport(
-            score=100.0,
-            signal="BUY",
-            confidence=0.90,
-        ),
+        lambda candles: AnalysisReport(score=100.0, signal="BUY", confidence=0.90),
     )
 
     report = __import__("asyncio").run(
@@ -227,11 +244,7 @@ def test_market_aware_engine_propagates_conversion_failure_fail_closed(
     monkeypatch.setattr(
         engine.analysis_engine,
         "analyze",
-        lambda candles: AnalysisReport(
-            score=100.0,
-            signal="BUY",
-            confidence=0.90,
-        ),
+        lambda candles: AnalysisReport(score=100.0, signal="BUY", confidence=0.90),
     )
 
     with pytest.raises(ValueError, match="Unable to resolve fresh currency conversion"):
