@@ -64,12 +64,26 @@ Regression commits:
 - `03cace1b483d1980c3db074bae1be240f487f53c`
 - `54dfaa6591b90ebf9e99906cf14a10c73a30ea37`
 
+## TASK-083 — Configured Risk Policy Ceiling for Dynamic Sizing
+
+- `RiskEngine` accepted a configured `risk_percent`, but when `calculate()` was called without an explicit per-call override, `_dynamic_risk_percent()` selected hard-coded values up to `2.0%` without considering the configured policy.
+- This meant a production configuration such as `risk_percent=0.25` could be silently exceeded by a high-confidence signal, creating a direct risk-budget bypass.
+- Dynamic sizing now treats configured `risk_percent` as the account-level ceiling: the confidence/score policy can select a lower percentage, but can never exceed the configured maximum.
+- An explicit `calculate(..., risk_percent=...)` override remains validated and authoritative for that call.
+- Regression coverage verifies symmetry, a restrictive configured ceiling, and behavior when the configured ceiling is above the dynamic candidate.
+
+Implementation commit:
+- `d9c427b7f44a56db2c4f6c98b37e249a6df8af82`
+
+Regression commit:
+- `cbc09a3fefa6b5d97d77119cb8196f1d21da7604`
+
 ## Verification
 
 Resulting `main` HEAD:
-- `54dfaa6591b90ebf9e99906cf14a10c73a30ea37`
+- `cbc09a3fefa6b5d97d77119cb8196f1d21da7604`
 
-GitHub Actions were triggered for this exact HEAD. No green/verified claim is made until the required gates complete.
+GitHub Actions are running for the latest exact HEAD. No green/verified claim is made until the required gates complete.
 
 ## Next Frontier
 
