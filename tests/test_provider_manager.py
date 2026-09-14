@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+from core.errors import ApplicationError
 from data.models import Candle
 from data.provider_manager import ProviderManager
 
@@ -112,8 +113,15 @@ async def test_manager_rejects_non_chronological_provider_output() -> None:
     candles = [make_candle(3), make_candle(1), make_candle(2)]
     provider = FakeProvider([candles])
     manager = ProviderManager(providers=[provider], retries=0, retry_delay=0)
-    with pytest.raises(Exception, match="non-chronological or duplicate"):
+
+    with pytest.raises(ApplicationError, match="All market data providers failed"):
         await manager.get_candles("EUR_USD", "M15", 10)
+
+    assert any(
+        failure.error_type == "ApplicationError"
+        and "non-chronological or duplicate" in failure.message
+        for failure in manager.last_failures
+    )
 
 
 @pytest.mark.asyncio
@@ -121,8 +129,15 @@ async def test_manager_rejects_duplicate_provider_timestamps() -> None:
     candles = [make_candle(1), make_candle(2), make_candle(2), make_candle(3)]
     provider = FakeProvider([candles])
     manager = ProviderManager(providers=[provider], retries=0, retry_delay=0)
-    with pytest.raises(Exception, match="non-chronological or duplicate"):
+
+    with pytest.raises(ApplicationError, match="All market data providers failed"):
         await manager.get_candles("EUR_USD", "M15", 10)
+
+    assert any(
+        failure.error_type == "ApplicationError"
+        and "non-chronological or duplicate" in failure.message
+        for failure in manager.last_failures
+    )
 
 
 @pytest.mark.asyncio
