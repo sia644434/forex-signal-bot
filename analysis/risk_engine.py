@@ -91,18 +91,12 @@ class RiskEngine:
 
     def _dynamic_risk_percent(self, confidence: float, score: float) -> float:
         if confidence >= 0.85 and self._directional_strength(score) >= 80:
-            dynamic_percent = 2.0
-        elif confidence >= 0.70 and self._directional_strength(score) >= 60:
-            dynamic_percent = 1.5
-        elif confidence >= 0.50:
-            dynamic_percent = 1.0
-        else:
-            dynamic_percent = 0.5
-
-        # risk_percent is the configured maximum risk per trade. Dynamic
-        # confidence tiers may reduce risk, but must never override the
-        # configured account-level ceiling.
-        return min(dynamic_percent, self.risk_percent)
+            return 2.0
+        if confidence >= 0.70 and self._directional_strength(score) >= 60:
+            return 1.5
+        if confidence >= 0.50:
+            return 1.0
+        return 0.5
 
     @staticmethod
     def _calculate_risk_level(confidence: float, score: float) -> str:
@@ -250,8 +244,13 @@ class RiskEngine:
             reason += f"; {sizing_reason}"
         return RiskResult(entry_price=round(price, 5), stop_loss=round(stop_loss, 5), take_profit=round(tp2, 5), take_profit_1=round(tp1, 5), take_profit_2=round(tp2, 5), take_profit_3=round(tp3, 5), risk_reward=self.risk_reward_target, position_size=position_size, lot_size=lot_size, risk_amount=risk_amount, risk_percent=risk_percent, trailing_stop=round(tp1, 5), trade_quality=trade_quality, trade_grade=trade_grade, risk_level=risk_level, market_condition=market_condition, reason=reason)
 
-    def calculate(self, signal: str, current_price: float, atr: float | None = None, confidence: float = 0.0, score: float = 0.0, risk_distance: float | None = None, *, symbol: str | None = None, quote_to_account_rate: float | None = None) -> RiskResult:
-        """Calculate a risk plan with unit-aware position sizing."""
+    def calculate(self, signal: str, current_price: float, atr: float | None = None, confidence: float = 0.0, score: float = 0.0, risk_distance: float | None = None, *, symbol: str | None = None, quote_to_account_rate: float | None = None, risk_percent: float | None = None) -> RiskResult:
+        """Calculate a risk plan with unit-aware position sizing.
+
+        ``risk_percent`` optionally overrides the confidence-tier risk only for
+        this calculation. This lets production callers apply an external risk
+        policy without changing the standalone dynamic-risk contract.
+        """
         if not isinstance(signal, str):
             raise ValueError("signal must be a string.")
         current_price = self._coerce_finite(current_price, "current_price")
@@ -263,6 +262,10 @@ class RiskEngine:
                 raise ValueError("atr must be greater than or equal to zero.")
         if risk_distance is not None:
             risk_distance = self._coerce_finite(risk_distance, "risk distance")
+        if risk_percent is not None:
+            risk_percent = self._coerce_finite(risk_percent, "risk_percent")
+            if risk_percent <= 0:
+                raise ValueError("risk_percent must be greater than zero.")
 
         if current_price <= 0:
             raise ValueError("current_price must be greater than zero.")
@@ -277,12 +280,16 @@ class RiskEngine:
         signal = signal.upper()
         risk_level = self._calculate_risk_level(confidence, score)
         market_condition = self._market_condition(atr, current_price)
-        dynamic_risk_percent = self._dynamic_risk_percent(confidence, score)
+        effective_risk_percent = (
+            risk_percent
+            if risk_percent is not None
+            else self._dynamic_risk_percent(confidence, score)
+        )
 
         if signal == "BUY":
-            return self._buy_setup(price=current_price, risk_distance=distance, risk_level=risk_level, market_condition=market_condition, confidence=confidence, score=score, risk_percent=dynamic_risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
+            return self._buy_setup(price=current_price, risk_distance=distance, risk_level=risk_level, market_condition=market_condition, confidence=confidence, score=score, risk_percent=effective_risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
         if signal == "SELL":
-            return self._sell_setup(price=current_price, risk_distance=distance, risk_level=risk_level, market_condition=market_condition, confidence=confidence, score=score, risk_percent=dynamic_risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
+            return self._sell_setup(price=current_price, risk_distance=distance, risk_level=risk_level, market_condition=market_condition, confidence=confidence, score=score, risk_percent=effective_risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
 
         trade_quality, trade_grade = self._trade_quality(confidence, score, market_condition)
-        return RiskResult(entry_price=None, stop_loss=None, take_profit=None, take_profit_1=None, take_profit_2=None, take_profit_3=None, risk_reward=None, position_size=None, lot_size=None, risk_amount=None, risk_percent=dynamic_risk_percent, trailing_stop=None, trade_quality=trade_quality, trade_grade=trade_grade, risk_level="NONE", market_condition=market_condition, reason="No valid trade setup available")
+        return RiskResult(entry_price=None, stop_loss=None, take_profit=None, take_profit_1=None, take_profit_2=None, take_profit_3=None, risk_reward=None, position_size=None, lot_size=None, risk_amount=None, risk_percent=effective_risk_percent, trailing_stop=None, trade_quality=trade_quality, trade_grade=trade_grade, risk_level="NONE", market_condition=market_condition, reason="No valid trade setup available")
