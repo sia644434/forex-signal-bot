@@ -34,7 +34,7 @@ def settings_keyboard(setting: str, language: str = "fa"):
         "settings_language": [(t(language, "persian"), "language_fa"), (t(language, "english"), "language_en")],
         "settings_analysis_mode": [("Manual", "mode_manual"), ("Smart", "mode_smart"), ("Hybrid", "mode_hybrid")],
         "settings_risk": [("Low", "risk_low"), ("Medium", "risk_medium"), ("High", "risk_high")],
-        "settings_market": [("EUR/USD", "market_EURUSD"), ("GBP/USD", "market_GBPUSD"), ("USD/JPY", "market_USDJPY"), ("XAU/USD", "market_XAUUSD")],
+        "settings_market": [("EUR/USD", "market_EURUSD"), ("GBP/USD", "market_GBPUSD"), ("USD/JPY", "market_USDJPY"), ("EUR/JPY", "market_EURJPY")],
         "settings_timeframe": [("M5", "timeframe_M5"), ("M15", "timeframe_M15"), ("H1", "timeframe_H1"), ("H4", "timeframe_H4")],
         "settings_notifications": [("🔔 On" if language == "en" else "🔔 فعال", "notifications_on"), ("🔕 Off" if language == "en" else "🔕 خاموش", "notifications_off")],
     }
