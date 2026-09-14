@@ -10,11 +10,18 @@ def test_directional_strength_is_symmetric_for_decision_scores():
 
 
 def test_dynamic_risk_percent_is_symmetric_for_extreme_scores():
-    engine = RiskEngine()
+    # Explicit 2% ceiling preserves the legacy dynamic tiers for callers that
+    # intentionally allow that maximum.
+    engine = RiskEngine(risk_percent=2.0)
     assert engine._dynamic_risk_percent(0.90, 100) == 2.0
     assert engine._dynamic_risk_percent(0.90, 0) == 2.0
     assert engine._dynamic_risk_percent(0.75, 90) == 1.5
     assert engine._dynamic_risk_percent(0.75, 10) == 1.5
+
+
+def test_configured_risk_percent_caps_dynamic_risk():
+    engine = RiskEngine(risk_percent=0.5)
+    assert engine._dynamic_risk_percent(0.90, 100) == 0.5
 
 
 def test_risk_level_is_symmetric_for_bullish_and_bearish_scores():
