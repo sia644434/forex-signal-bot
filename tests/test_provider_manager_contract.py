@@ -162,18 +162,17 @@ def test_manager_rejects_unknown_provider_name():
     assert exc_info.value.details["provider"] == "definitely-unknown-provider"
 
 
-def test_set_providers_replaces_active_priority_without_discarding_injected_instances():
+def test_set_providers_replaces_active_priority_and_prunes_removed_instances():
     first = FakeProvider("first", [candle(1)])
     second = FakeProvider("second", [candle(2)])
     manager = ProviderManager(providers=[first, second])
     manager.set_providers([second])
     assert manager.providers == ("second",)
-    assert manager.status()["injected_instances"] == ["first", "second"]
+    assert manager.status()["injected_instances"] == ["second"]
     manager.set_providers([first])
     assert manager.providers == ("first",)
-    assert manager.status()["injected_instances"] == ["first", "second"]
-    assert manager._get_provider("first") is first
-    assert manager._get_provider("second") is second
+    assert manager.status()["injected_instances"] == ["first"]
+    assert manager._get_provider("second") is not second
 
 
 def test_set_providers_replaces_injected_instance_when_same_provider_name_is_rebound():
