@@ -12,6 +12,18 @@ from services.market_data.service import get_market_data_service
 from core.errors import ApplicationError
 
 
+ALLOWED_CALLBACKS = {
+    "home", "analysis", "signals", "scanner", "coach", "journal", "journal_add",
+    "signal_track", "signal_untrack", "signal_new", "settings",
+    "settings_language", "settings_analysis_mode", "settings_risk", "settings_market",
+    "settings_timeframe", "settings_notifications", "analysis_quick", "analysis_full",
+    "language_fa", "language_en", "mode_manual", "mode_smart", "mode_hybrid",
+    "risk_low", "risk_medium", "risk_high", "notifications_on", "notifications_off",
+    "market_EURUSD", "market_GBPUSD", "market_USDJPY", "market_EURJPY",
+    "timeframe_M5", "timeframe_M15", "timeframe_H1", "timeframe_H4",
+}
+
+
 def main_menu_keyboard(language: str = "fa"):
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("📊 Smart Analysis" if language == "en" else "📊 تحلیل هوشمند", callback_data="analysis"), InlineKeyboardButton("📡 Live Signal" if language == "en" else "📡 سیگنال زنده", callback_data="signals")],
@@ -43,16 +55,30 @@ def settings_keyboard(setting: str, language: str = "fa"):
     return InlineKeyboardMarkup(buttons)
 
 
-def _apply_setting(state, data: str) -> str:
-    if data == "language_fa": state.language = "fa"; return "زبان فارسی"
-    if data == "language_en": state.language = "en"; return "English"
-    if data.startswith("market_"): state.settings["market_symbol"] = data.removeprefix("market_"); return f"Market {state.settings['market_symbol']}"
-    if data.startswith("timeframe_"): state.settings["timeframe"] = data.removeprefix("timeframe_"); return f"Timeframe {state.settings['timeframe']}"
-    if data.startswith("mode_"): state.settings["analysis_mode"] = data.removeprefix("mode_"); return f"Analysis mode {state.settings['analysis_mode']}"
-    if data.startswith("risk_"): state.settings["risk_level"] = data.removeprefix("risk_"); return f"Risk {state.settings['risk_level']}"
-    if data == "notifications_on": state.settings["notifications_enabled"] = True; return "Notifications enabled"
-    if data == "notifications_off": state.settings["notifications_enabled"] = False; return "Notifications disabled"
-    return "Settings saved"
+def _apply_setting(state, data: str) -> str | None:
+    """Apply only callback values emitted by the canonical settings keyboards."""
+    allowed = {
+        "language_fa": lambda: setattr(state, "language", "fa") or "زبان فارسی",
+        "language_en": lambda: setattr(state, "language", "en") or "English",
+        "market_EURUSD": lambda: state.settings.__setitem__("market_symbol", "EURUSD") or "Market EURUSD",
+        "market_GBPUSD": lambda: state.settings.__setitem__("market_symbol", "GBPUSD") or "Market GBPUSD",
+        "market_USDJPY": lambda: state.settings.__setitem__("market_symbol", "USDJPY") or "Market USDJPY",
+        "market_EURJPY": lambda: state.settings.__setitem__("market_symbol", "EURJPY") or "Market EURJPY",
+        "timeframe_M5": lambda: state.settings.__setitem__("timeframe", "M5") or "Timeframe M5",
+        "timeframe_M15": lambda: state.settings.__setitem__("timeframe", "M15") or "Timeframe M15",
+        "timeframe_H1": lambda: state.settings.__setitem__("timeframe", "H1") or "Timeframe H1",
+        "timeframe_H4": lambda: state.settings.__setitem__("timeframe", "H4") or "Timeframe H4",
+        "mode_manual": lambda: state.settings.__setitem__("analysis_mode", "manual") or "Analysis mode manual",
+        "mode_smart": lambda: state.settings.__setitem__("analysis_mode", "smart") or "Analysis mode smart",
+        "mode_hybrid": lambda: state.settings.__setitem__("analysis_mode", "hybrid") or "Analysis mode hybrid",
+        "risk_low": lambda: state.settings.__setitem__("risk_level", "low") or "Risk low",
+        "risk_medium": lambda: state.settings.__setitem__("risk_level", "medium") or "Risk medium",
+        "risk_high": lambda: state.settings.__setitem__("risk_level", "high") or "Risk high",
+        "notifications_on": lambda: state.settings.__setitem__("notifications_enabled", True) or "Notifications enabled",
+        "notifications_off": lambda: state.settings.__setitem__("notifications_enabled", False) or "Notifications disabled",
+    }
+    action = allowed.get(data)
+    return action() if action else None
 
 
 async def _run_signal_report(state, market_data):
@@ -75,7 +101,11 @@ async def menu_callback_handler(update: Update, context: ContextTypes.DEFAULT_TY
     query = update.callback_query
     if not query: return
     await query.answer()
-    data = query.data or "home"; user = update.effective_user; state = get_user_state(user.id) if user else None
+    data = query.data or "home"
+    if data not in ALLOWED_CALLBACKS:
+        await query.edit_message_text("❌ درخواست نامعتبر است." if update.effective_user and get_user_state(update.effective_user.id).language == "fa" else "❌ Invalid request.")
+        return
+    user = update.effective_user; state = get_user_state(user.id) if user else None
     language = state.language if state else "fa"
     if user: update_menu(user.id, data)
     if data == "home": await query.edit_message_text(t(language, "home"), reply_markup=main_menu_keyboard(language)); return
@@ -120,7 +150,8 @@ async def menu_callback_handler(update: Update, context: ContextTypes.DEFAULT_TY
             buttons = [[InlineKeyboardButton(t(language, "new_signal"), callback_data="signal_new")], [InlineKeyboardButton(t(language, "back"), callback_data="signals")]]
         else:
             lines = ["📈 <b>Tracked Signals</b>", ""]
-            for item in active: lines.append(f"• {item.symbol}/{item.timeframe} → <b>{item.last_signal}</b> | {item.status} | {item.last_price or '—'}")
+            for item in active:
+                lines.append(f"• {item.symbol}/{item.timeframe} → <b>{item.last_signal}</b> | {item.status} | {item.last_price or '—'}")
             text = "\n".join(lines); buttons = [[InlineKeyboardButton("⛔ Stop tracking" if language == "en" else "⛔ توقف پیگیری", callback_data="signal_untrack")], [InlineKeyboardButton("🔄 Refresh" if language == "en" else "🔄 بروزرسانی", callback_data="signal_track")], [InlineKeyboardButton(t(language, "back"), callback_data="signals")]]
         await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons)); return
     if data == "signal_untrack":
@@ -137,10 +168,11 @@ async def menu_callback_handler(update: Update, context: ContextTypes.DEFAULT_TY
     if data == "signal_new":
         from .signal import signal_handler
         await signal_handler(update, context); return
-    if state:
-        message = _apply_setting(state, data)
-        if data in {"language_fa", "language_en"}:
-            language = state.language
-            await query.edit_message_text(t(language, "home"), reply_markup=main_menu_keyboard(language)); return
-    else: message = t(language, "saved")
+    message = _apply_setting(state, data) if state else None
+    if message is None:
+        await query.edit_message_text("❌ درخواست تنظیمات نامعتبر است." if language == "fa" else "❌ Invalid settings request.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "settings_back"), callback_data="settings")]]))
+        return
+    if data in {"language_fa", "language_en"}:
+        language = state.language
+        await query.edit_message_text(t(language, "home"), reply_markup=main_menu_keyboard(language)); return
     await query.edit_message_text(f"✅ {message}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "settings_back"), callback_data="settings")]]))
