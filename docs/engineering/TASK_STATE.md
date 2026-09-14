@@ -103,10 +103,10 @@ Phase: Phase 3 — Worker / Queue / Recovery Reliability
 Title: Renewable Worker Queue Leases
 Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
 Evidence:
-- Concrete remaining lease gap: a legitimate long-running dispatcher claim could expire solely because `claimed_at` was never renewed while the worker was still executing.
+- A legitimate long-running dispatcher claim could expire because `claimed_at` was never renewed while the worker was still executing.
 - `WorkerQueue.renew_lease()` now refreshes only the matching `job_id + claim_token` pair.
 - `WorkerDispatcher` runs a bounded heartbeat (maximum 30 seconds, approximately one-third of the requested timeout) while the worker submission is in flight.
-- A failed heartbeat is fail-closed: it cannot overwrite a newer claim because terminal transitions remain token-fenced.
+- A failed heartbeat cannot overwrite a newer claim because terminal transitions remain token-fenced.
 - Regression coverage verifies lease renewal and rejection of a stale token after re-claim.
 
 ## TASK-098
@@ -114,9 +114,9 @@ Phase: Phase 3 — Worker / Runtime Reliability
 Title: Synchronous Worker Timeout Fencing
 Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
 Evidence:
-- Concrete runtime gap: `asyncio.wait_for(asyncio.to_thread(...))` cannot terminate the underlying OS thread. A timed-out synchronous handler could therefore continue executing after the runtime had forgotten it was active.
+- `asyncio.wait_for(asyncio.to_thread(...))` cannot terminate the underlying OS thread. A timed-out synchronous handler could therefore continue after the runtime had forgotten it was active.
 - Timed-out synchronous jobs now keep their underlying thread task tracked until it actually finishes.
-- A duplicate request with the same job ID returns `RUNNING` while the original thread is still in flight, then receives the cached completed result exactly once when it finishes.
+- A duplicate request with the same job ID returns `RUNNING` while the original thread is in flight, then receives the cached completed result exactly once when it finishes.
 - Regression coverage verifies no duplicate execution after a synchronous timeout.
 
 ## TASK-099
@@ -124,14 +124,25 @@ Phase: Phase 3 — Telegram / Startup Reliability
 Title: Preflight Background-Service Dependencies Before Runtime Start
 Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
 Evidence:
-- Concrete startup gap: tracker scheduling and updater availability were validated after `Application.start()`, allowing a dependency failure to leave a partially-started Telegram runtime.
-- Startup now validates the updater and schedules the durable tracker job before marking the application runtime as started.
+- Tracker scheduling and updater availability were previously validated after `Application.start()`, allowing partial startup on dependency failure.
+- Startup now validates the updater and schedules the durable tracker job before the runtime is marked started.
+
+## TASK-100
+Phase: Phase 3 — Market Data / Provider Reliability
+Title: Explicit Provider Symbol Capability Boundaries
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Evidence:
+- The multi-asset scanner includes Crypto, Stocks, Indices, and Commodities, while the currently registered Finnhub and Alpha Vantage implementations are explicitly Forex-only and OANDA has a narrower instrument map.
+- Before this change, ProviderManager attempted every configured provider for every symbol, turning known capability mismatches into generic provider failures and unnecessary retries/cooldowns.
+- Providers now expose `supports_symbol`; OANDA, Finnhub, and Alpha Vantage declare their real symbol boundaries, while duck-typed custom providers remain backward-compatible.
+- ProviderManager skips unsupported providers without making network requests and records an explicit `UnsupportedSymbol` diagnostic. This makes multi-asset capability gaps fail closed instead of looking like transient provider outages.
+- Regression coverage verifies capability-based provider skipping and diagnostics.
 
 ## Multi-Asset Architecture Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
 
 ## Current Audit Frontier
-Phase 3 remains active. TASK-090 is verified. TASK-091 through TASK-099 are implemented and pending exact-head CI verification. The current audit has covered durable Telegram state/tracking, callback identity, multi-asset scanning, queue lease fencing/renewal, synchronous worker timeout semantics, and Telegram startup preflight. The remaining concrete frontier is Telegram multi-asset settings, provider capability boundaries, queue/runtime shutdown and persistence recovery, production health, and final end-to-end lifecycle. Do not create a task merely to advance the roadmap; create the next task only after a concrete repository-backed gap is demonstrated.
+Phase 3 remains active. TASK-090 is verified. TASK-091 through TASK-100 are implemented and pending exact-head CI verification. The remaining concrete frontier is Telegram multi-asset settings consistency, queue/runtime shutdown and persistence recovery, production health, and final end-to-end lifecycle. Provider capability boundaries are now explicit. Do not create a task merely to advance the roadmap; create the next task only after a concrete repository-backed gap is demonstrated.
 
 ## New-chat Continuation Contract
 When a new chat starts work on this repository, first read:
