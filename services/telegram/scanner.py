@@ -5,6 +5,7 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 import html
 import logging
+import os
 from typing import Any
 
 from analysis.full_engine import FullAnalysisEngine
@@ -17,8 +18,13 @@ from .market_session import evaluate_market_status
 from .i18n import t
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_SCAN_SYMBOLS = ("EURUSD", "GBPUSD", "USDJPY", "EURJPY")
+DEFAULT_SCAN_SYMBOLS = (
+    "EURUSD", "GBPUSD", "USDJPY",
+    "BTCUSDT", "ETHUSDT",
+    "AAPL", "NVDA",
+    "SPX", "NDX",
+    "XAUUSD", "XAGUSD", "WTI",
+)
 DEFAULT_TIMEFRAME = "M15"
 DEFAULT_LIMIT = 300
 SCANNER_PROVIDER_MANAGER_KEY = "scanner_provider_manager"
@@ -43,6 +49,19 @@ class ScanResult:
 class ScanReadiness:
     configured_providers: tuple[str, ...]
     unavailable_providers: tuple[str, ...]
+
+
+def _configured_scan_symbols() -> tuple[str, ...]:
+    """Return a bounded, normalized scanner universe with an explicit env override."""
+    raw = os.getenv("TELEGRAM_SCANNER_SYMBOLS", "").strip()
+    if not raw:
+        return DEFAULT_SCAN_SYMBOLS
+    symbols = tuple(dict.fromkeys(item.strip().upper().replace("/", "") for item in raw.split(",") if item.strip()))
+    if not symbols:
+        raise ValueError("TELEGRAM_SCANNER_SYMBOLS must contain at least one symbol")
+    if len(symbols) > 20:
+        raise ValueError("TELEGRAM_SCANNER_SYMBOLS must contain at most 20 symbols")
+    return symbols
 
 
 def _provider_readiness() -> ScanReadiness:
@@ -87,12 +106,17 @@ def get_scanner_provider_manager(application: Any) -> ProviderManager:
 
 
 async def scan_market(
-    symbols=DEFAULT_SCAN_SYMBOLS,
+    symbols=None,
     timeframe=DEFAULT_TIMEFRAME,
     limit=DEFAULT_LIMIT,
     provider_manager: ProviderManager | None = None,
 ):
     provider_manager = provider_manager or _build_provider_manager()
+    scan_symbols = _configured_scan_symbols() if symbols is None else tuple(symbols)
+    if not scan_symbols:
+        raise ValueError("Scanner symbol universe cannot be empty")
+    if len(scan_symbols) > 20:
+        raise ValueError("Scanner symbol universe cannot exceed 20 symbols")
     market_data = MarketDataService(provider_manager=provider_manager)
     analyzer = FullAnalysisEngine()
 
@@ -128,7 +152,7 @@ async def scan_market(
             logger.exception("Market scan failed for %s/%s", symbol, timeframe)
             return ScanResult(symbol, "NO_TRADE", 0.0, 0.0, None, "UNKNOWN", "unknown", None, error="scan_failed")
 
-    return sorted(await asyncio.gather(*(scan_one(s) for s in symbols)), key=lambda x: (x.error is None, x.confidence, x.score), reverse=True)
+    return sorted(await asyncio.gather(*(scan_one(s) for s in scan_symbols)), key=lambda x: (x.error is None, x.confidence, x.score), reverse=True)
 
 
 def _status_text(status: str, language: str = "fa") -> str:
@@ -172,6 +196,6 @@ def format_scan(results, timeframe, language="fa"):
 
 
 __all__ = [
-    "ScanResult", "ScanReadiness", "scan_market", "format_scan",
-    "get_scanner_provider_manager", "DEFAULT_SCAN_SYMBOLS",
+    "ScanResult", "ScanReadiness", "scan_market",
+    "format_scan", "get_scanner_provider_manager", "DEFAULT_SCAN_SYMBOLS",
 ]
