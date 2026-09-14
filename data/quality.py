@@ -5,6 +5,7 @@ from datetime import timedelta
 import math
 from collections.abc import Sequence
 
+from config.symbols import normalize_symbol
 from data.models import Candle
 
 
@@ -40,7 +41,7 @@ class DataQuality:
 
     @staticmethod
     def _normalize_symbol(symbol: str) -> str:
-        return symbol.strip().upper().replace("_", "")
+        return normalize_symbol(symbol)
 
     @classmethod
     def _is_expected_market_closure_gap(
