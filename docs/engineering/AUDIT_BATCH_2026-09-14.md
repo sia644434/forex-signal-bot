@@ -1,6 +1,6 @@
 # Multi-Layer Production Audit Batch — 2026-09-14
 
-This document records the concrete repository-backed fixes applied during the cross-layer audit. Verification remains pending until the required GitHub Actions gates for the resulting `main` HEAD finish.
+This document records the concrete repository-backed fixes applied during the cross-layer audit. Verification is tied to the exact resulting `main` HEAD and must not be inferred from implementation success alone.
 
 ## TASK-079 — Stablecoin Currency Boundary Consistency
 
@@ -26,9 +26,9 @@ Regression commits:
 - RiskEngine previously defaulted to Forex contract size `100000` even when called directly with a non-Forex symbol and no explicit contract size.
 - This could produce materially incorrect crypto/stock/index/commodity sizing outside the MarketAware path.
 - `RiskEngine.contract_size` is now optional. When omitted, it derives contract size from centralized instrument metadata.
-- Forex therefore retains `100000`, while the current spot-like non-Forex universe uses its explicit metadata default of `1.0`.
+- Forex retains `100000`, while the current spot-like non-Forex universe uses its explicit metadata default of `1.0`.
 - An explicitly supplied contract size remains authoritative for broker/provider-specific overrides.
-- Regression coverage verifies BTCUSDT sizing uses the asset-derived unit and that USDT→USD conversion can be supplied explicitly.
+- Regression coverage verifies BTCUSDT sizing uses the asset-derived unit and USDT→USD conversion can be supplied explicitly.
 
 Implementation commit:
 - `6f4e28a36338810a4ecb97bbe6b0bb08e9df0e92`
@@ -39,7 +39,7 @@ Regression commit:
 ## TASK-081 — Central Symbol Normalization at Data-Quality Boundary
 
 - DataQuality used a local normalization implementation that removed `_` only.
-- The canonical symbol layer already supports `/`, `_`, and `-` forms, so equivalent symbols could disagree at the data-quality boundary.
+- The canonical symbol layer already supports `/`, `_`, and `-`, so equivalent symbols could disagree at the data-quality boundary.
 - DataQuality now delegates symbol normalization to `config.symbols.normalize_symbol()`.
 - Regression coverage verifies `eur/usd` and `EUR_USD` are treated as the same symbol.
 
@@ -66,11 +66,11 @@ Regression commits:
 
 ## TASK-083 — Configured Risk Policy Ceiling for Dynamic Sizing
 
-- `RiskEngine` accepted a configured `risk_percent`, but when `calculate()` was called without an explicit per-call override, `_dynamic_risk_percent()` selected hard-coded values up to `2.0%` without considering the configured policy.
-- This meant a production configuration such as `risk_percent=0.25` could be silently exceeded by a high-confidence signal, creating a direct risk-budget bypass.
-- Dynamic sizing now treats configured `risk_percent` as the account-level ceiling: the confidence/score policy can select a lower percentage, but can never exceed the configured maximum.
+- `RiskEngine` accepted a configured `risk_percent`, but `_dynamic_risk_percent()` selected hard-coded candidates up to `2.0%` without considering the configured policy.
+- A production configuration such as `risk_percent=0.25` could therefore be silently exceeded by a high-confidence/high-strength signal, creating a direct risk-budget bypass.
+- Dynamic sizing now treats configured `risk_percent` as the account-level ceiling: confidence/score heuristics may select a lower percentage but can never silently exceed the configured maximum.
 - An explicit `calculate(..., risk_percent=...)` override remains validated and authoritative for that call.
-- Regression coverage verifies symmetry, a restrictive configured ceiling, and behavior when the configured ceiling is above the dynamic candidate.
+- Regression coverage verifies restrictive and non-restrictive ceilings and symmetric directional scoring.
 
 Implementation commit:
 - `d9c427b7f44a56db2c4f6c98b37e249a6df8af82`
@@ -78,17 +78,34 @@ Implementation commit:
 Regression commit:
 - `cbc09a3fefa6b5d97d77119cb8196f1d21da7604`
 
-## Verification
+## ProviderManager CI Regression Synchronization
 
-Resulting `main` HEAD:
-- `cbc09a3fefa6b5d97d77119cb8196f1d21da7604`
+- The CI suite exposed a stale regression expectation for `set_providers()` after TASK-082 intentionally changed lifecycle semantics from merge/update to replacement.
+- The regression test was synchronized with the new contract: removed injected providers must disappear from the active registry and cannot remain reachable through stale injection state.
+- This is a test-contract correction, not a relaxation of the lifecycle safety behavior.
 
-GitHub Actions are running for the latest exact HEAD. No green/verified claim is made until the required gates complete.
+## Verification State
+
+- The latest audit implementation and documentation checkpoints are present on `main`.
+- Required GitHub Actions verification must always be evaluated against the exact final `main` HEAD after documentation synchronization.
+- Until all required gates complete successfully, the latest audit batch remains `VERIFICATION PENDING`.
+- Existing historical Railway/live verification remains valid only for the previously verified deployment checkpoint and must not be conflated with the current audit batch.
 
 ## Next Frontier
 
-After verification, continue with the remaining cross-layer audit:
+Continue the remaining cross-layer audit in this order:
 
 `ProviderManager → MarketDataService → Freshness/DataQuality → Symbol/Asset Metadata → CurrencyConversion → MarketAwareAnalysisEngine → RiskEngine → PositionSizing → Telegram/Scanner/Tracker/Callbacks → Worker/Queue/Persistence → Security/Production → Final E2E`
 
-Prioritize unit/contract semantics, conversion freshness/direction, provider concurrency isolation, and end-to-end consistency before adding speculative features.
+Priorities:
+- freshness/staleness propagation and fail-closed behavior
+- provider retry/cooldown overflow and concurrency boundaries
+- market-specific session/closure semantics
+- symbol/asset metadata consistency
+- conversion rate direction, freshness, and unavailable-data handling
+- quantity/contract/lot semantics and precision/rounding
+- account risk-budget preservation end-to-end
+- Telegram and worker lifecycle/recovery contracts
+- security and production hardening
+
+Do not create a new task until a concrete repository-backed gap is demonstrated.
