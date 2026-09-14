@@ -19,15 +19,7 @@ class FakeProvider:
 
 
 def candle(minute: int, close: float = 1.1005) -> Candle:
-    return Candle(
-        symbol="EURUSD",
-        timestamp=datetime(2026, 1, 1, 0, minute, tzinfo=timezone.utc),
-        open=1.1000,
-        high=1.1010,
-        low=1.0990,
-        close=close,
-        volume=100.0,
-    )
+    return Candle(symbol="EURUSD", timestamp=datetime(2026, 1, 1, 0, minute, tzinfo=timezone.utc), open=1.1000, high=1.1010, low=1.0990, close=close, volume=100.0)
 
 
 @pytest.mark.asyncio
@@ -142,11 +134,7 @@ def test_manager_rejects_non_finite_provider_timing_configuration(field, value):
 
 
 def test_manager_accepts_zero_provider_timing_configuration():
-    manager = ProviderManager(
-        providers=[FakeProvider("first", [candle(1)])],
-        retry_delay=0,
-        cooldown_seconds=0,
-    )
+    manager = ProviderManager(providers=[FakeProvider("first", [candle(1)])], retry_delay=0, cooldown_seconds=0)
     assert manager.retry_delay == 0.0
     assert manager.cooldown_seconds == 0.0
 
@@ -202,3 +190,17 @@ def test_set_providers_replaces_injected_instance_when_same_provider_name_is_reb
     assert manager.providers == ("first",)
     assert manager.status()["injected_instances"] == ["first"]
     assert manager._get_provider("first") is replacement
+
+
+@pytest.mark.asyncio
+async def test_manager_skips_provider_when_declared_symbol_capability_does_not_match():
+    unsupported = FakeProvider("unsupported", [candle(1)])
+    unsupported.supports_symbol = lambda _symbol: False
+    fallback = FakeProvider("fallback", [candle(2)])
+    manager = ProviderManager(providers=[unsupported, fallback], retries=0, retry_delay=0, cooldown_seconds=0)
+    result = await manager.get_candles("EURUSD", "15m", limit=1)
+    assert result == [candle(2)]
+    unsupported.get_candles.assert_not_awaited()
+    fallback.get_candles.assert_awaited_once()
+    assert manager.last_failures[0].error_type == "UnsupportedSymbol"
+    assert manager.last_failures[0].attempt == 0
