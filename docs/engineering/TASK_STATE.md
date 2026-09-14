@@ -115,6 +115,20 @@ Evidence:
 - Regression commits: `a10de135f2d9d4fd1a3c387e4b167525f5733832` and `fa77800d52d22578914630235a1d3cec777ff48f`.
 - Verification is pending on the resulting head; no green claim is made until the required gates finish.
 
+## TASK-075
+Phase: Phase 7 — Worker / Queue / Persistence Reliability
+Title: Targeted Queue Claims and Cancellation Recovery
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- `WorkerDispatcher.submit()` enqueued a request and then called `claim_next()`. Under concurrent submissions, the scheduler could allow another request to claim the highest-priority pending job, causing the original caller to return `PENDING` for work it had already submitted and creating a dispatch race around priority ordering.
+- The durable queue now exposes an atomic targeted `claim(job_id)` operation while preserving `claim_next()` for generic consumers.
+- Dispatcher submission now claims the exact request it enqueued, eliminating cross-request claim stealing.
+- Dispatcher cancellation now transitions the claimed durable job to `CANCELLED` instead of re-raising `CancelledError` while leaving the SQLite record `RUNNING` until later crash recovery.
+- Regression coverage verifies targeted claim semantics, concurrent dispatches completing their own jobs, and cancellation not stranding a running queue record.
+- Implementation commits: `64f833d72903d1142273ec6db034ee1946e715e3` and `cc068e5d5fbab53175c67c25682bcf2e8863a286`.
+- Regression commits: `04d870ed8bac9e198427516c474c609b5a46e5d8` and `2e20055af86a31160a323a9656bb49b26fa3146a`.
+- Verification is pending on the resulting head; no green claim is made until the required gates finish.
+
 ## Multi-Asset Architecture Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
 
@@ -157,7 +171,7 @@ Then:
 1. Determine the exact current `main` HEAD.
 2. Inspect GitHub Actions for that exact HEAD.
 3. Resolve every pending or failed verification before moving deeper.
-4. Do not repeat TASK-058 through TASK-074 unless verification evidence is missing or contradicted.
+4. Do not repeat TASK-058 through TASK-075 unless verification evidence is missing or contradicted.
 5. Continue from the first unresolved audit frontier recorded above.
 6. Inspect more architecture than the previous step and only implement concrete repository-backed gaps.
 7. Add focused regression coverage for every confirmed defect.
