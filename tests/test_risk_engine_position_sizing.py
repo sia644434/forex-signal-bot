@@ -108,6 +108,6 @@ def test_risk_engine_applies_explicit_jpy_to_usd_conversion_without_risk_overrun
 
     assert result.position_size == 900.0
     assert result.lot_size == 0.009
-    assert result.position_size == result.lot_size * 100000
+    assert result.position_size == pytest.approx(result.lot_size * 100000)
     assert result.risk_amount == 10.0
     assert "Position sizing unavailable" not in result.reason
