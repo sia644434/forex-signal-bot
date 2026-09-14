@@ -123,6 +123,14 @@ def test_settings_reject_non_finite_risk_and_balance(monkeypatch):
         Settings.load()
 
 
+def test_settings_accept_stablecoin_account_currency(monkeypatch):
+    monkeypatch.setenv("ACCOUNT_CURRENCY", "usdt")
+
+    settings = Settings.load()
+
+    assert settings.account_currency == "USDT"
+
+
 def test_settings_reject_invalid_account_currency(monkeypatch):
     monkeypatch.setenv("ACCOUNT_CURRENCY", "12$")
 
