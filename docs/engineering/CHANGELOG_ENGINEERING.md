@@ -1,5 +1,12 @@
 # Engineering Changelog
 
+## 2026-09-15 — Provider capability boundary hardening
+- TASK-100 identified a concrete multi-asset reliability gap: the scanner's multi-asset universe includes Crypto, Stocks, Indices, and Commodities, but the registered Finnhub and Alpha Vantage providers are Forex-only and OANDA has a narrower instrument map. ProviderManager previously attempted every configured provider for every symbol, turning known capability mismatches into generic failures/retries/cooldowns.
+- Added explicit `supports_symbol()` provider capability boundaries. OANDA now exposes its actual instrument acceptance; Finnhub and Alpha Vantage explicitly declare Forex-only coverage.
+- ProviderManager now skips unsupported providers without issuing network requests and records an `UnsupportedSymbol` diagnostic. Duck-typed custom providers remain backward-compatible when they do not expose the optional capability method.
+- Added regression coverage for capability-based provider skipping.
+- TASK-100 remains pending exact-head CI verification.
+
 ## 2026-09-15 — Cross-layer Worker/Queue/Telegram reliability hardening
 - TASK-096 identified a concrete recovery race in the durable WorkerQueue: an expired `RUNNING` job could be recovered to `PENDING`, re-claimed by a new execution, and then have the original stale worker overwrite the newer terminal state. Added per-claim `claim_token` fencing and regression coverage.
 - TASK-097 found the complementary lease-expiry gap: legitimate long-running jobs had no heartbeat, so `claimed_at` could expire while the worker was still executing. Added token-scoped `renew_lease()` and a bounded dispatcher heartbeat.
