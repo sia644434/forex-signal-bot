@@ -1,7 +1,7 @@
 # Test State
 
 ## Current Verification State
-- Latest engineering HEAD at the time of this update is `088394bb1923b2939598f333f19d20d10a129ccb`.
+- The exact verification target is always the current `main` branch HEAD; no self-referential SHA is stored here.
 - Fresh exact-head CI verification has not completed for the latest audit commits. No seven-workflow green result is claimed for the current HEAD.
 - No local execution is claimed; repository verification is performed through GitHub Actions/connector evidence only.
 - TASK-091 through TASK-100 remain pending exact-head verification unless explicitly promoted by fresh evidence on the exact current HEAD.
