@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from analysis.currency import get_forex_currency_pair
+from analysis.currency import get_quote_currency
 from analysis.position_sizing import calculate_position_size
 
 
@@ -111,8 +111,16 @@ class RiskEngine:
         if not symbol:
             return None, None, None, "market symbol is required for position sizing"
         try:
-            pair = get_forex_currency_pair(symbol)
-            result = calculate_position_size(account_balance=self.account_balance, risk_percent=dynamic_risk_percent, risk_distance_quote=risk_distance, contract_size=self.contract_size, account_currency=self.account_currency, quote_currency=pair.quote_currency, quote_to_account_rate=quote_to_account_rate)
+            quote_currency = get_quote_currency(symbol)
+            result = calculate_position_size(
+                account_balance=self.account_balance,
+                risk_percent=dynamic_risk_percent,
+                risk_distance_quote=risk_distance,
+                contract_size=self.contract_size,
+                account_currency=self.account_currency,
+                quote_currency=quote_currency,
+                quote_to_account_rate=quote_to_account_rate,
+            )
         except ValueError as error:
             return None, None, None, str(error)
         return result.position_size, result.lot_size, result.risk_amount_account, None
