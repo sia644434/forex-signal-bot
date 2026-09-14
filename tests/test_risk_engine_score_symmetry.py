@@ -11,10 +11,22 @@ def test_directional_strength_is_symmetric_for_decision_scores():
 
 def test_dynamic_risk_percent_is_symmetric_for_extreme_scores():
     engine = RiskEngine()
-    assert engine._dynamic_risk_percent(0.90, 100) == 2.0
-    assert engine._dynamic_risk_percent(0.90, 0) == 2.0
-    assert engine._dynamic_risk_percent(0.75, 90) == 1.5
-    assert engine._dynamic_risk_percent(0.75, 10) == 1.5
+    assert engine._dynamic_risk_percent(0.90, 100) == 1.0
+    assert engine._dynamic_risk_percent(0.90, 0) == 1.0
+    assert engine._dynamic_risk_percent(0.75, 90) == 1.0
+    assert engine._dynamic_risk_percent(0.75, 10) == 1.0
+
+
+def test_dynamic_risk_percent_cannot_exceed_configured_risk_policy():
+    engine = RiskEngine(risk_percent=0.25)
+    assert engine._dynamic_risk_percent(0.95, 100) == 0.25
+    assert engine._dynamic_risk_percent(0.60, 75) == 0.25
+
+
+def test_dynamic_risk_percent_can_use_configured_policy_when_it_is_above_candidate():
+    engine = RiskEngine(risk_percent=2.0)
+    assert engine._dynamic_risk_percent(0.95, 100) == 2.0
+    assert engine._dynamic_risk_percent(0.60, 75) == 1.0
 
 
 def test_calculate_accepts_explicit_risk_policy_override():
