@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Final
 from core.errors import ApplicationError
 from core.logger import setup_logger
+from config.symbols import get_market_type
 from data.base import MarketDataProvider
 from data.models import Candle
 from data.providers.clients.finnhub import FinnhubClient
@@ -20,6 +21,12 @@ class FinnhubProvider(MarketDataProvider):
 
     def is_configured(self) -> bool:
         return self.client.is_configured()
+
+    def supports_symbol(self, symbol: str) -> bool:
+        try:
+            return get_market_type(symbol) == "forex"
+        except (TypeError, ValueError):
+            return False
 
     @classmethod
     def _normalize_timeframe(cls, timeframe: str) -> str:
@@ -73,7 +80,6 @@ class FinnhubProvider(MarketDataProvider):
         resolution = self._validate_timeframe(timeframe)
         start, end = self._calculate_time_range(resolution, limit)
         try:
-            # The client owns the provider-specific OANDA:EUR_USD representation.
             response = await self.client.get_candles(canonical_symbol, resolution, start, end)
         except Exception as error:
             raise ApplicationError("Failed to fetch Finnhub forex candles.", {"provider":self.name,"symbol":canonical_symbol,"timeframe":resolution,"limit":limit}) from error
