@@ -32,6 +32,14 @@ def test_quality_accepts_clean_series() -> None:
     assert report.duplicate_timestamps == 0
 
 
+def test_quality_uses_central_symbol_normalization_for_expected_symbol() -> None:
+    report = DataQuality.inspect(
+        [candle(0, symbol="EUR_USD")],
+        expected_symbol="eur/usd",
+    )
+    assert report.valid
+
+
 def test_quality_detects_duplicate_timestamp() -> None:
     candles = [candle(0), candle(1), candle(1)]
     report = DataQuality.inspect(candles)
