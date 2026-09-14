@@ -82,6 +82,19 @@ def _apply_setting(state, data: str) -> str | None:
     return action() if action else None
 
 
+def _tracking_callback(symbol: str, timeframe: str) -> str:
+    return f"signal_untrack:{symbol}:{timeframe}"
+
+
+def _parse_tracking_callback(data: str) -> tuple[str, str] | None:
+    if not data.startswith("signal_untrack:"):
+        return None
+    parts = data.split(":")
+    if len(parts) != 3 or not parts[1] or not parts[2]:
+        return None
+    return parts[1], parts[2]
+
+
 async def _run_signal_report(state, market_data):
     symbol = state.settings.get("market_symbol", "EURUSD"); timeframe = state.settings.get("timeframe", "M15")
     candles = await market_data.get_candles_list(symbol, timeframe, 300)
@@ -103,7 +116,7 @@ async def menu_callback_handler(update: Update, context: ContextTypes.DEFAULT_TY
     if not query: return
     await query.answer()
     data = query.data or "home"
-    if data not in ALLOWED_CALLBACKS:
+    if data not in ALLOWED_CALLBACKS and not data.startswith("signal_untrack:"):
         await query.edit_message_text("❌ درخواست نامعتبر است." if update.effective_user and get_user_state(update.effective_user.id).language == "fa" else "❌ Invalid request.")
         return
     user = update.effective_user; state = get_user_state(user.id) if user else None
@@ -151,15 +164,34 @@ async def menu_callback_handler(update: Update, context: ContextTypes.DEFAULT_TY
             buttons = [[InlineKeyboardButton(t(language, "new_signal"), callback_data="signal_new")], [InlineKeyboardButton(t(language, "back"), callback_data="signals")]]
         else:
             lines = ["📈 <b>Tracked Signals</b>", ""]
+            buttons = []
             for item in active:
                 lines.append(f"• {escape(str(item.symbol), quote=False)}/{escape(str(item.timeframe), quote=False)} → <b>{escape(str(item.last_signal), quote=False)}</b> | {escape(str(item.status), quote=False)} | {escape(str(item.last_price) if item.last_price is not None else '—', quote=False)}")
-            text = "\n".join(lines); buttons = [[InlineKeyboardButton("⛔ Stop tracking" if language == "en" else "⛔ توقف پیگیری", callback_data="signal_untrack")], [InlineKeyboardButton("🔄 Refresh" if language == "en" else "🔄 بروزرسانی", callback_data="signal_track")], [InlineKeyboardButton(t(language, "back"), callback_data="signals")]]
+                buttons.append([InlineKeyboardButton(("⛔ Stop " if language == "en" else "⛔ توقف ") + f"{item.symbol}/{item.timeframe}", callback_data=_tracking_callback(item.symbol, item.timeframe))])
+            buttons.extend([[InlineKeyboardButton("🔄 Refresh" if language == "en" else "🔄 بروزرسانی", callback_data="signal_track")], [InlineKeyboardButton(t(language, "back"), callback_data="signals")]])
+            text = "\n".join(lines)
         await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons)); return
     if data == "signal_untrack":
+        # Legacy callback: only stop the currently selected track if it actually exists.
         if user and state:
-            removed = stop_tracking(user.id, state.settings.get("market_symbol", "EURUSD"), state.settings.get("timeframe", "M15"))
+            symbol = state.settings.get("market_symbol", "EURUSD")
+            timeframe = state.settings.get("timeframe", "M15")
+            removed = stop_tracking(user.id, symbol, timeframe)
             text = ("⛔ Tracking stopped." if removed else "ℹ️ No active tracking found.") if language == "en" else ("⛔ پیگیری متوقف شد." if removed else "ℹ️ سیگنال فعالی پیدا نشد.")
             await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "back"), callback_data="signals")]]))
+        return
+    parsed_tracking = _parse_tracking_callback(data)
+    if parsed_tracking is not None:
+        if not user:
+            return
+        symbol, timeframe = parsed_tracking
+        owned = {(item.symbol, item.timeframe) for item in list_tracking(user.id)}
+        if (symbol, timeframe) not in owned:
+            await query.edit_message_text("❌ درخواست پیگیری نامعتبر است." if language == "fa" else "❌ Invalid tracking request.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "back"), callback_data="signals")]]))
+            return
+        removed = stop_tracking(user.id, symbol, timeframe)
+        text = ("⛔ Tracking stopped." if removed else "ℹ️ No active tracking found.") if language == "en" else ("⛔ پیگیری متوقف شد." if removed else "ℹ️ سیگنال فعالی پیدا نشد.")
+        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "back"), callback_data="signals")]]))
         return
     if data.startswith("settings_"):
         await query.edit_message_text(t(language, "settings"), reply_markup=settings_keyboard(data, language)); return
