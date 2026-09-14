@@ -46,8 +46,9 @@ def test_non_usd_quote_applies_explicit_conversion_rate():
 
     assert result.risk_amount_account == 10.0
     assert result.risk_per_unit_account == 0.0013
-    assert result.position_size == pytest.approx(7692.3077)
+    assert result.position_size == pytest.approx(7600.0)
     assert result.lot_size == pytest.approx(0.076)
+    assert result.position_size == pytest.approx(result.lot_size * 100000)
 
 
 def test_lot_precision_floors_instead_of_rounding_up_into_higher_risk():
@@ -61,9 +62,15 @@ def test_lot_precision_floors_instead_of_rounding_up_into_higher_risk():
         quote_to_account_rate=0.00649,
     )
 
-    raw_lot_size = result.position_size / 100000
+    raw_position_size = 10.0 / (0.20 * 0.00649)
+    raw_lot_size = raw_position_size / 100000
     assert result.lot_size == pytest.approx(0.077)
+    assert result.position_size == pytest.approx(7700.0)
     assert result.lot_size <= raw_lot_size
+    assert result.position_size == pytest.approx(result.lot_size * 100000)
+
+    executable_risk = result.position_size * 0.20 * 0.00649
+    assert executable_risk <= result.risk_amount_account
 
 
 def test_lot_below_supported_precision_fails_closed():
