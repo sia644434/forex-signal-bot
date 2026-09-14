@@ -43,8 +43,10 @@ async def test_identity_conversion_is_exact_without_market_request() -> None:
     result = await service.get_conversion(source_currency="usd", target_currency="USD")
 
     assert result.rate == 1.0
-    assert result.pair_symbol == "USDUSD"
+    assert result.pair_symbol == ""
     assert result.inverted is False
+    assert result.source_currency == "USD"
+    assert result.target_currency == "USD"
     assert engine.requests == []
 
 
@@ -84,13 +86,28 @@ async def test_missing_market_data_fails_closed() -> None:
 
 
 @pytest.mark.asyncio
-async def test_invalid_market_price_fails_closed() -> None:
-    invalid_candle = SimpleNamespace(close=0.0, timestamp=datetime(2026, 9, 13, 20, 0, tzinfo=timezone.utc))
+@pytest.mark.parametrize("invalid_price", [0.0, -1.0, float("nan"), float("inf"), float("-inf")])
+async def test_non_finite_or_nonpositive_market_price_fails_closed(invalid_price: float) -> None:
+    invalid_candle = SimpleNamespace(
+        close=invalid_price,
+        timestamp=datetime(2026, 9, 13, 20, 0, tzinfo=timezone.utc),
+    )
     engine = FakeMarketDataEngine([invalid_candle])
     service = CurrencyConversionService(MarketDataService(engine=engine))
 
     with pytest.raises(ValueError, match="Unable to resolve fresh currency conversion JPY->USD"):
         await service.get_conversion(source_currency="JPY", target_currency="USD")
+
+
+@pytest.mark.asyncio
+async def test_provider_exception_fails_closed() -> None:
+    engine = FakeMarketDataEngine(error=RuntimeError("provider unavailable"))
+    service = CurrencyConversionService(MarketDataService(engine=engine))
+
+    with pytest.raises(ValueError, match="Unable to resolve fresh currency conversion JPY->USD"):
+        await service.get_conversion(source_currency="JPY", target_currency="USD")
+
+    assert engine.requests == [("USDJPY", "1m", 1)]
 
 
 @pytest.mark.asyncio
