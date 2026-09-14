@@ -156,6 +156,19 @@ Evidence:
 - Regression test commit: `c3d885443271ab6c9b9066cfc1757ff3960cfe40`.
 - Verification is pending on the resulting head; no green claim is made until the required gates finish.
 
+## TASK-078
+Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
+Title: Market-Aware Risk State Isolation
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- `MarketAwareAnalysisEngine.analyze()` previously replaced the shared `FullAnalysisEngine.risk_engine` instance on every tradable analysis.
+- A long-lived MarketAwareAnalysisEngine can be reused by Telegram/scanner/worker paths, so mutating that shared field creates cross-request state coupling and a race hazard when analyses overlap.
+- RiskEngine is now created as a local per-analysis dependency and is used directly for the calculation, leaving the shared FullAnalysisEngine risk component untouched.
+- Regression coverage verifies the shared risk-engine reference is not mutated by market-aware analysis.
+- Implementation commit: `355ecc083c62e525af687e9478e469b66b27bb84`.
+- Regression test commit: `137990c2337ed2015ab349e1d871a78d338fec36`.
+- Verification is pending on the resulting head; no green claim is made until the required gates finish.
+
 ## Multi-Asset Architecture Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
 
@@ -198,7 +211,7 @@ Then:
 1. Determine the exact current `main` HEAD.
 2. Inspect GitHub Actions for that exact HEAD.
 3. Resolve every pending or failed verification before moving deeper.
-4. Do not repeat TASK-058 through TASK-077 unless verification evidence is missing or contradicted.
+4. Do not repeat TASK-058 through TASK-078 unless verification evidence is missing or contradicted.
 5. Continue from the first unresolved audit frontier recorded above.
 6. Inspect more architecture than the previous step and only implement concrete repository-backed gaps.
 7. Add focused regression coverage for every confirmed defect.
