@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import math
 
 import pytest
 
@@ -67,3 +68,13 @@ def test_market_aware_engine_normalizes_symbol_and_timeframe() -> None:
 
     assert report.symbol == "EURUSD"
     assert report.timeframe == "1H"
+
+
+def test_market_aware_current_price_supports_legacy_price_list() -> None:
+    assert MarketAwareAnalysisEngine._current_price([1.1, 1.2]) == pytest.approx(1.2)
+
+
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf, 0.0, -1.0, "bad"])
+def test_market_aware_current_price_rejects_invalid_price(value) -> None:
+    with pytest.raises(ValueError, match="latest candle price"):
+        MarketAwareAnalysisEngine._current_price([value])
