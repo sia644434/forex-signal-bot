@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Work: TASK-064 is verified; continue the evidence-backed analysis/reliability audit and create a new task only when a concrete repository-backed gap is demonstrated.
+Active Work: TASK-065/TASK-066 numeric-contract audit and verification; next frontier is RiskEngine → PositionSizing → CurrencyConversion unit/contract integrity.
 Objective: Complete only architecture work that directly supports the Forex platform and its heavy Forex processing path.
 
 ### Completed Evidence
@@ -49,12 +49,10 @@ Objective: Complete only architecture work that directly supports the Forex plat
 - TASK-064 fixed DecisionEngine Supply/Demand consumption so it reads the explicit `supply_demand_score` contract rather than `trend_score`; regression coverage and production verification passed.
 
 ### Current Audit
-- TASK-061 is VERIFIED.
-- TASK-062 is VERIFIED.
-- TASK-063 is VERIFIED.
-- TASK-064 is VERIFIED.
-- Continue the evidence-backed analysis/reliability audit.
-- No new task is created unless a concrete repository-backed correctness, reliability, security, observability, deployment, or recovery gap is demonstrated.
+- TASK-058 through TASK-064 remain VERIFIED.
+- TASK-065/TASK-066 numeric hardening implementation and regression coverage are present; final GitHub Actions verification is pending at the time of this state synchronization.
+- The next evidence-backed audit frontier is `RiskEngine → PositionSizing → CurrencyConversion`, specifically unit preservation and finite/positive contracts for account currency, quote currency, conversion rate, risk amount, risk-per-unit, lot size, and executable position size.
+- Do not invent a task merely to advance the roadmap. Create the next task only after a concrete repository-backed gap is demonstrated.
 
 ## Phase 3 — Telegram Bot
 Status: PARTIALLY_COMPLETE
@@ -84,7 +82,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Existing CI and production verification gates are green for verified implementation heads. Reliability regression coverage is added only when a concrete Phase 2 defect is confirmed.
+Evidence: Existing CI and production verification gates are green for verified implementation heads. Current audit commits must finish their GitHub Actions runs before being marked VERIFIED.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
