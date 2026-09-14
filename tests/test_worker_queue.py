@@ -237,3 +237,33 @@ def test_stale_worker_cannot_complete_recovered_job():
     assert fresh_result.status == "COMPLETED"
     assert fresh_result.result == {"fresh": True}
     queue.close()
+
+
+def test_active_claim_can_be_renewed_without_changing_lease_identity():
+    queue = WorkerQueue()
+    queue.enqueue(JobRequest("renew", "backtest", timeout_seconds=10))
+    claimed = queue.claim("renew")
+    assert claimed is not None and claimed.claim_token
+    before = claimed.claimed_at
+    renewed = queue.renew_lease("renew", claimed.claim_token)
+    assert renewed.status == "RUNNING"
+    assert renewed.claim_token == claimed.claim_token
+    assert renewed.claimed_at is not None
+    assert before is not None
+    assert renewed.claimed_at >= before
+    queue.close()
+
+
+def test_stale_claim_cannot_renew_recovered_job():
+    queue = WorkerQueue()
+    queue.enqueue(JobRequest("renew-stale", "backtest", timeout_seconds=1))
+    first = queue.claim("renew-stale")
+    assert first is not None and first.claim_token
+    queue._connection.execute("UPDATE worker_jobs SET claimed_at = ? WHERE job_id = ?", (time.time() - 10, "renew-stale"))
+    queue._connection.commit()
+    queue.recover_expired_running(grace_seconds=0)
+    second = queue.claim("renew-stale")
+    assert second is not None and second.claim_token != first.claim_token
+    unchanged = queue.renew_lease("renew-stale", first.claim_token)
+    assert unchanged.claim_token == second.claim_token
+    queue.close()
