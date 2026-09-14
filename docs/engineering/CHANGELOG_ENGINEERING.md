@@ -1,5 +1,22 @@
 # Engineering Changelog
 
+## 2026-09-14 — Post-TASK-084 cross-layer reliability audit
+- TASK-085: ProviderManager no longer sorts/deduplicates provider candles before downstream quality validation. Provider candle sequences must now already be strictly chronological with unique timestamps; malformed ordering/duplicates fail and can trigger provider failover instead of being silently repaired.
+- TASK-085: added regression coverage for non-chronological and duplicate provider responses while preserving tuple compatibility and limit behavior.
+- TASK-085 implementation commit `eea607f106cbea57c1fd3b6d3d7b0a783398eb97`; regression commit `a7d181580369fc3f92b851d608a8f406060f49f6`.
+- TASK-086: WorkerRuntime now applies the timeout boundary to synchronous heavy executors using an off-event-loop execution path, preventing CPU-bound synchronous handlers from blocking the worker event loop and making the runtime timeout contract effective for both sync and async handlers.
+- TASK-086: added regression coverage for synchronous timeout behavior, invalid timeout input, and cancellation cache safety.
+- TASK-086 implementation commit `6e22747447de1a545c4f5fe59d80e`; regression commit `f623afee75b8c6fc4c8b5f72605b4a0d8fd11d69`.
+- TASK-087: Tracker refresh now re-analyzes the latest market state before evaluating TP/SL, preventing an old BUY/SELL risk plan from incorrectly closing a signal after a same-candle direction change. Tracker notifications also escape dynamic HTML content.
+- TASK-087: added regression coverage for direction-flip target ordering.
+- TASK-087 implementation commit `c9e9f9417800693cc7e354386dd4189811314503`; regression commits `d32d9478e699263e5ae2bd8264b2f247bb277e6a` and `5582f1179c94a21549a9cc887149cb6c31884ed4`.
+- TASK-088: Telegram signal output now HTML-escapes dynamic market/report fields and the tracker accepts only executable BUY/SELL decisions from the signal handler; neutral/unknown results are never registered as active tracked trades.
+- TASK-088 implementation commit `320e2d5f2dd1ab7d512d3b6fc02b854daf7cec0e`.
+- TASK-089: centralized Telegram access control was added. `TELEGRAM_ALLOWED_USER_IDS` is an explicit allowlist; production with a missing/invalid allowlist fails closed, while development/testing preserve the prior open behavior. All command and callback routes pass through the same authorization boundary.
+- TASK-089: added regression coverage for allowlisted users, unauthorized users, invalid configuration, production fail-closed behavior, and development compatibility.
+- TASK-089 commits: access boundary `925ba7f48a16cad20c61941d51c891d1a4f5bf8c`, route enforcement `ec6c29e531961c2e57e466be46a31474ec99e7a6`, regression coverage `55284ac27fd54de248941c1f2bf132c00e317655`.
+- Current exact `main` HEAD is `55284ac27fd54de248941c1f2bf132c00e317655`. Its seven required workflows were triggered; at the latest inspection they were still queued/in progress, so TASK-084 through TASK-089 are not yet marked VERIFIED.
+
 ## 2026-09-14 — TASK-084 Market Status Contract Hardening
 - Exact `main` HEAD `48b015525daf99b60294c8591cb8ed1c0fee2c35` was verified before starting the next audit step: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate all succeeded; combined status is successful.
 - TASK-084 identified a concrete Telegram market-status contract gap: the helper emitted `STALE_DATA` rather than canonical `STALE`, ignored its timeframe argument for a fixed 180-minute threshold, treated naive timestamps as UTC, and applied weekend closure globally.
@@ -9,38 +26,24 @@
 - TASK-084 implementation commit `a0caef5d41e598dc9ce54c31b68d2529c1438c5d`.
 - TASK-084 scanner integration commit `ad0ae2ed332ed1007302cfe008587e9cfb8a6c10`.
 - TASK-084 regression commit `3e3f17dac93f2f20e13c804a0b89195fdf239587`.
-- TASK-084 post-change exact-head verification is pending; no green or live-production claim is made yet.
 
 ## 2026-09-14 — Audit synchronization through TASK-083
 - TASK-083: identified a concrete RiskEngine policy gap where `_dynamic_risk_percent()` could select up to `2.0%` without respecting a more restrictive configured `risk_percent`.
-- TASK-083: changed dynamic sizing so configured `risk_percent` is the account-level ceiling; the dynamic heuristic may reduce risk but cannot silently exceed policy.
+- TASK-083: changed dynamic sizing so configured `risk_percent` is the account-level ceiling; the dynamic heuristic may reduce risk but cannot silently exceed it.
 - TASK-083: added focused regression coverage for restrictive/non-restrictive ceilings and symmetric directional scoring.
 - TASK-083: implementation commit `d9c427b7f44a56db2c4f6c98b37e249a6df8af82`.
 - TASK-083: regression commit `cbc09a3fefa6b5d97d77119cb8196f1d21da7604`.
-- ProviderManager lifecycle regression expectation was synchronized with the intentional `set_providers()` replacement contract after the CI suite exposed the stale test assumption.
-- TASK-082: reconfiguration now replaces the injected provider registry and prunes removed instances/cooldowns while preserving active factory cache state.
-- TASK-081: DataQuality now delegates symbol normalization to the canonical symbol layer.
-- TASK-080: RiskEngine derives contract size from centralized asset metadata when no explicit override is supplied.
-- TASK-079: PositionSizing, Settings, and RiskEngine now share the explicit USDT/USDC currency policy already supported by CurrencyConversion.
 - TASK-065 through TASK-083 were subsequently verified together on exact `main` HEAD `48b015525daf99b60294c8591cb8ed1c0fee2c35`; all seven required workflows succeeded and combined status is successful.
 
 ## 2026-09-14 — TASK-079 through TASK-082
-- TASK-082: identified a ProviderManager reconfiguration lifecycle gap where removed injected providers and stale cached state could remain reachable after `set_providers()`.
-- TASK-082: replaced the injected-provider registry on reconfiguration and pruned inactive provider instances/cooldowns while preserving active factory cache state.
-- TASK-082: added regression coverage for removal, stale cooldown cleanup, re-addition, and same-name instance rebinding.
-- TASK-082 implementation commit `46ba02295ddbc2629cca371ebbdafaba47a6a715`.
-- TASK-082 regression commits `03cace1b483d1980c3db074bae1be240f487f53c` and `54dfaa6591b90ebf9e99906cf14a10c73a30ea37`.
-- TASK-081: aligned DataQuality symbol normalization with `config.symbols.normalize_symbol()` and added slash/underscore regression coverage.
-- TASK-081 implementation commit `a3c6f43bf76e0ab10b0cb721fdd0e18a20e04ddd`.
-- TASK-081 regression commit `0cbe8b40c62fb6a0b561d0d94d72de10436dbaa5`.
-- TASK-080: removed the Forex contract-size default from direct non-Forex RiskEngine calls by deriving asset metadata when no explicit override exists.
-- TASK-080 regression commit `761e7666b846a69d3e1b5cc07604a4747e738f3f`.
-- TASK-079: made the stablecoin currency boundary consistent across PositionSizing, Settings, RiskEngine, and CurrencyConversion.
+- TASK-082: ProviderManager reconfiguration now replaces the injected provider registry and prunes inactive instances/cooldowns while preserving active factory cache state.
+- TASK-081: DataQuality now delegates symbol normalization to `config.symbols.normalize_symbol()` and regression coverage verifies slash/underscore equivalence.
+- TASK-080: RiskEngine derives contract size from centralized asset metadata when no explicit override is supplied.
+- TASK-079: PositionSizing, Settings, and RiskEngine now share the explicit USDT/USDC currency policy already supported by CurrencyConversion.
 
 ## 2026-09-13 — TASK-065 and prior verified checkpoints
-- TASK-065: identified a concrete RiskEngine configuration gap: `risk_reward_target` was accepted as a constructor parameter but TP2 and reported risk/reward remained hardcoded at `2.0`.
-- TASK-065: wired `risk_reward_target` into BUY/SELL TP2 and `RiskResult.risk_reward`, added validation, and regression coverage.
-- Historical TASK-058 through TASK-064 verification evidence remains preserved in repository history.
+- TASK-065: `risk_reward_target` is now wired into BUY/SELL TP2 and reported risk/reward with validation and regression coverage.
+- Historical TASK-058 through TASK-064 evidence remains preserved in repository history.
 - Historical TASK-052 through TASK-057 evidence remains preserved in repository history.
 
 ## Historical 2026-09-12 and earlier engineering checkpoints
