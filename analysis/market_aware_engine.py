@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import replace
 
 from analysis.atr_engine import ATREngine
@@ -19,6 +20,22 @@ class MarketAwareAnalysisEngine:
         self.settings = settings or Settings.load()
         self.analysis_engine = FullAnalysisEngine()
         self.conversion_service = CurrencyConversionService(market_data)
+
+    @staticmethod
+    def _current_price(candles) -> float:
+        """Read and validate the latest price for either Candle or price-list input."""
+        latest = candles[-1]
+        if hasattr(latest, "close"):
+            value = latest.close
+        else:
+            value = latest
+        try:
+            price = float(value)
+        except (TypeError, ValueError) as error:
+            raise ValueError("latest candle price must be numeric and finite.") from error
+        if not math.isfinite(price) or price <= 0:
+            raise ValueError("latest candle price must be numeric and finite and greater than zero.")
+        return price
 
     async def analyze(self, candles, *, symbol: str, timeframe: str):
         if not isinstance(symbol, str):
@@ -59,11 +76,12 @@ class MarketAwareAnalysisEngine:
 
         atr_result = ATREngine().calculate(candles)
         atr_value = atr_result.atr if atr_result.atr is not None else 0.0
+        current_price = self._current_price(candles)
 
         self.analysis_engine.risk_engine = RiskEngine(account_currency=self.settings.account_currency)
         risk_result = self.analysis_engine.risk_engine.calculate(
             signal=signal,
-            current_price=float(candles[-1].close),
+            current_price=current_price,
             atr=atr_value,
             confidence=report.confidence,
             score=report.score,
