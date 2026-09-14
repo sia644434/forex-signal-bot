@@ -75,7 +75,11 @@ class MarketAwareAnalysisEngine:
         )
 
         atr_result = ATREngine().calculate(candles)
-        atr_value = atr_result.atr if atr_result.atr is not None else 0.0
+        if atr_result.atr is None:
+            raise ValueError("ATR is required for market-aware risk sizing.")
+        atr_value = float(atr_result.atr)
+        if not math.isfinite(atr_value) or atr_value <= 0:
+            raise ValueError("ATR must be finite and greater than zero for market-aware risk sizing.")
         current_price = self._current_price(candles)
 
         # Settings stores RISK_PER_TRADE as a decimal fraction (0.01 = 1%),
