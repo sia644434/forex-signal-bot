@@ -132,7 +132,9 @@ def test_market_aware_engine_uses_configured_account_balance(
 
     assert report.risk_percent == pytest.approx(2.0)
     assert report.risk_amount == pytest.approx(500.0)
-    assert report.position_size == pytest.approx(45000.0)
+    # 500 account-currency risk / (1.5 quote units * 1/150 account/quote)
+    # = 50,000 units, then executable 0.001-lot flooring yields 49,900.
+    assert report.position_size == pytest.approx(49900.0)
 
 
 def test_market_aware_engine_honors_non_default_risk_per_trade(
