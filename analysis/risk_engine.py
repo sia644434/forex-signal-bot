@@ -50,27 +50,18 @@ class RiskEngine:
         contract_size: float = 100000,
         account_currency: str | None = None,
     ) -> None:
-        self.risk_reward_target = float(risk_reward_target)
-        self.atr_multiplier = float(atr_multiplier)
-        self.account_balance = float(account_balance)
-        self.risk_percent = float(risk_percent)
-        self.contract_size = float(contract_size)
+        self.risk_reward_target = self._coerce_finite(risk_reward_target, "risk_reward_target")
+        self.atr_multiplier = self._coerce_finite(atr_multiplier, "atr_multiplier")
+        self.account_balance = self._coerce_finite(account_balance, "account_balance")
+        self.risk_percent = self._coerce_finite(risk_percent, "risk_percent")
+        self.contract_size = self._coerce_finite(contract_size, "contract_size")
+        if account_currency is not None and not isinstance(account_currency, str):
+            raise TypeError("account_currency must be a string or None.")
         self.account_currency = (
             account_currency.strip().upper()
             if account_currency is not None and account_currency.strip()
             else None
         )
-
-        numeric_config = {
-            "risk_reward_target": self.risk_reward_target,
-            "atr_multiplier": self.atr_multiplier,
-            "account_balance": self.account_balance,
-            "risk_percent": self.risk_percent,
-            "contract_size": self.contract_size,
-        }
-        for name, value in numeric_config.items():
-            if not math.isfinite(value):
-                raise ValueError(f"{name} must be finite.")
 
         if self.risk_reward_target <= 0:
             raise ValueError("risk_reward_target must be greater than zero.")
@@ -84,7 +75,7 @@ class RiskEngine:
             raise ValueError("contract_size must be greater than zero.")
 
     @staticmethod
-    def _require_finite(value: float, name: str) -> float:
+    def _coerce_finite(value: float, name: str) -> float:
         try:
             numeric = float(value)
         except (TypeError, ValueError) as error:
@@ -95,7 +86,8 @@ class RiskEngine:
 
     @staticmethod
     def _directional_strength(score: float) -> float:
-        return abs((float(score) - 50.0) * 2.0)
+        numeric = RiskEngine._coerce_finite(score, "score")
+        return abs((numeric - 50.0) * 2.0)
 
     def _dynamic_risk_percent(self, confidence: float, score: float) -> float:
         if confidence >= 0.85 and self._directional_strength(score) >= 80:
@@ -239,13 +231,15 @@ class RiskEngine:
 
     def calculate(self, signal: str, current_price: float, atr: float | None = None, confidence: float = 0.0, score: float = 0.0, risk_distance: float | None = None, *, symbol: str | None = None, quote_to_account_rate: float | None = None) -> RiskResult:
         """Calculate a risk plan with unit-aware position sizing."""
-        current_price = self._require_finite(current_price, "current_price")
-        confidence = self._require_finite(confidence, "confidence")
-        score = self._require_finite(score, "score")
+        if not isinstance(signal, str):
+            raise ValueError("signal must be a string.")
+        current_price = self._coerce_finite(current_price, "current_price")
+        confidence = self._coerce_finite(confidence, "confidence")
+        score = self._coerce_finite(score, "score")
         if atr is not None:
-            atr = self._require_finite(atr, "atr")
+            atr = self._coerce_finite(atr, "atr")
         if risk_distance is not None:
-            risk_distance = self._require_finite(risk_distance, "risk distance")
+            risk_distance = self._coerce_finite(risk_distance, "risk distance")
 
         if current_price <= 0:
             raise ValueError("current_price must be greater than zero.")
@@ -253,7 +247,7 @@ class RiskEngine:
             raise ValueError("risk distance must be greater than zero.")
 
         distance = self._calculate_risk_distance(price=current_price, atr=atr, risk_distance=risk_distance)
-        distance = self._require_finite(distance, "risk distance")
+        distance = self._coerce_finite(distance, "risk distance")
         if distance <= 0:
             raise ValueError("risk distance must be greater than zero.")
 
