@@ -5,13 +5,13 @@
 - Current Commit: See `main` branch head; this field intentionally avoids a self-referential commit SHA because this file is itself committed as part of the synchronization.
 - Overall Status: `PRODUCTION_VERIFIED / AUDIT_IN_PROGRESS`
 - Current Phase: Phase 3 — Telegram / Worker / Cross-Layer Reliability Audit
-- Current Task Frontier: TASK-091 through TASK-099 are implemented and pending exact-head CI verification.
+- Current Task Frontier: TASK-091 through TASK-100 are implemented and pending exact-head CI verification.
 - Last Verified Task: TASK-090 — Telegram Surface Contract Hardening, exact-head verified on `45a4bd5bb892181cb6a30c75f8b0340ecccaacc7` with all seven required checks successful.
 - Known Blockers: No known blocker for the previously verified Railway deployment path. Current audit commits must not be treated as live-production verified until their exact `main` HEAD passes the required GitHub Actions gates.
 - Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Current audit changes remain unverified until exact-head CI evidence exists.
 - Broken Tests: No fresh exact-head workflow result is currently available for the latest audit commits; therefore no green state is claimed.
-- CI Status: Latest observed pre-audit status was pending on `0610627fbceeabff909179e6dbca3380ed90c559`. Fresh seven-workflow verification is still required for the current audit HEAD.
-- Deployment Status: No new live-production smoke is claimed from TASK-091 through TASK-099. The previously verified Railway path remains historical deployment evidence.
+- CI Status: Fresh seven-workflow verification is still required for the current audit HEAD. No green state is claimed until exact-head evidence exists.
+- Deployment Status: No new live-production smoke is claimed from TASK-091 through TASK-100. The previously verified Railway path remains historical deployment evidence.
 - Architecture Status: Canonical production flow remains `MarketDataService → MarketDataEngine → ProviderManager → FullAnalysisEngine → DecisionEngine → ConfidenceEngine → RiskEngine → PositionSizing/CurrencyConversion` where applicable. The PC Worker is restricted to heavy application processing. The `ai/` package remains dormant/unwired future Phase 6 capability and is not active production trading architecture. No local coding-agent/Ollama architecture is part of the active worker path.
 - Production Readiness: `VERIFIED` for the previously observed Railway deployment path; current audit commits are not claimed as fresh production verification.
 - Last State Update: 2026-09-15
@@ -34,9 +34,10 @@
 - TASK-097: renewable worker queue leases to prevent legitimate long-running jobs from being recovered while still active.
 - TASK-098: synchronous worker timeout fencing so `to_thread` work remains tracked until the underlying thread finishes.
 - TASK-099: Telegram startup dependency preflight before application runtime start.
+- TASK-100: explicit provider symbol capability boundaries and fail-closed diagnostics for unsupported market/provider combinations.
 
 ### Current concrete frontier
-The next unresolved repository-backed gaps are Telegram multi-asset settings consistency, provider capability boundaries, queue/runtime shutdown and persistence recovery, production health, and final end-to-end lifecycle consistency. Do not add speculative features; only create new tasks when code/tests/configuration demonstrate a concrete correctness or reliability gap.
+The remaining repository-backed gaps are Telegram multi-asset settings consistency, queue/runtime shutdown and persistence recovery, production health, and final end-to-end lifecycle consistency. Do not add speculative features; only create new tasks when code/tests/configuration demonstrate a concrete correctness or reliability gap.
 
 ## Multi-Asset Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported families are Forex, Crypto, Stocks, Indices, and Commodities. Market-specific semantics such as quote currency, contract size, session, provider support, and conversion requirements must be explicit and fail closed when unavailable.
