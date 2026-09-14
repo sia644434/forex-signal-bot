@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, tzinfo, timedelta
 
 import pytest
 
@@ -40,24 +40,38 @@ def test_candle_creation() -> None:
 def test_candle_timestamp() -> None:
     candle = create_candle()
 
-    assert isinstance(
-        candle.timestamp,
-        datetime,
-    )
-
+    assert isinstance(candle.timestamp, datetime)
     assert candle.timestamp.tzinfo == timezone.utc
 
 
-def test_typical_price() -> None:
+def test_candle_rejects_tzinfo_that_is_not_actually_aware() -> None:
+    class NonAwareTimezone(tzinfo):
+        def utcoffset(self, dt):
+            return None
+
+        def dst(self, dt):
+            return None
+
+        def tzname(self, dt):
+            return "NON_AWARE"
+
+    with pytest.raises(ValueError, match="timezone-aware"):
+        Candle(
+            symbol="EUR_USD",
+            timestamp=datetime(2026, 1, 1, 12, 0, tzinfo=NonAwareTimezone()),
+            open=1.1000,
+            high=1.1200,
+            low=1.0900,
+            close=1.1100,
+            volume=500,
+        )
+
+
+def test_candle_typical_price() -> None:
     candle = create_candle()
 
     result = candle.typical_price
-
-    expected = (
-        1.1200
-        + 1.0900
-        + 1.1100
-    ) / 3
+    expected = (1.1200 + 1.0900 + 1.1100) / 3
 
     assert result == expected
 
@@ -65,9 +79,7 @@ def test_typical_price() -> None:
 def test_candle_is_immutable() -> None:
     candle = create_candle()
 
-    with pytest.raises(
-        AttributeError
-    ):
+    with pytest.raises(AttributeError):
         candle.close = 1.2000
 
 
