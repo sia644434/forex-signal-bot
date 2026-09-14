@@ -60,12 +60,12 @@ def _price_candles(symbol: str, price: float = 150.0) -> list[Candle]:
     [
         # The conversion service returns a binary-float approximation of the
         # inverse. Executable 0.001-lot precision must floor conservatively.
-        ("USDJPY", "USDJPY", 150.0, 1.0 / 150.0, 1900.0),
+        ("USDJPY", "USDJPY", 150.0, 1.0 / 150.0, 950.0),
         # EURJPY is quoted in JPY, so JPY->USD still resolves through USDJPY.
-        ("EURJPY", "USDJPY", 150.0, 1.0 / 150.0, 1900.0),
+        ("EURJPY", "USDJPY", 150.0, 1.0 / 150.0, 950.0),
     ],
 )
-def test_market_aware_engine_uses_real_inverse_conversion_for_jpy_quotes(
+def test_market_aware_engine_uses_configured_risk_policy_for_jpy_quotes(
     monkeypatch: pytest.MonkeyPatch,
     symbol: str,
     conversion_symbol: str,
@@ -74,7 +74,8 @@ def test_market_aware_engine_uses_real_inverse_conversion_for_jpy_quotes(
     expected_position_size: float,
 ) -> None:
     market_data = FakeMarketDataService(conversion_symbol, conversion_price)
-    settings = Settings(account_currency="USD")
+    # Settings stores 0.01 as a decimal fraction, i.e. a 1% account risk cap.
+    settings = Settings(account_currency="USD", risk_per_trade=0.01)
     engine = MarketAwareAnalysisEngine(market_data=market_data, settings=settings)
 
     monkeypatch.setattr(
@@ -102,11 +103,36 @@ def test_market_aware_engine_uses_real_inverse_conversion_for_jpy_quotes(
     assert market_data.requests == [(conversion_symbol, "1m", 1)]
     assert report.position_size is not None
     assert report.lot_size is not None
-    assert report.risk_amount == pytest.approx(20.0)
+    assert report.risk_percent == pytest.approx(1.0)
+    assert report.risk_amount == pytest.approx(10.0)
     assert report.position_size == pytest.approx(expected_position_size)
-    assert report.position_size <= 20.0 / (1.5 * expected_rate)
+    assert report.position_size <= 10.0 / (1.5 * expected_rate)
     assert report.lot_size == pytest.approx(report.position_size / 100000, abs=0.0005)
     assert f"via {conversion_symbol}" in report.reasons[-1]
+
+
+def test_market_aware_engine_honors_non_default_risk_per_trade(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    market_data = FakeMarketDataService("USDJPY", 150.0)
+    settings = Settings(account_currency="USD", risk_per_trade=0.05)
+    engine = MarketAwareAnalysisEngine(market_data=market_data, settings=settings)
+    monkeypatch.setattr(
+        engine.analysis_engine,
+        "analyze",
+        lambda candles: AnalysisReport(score=100.0, signal="BUY", confidence=0.90),
+    )
+    monkeypatch.setattr(
+        "analysis.market_aware_engine.ATREngine.calculate",
+        lambda self, candles: type("ATRResult", (), {"atr": 1.0})(),
+    )
+
+    report = __import__("asyncio").run(
+        engine.analyze(_price_candles("USDJPY"), symbol="USDJPY", timeframe="1h")
+    )
+
+    assert report.risk_percent == pytest.approx(5.0)
+    assert report.risk_amount == pytest.approx(50.0)
 
 
 def test_market_aware_engine_fails_closed_without_account_currency(
