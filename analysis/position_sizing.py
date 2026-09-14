@@ -8,6 +8,7 @@ quote currency and account currency differ.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal, ROUND_FLOOR
 import math
 
 
@@ -115,9 +116,15 @@ def calculate_position_size(
     if not math.isfinite(raw_position_size) or not math.isfinite(raw_lot_size):
         raise ValueError("calculated position size must be finite.")
 
-    # Broker lot precision must never round upward: doing so could make the
-    # executable lot exceed the requested monetary risk.
-    lot_size = math.floor(raw_lot_size * 1000.0) / 1000.0
+    # Floor using decimal representations of the validated inputs so an
+    # exact 0.020 lot boundary cannot become 0.019 because of binary float
+    # noise. Flooring still guarantees that executable risk never exceeds the
+    # requested risk ceiling.
+    decimal_risk_amount = Decimal(str(account_balance)) * Decimal(str(risk_percent)) / Decimal("100")
+    decimal_risk_per_unit = Decimal(str(risk_distance_quote)) * Decimal(str(conversion_rate))
+    decimal_raw_lot = decimal_risk_amount / decimal_risk_per_unit / Decimal(str(contract_size))
+    lot_size_decimal = decimal_raw_lot.quantize(Decimal("0.001"), rounding=ROUND_FLOOR)
+    lot_size = float(lot_size_decimal)
     if lot_size <= 0:
         raise ValueError("calculated lot size is below the supported precision.")
 
