@@ -1,7 +1,9 @@
 from types import SimpleNamespace
 
+import pytest
+
 from services.telegram.scanner import DEFAULT_SCAN_SYMBOLS
-from services.telegram.tracker import TrackedSignal, _apply_report
+from services.telegram.tracker import TrackedSignal, _apply_report, refresh_tracking
 
 
 def _report(signal: str, base: float = 1.1):
@@ -34,9 +36,7 @@ def test_tracker_updates_direction_and_risk_levels_after_signal_flip():
         take_profit_3=1.13,
         last_signal="BUY",
     )
-
     old_signal, new_signal = _apply_report(item, _report("SELL", 1.20))
-
     assert (old_signal, new_signal) == ("BUY", "SELL")
     assert item.signal == "SELL"
     assert item.entry == 1.20
@@ -60,9 +60,7 @@ def test_tracker_clears_executable_levels_when_analysis_becomes_no_trade():
         take_profit_3=1.13,
         last_signal="BUY",
     )
-
     old_signal, new_signal = _apply_report(item, _report("NO_TRADE"))
-
     assert (old_signal, new_signal) == ("BUY", "NO_TRADE")
     assert item.signal == "NO_TRADE"
     assert item.entry is None
@@ -71,3 +69,42 @@ def test_tracker_clears_executable_levels_when_analysis_becomes_no_trade():
     assert item.take_profit_2 is None
     assert item.take_profit_3 is None
     assert item.status == "INVALIDATED"
+
+
+@pytest.mark.asyncio
+async def test_tracker_does_not_apply_old_target_before_current_analysis(monkeypatch):
+    item = TrackedSignal(
+        user_id=1,
+        symbol="EURUSD",
+        timeframe="M15",
+        signal="BUY",
+        entry=1.10,
+        stop_loss=1.09,
+        take_profit_1=1.11,
+        take_profit_2=1.12,
+        take_profit_3=1.13,
+        last_signal="BUY",
+    )
+
+    class MarketData:
+        async def get_candles_list(self, symbol, timeframe, limit):
+            return [SimpleNamespace(high=1.11, low=1.09, close=1.10)]
+
+    class Engine:
+        def __init__(self, *, market_data):
+            self.market_data = market_data
+
+        async def analyze(self, candles, *, symbol, timeframe):
+            return _report("SELL", 1.20)
+
+    notifications = []
+    monkeypatch.setattr("services.telegram.tracker.MarketAwareAnalysisEngine", Engine)
+    result = await refresh_tracking(item, notifications.append, MarketData())
+
+    assert result.status == "CHANGED"
+    assert result.signal == "SELL"
+    assert result.entry == 1.20
+    assert result.take_profit_1 == 1.21
+    assert notifications == [
+        "📢 <b>به‌روزرسانی EURUSD</b>\n\nسیگنال قبلی: <b>BUY</b>\nسیگنال فعلی: <b>SELL</b>\nقیمت: <b>1.1</b>"
+    ]
