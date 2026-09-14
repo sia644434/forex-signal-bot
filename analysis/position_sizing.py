@@ -65,8 +65,8 @@ def calculate_position_size(
 
     if account_balance <= 0:
         raise ValueError("account_balance must be greater than zero.")
-    if risk_percent <= 0:
-        raise ValueError("risk_percent must be greater than zero.")
+    if risk_percent <= 0 or risk_percent > 100:
+        raise ValueError("risk_percent must be greater than zero and at most 100.")
     if risk_distance_quote <= 0:
         raise ValueError("risk_distance_quote must be greater than zero.")
     if contract_size <= 0:
