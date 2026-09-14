@@ -38,8 +38,24 @@ Evidence:
 - Regression test commit: `131f0a656c694a9b6e4e88e4b1f7326032f91074`.
 - The first gate exposed an overly strict TP2/TP3 ordering assertion and a test fixture that incorrectly expected a BUY failure where only SELL could cross zero. Both were corrected before final verification.
 
+## TASK-069
+Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
+Title: Explicit Account-Balance Wiring and Settings Numeric Hardening
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- The production `MarketAwareAnalysisEngine` was constructing `RiskEngine` without an account balance, so executable position sizing always used RiskEngine's hard-coded default balance of 1000 instead of the configured trading account balance.
+- `Settings` now exposes `ACCOUNT_BALANCE`, validates it as finite and strictly positive, and MarketAwareAnalysisEngine passes it explicitly into RiskEngine.
+- `Settings.RISK_PER_TRADE` previously allowed `NaN`/`Infinity` through because ordinary range comparisons do not reject non-finite floats; it is now explicitly finite before range validation.
+- `ACCOUNT_CURRENCY` is now normalized and validated as a three-letter alphabetic currency code.
+- `.env.example` documents `ACCOUNT_BALANCE` and the explicit account-balance/risk policy relationship.
+- Regression coverage verifies configured account balance changes risk amount and executable position size, rejects non-finite account balance/risk values, and rejects malformed account currencies.
+- Implementation commits: `d8880ee51cfb8b975b629c1e69b74cba4eb75f1b` and `7101d6e121bb0e71b5517221ef55d460b9bef10f`.
+- Regression commits: `9703fff13d0064dcb4631ec388fc19ee268587a1` and `9da8a791c872a278bfef350600173d0332be362f`.
+- A first GitHub Test run exposed an incorrect expected position-size fixture; the implementation was correct and the fixture was corrected in `2a6fd7f3e874d0cda92b16b7eec04661e931d43c`.
+- Verification for the corrected head is currently in progress; no green claim is made until the required gates finish.
+
 ## Current Phase 2 Audit Frontier
-After TASK-065 through TASK-068 verification, continue the evidence-backed audit of:
+After TASK-065 through TASK-069 verification, continue the evidence-backed audit of:
 `RiskEngine → PositionSizing → CurrencyConversion → MarketAwareAnalysisEngine`
 then proceed outward into the Telegram/Scanner/Tracker/Callbacks and Worker/Queue/Persistence paths.
 
@@ -71,7 +87,7 @@ Then:
 1. Determine the exact current `main` HEAD.
 2. Inspect GitHub Actions for that exact HEAD.
 3. Resolve every pending or failed verification before moving deeper.
-4. Do not repeat TASK-058 through TASK-068 unless their verification evidence is missing or contradicted.
+4. Do not repeat TASK-058 through TASK-069 unless their verification evidence is missing or contradicted.
 5. Continue from the first unresolved audit frontier recorded above.
 6. Inspect more architecture than the previous step and only implement concrete repository-backed gaps.
 7. Add focused regression coverage for every confirmed defect.
