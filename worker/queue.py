@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import time
+import uuid
 from dataclasses import dataclass
 from typing import Any
 
@@ -24,19 +25,17 @@ class QueueRecord:
     result: dict[str, Any] | None = None
     error: str | None = None
     claimed_at: float | None = None
+    claim_token: str | None = None
 
 
 class WorkerQueue:
-    """Small durable SQLite queue for heavy worker jobs.
-
-    The queue owns job persistence and state transitions; transport and execution
-    remain outside this module. A unique job_id makes enqueue idempotent.
-    """
+    """Durable SQLite queue with lease fencing for crash/recovery safety."""
 
     def __init__(self, database_path: str = ":memory:") -> None:
-        self._connection = sqlite3.connect(database_path)
+        self._connection = sqlite3.connect(database_path, timeout=30.0)
         self._connection.row_factory = sqlite3.Row
         self._connection.execute("PRAGMA foreign_keys = ON")
+        self._connection.execute("PRAGMA busy_timeout = 30000")
         self._connection.execute(
             """
             CREATE TABLE IF NOT EXISTS worker_jobs (
@@ -49,11 +48,13 @@ class WorkerQueue:
                 status TEXT NOT NULL,
                 result TEXT,
                 error TEXT,
-                claimed_at REAL
+                claimed_at REAL,
+                claim_token TEXT
             )
             """
         )
         self._ensure_column("claimed_at", "REAL")
+        self._ensure_column("claim_token", "TEXT")
         self._connection.commit()
 
     def _ensure_column(self, name: str, definition: str) -> None:
@@ -75,14 +76,7 @@ class WorkerQueue:
             (job_id, job_type, payload, priority, timeout_seconds, allow_cpu_fallback, status)
             VALUES (?, ?, ?, ?, ?, ?, 'PENDING')
             """,
-            (
-                request.job_id,
-                request.job_type,
-                json.dumps(request.payload, sort_keys=True),
-                request.priority,
-                request.timeout_seconds,
-                int(request.allow_cpu_fallback),
-            ),
+            (request.job_id, request.job_type, json.dumps(request.payload, sort_keys=True), request.priority, request.timeout_seconds, int(request.allow_cpu_fallback)),
         )
         self._connection.commit()
         record = self.get(request.job_id)
@@ -100,21 +94,15 @@ class WorkerQueue:
         return self._claim_job_id(row["job_id"])
 
     def claim(self, job_id: str) -> QueueRecord | None:
-        """Atomically claim one specific pending job.
-
-        Dispatchers that enqueue a request and immediately execute that same
-        request must use this targeted form; otherwise another concurrent
-        submitter can claim the highest-priority job and leave the original
-        caller waiting on a job it did not claim.
-        """
         if not isinstance(job_id, str) or not job_id.strip():
             raise ValueError("Job ID must not be empty")
         return self._claim_job_id(job_id)
 
     def _claim_job_id(self, job_id: str) -> QueueRecord | None:
+        token = uuid.uuid4().hex
         cursor = self._connection.execute(
-            "UPDATE worker_jobs SET status = 'RUNNING', claimed_at = ? WHERE job_id = ? AND status = 'PENDING'",
-            (time.time(), job_id),
+            "UPDATE worker_jobs SET status = 'RUNNING', claimed_at = ?, claim_token = ?, error = NULL WHERE job_id = ? AND status = 'PENDING'",
+            (time.time(), token, job_id),
         )
         self._connection.commit()
         if cursor.rowcount != 1:
@@ -122,11 +110,8 @@ class WorkerQueue:
         return self.get(job_id)
 
     def metrics(self) -> dict[str, int]:
-        """Return actionable queue counts without exposing job payloads or errors."""
         counts = {state.lower(): 0 for state in QUEUE_STATES}
-        rows = self._connection.execute(
-            "SELECT status, COUNT(*) AS count FROM worker_jobs GROUP BY status"
-        ).fetchall()
+        rows = self._connection.execute("SELECT status, COUNT(*) AS count FROM worker_jobs GROUP BY status").fetchall()
         for row in rows:
             status = str(row["status"])
             if status in QUEUE_STATES:
@@ -145,18 +130,11 @@ class WorkerQueue:
         return self._recover_running_rows(rows)
 
     def recover_expired_running(self, grace_seconds: int = 30) -> list[QueueRecord]:
-        """Recover jobs whose own execution timeout has elapsed after a crash."""
         if grace_seconds < 0:
             raise ValueError("Recovery grace must not be negative")
         now = time.time()
         rows = self._connection.execute(
-            """
-            SELECT job_id
-            FROM worker_jobs
-            WHERE status = 'RUNNING'
-              AND claimed_at IS NOT NULL
-              AND claimed_at + timeout_seconds + ? <= ?
-            """,
+            "SELECT job_id FROM worker_jobs WHERE status = 'RUNNING' AND claimed_at IS NOT NULL AND claimed_at + timeout_seconds + ? <= ?",
             (grace_seconds, now),
         ).fetchall()
         return self._recover_running_rows(rows)
@@ -165,7 +143,7 @@ class WorkerQueue:
         if not rows:
             return []
         self._connection.executemany(
-            "UPDATE worker_jobs SET status = 'PENDING', claimed_at = NULL, error = ? WHERE job_id = ? AND status = 'RUNNING'",
+            "UPDATE worker_jobs SET status = 'PENDING', claimed_at = NULL, claim_token = NULL, error = ? WHERE job_id = ? AND status = 'RUNNING'",
             [("Recovered stale running job", row["job_id"]) for row in rows],
         )
         self._connection.commit()
@@ -176,62 +154,47 @@ class WorkerQueue:
                 records.append(record)
         return records
 
-    def finish(self, job_id: str, *, result: dict[str, Any] | None = None) -> QueueRecord:
-        return self._transition(job_id, "COMPLETED", result=result, error=None)
+    def finish(self, job_id: str, *, result: dict[str, Any] | None = None, claim_token: str | None = None) -> QueueRecord:
+        return self._transition(job_id, "COMPLETED", result=result, error=None, claim_token=claim_token)
 
-    def fail(self, job_id: str, error: str) -> QueueRecord:
-        return self._transition(job_id, "FAILED", result=None, error=error)
+    def fail(self, job_id: str, error: str, *, claim_token: str | None = None) -> QueueRecord:
+        return self._transition(job_id, "FAILED", result=None, error=error, claim_token=claim_token)
 
-    def timeout(self, job_id: str, error: str = "Worker job timeout") -> QueueRecord:
-        return self._transition(job_id, "TIMEOUT", result=None, error=error)
+    def timeout(self, job_id: str, error: str = "Worker job timeout", *, claim_token: str | None = None) -> QueueRecord:
+        return self._transition(job_id, "TIMEOUT", result=None, error=error, claim_token=claim_token)
 
-    def cancel(self, job_id: str) -> QueueRecord:
-        return self._transition(job_id, "CANCELLED", result=None, error=None)
+    def cancel(self, job_id: str, *, claim_token: str | None = None) -> QueueRecord:
+        return self._transition(job_id, "CANCELLED", result=None, error=None, claim_token=claim_token)
 
     def get(self, job_id: str) -> QueueRecord | None:
         row = self._connection.execute("SELECT * FROM worker_jobs WHERE job_id = ?", (job_id,)).fetchone()
         if row is None:
             return None
         return QueueRecord(
-            job_id=row["job_id"],
-            job_type=row["job_type"],
-            payload=json.loads(row["payload"]),
-            priority=row["priority"],
-            timeout_seconds=row["timeout_seconds"],
-            allow_cpu_fallback=bool(row["allow_cpu_fallback"]),
-            status=row["status"],
-            result=json.loads(row["result"]) if row["result"] else None,
-            error=row["error"],
-            claimed_at=row["claimed_at"],
+            job_id=row["job_id"], job_type=row["job_type"], payload=json.loads(row["payload"]), priority=row["priority"],
+            timeout_seconds=row["timeout_seconds"], allow_cpu_fallback=bool(row["allow_cpu_fallback"]), status=row["status"],
+            result=json.loads(row["result"]) if row["result"] else None, error=row["error"], claimed_at=row["claimed_at"], claim_token=row["claim_token"],
         )
 
-    def _transition(
-        self,
-        job_id: str,
-        status: str,
-        *,
-        result: dict[str, Any] | None,
-        error: str | None,
-    ) -> QueueRecord:
+    def _transition(self, job_id: str, status: str, *, result: dict[str, Any] | None, error: str | None, claim_token: str | None) -> QueueRecord:
         if status not in QUEUE_STATES - {"PENDING", "RUNNING"}:
             raise ValueError(f"Invalid terminal queue state: {status}")
+        if claim_token is None:
+            where = "job_id = ? AND status = 'RUNNING'"
+            params: tuple[Any, ...] = (job_id,)
+        else:
+            where = "job_id = ? AND status = 'RUNNING' AND claim_token = ?"
+            params = (job_id, claim_token)
         cursor = self._connection.execute(
-            """
-            UPDATE worker_jobs
-            SET status = ?, result = ?, error = ?, claimed_at = NULL
-            WHERE job_id = ? AND status = 'RUNNING'
-            """,
-            (status, json.dumps(result, sort_keys=True) if result is not None else None, error, job_id),
+            f"UPDATE worker_jobs SET status = ?, result = ?, error = ?, claimed_at = NULL, claim_token = NULL WHERE {where}",
+            (status, json.dumps(result, sort_keys=True) if result is not None else None, error, *params),
         )
         self._connection.commit()
-        if cursor.rowcount != 1:
-            record = self.get(job_id)
-            if record is None:
-                raise KeyError(job_id)
-            return record
         record = self.get(job_id)
         if record is None:
-            raise RuntimeError(f"Queue record disappeared: {job_id}")
+            raise KeyError(job_id)
+        if cursor.rowcount != 1:
+            return record
         return record
 
 
