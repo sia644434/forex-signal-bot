@@ -108,9 +108,17 @@ def calculate_position_size(
         raise ValueError("converted risk per unit must be greater than zero.")
 
     position_size = risk_amount_account / risk_per_unit_account
-    lot_size = position_size / contract_size
-    if not math.isfinite(position_size) or not math.isfinite(lot_size):
+    raw_lot_size = position_size / contract_size
+    if not math.isfinite(position_size) or not math.isfinite(raw_lot_size):
         raise ValueError("calculated position size must be finite.")
+
+    # Broker lot precision must never round upward: doing so could make the
+    # executable lot exceed the requested monetary risk. Keep the calculated
+    # position size independently rounded for reporting, while flooring the
+    # executable lot to the supported 0.001-lot precision.
+    lot_size = math.floor(raw_lot_size * 1000.0) / 1000.0
+    if lot_size <= 0:
+        raise ValueError("calculated lot size is below the supported precision.")
 
     return PositionSizingResult(
         position_size=round(position_size, 4),
