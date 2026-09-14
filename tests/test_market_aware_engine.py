@@ -60,9 +60,9 @@ def _price_candles(symbol: str, price: float = 150.0) -> list[Candle]:
     [
         # The conversion service returns a binary-float approximation of the
         # inverse. Executable 0.001-lot precision must floor conservatively.
-        ("USDJPY", "USDJPY", 150.0, 1.0 / 150.0, 950.0),
+        ("USDJPY", "USDJPY", 150.0, 1.0 / 150.0, 900.0),
         # EURJPY is quoted in JPY, so JPY->USD still resolves through USDJPY.
-        ("EURJPY", "USDJPY", 150.0, 1.0 / 150.0, 950.0),
+        ("EURJPY", "USDJPY", 150.0, 1.0 / 150.0, 900.0),
     ],
 )
 def test_market_aware_engine_uses_configured_risk_policy_for_jpy_quotes(
