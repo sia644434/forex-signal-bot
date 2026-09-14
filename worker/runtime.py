@@ -23,6 +23,7 @@ class WorkerRuntime:
     handlers: dict[str, Handler]
     max_completed_jobs: int = 1024
     _active_jobs: dict[str, asyncio.Task[JobResult]] = field(default_factory=dict, init=False, repr=False)
+    _inflight_sync_jobs: dict[str, asyncio.Task[Any]] = field(default_factory=dict, init=False, repr=False)
     _completed_jobs: dict[str, JobResult] = field(default_factory=dict, init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -43,7 +44,7 @@ class WorkerRuntime:
         self.handlers[job_type] = handler
 
     def health(self) -> dict[str, Any]:
-        return {"worker_id": self.worker_id, "status": "READY", "hostname": socket.gethostname(), "platform": platform.platform(), "python": platform.python_version(), "cpu": self.capabilities.cpu, "gpu": self.capabilities.gpu, "max_ram_gb": self.capabilities.max_ram_gb, "registered_jobs": sorted(self.handlers), "active_jobs": sorted(self._active_jobs), "completed_jobs": len(self._completed_jobs), "limited_jobs": sorted(self.capabilities.limited_jobs)}
+        return {"worker_id": self.worker_id, "status": "READY", "hostname": socket.gethostname(), "platform": platform.platform(), "python": platform.python_version(), "cpu": self.capabilities.cpu, "gpu": self.capabilities.gpu, "max_ram_gb": self.capabilities.max_ram_gb, "registered_jobs": sorted(self.handlers), "active_jobs": sorted(set(self._active_jobs) | set(self._inflight_sync_jobs)), "completed_jobs": len(self._completed_jobs), "limited_jobs": sorted(self.capabilities.limited_jobs)}
 
     async def execute(self, request: JobRequest) -> JobResult:
         if not isinstance(request.job_id, str) or not request.job_id.strip():
@@ -62,6 +63,9 @@ class WorkerRuntime:
         active = self._active_jobs.get(request.job_id)
         if active is not None:
             return JobResult(request.job_id, "RUNNING", request.job_type, worker_id=self.worker_id)
+        sync_active = self._inflight_sync_jobs.get(request.job_id)
+        if sync_active is not None:
+            return JobResult(request.job_id, "RUNNING", request.job_type, worker_id=self.worker_id)
 
         task = asyncio.create_task(self._run_job(request, handler))
         self._active_jobs[request.job_id] = task
@@ -70,19 +74,47 @@ class WorkerRuntime:
         finally:
             self._active_jobs.pop(request.job_id, None)
 
+    def _remember_completed(self, result: JobResult) -> None:
+        self._completed_jobs[result.job_id] = result
+        while len(self._completed_jobs) > self.max_completed_jobs:
+            oldest_job_id = next(iter(self._completed_jobs))
+            self._completed_jobs.pop(oldest_job_id, None)
+
+    def _finalize_sync_job(self, job_id: str, task: asyncio.Task[Any], job_type: str) -> None:
+        current = self._inflight_sync_jobs.get(job_id)
+        if current is not task:
+            return
+        self._inflight_sync_jobs.pop(job_id, None)
+        if task.cancelled():
+            return
+        try:
+            result = task.result()
+            if not isinstance(result, dict):
+                logger.error("Timed-out worker job returned a non-dictionary result: %s", job_id)
+                return
+            self._remember_completed(JobResult(job_id, "COMPLETED", job_type, output=result, worker_id=self.worker_id))
+        except Exception as exc:
+            logger.exception("Timed-out worker job completed after timeout with failure: %s", job_id, exc_info=exc)
+
     async def _run_job(self, request: JobRequest, handler: Handler) -> JobResult:
         try:
             if asyncio.iscoroutinefunction(handler):
                 result = await asyncio.wait_for(handler(request.payload), timeout=request.timeout_seconds)
             else:
-                result = await asyncio.wait_for(asyncio.to_thread(handler, request.payload), timeout=request.timeout_seconds)
+                # asyncio.to_thread cannot kill an already-running OS thread. Shield
+                # the underlying task so a timeout does not cancel it, keep the job
+                # fenced as RUNNING locally, and cache its eventual result exactly once.
+                sync_task = asyncio.create_task(asyncio.to_thread(handler, request.payload))
+                try:
+                    result = await asyncio.wait_for(asyncio.shield(sync_task), timeout=request.timeout_seconds)
+                except asyncio.TimeoutError:
+                    self._inflight_sync_jobs[request.job_id] = sync_task
+                    sync_task.add_done_callback(lambda task: self._finalize_sync_job(request.job_id, task, request.job_type))
+                    return JobResult(request.job_id, "TIMEOUT", request.job_type, error="Worker job timeout", worker_id=self.worker_id)
             if not isinstance(result, dict):
                 raise TypeError("Worker handler must return a dictionary.")
             completed = JobResult(request.job_id, "COMPLETED", request.job_type, output=result, worker_id=self.worker_id)
-            self._completed_jobs[request.job_id] = completed
-            while len(self._completed_jobs) > self.max_completed_jobs:
-                oldest_job_id = next(iter(self._completed_jobs))
-                self._completed_jobs.pop(oldest_job_id, None)
+            self._remember_completed(completed)
             return completed
         except asyncio.TimeoutError:
             return JobResult(request.job_id, "TIMEOUT", request.job_type, error="Worker job timeout", worker_id=self.worker_id)
