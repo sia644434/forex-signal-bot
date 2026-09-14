@@ -6,9 +6,9 @@ from data.models import Candle
 from data.quality import DataQuality
 
 
-def candle(timestamp: datetime) -> Candle:
+def candle(timestamp: datetime, *, symbol: str = "EURUSD") -> Candle:
     return Candle(
-        symbol="EURUSD",
+        symbol=symbol,
         timestamp=timestamp,
         open=1.1000,
         high=1.1010,
@@ -59,6 +59,29 @@ def test_large_intraday_monday_gap_is_not_hidden_by_weekend_exception():
         expected_symbol="EURUSD",
         expected_interval=timedelta(minutes=1),
         gap_tolerance=1,
+    )
+
+    assert report.valid is False
+    assert report.gaps == 1
+    assert report.suspicious_gaps == 1
+
+
+def test_crypto_friday_to_monday_gap_is_not_treated_as_weekend_closure():
+    friday = candle(
+        datetime(2026, 1, 2, 21, 59, tzinfo=timezone.utc),
+        symbol="BTCUSDT",
+    )
+    monday = candle(
+        datetime(2026, 1, 5, 0, 0, tzinfo=timezone.utc),
+        symbol="BTCUSDT",
+    )
+
+    report = DataQuality.inspect(
+        [friday, monday],
+        expected_symbol="BTCUSDT",
+        expected_interval=timedelta(minutes=1),
+        gap_tolerance=1,
+        market_type="crypto",
     )
 
     assert report.valid is False
