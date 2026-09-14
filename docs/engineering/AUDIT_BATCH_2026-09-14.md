@@ -49,12 +49,27 @@ Implementation commit:
 Regression commit:
 - `0cbe8b40c62fb6a0b561d0d94d72de10436dbaa5`
 
+## TASK-082 — Provider Reconfiguration Lifecycle Isolation
+
+- `ProviderManager.set_providers()` previously updated the injected-provider registry instead of replacing it.
+- A removed injected provider could therefore remain reachable after reconfiguration and later be silently resurrected when the same provider name was configured as a string.
+- Factory-created provider instances for removed providers could also remain cached outside the active provider set.
+- Reconfiguration now replaces the injected registry and prunes factory-instance caches and cooldown state to the active provider set while preserving the cache for providers that remain active.
+- Regression coverage verifies removed injected providers disappear, removed objects cannot be resurrected, and active factory caches remain stable.
+
+Implementation commit:
+- `46ba02295ddbc2629cca371ebbdafaba47a6a715`
+
+Regression commits:
+- `03cace1b483d1980c3db074bae1be240f487f53c`
+- `54dfaa6591b90ebf9e99906cf14a10c73a30ea37`
+
 ## Verification
 
 Resulting `main` HEAD:
-- `0cbe8b40c62fb6a0b561d0d94d72de10436dbaa5`
+- `54dfaa6591b90ebf9e99906cf14a10c73a30ea37`
 
-GitHub Actions were triggered for this exact HEAD. At the time this audit batch was recorded, the resulting workflow runs were still `in_progress`. No green/verified claim is made until all required gates complete.
+GitHub Actions were triggered for this exact HEAD. No green/verified claim is made until the required gates complete.
 
 ## Next Frontier
 
