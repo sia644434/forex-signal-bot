@@ -6,17 +6,17 @@ Phase 1/2 reliability and architecture tasks through DecisionEngine Supply/Deman
 ## TASK-065
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: ConfidenceEngine Numeric Boundary Hardening
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 
 ## TASK-066
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: FullAnalysisEngine Numeric Boundary Hardening
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 
 ## TASK-067
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: PositionSizing Decimal Numeric-Range Hardening
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - Float-level finite validation was followed by Decimal quantization that could leak DecimalException for finite values exceeding active Decimal precision.
 - PositionSizing converts that numeric-range failure to the public fail-closed ValueError contract.
@@ -27,7 +27,7 @@ Evidence:
 ## TASK-068
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: RiskEngine Directional Price-Level Safety
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - Deeper inspection of `RiskEngine → PositionSizing → CurrencyConversion → MarketAwareAnalysisEngine` found that finite risk distances could still produce economically invalid trade levels.
 - A BUY setup could produce a zero/negative stop-loss when risk distance crossed the entry price; a SELL setup could produce non-positive take-profit levels.
@@ -40,7 +40,7 @@ Evidence:
 ## TASK-069
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: Explicit Account-Balance Wiring and Settings Numeric Hardening
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - Production MarketAwareAnalysisEngine was constructing RiskEngine without the configured account balance.
 - Settings now validates account balance/risk/currency policy and MarketAwareAnalysisEngine passes the configured balance explicitly.
@@ -51,18 +51,18 @@ Evidence:
 ## TASK-070
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: Risk-Policy Upper-Bound and Currency-Context Hardening
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - Standalone PositionSizing and RiskEngine accepted risk policies above 100%.
 - RiskEngine account_currency could defer malformed values into later sizing failures.
 - PositionSizing and RiskEngine now enforce `0 < risk_percent <= 100` and validate account currency at the boundary.
-- Implementation commits: `39464db41d3b3478ec79322e455bf1886077f7743` and `6d3eb873f6beb664ffe135002a9f976a3`.
+- Implementation commits: `39464db41d3b3478ec79322e455bf188607f7743` and `6d3eb873f6beb664ffe135002a9f976a3`.
 - Regression commits: `917c8690331083a2cebc8d806b9c3849ec431322` and `24350c2eaf3de319d55a1dfd440e5daa3a16b901`.
 
 ## TASK-071
 Phase: Phase 2 — Core Architecture / Market Data Reliability
 Title: Timestamp and Provider Timing Boundary Hardening
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - `Candle` now requires both `tzinfo` and a non-None `utcoffset()`.
 - ProviderManager now requires finite, non-negative retry delay and cooldown values.
@@ -73,7 +73,7 @@ Evidence:
 ## TASK-072
 Phase: Phase 2 — Core Architecture / Market Data Reliability
 Title: Weekend Gap Detection Boundary Hardening
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - DataQuality now limits the weekend closure exception to a genuine Friday-to-Monday transition within the existing maximum weekend window.
 - Regression coverage verifies genuine Friday→Monday closure while large intraday Friday/Monday gaps remain invalid.
@@ -83,7 +83,7 @@ Evidence:
 ## TASK-073
 Phase: Phase 3 — Telegram / Scanner / Tracker Reliability
 Title: Tracker Risk-Plan Synchronization
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - Tracker refresh now synchronizes the complete executable risk plan on tradable direction changes.
 - WAIT/NO_TRADE clears executable levels and marks the tracked item INVALIDATED.
@@ -94,7 +94,7 @@ Evidence:
 ## TASK-074
 Phase: Phase 2/3 — Multi-Asset Market and Risk Architecture
 Title: Remove Forex-Only Assumptions from Market-Aware Risk Path
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - Central configuration explicitly supports Forex, Crypto, Stocks, Indices, and Commodities.
 - MarketAwareAnalysisEngine and RiskEngine no longer force every symbol through Forex-only currency parsing.
@@ -107,7 +107,7 @@ Evidence:
 ## TASK-075
 Phase: Phase 7 — Worker / Queue / Persistence Reliability
 Title: Targeted Queue Claims and Cancellation Recovery
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - Added atomic targeted queue `claim(job_id)` and changed Dispatcher submission to claim the exact job it enqueued.
 - Dispatcher cancellation now marks the durable job CANCELLED instead of stranding a RUNNING record.
@@ -118,7 +118,7 @@ Evidence:
 ## TASK-076
 Phase: Phase 2 — Core Architecture / Market Data Reliability
 Title: Provider Result Compatibility Boundary
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - ProviderManager `_validate_result()` now accepts both list and tuple results and canonicalizes them to list.
 - Regression coverage verifies asynchronous manager and direct validation compatibility.
@@ -128,7 +128,7 @@ Evidence:
 ## TASK-077
 Phase: Phase 2 — Core Architecture / Market Data Reliability
 Title: Asset-Aware Weekend Gap Semantics
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - Weekend-gap semantics now receive explicit market type.
 - Forex, Stocks, Indices, and Commodities preserve weekend closure handling; Crypto is fail-closed for the same Friday→Monday gap because it is 24/7.
@@ -139,7 +139,7 @@ Evidence:
 ## TASK-078
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: Market-Aware Risk State Isolation
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - MarketAwareAnalysisEngine no longer replaces the shared FullAnalysisEngine risk_engine on every analysis.
 - RiskEngine is instantiated locally per market-aware analysis, preventing cross-request state coupling.
@@ -150,7 +150,7 @@ Evidence:
 ## TASK-079
 Phase: Phase 2 — Core Architecture / Market and Risk Reliability
 Title: Stablecoin Currency Boundary Consistency
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - PositionSizing previously required exactly three-letter currencies despite explicit USDT/USDC conversion support.
 - PositionSizing, Settings, and RiskEngine now share the explicit three-letter-plus-USDT/USDC currency policy.
@@ -161,7 +161,7 @@ Evidence:
 ## TASK-080
 Phase: Phase 2 — Core Architecture / Multi-Asset Risk Reliability
 Title: Asset-Derived Risk Contract Size
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - RiskEngine no longer defaults direct non-Forex sizing to Forex contract size 100000.
 - Contract size is derived from centralized asset metadata when no explicit override is supplied; explicit overrides remain authoritative.
@@ -172,7 +172,7 @@ Evidence:
 ## TASK-081
 Phase: Phase 2 — Core Architecture / Market Data Reliability
 Title: Central Symbol Normalization at Data-Quality Boundary
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - DataQuality now delegates symbol normalization to `config.symbols.normalize_symbol()` instead of maintaining a narrower local implementation.
 - Regression coverage verifies `eur/usd` and `EUR_USD` semantic equivalence.
@@ -182,7 +182,7 @@ Evidence:
 ## TASK-082
 Phase: Phase 2 — Core Architecture / Provider Reliability
 Title: Provider Reconfiguration Lifecycle Isolation
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - `ProviderManager.set_providers()` now replaces the injected provider registry instead of updating it in place.
 - Removed providers are pruned from injected instances, factory caches, and cooldown state; active provider cache state is preserved.
@@ -194,7 +194,7 @@ Evidence:
 ## TASK-083
 Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
 Title: Configured Risk Policy Ceiling for Dynamic Sizing
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
 - `_dynamic_risk_percent()` previously selected hard-coded candidates up to 2.0% without respecting the configured `risk_percent` ceiling.
 - A restrictive production policy such as `risk_percent=0.25` could therefore be silently exceeded by a high-confidence/high-strength signal.
@@ -203,6 +203,23 @@ Evidence:
 - Regression coverage verifies restrictive and non-restrictive ceilings plus symmetric directional behavior.
 - Implementation commit: `d9c427b7f44a56db2c4f6c98b37e249a6df8af82`.
 - Regression commit: `cbc09a3fefa6b5d97d77119cb8196f1d21da7604`.
+- Exact-head verification: `main` commit `48b015525daf99b60294c8591cb8ed1c0fee2c35`; all seven required workflows succeeded and combined status is successful.
+
+## TASK-084
+Phase: Phase 2 — Telegram / Market Status Reliability
+Title: Market Status Contract Hardening
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- The Telegram market-status helper exposed `STALE_DATA` instead of the canonical `STALE` status expected by the platform contract.
+- It used a fixed 180-minute stale threshold despite receiving a timeframe argument.
+- It silently interpreted naive timestamps as UTC instead of failing closed.
+- Weekend closure was applied globally, incorrectly classifying 24/7 Crypto as CLOSED.
+- The market-status boundary now uses canonical `OPEN/CLOSED/STALE/NO_DATA`, scales stale detection to six timeframe intervals, rejects invalid/naive/future timestamps, and applies weekend closure only to non-crypto markets.
+- Scanner now passes symbol context and consumes the canonical `STALE` status.
+- Focused regression coverage added for no-data, timestamp safety, future timestamps, timeframe-scaled staleness, weekday OPEN, Forex weekend closure, Crypto weekend behavior, and invalid reference time.
+- Implementation commit: `a0caef5d41e598dc9ce54c31b68d2529c1438c5d`.
+- Scanner integration commit: `ad0ae2ed332ed1007302cfe008587e9cfb8a6c10`.
+- Regression test commit: `3e3f17dac93f2f20e13c804a0b89195fdf239587`.
 
 ## Multi-Asset Architecture Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
