@@ -66,10 +66,13 @@ class MarketAwareAnalysisEngine:
         if signal not in {"BUY", "SELL"}:
             return report
 
-        conversion = await self.conversion_service.get_conversion(
-            source_currency=quote_currency,
-            target_currency=self.settings.account_currency,
-        )
+        try:
+            conversion = await self.conversion_service.get_conversion(
+                source_currency=quote_currency,
+                target_currency=self.settings.account_currency,
+            )
+        except ValueError as error:
+            raise ValueError("Unable to resolve fresh currency conversion") from error
 
         atr_result = ATREngine().calculate(candles)
         if atr_result.atr is None:
