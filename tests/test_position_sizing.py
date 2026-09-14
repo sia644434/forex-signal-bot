@@ -13,6 +13,21 @@ def test_usd_quote_uses_identity_conversion():
     assert result.lot_size == 0.05
 
 
+def test_usdt_quote_uses_identity_conversion():
+    result = calculate_position_size(account_balance=1000, risk_percent=1, risk_distance_quote=100.0, contract_size=1, account_currency="USDT", quote_currency="USDT")
+    assert result.risk_amount_account == 10.0
+    assert result.risk_per_unit_account == 100.0
+    assert result.position_size == 0.1
+    assert result.lot_size == 0.1
+
+
+def test_usdt_quote_can_convert_to_usd_account_currency():
+    result = calculate_position_size(account_balance=1000, risk_percent=1, risk_distance_quote=100.0, contract_size=1, account_currency="USD", quote_currency="USDT", quote_to_account_rate=1.0)
+    assert result.risk_amount_account == 10.0
+    assert result.risk_per_unit_account == 100.0
+    assert result.position_size == 0.1
+
+
 def test_non_usd_quote_requires_explicit_conversion_rate():
     with pytest.raises(ValueError, match="quote_to_account_rate"):
         calculate_position_size(account_balance=1000, risk_percent=1, risk_distance_quote=0.20, contract_size=100000, account_currency="USD", quote_currency="JPY")
@@ -81,11 +96,11 @@ def test_position_sizing_rejects_non_string_currency_context():
         calculate_position_size(account_balance=1000, risk_percent=1, risk_distance_quote=0.20, contract_size=100000, account_currency=None, quote_currency="USD")
 
 
-@pytest.mark.parametrize("field,value", [("account_currency", "US"), ("account_currency", "USDX"), ("account_currency", "U$D"), ("quote_currency", "JP"), ("quote_currency", "J@Y")])
+@pytest.mark.parametrize("field,value", [("account_currency", "US"), ("account_currency", "USDX"), ("account_currency", "U$D"), ("quote_currency", "JP"), ("quote_currency", "J@Y"), ("quote_currency", "USDTX")])
 def test_position_sizing_rejects_malformed_currency_codes(field: str, value: str):
     kwargs = {"account_balance": 1000, "risk_percent": 1, "risk_distance_quote": 0.20, "contract_size": 100000, "account_currency": "USD", "quote_currency": "JPY", "quote_to_account_rate": 0.0065}
     kwargs[field] = value
-    with pytest.raises(ValueError, match="3-letter currency code"):
+    with pytest.raises(ValueError, match="supported currency code"):
         calculate_position_size(**kwargs)
 
 
