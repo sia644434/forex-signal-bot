@@ -115,13 +115,16 @@ def test_full_engine_rejects_non_finite_analysis_component(monkeypatch) -> None:
     def invalid_smc(prices):
         result = original_analyze(prices)
         return type(result)(
-            score=float("inf"),
             bias=result.bias,
             structure=result.structure,
             order_block=result.order_block,
             liquidity=result.liquidity,
             fair_value_gap=result.fair_value_gap,
             premium_discount=result.premium_discount,
+            equal_high=result.equal_high,
+            equal_low=result.equal_low,
+            score=float("inf"),
+            strength=result.strength,
             reason=result.reason,
         )
 
