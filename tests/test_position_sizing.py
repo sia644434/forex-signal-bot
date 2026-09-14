@@ -77,3 +77,15 @@ def test_position_sizing_rejects_malformed_currency_codes(field: str, value: str
     kwargs[field] = value
     with pytest.raises(ValueError, match="3-letter currency code"):
         calculate_position_size(**kwargs)
+
+
+def test_position_sizing_normalizes_decimal_range_failure_to_value_error():
+    with pytest.raises(ValueError, match="supported numeric range"):
+        calculate_position_size(
+            account_balance=1e308,
+            risk_percent=100,
+            risk_distance_quote=1.0,
+            contract_size=1.0,
+            account_currency="USD",
+            quote_currency="USD",
+        )
