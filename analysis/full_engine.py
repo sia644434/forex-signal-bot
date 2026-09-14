@@ -95,28 +95,16 @@ class FullAnalysisEngine:
 
         start = datetime(1970, 1, 1, tzinfo=timezone.utc)
         candle_data = [
-            Candle(
-                symbol="UNKNOWN",
-                timestamp=start + timedelta(minutes=index),
-                open=price,
-                high=price,
-                low=price,
-                close=price,
-                volume=0.0,
-            )
+            Candle(symbol="UNKNOWN", timestamp=start + timedelta(minutes=index), open=price, high=price, low=price, close=price, volume=0.0)
             for index, price in enumerate(closes)
         ]
         return candle_data, closes
 
     def analyze(self, candles: list[Candle] | list[float]) -> AnalysisReport:
         candle_data, closes = self._normalize_candles(candles)
-
         atr_result = self.atr_engine.calculate(closes)
         atr_value = self._require_finite(atr_result.atr if atr_result.atr is not None else 0.0, "ATR")
-        atr_percentage = self._require_finite(
-            atr_result.atr_percentage if atr_result.atr_percentage is not None else 0.0,
-            "ATR percentage",
-        )
+        atr_percentage = self._require_finite(atr_result.atr_percentage if atr_result.atr_percentage is not None else 0.0, "ATR percentage")
         if atr_value < 0 or atr_percentage < 0:
             raise ValueError("ATR metrics must be non-negative.")
 
@@ -150,56 +138,25 @@ class FullAnalysisEngine:
             self._require_finite(value, name)
 
         analysis_result = AnalysisResult(
-            trend=structure.trend,
-            momentum=momentum_result.state,
-            indicators=indicator_snapshot.values,
-            candles=candle_data,
-            supply_demand=supply_demand_result.zone,
-            trend_score=component_scores["trend_score"],
-            momentum_score=component_scores["momentum_score"],
-            structure_score=component_scores["structure_score"],
-            volatility_score=component_scores["volatility_score"],
-            price_action_score=component_scores["price_action_score"],
-            supply_demand_score=component_scores["supply_demand_score"],
-            candlestick_score=component_scores["candlestick_score"],
-            elliott_score=component_scores["elliott_score"],
-            harmonic_score=component_scores["harmonic_score"],
-            brooks_score=component_scores["brooks_score"],
-            wyckoff_score=component_scores["wyckoff_score"],
-            smart_money_score=component_scores["smart_money_score"],
-            smc_bias=smc_result.bias,
-            smc_structure=smc_result.structure,
-            order_block=smc_result.order_block,
-            liquidity=smc_result.liquidity,
-            fair_value_gap=smc_result.fair_value_gap,
-            premium_discount=smc_result.premium_discount,
-            reasons=(
-                momentum_result.reasons
-                + price_action_result.reasons
-                + [
-                    supply_demand_result.reason,
-                    candlestick_result.reason,
-                    elliott_result.reason,
-                    harmonic_result.reason,
-                    brooks_result.reason,
-                    wyckoff_result.reason,
-                    smc_result.reason,
-                ]
-            ),
+            trend=structure.trend, momentum=momentum_result.state, indicators=indicator_snapshot.values, candles=candle_data,
+            supply_demand=supply_demand_result.zone, trend_score=component_scores["trend_score"], momentum_score=component_scores["momentum_score"],
+            structure_score=component_scores["structure_score"], volatility_score=component_scores["volatility_score"], price_action_score=component_scores["price_action_score"],
+            supply_demand_score=component_scores["supply_demand_score"], candlestick_score=component_scores["candlestick_score"], elliott_score=component_scores["elliott_score"],
+            harmonic_score=component_scores["harmonic_score"], brooks_score=component_scores["brooks_score"], wyckoff_score=component_scores["wyckoff_score"],
+            smart_money_score=component_scores["smart_money_score"], smc_bias=smc_result.bias, smc_structure=smc_result.structure, order_block=smc_result.order_block,
+            liquidity=smc_result.liquidity, fair_value_gap=smc_result.fair_value_gap, premium_discount=smc_result.premium_discount,
+            reasons=momentum_result.reasons + price_action_result.reasons + [supply_demand_result.reason, candlestick_result.reason, elliott_result.reason, harmonic_result.reason, brooks_result.reason, wyckoff_result.reason, smc_result.reason],
         )
 
         decision = self.decision_engine.decide(analysis_result)
         confidence_result = self.confidence_engine.evaluate(analysis_result)
-        risk_result = self.risk_engine.calculate(
-            signal=decision.signal,
-            current_price=closes[-1],
-            atr=atr_value,
-            confidence=confidence_result.confidence,
-            score=decision.score,
-        )
+        risk_result = self.risk_engine.calculate(signal=decision.signal, current_price=closes[-1], atr=atr_value, confidence=confidence_result.confidence, score=decision.score)
 
         confidence_value = self._require_finite(confidence_result.confidence, "confidence")
         decision_score = self._require_finite(decision.score, "decision score")
+        # RiskResult intentionally uses None for a NO-TRADE plan. Validate every
+        # populated numeric field without converting the legitimate None contract
+        # into a failure.
         risk_values = {
             "entry_price": risk_result.entry_price,
             "stop_loss": risk_result.stop_loss,
@@ -209,7 +166,8 @@ class FullAnalysisEngine:
             "risk_amount": risk_result.risk_amount,
         }
         for name, value in risk_values.items():
-            self._require_finite(value, name)
+            if value is not None:
+                self._require_finite(value, name)
 
         if confidence_value >= 0.85:
             confidence_grade = "VERY_HIGH"
@@ -223,17 +181,7 @@ class FullAnalysisEngine:
             confidence_grade = "VERY_LOW"
 
         structure_name = "BOS" if structure.bos else "NORMAL"
-        trade_quality = min(
-            100,
-            max(
-                0,
-                int(
-                    (confidence_value * 50)
-                    + (self._directional_strength(decision_score) * 0.5)
-                ),
-            ),
-        )
-
+        trade_quality = min(100, max(0, int((confidence_value * 50) + (self._directional_strength(decision_score) * 0.5))))
         if trade_quality >= 90:
             trade_grade = "A+"
         elif trade_quality >= 80:
@@ -246,49 +194,14 @@ class FullAnalysisEngine:
             trade_grade = "D"
 
         return AnalysisReport(
-            trend=structure.trend,
-            structure=structure_name,
-            score=decision_score,
-            signal=decision.signal,
-            confidence=confidence_value,
-            agreement=confidence_result.agreement,
-            bullish_votes=confidence_result.bullish_votes,
-            bearish_votes=confidence_result.bearish_votes,
-            neutral_votes=confidence_result.neutral_votes,
-            warnings=confidence_result.warnings,
-            confidence_grade=confidence_grade,
-            decision_bias=decision.bias,
-            risk_level=risk_result.risk_level,
-            entry_price=risk_result.entry_price,
-            stop_loss=risk_result.stop_loss,
-            take_profit=risk_result.take_profit,
-            take_profit_1=risk_result.take_profit_1,
-            take_profit_2=risk_result.take_profit_2,
-            take_profit_3=risk_result.take_profit_3,
-            risk_reward=risk_result.risk_reward,
-            position_size=risk_result.position_size,
-            risk_amount=risk_result.risk_amount,
-            trailing_stop=risk_result.trailing_stop,
-            market_condition=risk_result.market_condition,
-            trade_quality=trade_quality,
-            trade_grade=trade_grade,
-            smc_bias=smc_result.bias,
-            smc_structure=smc_result.structure,
-            order_block=smc_result.order_block,
-            liquidity=smc_result.liquidity,
-            fair_value_gap=smc_result.fair_value_gap,
-            premium_discount=smc_result.premium_discount,
-            reasons=(
-                analysis_result.reasons
-                + decision.reasons
-                + confidence_result.warnings
-                + [
-                    risk_result.reason,
-                    f"ATR: {atr_value}",
-                    f"ATR Percentage: {atr_percentage}",
-                    f"Market Condition: {risk_result.market_condition}",
-                    f"Trade Grade: {trade_grade}",
-                ]
-            ),
+            trend=structure.trend, structure=structure_name, score=decision_score, signal=decision.signal, confidence=confidence_value,
+            agreement=confidence_result.agreement, bullish_votes=confidence_result.bullish_votes, bearish_votes=confidence_result.bearish_votes, neutral_votes=confidence_result.neutral_votes,
+            warnings=confidence_result.warnings, confidence_grade=confidence_grade, decision_bias=decision.bias, risk_level=risk_result.risk_level,
+            entry_price=risk_result.entry_price, stop_loss=risk_result.stop_loss, take_profit=risk_result.take_profit, take_profit_1=risk_result.take_profit_1,
+            take_profit_2=risk_result.take_profit_2, take_profit_3=risk_result.take_profit_3, risk_reward=risk_result.risk_reward, position_size=risk_result.position_size,
+            risk_amount=risk_result.risk_amount, trailing_stop=risk_result.trailing_stop, market_condition=risk_result.market_condition, trade_quality=trade_quality,
+            trade_grade=trade_grade, smc_bias=smc_result.bias, smc_structure=smc_result.structure, order_block=smc_result.order_block, liquidity=smc_result.liquidity,
+            fair_value_gap=smc_result.fair_value_gap, premium_discount=smc_result.premium_discount,
+            reasons=analysis_result.reasons + decision.reasons + confidence_result.warnings + [risk_result.reason, f"ATR: {atr_value}", f"ATR Percentage: {atr_percentage}", f"Market Condition: {risk_result.market_condition}", f"Trade Grade: {trade_grade}"],
             indicators=indicator_snapshot.values,
         )
