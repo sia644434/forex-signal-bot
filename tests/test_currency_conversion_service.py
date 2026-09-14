@@ -52,9 +52,7 @@ def canonical_service_with_clock(candles: list[Candle], clock: datetime) -> Curr
 async def test_identity_conversion_is_exact_without_market_request() -> None:
     engine = FakeMarketDataEngine()
     service = CurrencyConversionService(MarketDataService(engine=engine))
-
     result = await service.get_conversion(source_currency="usd", target_currency="USD")
-
     assert result.rate == 1.0
     assert result.pair_symbol == ""
     assert result.inverted is False
@@ -67,9 +65,7 @@ async def test_identity_conversion_is_exact_without_market_request() -> None:
 async def test_direct_conversion_uses_quote_to_account_pair() -> None:
     engine = FakeMarketDataEngine([candle("EURUSD", 1.25)])
     service = CurrencyConversionService(MarketDataService(engine=engine))
-
     result = await service.get_conversion(source_currency="EUR", target_currency="USD")
-
     assert result.rate == 1.25
     assert result.pair_symbol == "EURUSD"
     assert result.inverted is False
@@ -80,9 +76,7 @@ async def test_direct_conversion_uses_quote_to_account_pair() -> None:
 async def test_inverse_conversion_inverts_account_quote_pair() -> None:
     engine = FakeMarketDataEngine([candle("USDJPY", 150.0)])
     service = CurrencyConversionService(MarketDataService(engine=engine))
-
     result = await service.get_conversion(source_currency="JPY", target_currency="USD")
-
     assert result.rate == pytest.approx(1 / 150.0)
     assert result.pair_symbol == "USDJPY"
     assert result.inverted is True
@@ -93,8 +87,7 @@ async def test_inverse_conversion_inverts_account_quote_pair() -> None:
 async def test_missing_market_data_fails_closed() -> None:
     engine = FakeMarketDataEngine([])
     service = CurrencyConversionService(MarketDataService(engine=engine))
-
-    with pytest.raises(ValueError, match="Unable to resolve fresh currency conversion JPY->USD"):
+    with pytest.raises(ValueError, match="No supported market-backed currency conversion for JPY->USD"):
         await service.get_conversion(source_currency="JPY", target_currency="USD")
 
 
@@ -107,8 +100,7 @@ async def test_non_finite_or_nonpositive_market_price_fails_closed(invalid_price
     )
     engine = FakeMarketDataEngine([invalid_candle])
     service = CurrencyConversionService(MarketDataService(engine=engine))
-
-    with pytest.raises(ValueError, match="Unable to resolve fresh currency conversion JPY->USD"):
+    with pytest.raises(ValueError, match="No supported market-backed currency conversion for JPY->USD"):
         await service.get_conversion(source_currency="JPY", target_currency="USD")
 
 
@@ -116,10 +108,8 @@ async def test_non_finite_or_nonpositive_market_price_fails_closed(invalid_price
 async def test_provider_exception_fails_closed() -> None:
     engine = FakeMarketDataEngine(error=RuntimeError("provider unavailable"))
     service = CurrencyConversionService(MarketDataService(engine=engine))
-
-    with pytest.raises(ValueError, match="Unable to resolve fresh currency conversion JPY->USD"):
+    with pytest.raises(ValueError, match="No supported market-backed currency conversion for JPY->USD"):
         await service.get_conversion(source_currency="JPY", target_currency="USD")
-
     assert engine.requests == [("USDJPY", "1m", 1)]
 
 
@@ -127,15 +117,26 @@ async def test_provider_exception_fails_closed() -> None:
 async def test_stale_conversion_data_is_rejected_by_canonical_market_data_path() -> None:
     stale = candle("USDJPY", 150.0, timestamp=NOW - timedelta(minutes=7))
     service = canonical_service_with_clock([stale], NOW)
-
-    with pytest.raises(ValueError, match="Unable to resolve fresh currency conversion JPY->USD"):
+    with pytest.raises(ValueError, match="No supported market-backed currency conversion for JPY->USD"):
         await service.get_conversion(source_currency="JPY", target_currency="USD")
 
 
 @pytest.mark.asyncio
-async def test_unsupported_conversion_pair_fails_closed() -> None:
+async def test_stablecoin_to_usd_is_explicitly_supported_without_fx_pair() -> None:
     engine = FakeMarketDataEngine()
     service = CurrencyConversionService(MarketDataService(engine=engine))
+    result = await service.get_conversion(source_currency="USDT", target_currency="USD")
+    assert result.rate == 1.0
+    assert result.pair_symbol == "USDTUSD"
+    assert engine.requests == []
 
-    with pytest.raises(ValueError, match="No supported Forex conversion pair"):
-        await service.get_conversion(source_currency="XAU", target_currency="USD")
+
+@pytest.mark.asyncio
+async def test_stablecoin_quote_can_bridge_to_non_usd_account_currency() -> None:
+    engine = FakeMarketDataEngine([candle("EURUSD", 1.25)])
+    service = CurrencyConversionService(MarketDataService(engine=engine))
+    result = await service.get_conversion(source_currency="USDT", target_currency="EUR")
+    assert result.rate == pytest.approx(1 / 1.25)
+    assert result.pair_symbol == "EURUSD"
+    assert result.inverted is True
+    assert engine.requests == [("EURUSD", "1m", 1)]
