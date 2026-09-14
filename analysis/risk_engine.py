@@ -40,14 +40,16 @@ class RiskEngine:
         if account_currency is not None and not isinstance(account_currency, str):
             raise TypeError("account_currency must be a string or None.")
         self.account_currency = account_currency.strip().upper() if account_currency is not None and account_currency.strip() else None
+        if self.account_currency is not None and (len(self.account_currency) != 3 or not self.account_currency.isalpha()):
+            raise ValueError("account_currency must be a 3-letter ISO currency code.")
         if self.risk_reward_target <= 0:
             raise ValueError("risk_reward_target must be greater than zero.")
         if self.atr_multiplier <= 0:
             raise ValueError("atr_multiplier must be greater than zero.")
         if self.account_balance <= 0:
             raise ValueError("account_balance must be greater than zero.")
-        if self.risk_percent <= 0:
-            raise ValueError("risk_percent must be greater than zero.")
+        if self.risk_percent <= 0 or self.risk_percent > 100:
+            raise ValueError("risk_percent must be greater than zero and at most 100.")
         if self.contract_size <= 0:
             raise ValueError("contract_size must be greater than zero.")
 
@@ -195,8 +197,8 @@ class RiskEngine:
             risk_distance = self._coerce_finite(risk_distance, "risk distance")
         if risk_percent is not None:
             risk_percent = self._coerce_finite(risk_percent, "risk_percent")
-            if risk_percent <= 0:
-                raise ValueError("risk_percent must be greater than zero.")
+            if risk_percent <= 0 or risk_percent > 100:
+                raise ValueError("risk_percent must be greater than zero and at most 100.")
         if current_price <= 0:
             raise ValueError("current_price must be greater than zero.")
         if risk_distance is not None and risk_distance <= 0:
