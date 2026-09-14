@@ -32,30 +32,19 @@ def calculate_position_size(
     quote_currency: str,
     quote_to_account_rate: float | None = None,
 ) -> PositionSizingResult:
-    """Calculate an executable position size with explicit currency units.
-
-    ``risk_distance_quote`` is the price distance denominated in the
-    instrument's quote currency per unit of the base asset.
-
-    If quote and account currencies differ, ``quote_to_account_rate`` must
-    convert one quote-currency unit into account-currency units. No implicit
-    USD assumption or market-rate lookup is performed here.
-
-    The requested monetary risk is treated as a ceiling. Because the broker
-    lot precision is 0.001 lots, the executable lot is floored rather than
-    rounded upward. ``position_size`` is then derived from that executable
-    lot so the two values always describe the same executable quantity.
-    """
+    """Calculate an executable position size with explicit currency units."""
     if not isinstance(account_currency, str) or not isinstance(quote_currency, str):
         raise TypeError("account_currency and quote_currency must be strings.")
 
     account_currency = account_currency.strip().upper()
     quote_currency = quote_currency.strip().upper()
 
-    if not account_currency:
-        raise ValueError("account_currency must not be empty.")
-    if not quote_currency:
-        raise ValueError("quote_currency must not be empty.")
+    for name, currency in (
+        ("account_currency", account_currency),
+        ("quote_currency", quote_currency),
+    ):
+        if len(currency) != 3 or not currency.isalpha():
+            raise ValueError(f"{name} must be a 3-letter currency code.")
 
     numeric_inputs = {
         "account_balance": account_balance,
@@ -116,10 +105,6 @@ def calculate_position_size(
     if not math.isfinite(raw_position_size) or not math.isfinite(raw_lot_size):
         raise ValueError("calculated position size must be finite.")
 
-    # Floor using decimal representations of the validated inputs so an
-    # exact 0.020 lot boundary cannot become 0.019 because of binary float
-    # noise. Flooring still guarantees that executable risk never exceeds the
-    # requested risk ceiling.
     decimal_risk_amount = Decimal(str(account_balance)) * Decimal(str(risk_percent)) / Decimal("100")
     decimal_risk_per_unit = Decimal(str(risk_distance_quote)) * Decimal(str(conversion_rate))
     decimal_raw_lot = decimal_risk_amount / decimal_risk_per_unit / Decimal(str(contract_size))
@@ -128,8 +113,6 @@ def calculate_position_size(
     if lot_size <= 0:
         raise ValueError("calculated lot size is below the supported precision.")
 
-    # Derive position_size from the executable lot. This prevents the public
-    # position_size and lot_size fields from describing different quantities.
     position_size = lot_size * contract_size
     if not math.isfinite(position_size):
         raise ValueError("executable position size must be finite.")
