@@ -72,12 +72,17 @@ class RiskEngine:
     def _dynamic_risk_percent(self, confidence: float, score: float) -> float:
         strength = self._directional_strength(score)
         if confidence >= 0.85 and strength >= 80:
-            return 2.0
-        if confidence >= 0.70 and strength >= 60:
-            return 1.5
-        if confidence >= 0.50:
-            return 1.0
-        return 0.5
+            candidate = 2.0
+        elif confidence >= 0.70 and strength >= 60:
+            candidate = 1.5
+        elif confidence >= 0.50:
+            candidate = 1.0
+        else:
+            candidate = 0.5
+        # The configured risk_percent is the account-level ceiling. Dynamic
+        # scoring may reduce the configured budget, but must never silently
+        # increase it above the explicit production risk policy.
+        return min(candidate, self.risk_percent)
 
     @staticmethod
     def _calculate_risk_level(confidence: float, score: float) -> str:
