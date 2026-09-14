@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: IN_PROGRESS
-Active Work: Cross-layer provider/market-data/risk reliability audit through TASK-083; verification of the latest exact `main` HEAD remains the checkpoint before closure of the current batch.
+Active Work: Cross-layer provider/market-data/risk reliability audit through TASK-084; verification of the latest exact `main` HEAD remains the checkpoint before closure of the current task.
 Objective: Complete only architecture work that directly supports the multi-asset trading-intelligence platform and its heavy application processing path.
 
 ### Completed Evidence
@@ -15,11 +15,11 @@ Objective: Complete only architecture work that directly supports the multi-asse
 - TASK-015 hardened worker job lifecycle validation, timeout, cancellation, active-job tracking, and completed-job idempotency.
 - TASK-017 removed the residual `multi_agent_analysis` workload, executor, tests, and documentation references.
 - TASK-018 through TASK-023 established durable worker queue, crash recovery, persistence configuration, application service composition, and real heavy-application routing without speculative callers.
-- TASK-024 through TASK-031 established authenticated heartbeat, readiness, freshness, least-privilege health exposure, authenticated job requests, readiness-gated dispatch, and worker observability.
+- TASK-024 through TASK-031 established authenticated heartbeat, readiness, freshness, least-privilege health, authenticated job requests, readiness-gated dispatch, and worker observability.
 - TASK-032 consolidated Telegram ownership under `services/telegram/`.
 - TASK-033 consolidated Decision/Risk ownership under canonical `analysis/` engines.
 - TASK-034 removed the unused alternate analysis adapter/registry/orchestrator/contracts architecture.
-- TASK-035 audited the `ai/` package and established that it is dormant/unwired future Phase 6 capability.
+- TASK-035 audited the `ai/` package and established it as dormant/unwired future Phase 6 capability.
 - TASK-036 through TASK-044 established canonical market-data ownership, construction, lifetime, provider routing, and scanner readiness boundaries.
 - TASK-045 through TASK-051 established Telegram tracker/user-state and journal ordering, atomic mutation, corruption fail-closed, structure validation, and entry-schema validation.
 - TASK-052 through TASK-055 hardened service startup/shutdown cleanup and worker queue resource lifecycle.
@@ -38,12 +38,12 @@ Objective: Complete only architecture work that directly supports the multi-asse
 - TASK-081 made DataQuality use the canonical symbol normalization layer.
 - TASK-082 made ProviderManager reconfiguration replace the injected provider registry and prune removed instances/cooldowns while preserving active cache state.
 - TASK-083 made configured `risk_percent` an account-level ceiling for dynamic risk selection so confidence/score heuristics cannot silently exceed the production risk policy.
+- TASK-084 hardened the Telegram market-status contract with canonical statuses, timeframe-scaled stale detection, strict timezone-aware timestamps, future-timestamp rejection, and asset-aware weekend semantics; scanner propagation was updated accordingly.
 
 ### Current Audit
-- TASK-058 through TASK-064 remain historically verified according to persistent engineering history.
-- TASK-065 through TASK-083 have implementation/regression evidence recorded in the engineering state; the latest exact-head GitHub Actions verification must be confirmed before marking the latest batch VERIFIED.
-- The current frontier is `ProviderManager → MarketDataService → Freshness/DataQuality → Symbol/Asset Metadata → CurrencyConversion → MarketAwareAnalysisEngine → RiskEngine → PositionSizing`.
-- After the market/risk chain, continue into Telegram/Scanner/Tracker/Callbacks, Worker/Queue/Persistence, Security/Production, and Final E2E.
+- TASK-058 through TASK-083 are verified by the exact `main` HEAD `48b015525daf99b60294c8591cb8ed1c0fee2c35`, whose seven required workflows all succeeded and whose combined status is successful.
+- TASK-084 implementation and regression coverage are present; final exact-head verification is pending.
+- After TASK-084 verification, continue into Telegram/Scanner/Tracker/Callbacks, Worker/Queue/Persistence, Security/Production, and Final E2E.
 - Do not invent a task merely to advance the roadmap. Create the next task only after a concrete repository-backed gap is demonstrated.
 
 ## Phase 3 — Telegram Bot
