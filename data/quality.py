@@ -22,6 +22,8 @@ class DataQualityReport:
 class DataQuality:
     """Validate normalized market candles while allowing normal market closures."""
 
+    _WEEKEND_CLOSURE_MARKETS = frozenset({"forex", "stock", "index", "commodity"})
+
     @staticmethod
     def _validate_interval(interval: timedelta) -> None:
         if not isinstance(interval, timedelta):
@@ -40,29 +42,52 @@ class DataQuality:
     def _normalize_symbol(symbol: str) -> str:
         return symbol.strip().upper().replace("_", "")
 
-    @staticmethod
-    def _is_expected_market_closure_gap(previous, current, expected_interval: timedelta) -> bool:
+    @classmethod
+    def _is_expected_market_closure_gap(
+        cls,
+        previous,
+        current,
+        expected_interval: timedelta,
+        market_type: str = "forex",
+    ) -> bool:
         delta = current.timestamp - previous.timestamp
         if delta <= expected_interval:
+            return False
+
+        if market_type not in cls._WEEKEND_CLOSURE_MARKETS:
             return False
 
         previous_day = previous.timestamp.weekday()
         current_day = current.timestamp.weekday()
 
         # Only a genuine Friday -> Monday transition is treated as the normal
-        # Forex weekend closure. Intraday Friday/Monday gaps must remain visible
-        # so a provider cannot hide missing candles behind the weekend exception.
+        # weekend closure. Crypto is explicitly 24/7, so its Friday->Monday
+        # gap must remain visible as a data-quality failure.
         if previous_day == 4 and current_day == 0 and current.timestamp.date() > previous.timestamp.date():
             return delta <= timedelta(days=3, hours=6)
 
         return False
 
     @classmethod
-    def inspect(cls, candles: Sequence[Candle], *, expected_symbol=None, expected_interval=None, gap_tolerance=1):
+    def inspect(
+        cls,
+        candles: Sequence[Candle],
+        *,
+        expected_symbol=None,
+        expected_interval=None,
+        gap_tolerance=1,
+        market_type: str = "forex",
+    ):
         if candles is None:
             raise TypeError("candles cannot be None")
         if not isinstance(candles, Sequence):
             raise TypeError("candles must be a sequence")
+
+        if not isinstance(market_type, str):
+            raise TypeError("market_type must be a string")
+        normalized_market_type = market_type.strip().lower()
+        if not normalized_market_type:
+            raise ValueError("market_type cannot be empty")
 
         cls._validate_gap_tolerance(gap_tolerance)
         if expected_interval is not None:
@@ -102,7 +127,12 @@ class DataQuality:
                     out_of_order += 1
                     issues.append(f"timestamp order violation at item {index}")
                 elif expected_interval and delta > expected_interval * gap_tolerance:
-                    if not cls._is_expected_market_closure_gap(previous, candle, expected_interval):
+                    if not cls._is_expected_market_closure_gap(
+                        previous,
+                        candle,
+                        expected_interval,
+                        normalized_market_type,
+                    ):
                         gaps += 1
                         suspicious_gaps += 1
                         issues.append(f"gap detected before item {index}: {delta}")
