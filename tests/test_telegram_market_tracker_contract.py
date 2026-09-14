@@ -98,8 +98,12 @@ async def test_tracker_does_not_apply_old_target_before_current_analysis(monkeyp
             return _report("SELL", 1.20)
 
     notifications = []
+
+    async def notify(message: str):
+        notifications.append(message)
+
     monkeypatch.setattr("services.telegram.tracker.MarketAwareAnalysisEngine", Engine)
-    result = await refresh_tracking(item, notifications.append, MarketData())
+    result = await refresh_tracking(item, notify, MarketData())
 
     assert result.status == "CHANGED"
     assert result.signal == "SELL"
