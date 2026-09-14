@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 from services.telegram.handlers.callbacks import ALLOWED_CALLBACKS, _apply_setting
 from services.telegram.handlers.signal import _EXECUTABLE_SIGNALS, _setting_value
+from services.telegram.journal import JournalEntry, add_entry, format_journal
 from services.telegram.scanner import ScanResult, format_scan
 from services.telegram.state import TelegramUserState
 
@@ -58,4 +57,29 @@ def test_scanner_html_escapes_dynamic_symbol_fields() -> None:
     )
     rendered = format_scan([result], "M15")
     assert "EURUSD<&" not in rendered
+    assert "EURUSD&lt;&amp;" in rendered
+
+
+def test_journal_html_escapes_persisted_dynamic_fields(tmp_path, monkeypatch) -> None:
+    from services.telegram import journal
+
+    class Store:
+        def list(self, user_id, limit=1000):
+            return [{
+                "symbol": "EURUSD<&",
+                "side": "BUY<b>",
+                "entry": 1.1,
+                "stop_loss": 1.0,
+                "take_profit": 1.2,
+                "notes": "",
+                "status": "OPEN",
+                "result": "OK<&",
+                "created_at": "",
+            }]
+
+    monkeypatch.setattr(journal, "_STORE", Store())
+    rendered = format_journal(1)
+    assert "EURUSD<&" not in rendered
+    assert "BUY<b>" not in rendered
+    assert "OK<&" not in rendered
     assert "EURUSD&lt;&amp;" in rendered
