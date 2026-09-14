@@ -186,17 +186,22 @@ class ProviderManager:
         raise last_error
 
     @staticmethod
+    def _canonical_symbol_for_validation(symbol: str) -> str:
+        """Compare provider symbols by semantic identity, not formatting."""
+        return "".join(character for character in symbol.strip().upper() if character not in "_/ -")
+
+    @staticmethod
     def _validate_result(provider_name: str, candles: object, symbol: str) -> list[Candle]:
         # Provider adapters historically returned either list or tuple. Keep
         # that compatibility at the boundary, then canonicalize to list for
         # all downstream consumers.
         if not isinstance(candles, (list, tuple)):
             raise ApplicationError("Provider returned an invalid candle collection.", {"provider": provider_name, "symbol": symbol, "expected": "list[Candle]", "actual": type(candles).__name__})
-        expected = symbol.strip().upper().replace("_", "")
+        expected = ProviderManager._canonical_symbol_for_validation(symbol)
         for index, candle in enumerate(candles):
             if not isinstance(candle, Candle):
                 raise ApplicationError("Provider returned invalid candle data.", {"provider": provider_name, "symbol": symbol, "index": index, "expected": "Candle", "actual": type(candle).__name__})
-            actual = candle.symbol.strip().upper().replace("_", "")
+            actual = ProviderManager._canonical_symbol_for_validation(candle.symbol)
             if actual != expected:
                 raise ApplicationError("Provider returned candles for an unexpected symbol.", {"provider": provider_name, "symbol": symbol, "index": index, "actual_symbol": candle.symbol})
         return list(candles)
