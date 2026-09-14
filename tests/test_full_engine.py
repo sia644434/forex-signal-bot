@@ -95,6 +95,58 @@ def test_full_engine_directional_strength_rejects_invalid_scores(invalid_score) 
         FullAnalysisEngine._directional_strength(invalid_score)
 
 
+def test_full_engine_rejects_non_finite_atr_output(monkeypatch) -> None:
+    engine = FullAnalysisEngine()
+    original_calculate = engine.atr_engine.calculate
+
+    def invalid_atr(prices):
+        result = original_calculate(prices)
+        return type(result)(atr=float("nan"), atr_percentage=result.atr_percentage)
+
+    monkeypatch.setattr(engine.atr_engine, "calculate", invalid_atr)
+    with pytest.raises(ValueError, match="ATR must be numeric and finite"):
+        engine.analyze(make_candles([1.0, 1.1, 1.05, 1.2, 1.15, 1.3]))
+
+
+def test_full_engine_rejects_non_finite_analysis_component(monkeypatch) -> None:
+    engine = FullAnalysisEngine()
+    original_analyze = engine.smc_engine.analyze
+
+    def invalid_smc(prices):
+        result = original_analyze(prices)
+        return type(result)(
+            score=float("inf"),
+            bias=result.bias,
+            structure=result.structure,
+            order_block=result.order_block,
+            liquidity=result.liquidity,
+            fair_value_gap=result.fair_value_gap,
+            premium_discount=result.premium_discount,
+            reason=result.reason,
+        )
+
+    monkeypatch.setattr(engine.smc_engine, "analyze", invalid_smc)
+    with pytest.raises(ValueError, match="smart_money_score must be numeric and finite"):
+        engine.analyze(make_candles([1.0, 1.1, 1.05, 1.2, 1.15, 1.3]))
+
+
+def test_full_engine_output_numeric_contract_is_finite() -> None:
+    result = FullAnalysisEngine().analyze(make_candles([1.0, 1.1, 1.05, 1.2, 1.15, 1.3]))
+    for value in (
+        result.score,
+        result.confidence,
+        result.agreement,
+        result.entry_price,
+        result.stop_loss,
+        result.take_profit,
+        result.risk_reward,
+        result.position_size,
+        result.risk_amount,
+    ):
+        assert value == pytest.approx(value)
+        assert abs(value) != float("inf")
+
+
 def test_full_engine_wires_supply_demand_score_to_analysis_contract(monkeypatch) -> None:
     engine = FullAnalysisEngine()
     captured = {}
