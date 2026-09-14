@@ -4,7 +4,7 @@ import math
 from dataclasses import replace
 
 from analysis.atr_engine import ATREngine
-from analysis.currency import get_forex_currency_pair
+from analysis.currency import get_contract_size, get_quote_currency
 from analysis.full_engine import FullAnalysisEngine
 from analysis.risk_engine import RiskEngine
 from config.settings import Settings
@@ -23,12 +23,8 @@ class MarketAwareAnalysisEngine:
 
     @staticmethod
     def _current_price(candles) -> float:
-        """Read and validate the latest price for either Candle or price-list input."""
         latest = candles[-1]
-        if hasattr(latest, "close"):
-            value = latest.close
-        else:
-            value = latest
+        value = latest.close if hasattr(latest, "close") else latest
         try:
             price = float(value)
         except (TypeError, ValueError) as error:
@@ -57,7 +53,8 @@ class MarketAwareAnalysisEngine:
 
         normalized_symbol = symbol.strip().upper()
         normalized_timeframe = timeframe.strip()
-        pair = get_forex_currency_pair(normalized_symbol)
+        quote_currency = get_quote_currency(normalized_symbol)
+        contract_size = get_contract_size(normalized_symbol)
 
         report = self.analysis_engine.analyze(candles)
         report = replace(report, symbol=normalized_symbol, timeframe=normalized_timeframe)
@@ -70,7 +67,7 @@ class MarketAwareAnalysisEngine:
             return report
 
         conversion = await self.conversion_service.get_conversion(
-            source_currency=pair.quote_currency,
+            source_currency=quote_currency,
             target_currency=self.settings.account_currency,
         )
 
@@ -82,12 +79,11 @@ class MarketAwareAnalysisEngine:
             raise ValueError("ATR must be finite and greater than zero for market-aware risk sizing.")
         current_price = self._current_price(candles)
 
-        # Settings stores RISK_PER_TRADE as a decimal fraction (0.01 = 1%),
-        # while RiskEngine expresses risk_percent in percentage points.
         configured_risk_percent = self.settings.risk_per_trade * 100.0
         self.analysis_engine.risk_engine = RiskEngine(
             account_balance=self.settings.account_balance,
             account_currency=self.settings.account_currency,
+            contract_size=contract_size,
         )
         risk_result = self.analysis_engine.risk_engine.calculate(
             signal=signal,
@@ -118,8 +114,8 @@ class MarketAwareAnalysisEngine:
             market_condition=risk_result.market_condition,
             trade_grade=risk_result.trade_grade,
             reasons=report.reasons + [
-                f"Currency conversion: {conversion.source_currency}->{conversion.target_currency} "
-                f"via {conversion.pair_symbol} at {conversion.rate}"
+                f"Quote currency: {quote_currency}; conversion {conversion.source_currency}->{conversion.target_currency} "
+                f"via {conversion.pair_symbol or 'identity'} at {conversion.rate}; contract size {contract_size}"
             ],
         )
 
