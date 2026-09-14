@@ -29,7 +29,7 @@ class QueueRecord:
 
 
 class WorkerQueue:
-    """Durable SQLite queue with lease fencing for crash/recovery safety."""
+    """Durable SQLite queue with fenced leases and renewable execution claims."""
 
     def __init__(self, database_path: str = ":memory:") -> None:
         self._connection = sqlite3.connect(database_path, timeout=30.0)
@@ -108,6 +108,22 @@ class WorkerQueue:
         if cursor.rowcount != 1:
             return None
         return self.get(job_id)
+
+    def renew_lease(self, job_id: str, claim_token: str) -> QueueRecord:
+        """Refresh a live claim without allowing an older worker to renew it."""
+        if not isinstance(claim_token, str) or not claim_token.strip():
+            raise ValueError("Claim token must not be empty")
+        cursor = self._connection.execute(
+            "UPDATE worker_jobs SET claimed_at = ? WHERE job_id = ? AND status = 'RUNNING' AND claim_token = ?",
+            (time.time(), job_id, claim_token),
+        )
+        self._connection.commit()
+        record = self.get(job_id)
+        if record is None:
+            raise KeyError(job_id)
+        if cursor.rowcount != 1:
+            return record
+        return record
 
     def metrics(self) -> dict[str, int]:
         counts = {state.lower(): 0 for state in QUEUE_STATES}
