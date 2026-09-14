@@ -27,7 +27,7 @@ class QueueRecord:
 
 
 class WorkerQueue:
-    """Small durable SQLite queue for heavy Forex worker jobs.
+    """Small durable SQLite queue for heavy worker jobs.
 
     The queue owns job persistence and state transitions; transport and execution
     remain outside this module. A unique job_id makes enqueue idempotent.
@@ -91,19 +91,35 @@ class WorkerQueue:
         return record
 
     def claim_next(self) -> QueueRecord | None:
+        """Atomically claim the highest-priority pending job."""
         row = self._connection.execute(
             "SELECT job_id FROM worker_jobs WHERE status = 'PENDING' ORDER BY priority DESC, rowid ASC LIMIT 1"
         ).fetchone()
         if row is None:
             return None
+        return self._claim_job_id(row["job_id"])
+
+    def claim(self, job_id: str) -> QueueRecord | None:
+        """Atomically claim one specific pending job.
+
+        Dispatchers that enqueue a request and immediately execute that same
+        request must use this targeted form; otherwise another concurrent
+        submitter can claim the highest-priority job and leave the original
+        caller waiting on a job it did not claim.
+        """
+        if not isinstance(job_id, str) or not job_id.strip():
+            raise ValueError("Job ID must not be empty")
+        return self._claim_job_id(job_id)
+
+    def _claim_job_id(self, job_id: str) -> QueueRecord | None:
         cursor = self._connection.execute(
             "UPDATE worker_jobs SET status = 'RUNNING', claimed_at = ? WHERE job_id = ? AND status = 'PENDING'",
-            (time.time(), row["job_id"]),
+            (time.time(), job_id),
         )
         self._connection.commit()
         if cursor.rowcount != 1:
             return None
-        return self.get(row["job_id"])
+        return self.get(job_id)
 
     def metrics(self) -> dict[str, int]:
         """Return actionable queue counts without exposing job payloads or errors."""
