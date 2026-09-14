@@ -56,7 +56,7 @@ def test_risk_engine_requires_conversion_for_non_matching_quote_currency() -> No
     assert "quote_to_account_rate is required" in result.reason
 
 
-def test_risk_engine_applies_explicit_jpy_to_usd_conversion() -> None:
+def test_risk_engine_applies_explicit_jpy_to_usd_conversion_without_risk_overrun() -> None:
     engine = RiskEngine(account_balance=1000, account_currency="USD")
 
     result = engine.calculate(
@@ -69,8 +69,8 @@ def test_risk_engine_applies_explicit_jpy_to_usd_conversion() -> None:
         quote_to_account_rate=0.0066666667,
     )
 
-    assert result.position_size == 2000.0
-    assert result.lot_size == 0.02
+    assert result.position_size == 1900.0
+    assert result.lot_size == 0.019
     assert result.position_size == result.lot_size * 100000
     assert result.risk_amount == 20.0
     assert "Position sizing unavailable" not in result.reason
