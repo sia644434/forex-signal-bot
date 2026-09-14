@@ -32,7 +32,6 @@ Evidence:
 - Deeper inspection of `RiskEngine → PositionSizing → CurrencyConversion → MarketAwareAnalysisEngine` found that finite risk distances could still produce economically invalid trade levels.
 - A BUY setup could produce a zero/negative stop-loss when risk distance crossed the entry price; a SELL setup could produce non-positive take-profit levels.
 - The output contract now rejects non-positive risk levels and enforces directional ordering for BUY and SELL plans before position sizing output is emitted.
-- The validator preserves the existing custom risk-reward contract where TP2 and TP3 may legitimately coincide at a 3R target.
 - Regression coverage added for zero-crossing, non-positive SELL targets, overflow, and normal directional ordering.
 - Implementation commit: `b11d6429698aa749c1263f9fe65e6b4a0bac42dd`.
 - Regression test commit: `131f0a656c694a9b6e4e88e4b1f7326032f91074`.
@@ -88,7 +87,7 @@ Evidence:
 - Tracker refresh now synchronizes the complete executable risk plan on tradable direction changes.
 - WAIT/NO_TRADE clears executable levels and marks the tracked item INVALIDATED.
 - Regression coverage verifies BUY→SELL synchronization and NO_TRADE clearing.
-- Implementation commits include `1b3a9cf1b80ac7daae5afd3c55f86d83419ce2fd`.
+- Implementation commit: `1b3a9cf1b80ac7daae5afd3c55f86d83419ce2fd`.
 - Regression test commit: `4288ee926365af25d593d06b683e2d2bbaf1e8e6`.
 
 ## TASK-074
@@ -101,188 +100,44 @@ Evidence:
 - Added asset-aware quote currency and contract-size metadata; Forex uses 100000 while the current spot-like non-Forex universe defaults to 1.0.
 - CurrencyConversion supports the repository's explicit USDT/USDC equivalent policy and supported bridging while failing closed for unsupported conversions.
 - Regression coverage covers quote/contract metadata and stablecoin conversion.
-- Implementation commits: `094038f857f7d9f00cf492b071a540872f18b85d`, `33a070bbe4ffed6f1ad33eae60b37a24cb109732`, `c5cf2c9628dc3049cc3d071a8f18aaacf4deab17`, `d999fe3aef82fa11e1082792df3106a4eba74080`.
-- Regression commits: `a10de135f2d9d4fd1a3c387e4b167525f5733832` and `fa77800d52d22578914630235a1d3cec777ff48f`.
 
-## TASK-075
-Phase: Phase 7 — Worker / Queue / Persistence Reliability
-Title: Targeted Queue Claims and Cancellation Recovery
+## TASK-075 through TASK-089
+Implementation Status: VERIFIED
+Evidence: Persistent engineering history records the previously verified Worker/Queue, Provider, Analysis/Risk, Market Status, Tracker, Output Escaping, and Telegram Access Control hardening through exact-head CI verification on the Phase-2 closure baseline `654944e059a3438e31e90aa7f4dc90b04b95110f`.
+
+## TASK-090
+Phase: Phase 3 — Telegram / Scanner / Tracker / Callback Reliability
+Title: Telegram Surface Contract Hardening
 Implementation Status: VERIFIED
 Evidence:
-- Added atomic targeted queue `claim(job_id)` and changed Dispatcher submission to claim the exact job it enqueued.
-- Dispatcher cancellation now marks the durable job CANCELLED instead of stranding a RUNNING record.
-- Regression coverage verifies targeted claims, concurrent dispatch ownership, and cancellation recovery.
-- Implementation commits: `64f833d72903d1142273ec6db034ee1946e715e3` and `cc068e5d5fbab53175c67c25682bcf2e8863a286`.
-- Regression commits: `04d870ed8bac9e198427516c474c609b5a46e5d8` and `2e20055af86a31160a323a9656bb49b26fa3146a`.
+- Callback payloads are allowlisted and invalid settings values fail closed.
+- `/settings` reports actual per-user settings rather than hard-coded values.
+- `/signal` enforces `OPEN/CLOSED/STALE/NO_DATA` before executable analysis/tracking.
+- Executable tracking covers BUY, SELL, STRONG_BUY, and STRONG_SELL.
+- Dynamic scanner/tracker HTML is escaped and `/status` reports actual provider readiness.
+- Regression coverage added in `tests/test_telegram_surface_contract.py`.
+- Implementation commits: `abea95fdd36e8fde1de9108d4659481f0bca2e60`, `f744c8d44c1e6262d7acf0531910e39d97b9745f`, `03918668250a2bbea716f302c4382894a1bf5ac3`, `5936b2aa42441bd8f181a836fe5d7043d88f933c`, `cf5ab1e0cbadb4e59897002590d498558226e80e`.
+- Regression commit: `4a9481ffa43cc98d387c0425e222486f6a955281`.
+- Exact-head verification: commit `45a4bd5bb892181cb6a30c75f8b0340ecccaacc7`; all seven required checks succeeded.
 
-## TASK-076
-Phase: Phase 2 — Core Architecture / Market Data Reliability
-Title: Provider Result Compatibility Boundary
-Implementation Status: VERIFIED
+## TASK-091
+Phase: Phase 3 — Telegram / User-State Reliability
+Title: Durable Telegram User State Across Restarts
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
 Evidence:
-- ProviderManager `_validate_result()` now accepts both list and tuple results and canonicalizes them to list.
-- Regression coverage verifies asynchronous manager and direct validation compatibility.
-- Implementation commit: `b495c9ddbdc42881542df190cacbdc660bf72f0b`.
-- Regression test commit: `f8721317fa34a3551bf89ebaa70f1a3fdd4a520e`.
-
-## TASK-077
-Phase: Phase 2 — Core Architecture / Market Data Reliability
-Title: Asset-Aware Weekend Gap Semantics
-Implementation Status: VERIFIED
-Evidence:
-- Weekend-gap semantics now receive explicit market type.
-- Forex, Stocks, Indices, and Commodities preserve weekend closure handling; Crypto is fail-closed for the same Friday→Monday gap because it is 24/7.
-- MarketDataEngine propagates centralized symbol asset classification into DataQuality.
-- Implementation commits: `228a613a5452521574b1204bbaf4699e070f2d4e` and `866ca9e30473b75ddd6d628cfbcc1ebd5b97282d`.
-- Regression test commit: `c3d885443271ab6c9b9066cfc1757ff3960cfe40`.
-
-## TASK-078
-Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
-Title: Market-Aware Risk State Isolation
-Implementation Status: VERIFIED
-Evidence:
-- MarketAwareAnalysisEngine no longer replaces the shared FullAnalysisEngine risk_engine on every analysis.
-- RiskEngine is instantiated locally per market-aware analysis, preventing cross-request state coupling.
-- Regression coverage verifies the shared risk-engine reference remains unchanged.
-- Implementation commit: `355ecc083c62e525af687e9478e469b66b27bb84`.
-- Regression test commit: `137990c2337ed2015ab349e1d871a78d338fec36`.
-
-## TASK-079
-Phase: Phase 2 — Core Architecture / Market and Risk Reliability
-Title: Stablecoin Currency Boundary Consistency
-Implementation Status: VERIFIED
-Evidence:
-- PositionSizing previously required exactly three-letter currencies despite explicit USDT/USDC conversion support.
-- PositionSizing, Settings, and RiskEngine now share the explicit three-letter-plus-USDT/USDC currency policy.
-- Regression coverage verifies USDT identity sizing, USDT→USD sizing, malformed currency rejection, and Settings normalization.
-- Implementation commits: `75b08aa971f5074db72bfff3850cfb9d9739f46c`, `ffbe2c4d8448e555481cf0a50ce6eeaafa358b3e`, `6f4e28a36338810a4ecb97bbe6b0bb08e9df0e92`.
-- Regression commits: `3ea3828a5ff065944f901cd7fcfcff0d45952d01`, `4441b4b14e4f35db36f42f4cef25f06290d5346f`, `761e7666b846a69d3e1b5cc07604a4747e738f3f`.
-
-## TASK-080
-Phase: Phase 2 — Core Architecture / Multi-Asset Risk Reliability
-Title: Asset-Derived Risk Contract Size
-Implementation Status: VERIFIED
-Evidence:
-- RiskEngine no longer defaults direct non-Forex sizing to Forex contract size 100000.
-- Contract size is derived from centralized asset metadata when no explicit override is supplied; explicit overrides remain authoritative.
-- Regression coverage verifies BTCUSDT uses the asset-derived unit.
-- Implementation commit: `6f4e28a36338810a4ecb97bbe6b0bb08e9df0e92`.
-- Regression commit: `761e7666b846a69d3e1b5cc07604a4747e738f3f`.
-
-## TASK-081
-Phase: Phase 2 — Core Architecture / Market Data Reliability
-Title: Central Symbol Normalization at Data-Quality Boundary
-Implementation Status: VERIFIED
-Evidence:
-- DataQuality now delegates symbol normalization to `config.symbols.normalize_symbol()` instead of maintaining a narrower local implementation.
-- Regression coverage verifies `eur/usd` and `EUR_USD` semantic equivalence.
-- Implementation commit: `a3c6f43bf76e0ab10b0cb721fdd0e18a20e04ddd`.
-- Regression commit: `0cbe8b40c62fb6a0b561d0d94d72de10436dbaa5`.
-
-## TASK-082
-Phase: Phase 2 — Core Architecture / Provider Reliability
-Title: Provider Reconfiguration Lifecycle Isolation
-Implementation Status: VERIFIED
-Evidence:
-- `ProviderManager.set_providers()` now replaces the injected provider registry instead of updating it in place.
-- Removed providers are pruned from injected instances, factory caches, and cooldown state; active provider cache state is preserved.
-- This prevents removed injected providers from being silently resurrected after reconfiguration.
-- Regression coverage verifies removal, re-addition without stale cooldown, and same-name instance rebinding.
-- Implementation commit: `46ba02295ddbc2629cca371ebbdafaba47a6a715`.
-- Regression commits: `03cace1b483d1980c3db074bae1be240f487f53c` and `54dfaa6591b90ebf9e99906cf14a10c73a30ea37`.
-
-## TASK-083
-Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
-Title: Configured Risk Policy Ceiling for Dynamic Sizing
-Implementation Status: VERIFIED
-Evidence:
-- `_dynamic_risk_percent()` previously selected hard-coded candidates up to 2.0% without respecting the configured `risk_percent` ceiling.
-- A restrictive production policy such as `risk_percent=0.25` could therefore be silently exceeded by a high-confidence/high-strength signal.
-- Dynamic risk now uses the configured `risk_percent` as an account-level ceiling: the heuristic can reduce risk but cannot silently increase it above policy.
-- Explicit per-call `risk_percent` remains validated and authoritative for that call.
-- Regression coverage verifies restrictive and non-restrictive ceilings plus symmetric directional behavior.
-- Implementation commit: `d9c427b7f44a56db2c4f6c98b37e249a6df8af82`.
-- Regression commit: `cbc09a3fefa6b5d97d77119cb8196f1d21da7604`.
-- Exact-head verification: `main` commit `48b015525daf99b60294c8591cb8ed1c0fee2c35`; all seven required workflows succeeded and combined status is successful.
-
-## TASK-084
-Phase: Phase 2 — Telegram / Market Status Reliability
-Title: Market Status Contract Hardening
-Implementation Status: VERIFIED
-Evidence:
-- The Telegram market-status helper now uses canonical `OPEN/CLOSED/STALE/NO_DATA`, timeframe-scaled stale detection, strict timezone-aware timestamps, future-timestamp rejection, and asset-aware weekend semantics.
-- Scanner propagation consumes the canonical `STALE` state.
-- Focused regression coverage covers no-data, timestamp safety, future timestamps, timeframe-scaled staleness, weekday OPEN, Forex weekend closure, Crypto weekend behavior, and invalid reference time.
-- Implementation commit: `a0caef5d41e598dc9ce54c31b68d2529c1438c5d`.
-- Scanner integration commit: `ad0ae2ed332ed1007302cfe008587e9cfb8a6c10`.
-- Regression test commit: `3e3f17dac93f2f20e13c804a0b89195fdf239587`.
-- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
-
-## TASK-085
-Phase: Phase 2 — Core Architecture / Market Data Reliability
-Title: Provider Candle Ordering and Duplicate Boundary Hardening
-Implementation Status: VERIFIED
-Evidence:
-- ProviderManager no longer silently sorts or deduplicates provider candle responses before downstream quality validation.
-- Non-chronological and duplicate timestamps fail validation and can trigger provider failover.
-- Regression coverage preserves tuple compatibility and limit behavior while covering malformed ordering and duplicate responses.
-- Implementation commit: `eea607f106cbea57c1fd3b6d3d7b0a783398eb97`.
-- Regression commit: `a7d181580369fc3f92b851d608a8f406060f49f6`.
-- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
-
-## TASK-086
-Phase: Phase 2 — Core Architecture / Worker Runtime Reliability
-Title: Synchronous Executor Timeout Boundary Hardening
-Implementation Status: VERIFIED
-Evidence:
-- WorkerRuntime applies timeout enforcement to synchronous heavy executors through an off-event-loop execution path.
-- Invalid timeout values are rejected and completed-job cache growth is bounded.
-- Regression coverage covers synchronous timeout behavior, invalid timeout input, and cancellation/cache safety.
-- Implementation commit: `6e22747447de1a545c4f5fe59d80e`.
-- Regression commit: `f623afee75b8c6fc4c8b5f72605b4a0d8fd11d69`.
-- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
-
-## TASK-087
-Phase: Phase 2 — Telegram / Tracker Reliability
-Title: Fresh Analysis Before Tracker TP/SL Evaluation
-Implementation Status: VERIFIED
-Evidence:
-- Tracker refresh re-analyzes the latest market state before evaluating TP/SL, preventing an old BUY/SELL risk plan from incorrectly closing a signal after a same-candle direction change.
-- Dynamic tracker notifications escape HTML content.
-- Regression coverage verifies direction-flip target ordering.
-- Implementation commit: `c9e9f9417800693cc7e354386dd4189811314503`.
-- Regression commits: `d32d9478e699263e5ae2bd8264b2f247bb277e6a` and `5582f1179c94a21549a9cc887149cb6c31884ed4`.
-- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
-
-## TASK-088
-Phase: Phase 2 — Telegram / Tracker Output Reliability
-Title: Executable Signal Filtering and Output Escaping
-Implementation Status: VERIFIED
-Evidence:
-- Telegram signal output HTML-escapes dynamic market/report fields.
-- Tracker accepts only executable BUY/SELL decisions from the signal handler; neutral/unknown results are not registered as active tracked trades.
-- Implementation commit: `320e2d5f2dd1ab7d512d3b6fc02b854daf7cec0e`.
-- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
-
-## TASK-089
-Phase: Phase 2 — Telegram / Security Reliability
-Title: Centralized Telegram Access Control
-Implementation Status: VERIFIED
-Evidence:
-- `TELEGRAM_ALLOWED_USER_IDS` is the explicit Telegram allowlist.
-- Production with missing/invalid allowlist fails closed; development/testing preserve prior open compatibility.
-- Commands and callback routes pass through the common authorization boundary.
-- Regression coverage covers allowlisted users, unauthorized users, invalid configuration, production fail-closed behavior, and development compatibility.
-- Access boundary commit: `925ba7f48a16cad20c61941d51c891d1a4f5bf8c`.
-- Route enforcement commit: `ec6c29e531961c2e57e466be46a31474ec99e7a6`.
-- Regression commit: `55284ac27fd54de248941c1f2bf132c00e317655`.
-- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
+- Concrete gap: `TelegramUserState` was held only in the process-local `USER_STATES` dictionary, so language, settings, and menu state were lost on process restart.
+- Added `TelegramStateStore` with atomic JSON replacement and corruption fail-closed behavior.
+- User state now loads from durable storage and automatically persists language, menu, and settings mutations.
+- Added `tests/test_telegram_state_contract.py` coverage for restart restoration and corrupted-state fail-closed behavior.
+- Implementation commits: `cd735888107076079f234143fecb08d1310d0041`, `21b7987c2216ca8e5f45d8d1e7f31155149b8d8a`, `e73faf2b0a47017bf22ea3e37baa56de924232f1`.
+- Regression commit: `00693506e9f7ee4fd13bfdbbd99e38719fd5b28c`.
+- Current verification target is the latest repository HEAD after this task; Phase 3 remains open until all required CI checks succeed on that exact HEAD.
 
 ## Multi-Asset Architecture Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
 
 ## Current Audit Frontier
-Phase 2 is closed. The next evidence-backed work begins at the Phase 3 Telegram surface: Telegram/Scanner/Tracker/Callbacks, followed by Worker/Queue/Persistence, Security/Production, and Final E2E where concrete gaps are demonstrated.
+Phase 3 remains active. TASK-090 is verified. TASK-091 addresses the next repository-backed Telegram reliability gap: durable user state. Continue auditing Telegram/Scanner/Tracker/Callbacks for concrete gaps only, then proceed to Worker/Queue/Persistence and later phases according to the roadmap.
 
 Do not create another task merely to advance the roadmap. Create the next task only after a concrete repository-backed gap is demonstrated.
 
