@@ -49,10 +49,11 @@ class DataQuality:
         previous_day = previous.timestamp.weekday()
         current_day = current.timestamp.weekday()
 
-        # Forex and metals providers may omit non-trading sessions.
-        if previous_day >= 4 or current_day <= 0:
-            if delta <= timedelta(days=3, hours=6):
-                return True
+        # Only a genuine Friday -> Monday transition is treated as the normal
+        # Forex weekend closure. Intraday Friday/Monday gaps must remain visible
+        # so a provider cannot hide missing candles behind the weekend exception.
+        if previous_day == 4 and current_day == 0 and current.timestamp.date() > previous.timestamp.date():
+            return delta <= timedelta(days=3, hours=6)
 
         return False
 
