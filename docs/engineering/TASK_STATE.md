@@ -116,8 +116,6 @@ Evidence:
 - Executable tracking covers BUY, SELL, STRONG_BUY, and STRONG_SELL.
 - Dynamic scanner/tracker HTML is escaped and `/status` reports actual provider readiness.
 - Regression coverage added in `tests/test_telegram_surface_contract.py`.
-- Implementation commits: `abea95fdd36e8fde1de9108d4659481f0bca2e60`, `f744c8d44c1e6262d7acf0531910e39d97b9745f`, `03918668250a2bbea716f302c4382894a1bf5ac3`, `5936b2aa42441bd8f181a836fe5d7043d88f933c`, `cf5ab1e0cbadb4e59897002590d498558226e80e`.
-- Regression commit: `4a9481ffa43cc98d387c0425e222486f6a955281`.
 - Exact-head verification: commit `45a4bd5bb892181cb6a30c75f8b0340ecccaacc7`; all seven required checks succeeded.
 
 ## TASK-091
@@ -128,30 +126,66 @@ Evidence:
 - Concrete gap: `TelegramUserState` was held only in the process-local `USER_STATES` dictionary, so language, settings, and menu state were lost on process restart.
 - Added `TelegramStateStore` with atomic JSON replacement and corruption fail-closed behavior.
 - User state now loads from durable storage and automatically persists language, menu, and settings mutations.
-- Added `tests/test_telegram_state_contract.py` coverage for restart restoration and corrupted-state fail-closed behavior.
+- Regression coverage added in `tests/test_telegram_state_contract.py`.
 - Implementation commits: `cd735888107076079f234143fecb08d1310d0041`, `21b7987c2216ca8e5f45d8d1e7f31155149b8d8a`, `e73faf2b0a47017bf22ea3e37baa56de924232f1`.
 - Regression commit: `00693506e9f7ee4fd13bfdbbd99e38719fd5b28c`.
-- Current verification target is the latest repository HEAD after this task; Phase 3 remains open until all required CI checks succeed on that exact HEAD.
 
 ## TASK-092
 Phase: Phase 3 — Telegram / Tracker Reliability
 Title: Durable Active Tracker State Across Restarts
 Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
 Evidence:
-- Concrete gap: active tracked signals were held only in the process-local `ACTIVE_TRACKS` dictionary. A service restart discarded every ongoing tracker even though the user had explicitly requested tracking.
+- Concrete gap: active tracked signals were held only in the process-local `ACTIVE_TRACKS` dictionary. A service restart discarded every ongoing tracker.
 - Added `TrackerStore` with atomic JSON replacement, configurable `TELEGRAM_TRACKER_FILE`, and corruption fail-closed behavior.
 - Active tracker records are restored at module initialization and persisted on create, stop, refresh, target/stop completion, and signal-plan updates.
-- Stored tracker identity is validated against its key to prevent mismatched records from being silently accepted.
-- Added `tests/test_telegram_tracker_persistence.py` covering restart restoration, removal persistence, corruption rejection, and identity mismatch rejection.
+- Stored tracker identity is validated against its key.
+- Regression coverage added in `tests/test_telegram_tracker_persistence.py`.
 - Implementation commits: `6765a4d022c84b90f01e34b379026670a03f1ecf`, `aee7e0b02a883ed283f4f8177ff70197f523c872`.
 - Regression commit: `e96075b80d7fb8ea104b1584a71fe6118220ef7a`.
-- Exact-head CI verification is still required before this task can be marked VERIFIED.
+
+## TASK-093
+Phase: Phase 3 — Telegram / Tracker Execution Reliability
+Title: Activate Tracker Refresh Loop and Honor Notification Preference
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Evidence:
+- Concrete gap: `refresh_all_tracked_signals()` existed but had no registration in the Telegram application, so persisted active trackers were never automatically refreshed after deployment/startup.
+- Concrete gap: the user's persisted `notifications_enabled` setting was not consulted by the tracker job; notifications were always sent.
+- Added a scheduled JobQueue refresh loop with a bounded configurable `TELEGRAM_TRACKER_INTERVAL_SECONDS` (minimum 5 seconds, default 60).
+- Startup now fails explicitly if Telegram JobQueue is unavailable because active tracking cannot operate without it.
+- Tracker notifications now respect the user's persisted notification preference, defaulting to enabled for backward compatibility.
+- Regression coverage added in `tests/test_telegram_tracker_job_contract.py`.
+- Implementation commits: `d2b5fd1e4e3bd95829707f369638b2d9c2e2e2fd`, `61ed687e94a912dd8f455a76cd4845df2abdf0c9`.
+- Regression commit: `a9e15adeedacd95e573b5f23fb2f038c880432a7`.
+
+## TASK-094
+Phase: Phase 3 — Telegram / Callback Reliability
+Title: Exact-Identity Untrack Callbacks
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Evidence:
+- Concrete gap: the single `signal_untrack` callback used the user's current settings rather than the specific tracked signal represented by the Tracking screen.
+- If multiple signals were tracked and the user changed market/timeframe settings, pressing Stop could stop the wrong signal or fail to stop the displayed one.
+- Tracking buttons now encode the exact symbol/timeframe identity and the handler validates ownership against the user's current tracked set before stopping it.
+- Regression coverage added in `tests/test_telegram_callback_tracking_contract.py`.
+- Implementation commit: `f5528c87a598f17bbb033e16b7b3985be336840f`.
+- Regression commit: `bd374520a7c5dae78cef2d79043d1f80188593b4`.
+
+## TASK-095
+Phase: Phase 3 — Telegram / Multi-Asset Scanner Reliability
+Title: Multi-Asset Scanner Universe
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Evidence:
+- Concrete gap: despite the platform's explicit multi-asset architecture, the Telegram scanner default universe contained only four Forex pairs.
+- Scanner now uses a bounded representative universe spanning Forex, Crypto, Stocks, Indices, and Commodities.
+- `TELEGRAM_SCANNER_SYMBOLS` provides an explicit normalized override with a maximum of 20 symbols to prevent uncontrolled scan fan-out.
+- Regression coverage verifies multi-asset defaults, normalization/deduplication, and the hard bound.
+- Implementation commit: `8201797322700ef0f4ac85fb7b01aa76fba8189a`.
+- Regression commit: `f26c454d2ecd5cd0c424f64f21b93a4005ab119e`.
 
 ## Multi-Asset Architecture Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
 
 ## Current Audit Frontier
-Phase 3 remains active. TASK-090 is verified. TASK-091 and TASK-092 are implemented and pending exact-head CI verification. Continue auditing Telegram/Scanner/Tracker/Callbacks for concrete gaps only, then proceed to Worker/Queue/Persistence and later phases according to the roadmap.
+Phase 3 remains active. TASK-090 is verified. TASK-091 through TASK-095 are implemented and pending exact-head CI verification. Continue auditing Telegram/Scanner/Tracker/Callbacks for concrete gaps only, then proceed to Worker/Queue/Persistence and later phases according to the roadmap.
 
 Do not create another task merely to advance the roadmap. Create the next task only after a concrete repository-backed gap is demonstrated.
 
