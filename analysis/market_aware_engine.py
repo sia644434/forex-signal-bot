@@ -14,42 +14,37 @@ from services.market_data.service import MarketDataService
 class MarketAwareAnalysisEngine:
     """Bind completed analysis to its real market and currency context."""
 
-    def __init__(
-        self,
-        *,
-        market_data: MarketDataService,
-        settings: Settings | None = None,
-    ) -> None:
+    def __init__(self, *, market_data: MarketDataService, settings: Settings | None = None) -> None:
         self.market_data = market_data
         self.settings = settings or Settings.load()
         self.analysis_engine = FullAnalysisEngine()
         self.conversion_service = CurrencyConversionService(market_data)
 
-    async def analyze(
-        self,
-        candles,
-        *,
-        symbol: str,
-        timeframe: str,
-    ):
-        if not symbol or not symbol.strip():
+    async def analyze(self, candles, *, symbol: str, timeframe: str):
+        if not isinstance(symbol, str):
+            raise TypeError("symbol must be a string.")
+        if not isinstance(timeframe, str):
+            raise TypeError("timeframe must be a string.")
+        if not symbol.strip():
             raise ValueError("symbol is required for market-aware analysis")
-        if not timeframe or not timeframe.strip():
+        if not timeframe.strip():
             raise ValueError("timeframe is required for market-aware analysis")
-        if not candles:
+        if candles is None:
+            raise ValueError("candles are required for market-aware analysis")
+        try:
+            candle_count = len(candles)
+        except TypeError as error:
+            raise TypeError("candles must be a sized candle collection.") from error
+        if candle_count == 0:
             raise ValueError("candles are required for market-aware analysis")
 
         normalized_symbol = symbol.strip().upper()
+        normalized_timeframe = timeframe.strip()
         pair = get_forex_currency_pair(normalized_symbol)
 
         report = self.analysis_engine.analyze(candles)
-        report = replace(
-            report,
-            symbol=normalized_symbol,
-            timeframe=timeframe.strip(),
-        )
+        report = replace(report, symbol=normalized_symbol, timeframe=normalized_timeframe)
 
-        # Missing account currency intentionally remains fail-closed.
         if not self.settings.account_currency:
             return report
 
@@ -62,17 +57,10 @@ class MarketAwareAnalysisEngine:
             target_currency=self.settings.account_currency,
         )
 
-        # Reuse the full OHLC candles so ATR remains consistent with the
-        # analysis engine instead of silently switching to close-only ATR.
         atr_result = ATREngine().calculate(candles)
         atr_value = atr_result.atr if atr_result.atr is not None else 0.0
 
-        # FullAnalysisEngine is intentionally backward compatible and creates
-        # a unitless RiskEngine. Replace that boundary instance here with the
-        # same risk defaults plus the explicitly configured account currency.
-        self.analysis_engine.risk_engine = RiskEngine(
-            account_currency=self.settings.account_currency,
-        )
+        self.analysis_engine.risk_engine = RiskEngine(account_currency=self.settings.account_currency)
         risk_result = self.analysis_engine.risk_engine.calculate(
             signal=signal,
             current_price=float(candles[-1].close),
