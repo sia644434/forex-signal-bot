@@ -7,6 +7,7 @@ from typing import Callable
 
 import pandas as pd
 
+from config.symbols import get_market_type
 from data.base import MarketDataProvider
 from data.freshness import FreshnessPolicy, FreshnessReport
 from data.models import Candle
@@ -128,6 +129,7 @@ class MarketDataEngine:
                 candles,
                 expected_symbol=expected_symbol,
                 expected_interval=cls._timeframe_to_timedelta(timeframe),
+                market_type=get_market_type(expected_symbol),
             )
         except (TypeError, ValueError) as exc:
             logger.error(
