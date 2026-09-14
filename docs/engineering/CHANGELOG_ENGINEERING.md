@@ -1,5 +1,13 @@
 # Engineering Changelog
 
+## 2026-09-15 — Cross-layer Worker/Queue/Telegram reliability hardening
+- TASK-096 identified a concrete recovery race in the durable WorkerQueue: an expired `RUNNING` job could be recovered to `PENDING`, re-claimed by a new execution, and then have the original stale worker overwrite the newer terminal state. Added per-claim `claim_token` fencing and regression coverage.
+- TASK-097 found the complementary lease-expiry gap: legitimate long-running jobs had no heartbeat, so `claimed_at` could expire while the worker was still executing. Added token-scoped `renew_lease()` and a bounded dispatcher heartbeat.
+- TASK-098 found that `asyncio.wait_for(asyncio.to_thread(...))` does not terminate the underlying synchronous OS thread. Timed-out synchronous worker jobs are now retained as in-flight until the underlying thread actually completes, preventing same-runtime duplicate execution and caching the eventual result once.
+- TASK-099 found a Telegram startup ordering gap: updater/JobQueue dependencies were validated after `Application.start()`. Startup now preflights these dependencies and schedules tracker refresh before the runtime is marked started, preventing partial startup on dependency failure.
+- Added regression coverage for renewable queue leases and synchronous worker timeout fencing.
+- These changes remain pending exact-head CI verification; they are not marked VERIFIED until the complete required workflow set succeeds on the exact current HEAD.
+
 ## 2026-09-15 — Worker queue recovery/lease fencing hardening
 - TASK-096 identified a concrete cross-layer recovery race in the durable WorkerQueue: an expired `RUNNING` job could be recovered to `PENDING`, re-claimed by a new worker execution, and then have its original stale worker overwrite the new execution's terminal state.
 - Added per-claim `claim_token` fencing. Recovery clears the old lease token; dispatcher terminal transitions must present the token belonging to their current claim, so stale workers cannot complete or fail a newer execution.
