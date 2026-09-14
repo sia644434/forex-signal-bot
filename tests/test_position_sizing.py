@@ -73,6 +73,22 @@ def test_lot_precision_floors_instead_of_rounding_up_into_higher_risk():
     assert executable_risk <= result.risk_amount_account
 
 
+def test_exact_lot_boundary_is_not_lost_to_float_rounding():
+    result = calculate_position_size(
+        account_balance=1000,
+        risk_percent=2,
+        risk_distance_quote=1.5,
+        contract_size=100000,
+        account_currency="USD",
+        quote_currency="JPY",
+        quote_to_account_rate=0.0066666667,
+    )
+
+    assert result.lot_size == pytest.approx(0.02)
+    assert result.position_size == pytest.approx(2000.0)
+    assert result.position_size == result.lot_size * 100000
+
+
 def test_lot_below_supported_precision_fails_closed():
     with pytest.raises(ValueError, match="below the supported precision"):
         calculate_position_size(
