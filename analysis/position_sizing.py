@@ -8,6 +8,7 @@ quote currency and account currency differ.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,6 +40,9 @@ def calculate_position_size(
     convert one quote-currency unit into account-currency units. No implicit
     USD assumption or market-rate lookup is performed here.
     """
+    if not isinstance(account_currency, str) or not isinstance(quote_currency, str):
+        raise TypeError("account_currency and quote_currency must be strings.")
+
     account_currency = account_currency.strip().upper()
     quote_currency = quote_currency.strip().upper()
 
@@ -46,6 +50,27 @@ def calculate_position_size(
         raise ValueError("account_currency must not be empty.")
     if not quote_currency:
         raise ValueError("quote_currency must not be empty.")
+
+    numeric_inputs = {
+        "account_balance": account_balance,
+        "risk_percent": risk_percent,
+        "risk_distance_quote": risk_distance_quote,
+        "contract_size": contract_size,
+    }
+    for name, value in numeric_inputs.items():
+        try:
+            if not math.isfinite(float(value)):
+                raise ValueError(f"{name} must be finite.")
+        except (TypeError, ValueError) as error:
+            if isinstance(error, ValueError) and str(error).endswith("must be finite."):
+                raise
+            raise ValueError(f"{name} must be a finite number.") from error
+
+    account_balance = float(account_balance)
+    risk_percent = float(risk_percent)
+    risk_distance_quote = float(risk_distance_quote)
+    contract_size = float(contract_size)
+
     if account_balance <= 0:
         raise ValueError("account_balance must be greater than zero.")
     if risk_percent <= 0:
@@ -63,7 +88,12 @@ def calculate_position_size(
                 "quote_to_account_rate is required when quote_currency "
                 "differs from account_currency."
             )
-        conversion_rate = float(quote_to_account_rate)
+        try:
+            conversion_rate = float(quote_to_account_rate)
+        except (TypeError, ValueError) as error:
+            raise ValueError("quote_to_account_rate must be a finite number.") from error
+        if not math.isfinite(conversion_rate):
+            raise ValueError("quote_to_account_rate must be finite.")
         if conversion_rate <= 0:
             raise ValueError(
                 "quote_to_account_rate must be greater than zero."
@@ -72,11 +102,15 @@ def calculate_position_size(
     risk_amount_account = account_balance * (risk_percent / 100.0)
     risk_per_unit_account = risk_distance_quote * conversion_rate
 
+    if not math.isfinite(risk_amount_account) or not math.isfinite(risk_per_unit_account):
+        raise ValueError("calculated risk values must be finite.")
     if risk_per_unit_account <= 0:
         raise ValueError("converted risk per unit must be greater than zero.")
 
     position_size = risk_amount_account / risk_per_unit_account
     lot_size = position_size / contract_size
+    if not math.isfinite(position_size) or not math.isfinite(lot_size):
+        raise ValueError("calculated position size must be finite.")
 
     return PositionSizingResult(
         position_size=round(position_size, 4),
