@@ -44,11 +44,66 @@ Evidence:
 - Production MarketAwareAnalysisEngine was constructing RiskEngine without the configured account balance.
 - Settings now validates account balance/risk/currency policy and MarketAwareAnalysisEngine passes the configured balance explicitly.
 - Regression coverage verifies the configured balance changes executable sizing and rejects malformed numeric/currency settings.
-- Implementation commits: `d8880ee51b8cf...`.
+- Implementation commits: `d8880ee51b8cfb975b629c1e69b74cba4eb75f1b` and `7101d6e121bb0e71b5517221ef55d460b9bef10f`.
+- Regression commits: `9703fff13d0064dcb4631ec388fc19ee268587a1`, `9da8a791c872a278bfef350600173d0332be362f`, and corrected fixture `2a6fd7f3e874d0cda92b16b7eec04661e931d43c`.
 
-## TASK-070 through TASK-089
+## TASK-070
+Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
+Title: Risk-Policy Upper-Bound and Currency-Context Hardening
 Implementation Status: VERIFIED
-Evidence: Persistent engineering history records the previously verified reliability hardening through exact-head CI verification on the Phase-2 closure baseline `654944e059a3438e31e90aa7f4dc90b04b95110f`.
+Evidence:
+- Standalone PositionSizing and RiskEngine accepted risk policies above 100%.
+- RiskEngine account_currency could defer malformed values into later sizing failures.
+- PositionSizing and RiskEngine now enforce `0 < risk_percent <= 100` and validate account currency at the boundary.
+- Implementation commits: `39464db41d3b3478ec79322e455bf188607f7743` and `6d3eb873f6beb664ffe135002a9f976a3`.
+- Regression commits: `917c8690331083a2cebc8d806b9c3849ec431322` and `24350c2eaf3de319d55a1dfd440e5daa3a16b901`.
+
+## TASK-071
+Phase: Phase 2 — Core Architecture / Market Data Reliability
+Title: Timestamp and Provider Timing Boundary Hardening
+Implementation Status: VERIFIED
+Evidence:
+- `Candle` now requires both `tzinfo` and a non-None `utcoffset()`.
+- ProviderManager now requires finite, non-negative retry delay and cooldown values.
+- Regression coverage covers invalid custom timezone objects, NaN/Infinity timing values, and valid zero-delay/zero-cooldown behavior.
+- Implementation commits: `df70c0bbab22432541fbfcd05de99519fb35fdae` and `7c1eae02d920f4a15f47ef57bbe2d3fd6a3089f9`.
+- Regression commits: `8a857af7a87c68566425a4ec34416b4ad68d1f35` and `89bbdf16c010de7de0ca333b332a6da21fd168f9`.
+
+## TASK-072
+Phase: Phase 2 — Core Architecture / Market Data Reliability
+Title: Weekend Gap Detection Boundary Hardening
+Implementation Status: VERIFIED
+Evidence:
+- DataQuality now limits the weekend closure exception to a genuine Friday-to-Monday transition within the existing maximum weekend window.
+- Regression coverage verifies genuine Friday→Monday closure while large intraday Friday/Monday gaps remain invalid.
+- Implementation commit: `7a322723e8bd1154ae7aaab5a8d8f48bf2790f3f`.
+- Regression test commit: `32815e720c22197248b817a1d45f01182ed096eb`.
+
+## TASK-073
+Phase: Phase 3 — Telegram / Scanner / Tracker Reliability
+Title: Tracker Risk-Plan Synchronization
+Implementation Status: VERIFIED
+Evidence:
+- Tracker refresh now synchronizes the complete executable risk plan on tradable direction changes.
+- WAIT/NO_TRADE clears executable levels and marks the tracked item INVALIDATED.
+- Regression coverage verifies BUY→SELL synchronization and NO_TRADE clearing.
+- Implementation commit: `1b3a9cf1b80ac7daae5afd3c55f86d83419ce2fd`.
+- Regression test commit: `4288ee926365af25d593d06b683e2d2bbaf1e8e6`.
+
+## TASK-074
+Phase: Phase 2/3 — Multi-Asset Market and Risk Architecture
+Title: Remove Forex-Only Assumptions from Market-Aware Risk Path
+Implementation Status: VERIFIED
+Evidence:
+- Central configuration explicitly supports Forex, Crypto, Stocks, Indices, and Commodities.
+- MarketAwareAnalysisEngine and RiskEngine no longer force every symbol through Forex-only currency parsing.
+- Added asset-aware quote currency and contract-size metadata; Forex uses 100000 while the current spot-like non-Forex universe defaults to 1.0.
+- CurrencyConversion supports the repository's explicit USDT/USDC equivalent policy and supported bridging while failing closed for unsupported conversions.
+- Regression coverage covers quote/contract metadata and stablecoin conversion.
+
+## TASK-075 through TASK-089
+Implementation Status: VERIFIED
+Evidence: Persistent engineering history records the previously verified Worker/Queue, Provider, Analysis/Risk, Market Status, Tracker, Output Escaping, and Telegram Access Control hardening through exact-head CI verification on the Phase-2 closure baseline `654944e059a3438e31e90aa7f4dc90b04b95110f`.
 
 ## TASK-090
 Phase: Phase 3 — Telegram / Scanner / Tracker / Callback Reliability
