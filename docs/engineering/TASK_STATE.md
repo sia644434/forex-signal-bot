@@ -208,46 +208,83 @@ Evidence:
 ## TASK-084
 Phase: Phase 2 — Telegram / Market Status Reliability
 Title: Market Status Contract Hardening
-Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Implementation Status: VERIFIED
 Evidence:
-- The Telegram market-status helper exposed `STALE_DATA` instead of the canonical `STALE` status expected by the platform contract.
-- It used a fixed 180-minute stale threshold despite receiving a timeframe argument.
-- It silently interpreted naive timestamps as UTC instead of failing closed.
-- Weekend closure was applied globally, incorrectly classifying 24/7 Crypto as CLOSED.
-- The market-status boundary now uses canonical `OPEN/CLOSED/STALE/NO_DATA`, scales stale detection to six timeframe intervals, rejects invalid/naive/future timestamps, and applies weekend closure only to non-crypto markets.
-- Scanner now passes symbol context and consumes the canonical `STALE` status.
-- Focused regression coverage added for no-data, timestamp safety, future timestamps, timeframe-scaled staleness, weekday OPEN, Forex weekend closure, Crypto weekend behavior, and invalid reference time.
+- The Telegram market-status helper now uses canonical `OPEN/CLOSED/STALE/NO_DATA`, timeframe-scaled stale detection, strict timezone-aware timestamps, future-timestamp rejection, and asset-aware weekend semantics.
+- Scanner propagation consumes the canonical `STALE` state.
+- Focused regression coverage covers no-data, timestamp safety, future timestamps, timeframe-scaled staleness, weekday OPEN, Forex weekend closure, Crypto weekend behavior, and invalid reference time.
 - Implementation commit: `a0caef5d41e598dc9ce54c31b68d2529c1438c5d`.
 - Scanner integration commit: `ad0ae2ed332ed1007302cfe008587e9cfb8a6c10`.
 - Regression test commit: `3e3f17dac93f2f20e13c804a0b89195fdf239587`.
+- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
+
+## TASK-085
+Phase: Phase 2 — Core Architecture / Market Data Reliability
+Title: Provider Candle Ordering and Duplicate Boundary Hardening
+Implementation Status: VERIFIED
+Evidence:
+- ProviderManager no longer silently sorts or deduplicates provider candle responses before downstream quality validation.
+- Non-chronological and duplicate timestamps fail validation and can trigger provider failover.
+- Regression coverage preserves tuple compatibility and limit behavior while covering malformed ordering and duplicate responses.
+- Implementation commit: `eea607f106cbea57c1fd3b6d3d7b0a783398eb97`.
+- Regression commit: `a7d181580369fc3f92b851d608a8f406060f49f6`.
+- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
+
+## TASK-086
+Phase: Phase 2 — Core Architecture / Worker Runtime Reliability
+Title: Synchronous Executor Timeout Boundary Hardening
+Implementation Status: VERIFIED
+Evidence:
+- WorkerRuntime applies timeout enforcement to synchronous heavy executors through an off-event-loop execution path.
+- Invalid timeout values are rejected and completed-job cache growth is bounded.
+- Regression coverage covers synchronous timeout behavior, invalid timeout input, and cancellation/cache safety.
+- Implementation commit: `6e22747447de1a545c4f5fe59d80e`.
+- Regression commit: `f623afee75b8c6fc4c8b5f72605b4a0d8fd11d69`.
+- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
+
+## TASK-087
+Phase: Phase 2 — Telegram / Tracker Reliability
+Title: Fresh Analysis Before Tracker TP/SL Evaluation
+Implementation Status: VERIFIED
+Evidence:
+- Tracker refresh re-analyzes the latest market state before evaluating TP/SL, preventing an old BUY/SELL risk plan from incorrectly closing a signal after a same-candle direction change.
+- Dynamic tracker notifications escape HTML content.
+- Regression coverage verifies direction-flip target ordering.
+- Implementation commit: `c9e9f9417800693cc7e354386dd4189811314503`.
+- Regression commits: `d32d9478e699263e5ae2bd8264b2f247bb277e6a` and `5582f1179c94a21549a9cc887149cb6c31884ed4`.
+- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
+
+## TASK-088
+Phase: Phase 2 — Telegram / Tracker Output Reliability
+Title: Executable Signal Filtering and Output Escaping
+Implementation Status: VERIFIED
+Evidence:
+- Telegram signal output HTML-escapes dynamic market/report fields.
+- Tracker accepts only executable BUY/SELL decisions from the signal handler; neutral/unknown results are not registered as active tracked trades.
+- Implementation commit: `320e2d5f2dd1ab7d512d3b6fc02b854daf7cec0e`.
+- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
+
+## TASK-089
+Phase: Phase 2 — Telegram / Security Reliability
+Title: Centralized Telegram Access Control
+Implementation Status: VERIFIED
+Evidence:
+- `TELEGRAM_ALLOWED_USER_IDS` is the explicit Telegram allowlist.
+- Production with missing/invalid allowlist fails closed; development/testing preserve prior open compatibility.
+- Commands and callback routes pass through the common authorization boundary.
+- Regression coverage covers allowlisted users, unauthorized users, invalid configuration, production fail-closed behavior, and development compatibility.
+- Access boundary commit: `925ba7f48a16cad20c61941d51c891d1a4f5bf8c`.
+- Route enforcement commit: `ec6c29e531961c2e57e466be46a31474ec99e7a6`.
+- Regression commit: `55284ac27fd54de248941c1f2bf132c00e317655`.
+- Exact-head verification: `main` commit `654944e059a3438e31e90aa7f4dc90b04b95110f`; all seven required workflows succeeded.
 
 ## Multi-Asset Architecture Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
 
 ## Current Audit Frontier
-Continue the evidence-backed audit from:
-`ProviderManager → MarketDataService → Freshness/DataQuality → Symbol/Asset Metadata → CurrencyConversion → MarketAwareAnalysisEngine → RiskEngine → PositionSizing`
-then proceed outward into Telegram/Scanner/Tracker/Callbacks and Worker/Queue/Persistence, Security/Production, and Final E2E.
+Phase 2 is closed. The next evidence-backed work begins at the Phase 3 Telegram surface: Telegram/Scanner/Tracker/Callbacks, followed by Worker/Queue/Persistence, Security/Production, and Final E2E where concrete gaps are demonstrated.
 
-Required checks:
-- provider result validation and normalization
-- retry/cooldown finite and overflow boundaries
-- concurrency isolation of provider state and failure diagnostics
-- freshness and stale-data fail-closed behavior
-- market-specific session/closure semantics
-- symbol normalization and asset classification
-- quote-currency and contract-size metadata
-- account-currency versus quote-currency unit semantics
-- conversion-rate direction and pair orientation
-- conversion freshness and missing/invalid data behavior
-- configured risk policy versus effective dynamic risk percentage
-- risk amount versus risk-per-unit units
-- lot/contract semantics per asset class
-- rounding/precision behavior
-- finite/positive/overflow/underflow boundaries
-- end-to-end consistency between MarketDataService, CurrencyConversionService, MarketAwareAnalysisEngine, RiskEngine, and PositionSizing
-
-Do not create another task until a concrete repository-backed gap is demonstrated.
+Do not create another task merely to advance the roadmap. Create the next task only after a concrete repository-backed gap is demonstrated.
 
 ## New-chat Continuation Contract
 When a new chat starts work on this repository, first read:
@@ -258,14 +295,3 @@ When a new chat starts work on this repository, first read:
 - `docs/engineering/ARCHITECTURE_MAP.md`
 - `docs/engineering/DECISIONS.md`
 - `docs/engineering/CHANGELOG_ENGINEERING.md`
-
-Then:
-1. Determine the exact current `main` HEAD.
-2. Inspect GitHub Actions for that exact HEAD.
-3. Resolve every pending or failed verification before moving deeper.
-4. Do not repeat completed tasks unless verification evidence is missing or contradicted.
-5. Continue from the first unresolved audit frontier recorded above.
-6. Inspect more architecture than the previous step and only implement concrete repository-backed gaps.
-7. Add focused regression coverage for every confirmed defect.
-8. Verify the required GitHub Actions gate set before marking a task VERIFIED.
-9. Treat the repository as a Multi-Asset Trading Intelligence Platform; do not reintroduce Forex-only assumptions. Do not introduce Data Analysis, local coding-agent/Ollama architecture, speculative features, or unrelated agent architecture.
