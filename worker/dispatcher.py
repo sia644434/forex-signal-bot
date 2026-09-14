@@ -14,12 +14,7 @@ JobHandler = Callable[[dict[str, Any]], Any]
 class WorkerDispatcher:
     """Queue-backed dispatcher for heavy worker jobs."""
 
-    def __init__(
-        self,
-        submit: Callable[[JobRequest], Awaitable[JobResult]] | None = None,
-        queue: WorkerQueue | None = None,
-        recovery_grace_seconds: int = 30,
-    ):
+    def __init__(self, submit: Callable[[JobRequest], Awaitable[JobResult]] | None = None, queue: WorkerQueue | None = None, recovery_grace_seconds: int = 30):
         self._submit = submit
         self._queue = queue
         if recovery_grace_seconds < 0:
@@ -28,19 +23,10 @@ class WorkerDispatcher:
             self._queue.recover_expired_running(recovery_grace_seconds)
 
     @classmethod
-    def from_settings(
-        cls,
-        submit: Callable[[JobRequest], Awaitable[JobResult]] | None = None,
-        settings: Settings | None = None,
-    ) -> "WorkerDispatcher":
-        """Build a queue-backed dispatcher from the central worker settings boundary."""
+    def from_settings(cls, submit: Callable[[JobRequest], Awaitable[JobResult]] | None = None, settings: Settings | None = None) -> "WorkerDispatcher":
         resolved = settings or Settings.load()
         queue = WorkerQueue(resolved.worker_queue_database_path)
-        return cls(
-            submit=submit,
-            queue=queue,
-            recovery_grace_seconds=resolved.worker_queue_recovery_grace_seconds,
-        )
+        return cls(submit=submit, queue=queue, recovery_grace_seconds=resolved.worker_queue_recovery_grace_seconds)
 
     async def submit(self, request: JobRequest) -> JobResult:
         if request.job_type not in HEAVY_JOB_TYPES:
@@ -58,56 +44,47 @@ class WorkerDispatcher:
         if record.status == "RUNNING":
             return JobResult(request.job_id, "RUNNING", request.job_type)
 
-        # Claim the exact request that this coroutine enqueued. Using claim_next()
-        # here allowed a concurrent submitter with a higher-priority job to steal
-        # the claim and left the original caller with a misleading PENDING result.
         claimed = self._queue.claim(request.job_id)
         if claimed is None:
             current = self._queue.get(request.job_id)
             return JobResult(request.job_id, current.status if current else "PENDING", request.job_type)
 
+        claim_token = claimed.claim_token
         if self._submit is None:
-            self._queue.fail(request.job_id, "PC worker transport is not configured")
+            self._queue.fail(request.job_id, "PC worker transport is not configured", claim_token=claim_token)
             return JobResult(request.job_id, "WORKER_OFFLINE", request.job_type, error="PC worker transport is not configured")
 
         try:
             result = await self._submit(request)
         except asyncio.CancelledError:
-            # Cancellation is a terminal caller-owned outcome; do not strand the
-            # durable record in RUNNING until crash-recovery eventually fires.
-            self._queue.cancel(request.job_id)
+            self._queue.cancel(request.job_id, claim_token=claim_token)
             raise
         except asyncio.TimeoutError as exc:
-            self._queue.timeout(request.job_id, str(exc) or "Worker job timeout")
+            self._queue.timeout(request.job_id, str(exc) or "Worker job timeout", claim_token=claim_token)
             raise
         except Exception as exc:
-            self._queue.fail(request.job_id, str(exc))
+            self._queue.fail(request.job_id, str(exc), claim_token=claim_token)
             raise
 
         if result.status == "COMPLETED":
-            self._queue.finish(request.job_id, result=result.output)
+            self._queue.finish(request.job_id, result=result.output, claim_token=claim_token)
         elif result.status == "TIMEOUT":
-            self._queue.timeout(request.job_id, result.error or "Worker job timeout")
+            self._queue.timeout(request.job_id, result.error or "Worker job timeout", claim_token=claim_token)
         elif result.status == "CANCELLED":
-            self._queue.cancel(request.job_id)
+            self._queue.cancel(request.job_id, claim_token=claim_token)
         elif result.status == "FAILED":
-            self._queue.fail(request.job_id, result.error or "Worker job failed")
+            self._queue.fail(request.job_id, result.error or "Worker job failed", claim_token=claim_token)
         return result
 
     def close(self) -> None:
-        """Close the dispatcher-owned durable queue resource, if any."""
         if self._queue is not None:
             self._queue.close()
             self._queue = None
 
     def health(self) -> dict[str, Any]:
-        """Return non-sensitive dispatcher and durable queue operational state."""
         if self._queue is None:
             return {"queue_configured": False}
-        return {
-            "queue_configured": True,
-            "queue": self._queue.metrics(),
-        }
+        return {"queue_configured": True, "queue": self._queue.metrics()}
 
     async def submit_many(self, requests: list[JobRequest]) -> list[JobResult]:
         return await asyncio.gather(*(self.submit(request) for request in requests))
