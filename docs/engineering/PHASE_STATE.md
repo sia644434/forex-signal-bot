@@ -6,7 +6,7 @@ Evidence: Baseline contract regressions were fixed and production verification w
 
 ## Phase 2 — Core Architecture
 Status: COMPLETE
-Evidence: The cross-layer architecture/reliability audit was completed through TASK-089 on exact current `main` HEAD `654944e059a3438e31e90aa7f4dc90b04b95110f`. TASK-084 through TASK-089 are implemented, regression-covered, and verified by the seven required GitHub Actions checks on that exact HEAD. No additional Phase-2 repository-backed gap was identified during the closure audit.
+Evidence: The cross-layer architecture/reliability audit was completed through TASK-089 on exact code HEAD `654944e059a3438e31e90aa7f4dc90b04b95110f`. TASK-084 through TASK-089 are implemented, regression-covered, and verified by the seven required GitHub Actions checks on that exact HEAD. No additional Phase-2 repository-backed gap was identified during the closure audit.
 
 ### Completed Evidence
 - TASK-004 through TASK-013 were verified and closed through GitHub Actions.
@@ -45,13 +45,36 @@ Evidence: The cross-layer architecture/reliability audit was completed through T
 - TASK-089 established centralized Telegram access control with production fail-closed behavior for missing/invalid allowlists and common authorization across commands/callbacks.
 
 ### Phase 2 Closure Verification
-- Exact `main` HEAD: `654944e059a3438e31e90aa7f4dc90b04b95110f`.
+- Exact code closure HEAD: `654944e059a3438e31e90aa7f4dc90b04b95110f`.
 - Required checks on that exact HEAD: `test`, `readiness`, `activation-validation`, `activation-gate`, `production-e2e-contract`, `dependency-audit`, and `final-gate` — all completed successfully.
-- Combined commit status is successful.
-- The prior pending-verification state is closed. Phase 2 is now formally COMPLETE.
+- Combined commit status was successful.
+- The later documentation synchronization created `b80d90b93af72b390c779b62ab055a7dee98444f`; its CI was subsequently observed as successful before Phase 3 changes began.
 
 ## Phase 3 — Telegram Bot
-Status: PARTIALLY_COMPLETE
+Status: IN_PROGRESS
+
+### TASK-090 — Telegram Surface Contract Hardening
+Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+
+Repository-backed gaps identified and corrected as one cross-layer change set:
+- Telegram callback payloads previously allowed arbitrary values through the settings mutation path; callback values are now allowlisted and invalid settings requests fail closed.
+- `/settings` previously displayed hard-coded state instead of the authenticated user's actual settings; it now reports actual language, market, timeframe, analysis mode, risk level, and notification state.
+- `/signal` previously proceeded directly from candle retrieval to analysis without enforcing the canonical Telegram market-status contract; it now returns `NO TRADE` for `CLOSED`, `STALE`, and `NO_DATA` before executable analysis/tracking.
+- Signal tracking now uses the full executable directional contract already supported by the tracker: `BUY`, `SELL`, `STRONG_BUY`, `STRONG_SELL`.
+- Dynamic scanner and tracked-signal HTML output is escaped at the rendering boundary.
+- `/status` now exposes actual configured market-data provider readiness instead of always claiming full readiness.
+- Regression coverage added in `tests/test_telegram_surface_contract.py`.
+
+Implementation commits:
+- `abea95fdd36e8fde1de9108d4659481f0bca2e60`
+- `f744c8d44c1e6262d7acf0531910e39d97b9745f`
+- `03918668250a2bbea716f302c4382894a1bf5ac3`
+- `5936b2aa42441bd8f181a836fe5d7043d88f933c`
+- `cf5ab1e0cbadb4e59897002590d498558226e80e`
+
+Regression commit: `4a9481ffa43cc98d387c0425e222486f6a955281`.
+
+Phase 3 remains open until the current code HEAD passes the required CI gates and the remaining Telegram command/callback/tracker audit is completed.
 
 ## Phase 4 — Market/Data Layer
 Status: PARTIALLY_COMPLETE
@@ -78,7 +101,7 @@ Evidence: Dependency security audit and production runtime verification are comp
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
-Evidence: Required CI verification gates are green on the exact current Phase-2 closure HEAD.
+Evidence: Required CI verification gates were green on the Phase-2 closure HEAD; Phase-3 changes are awaiting fresh exact-head verification.
 
 ## Phase 12 — Deployment
 Status: COMPLETE
@@ -88,4 +111,4 @@ Evidence: Railway live health and restart/recovery verification completed for th
 Status: NOT_STARTED
 
 ## Roadmap Rule
-Work phases sequentially. Phase 2 is now closed. The next planned work is Phase 3, and later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
+Work phases sequentially. Phase 2 is closed. Phase 3 is now the active audit frontier. Later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
