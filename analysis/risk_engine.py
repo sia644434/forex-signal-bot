@@ -10,7 +10,6 @@ from analysis.position_sizing import calculate_position_size
 @dataclass(frozen=True)
 class RiskResult:
     """Professional trade risk output."""
-
     entry_price: float | None
     stop_loss: float | None
     take_profit: float | None
@@ -32,7 +31,6 @@ class RiskResult:
 
 class RiskEngine:
     """Advanced professional risk management engine."""
-
     def __init__(self, risk_reward_target: float = 2.0, atr_multiplier: float = 1.5, account_balance: float = 1000.0, risk_percent: float = 1.0, contract_size: float = 100000, account_currency: str | None = None) -> None:
         self.risk_reward_target = self._coerce_finite(risk_reward_target, "risk_reward_target")
         self.atr_multiplier = self._coerce_finite(atr_multiplier, "atr_multiplier")
@@ -65,13 +63,13 @@ class RiskEngine:
 
     @staticmethod
     def _directional_strength(score: float) -> float:
-        numeric = RiskEngine._coerce_finite(score, "score")
-        return abs((numeric - 50.0) * 2.0)
+        return abs((RiskEngine._coerce_finite(score, "score") - 50.0) * 2.0)
 
     def _dynamic_risk_percent(self, confidence: float, score: float) -> float:
-        if confidence >= 0.85 and self._directional_strength(score) >= 80:
+        strength = self._directional_strength(score)
+        if confidence >= 0.85 and strength >= 80:
             return 2.0
-        if confidence >= 0.70 and self._directional_strength(score) >= 60:
+        if confidence >= 0.70 and strength >= 60:
             return 1.5
         if confidence >= 0.50:
             return 1.0
@@ -119,8 +117,7 @@ class RiskEngine:
 
     @staticmethod
     def _trade_quality(confidence: float, score: float, market_condition: str) -> tuple[float, str]:
-        quality = confidence * 50
-        quality += min(RiskEngine._directional_strength(score), 50)
+        quality = confidence * 50 + min(RiskEngine._directional_strength(score), 50)
         if market_condition == "NORMAL":
             quality += 10
         elif market_condition == "HIGH_VOLATILITY":
@@ -152,9 +149,9 @@ class RiskEngine:
         if any(value <= 0 for value in levels):
             raise ValueError("risk plan levels must be greater than zero")
         if signal == "BUY":
-            valid_order = stop_loss < entry_price < tp1 < tp2 < tp3
+            valid_order = stop_loss < entry_price < tp1 <= tp2 <= tp3
         else:
-            valid_order = tp3 < tp2 < tp1 < entry_price < stop_loss
+            valid_order = tp3 <= tp2 <= tp1 < entry_price < stop_loss
         if not valid_order:
             raise ValueError("risk plan levels have invalid directional ordering")
 
@@ -169,7 +166,7 @@ class RiskEngine:
         reason = "Professional bullish risk plan generated"
         if sizing_reason:
             reason += f"; {sizing_reason}"
-        return RiskResult(entry_price=round(price, 5), stop_loss=round(stop_loss, 5), take_profit=round(tp2, 5), take_profit_1=round(tp1, 5), take_profit_2=round(tp2, 5), take_profit_3=round(tp3, 5), risk_reward=self.risk_reward_target, position_size=position_size, lot_size=lot_size, risk_amount=risk_amount, risk_percent=risk_percent, trailing_stop=round(tp1, 5), trade_quality=trade_quality, trade_grade=trade_grade, risk_level=risk_level, market_condition=market_condition, reason=reason)
+        return RiskResult(round(price, 5), round(stop_loss, 5), round(tp2, 5), round(tp1, 5), round(tp2, 5), round(tp3, 5), self.risk_reward_target, position_size, lot_size, risk_amount, risk_percent, round(tp1, 5), trade_quality, trade_grade, risk_level, market_condition, reason)
 
     def _sell_setup(self, price: float, risk_distance: float, risk_level: str, market_condition: str, confidence: float, score: float, risk_percent: float, *, symbol: str | None, quote_to_account_rate: float | None) -> RiskResult:
         stop_loss = price + risk_distance
@@ -182,10 +179,9 @@ class RiskEngine:
         reason = "Professional bearish risk plan generated"
         if sizing_reason:
             reason += f"; {sizing_reason}"
-        return RiskResult(entry_price=round(price, 5), stop_loss=round(stop_loss, 5), take_profit=round(tp2, 5), take_profit_1=round(tp1, 5), take_profit_2=round(tp2, 5), take_profit_3=round(tp3, 5), risk_reward=self.risk_reward_target, position_size=position_size, lot_size=lot_size, risk_amount=risk_amount, risk_percent=risk_percent, trailing_stop=round(tp1, 5), trade_quality=trade_quality, trade_grade=trade_grade, risk_level=risk_level, market_condition=market_condition, reason=reason)
+        return RiskResult(round(price, 5), round(stop_loss, 5), round(tp2, 5), round(tp1, 5), round(tp2, 5), round(tp3, 5), self.risk_reward_target, position_size, lot_size, risk_amount, risk_percent, round(tp1, 5), trade_quality, trade_grade, risk_level, market_condition, reason)
 
     def calculate(self, signal: str, current_price: float, atr: float | None = None, confidence: float = 0.0, score: float = 0.0, risk_distance: float | None = None, *, symbol: str | None = None, quote_to_account_rate: float | None = None, risk_percent: float | None = None) -> RiskResult:
-        """Calculate a risk plan with unit-aware position sizing."""
         if not isinstance(signal, str):
             raise ValueError("signal must be a string.")
         current_price = self._coerce_finite(current_price, "current_price")
@@ -205,7 +201,7 @@ class RiskEngine:
             raise ValueError("current_price must be greater than zero.")
         if risk_distance is not None and risk_distance <= 0:
             raise ValueError("risk distance must be greater than zero.")
-        distance = self._coerce_finite(self._calculate_risk_distance(price=current_price, atr=atr, risk_distance=risk_distance), "risk distance")
+        distance = self._coerce_finite(self._calculate_risk_distance(current_price, atr, risk_distance), "risk distance")
         if distance <= 0:
             raise ValueError("risk distance must be greater than zero.")
         signal = signal.upper()
@@ -213,8 +209,8 @@ class RiskEngine:
         market_condition = self._market_condition(atr, current_price)
         effective_risk_percent = risk_percent if risk_percent is not None else self._dynamic_risk_percent(confidence, score)
         if signal == "BUY":
-            return self._buy_setup(price=current_price, risk_distance=distance, risk_level=risk_level, market_condition=market_condition, confidence=confidence, score=score, risk_percent=effective_risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
+            return self._buy_setup(current_price, distance, risk_level, market_condition, confidence, score, effective_risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
         if signal == "SELL":
-            return self._sell_setup(price=current_price, risk_distance=distance, risk_level=risk_level, market_condition=market_condition, confidence=confidence, score=score, risk_percent=effective_risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
+            return self._sell_setup(current_price, distance, risk_level, market_condition, confidence, score, effective_risk_percent, symbol=symbol, quote_to_account_rate=quote_to_account_rate)
         trade_quality, trade_grade = self._trade_quality(confidence, score, market_condition)
-        return RiskResult(entry_price=None, stop_loss=None, take_profit=None, take_profit_1=None, take_profit_2=None, take_profit_3=None, risk_reward=None, position_size=None, lot_size=None, risk_amount=None, risk_percent=effective_risk_percent, trailing_stop=None, trade_quality=trade_quality, trade_grade=trade_grade, risk_level="NONE", market_condition=market_condition, reason="No valid trade setup available")
+        return RiskResult(None, None, None, None, None, None, None, None, None, None, effective_risk_percent, None, trade_quality, trade_grade, "NONE", market_condition, "No valid trade setup available")
