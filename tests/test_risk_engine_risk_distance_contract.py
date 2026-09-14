@@ -39,10 +39,10 @@ def test_risk_distance_is_the_single_source_for_sl_tp_and_sizing(
     assert result.take_profit == pytest.approx(expected_tp2)
     assert result.risk_reward == 2.0
 
-    assert result.position_size == pytest.approx(1300.0)
-    assert result.lot_size == pytest.approx(0.013)
+    assert result.position_size == pytest.approx(600.0)
+    assert result.lot_size == pytest.approx(0.006)
     assert result.position_size == pytest.approx(result.lot_size * 100000)
-    assert result.risk_amount == pytest.approx(20.0)
+    assert result.risk_amount == pytest.approx(10.0)
 
     executable_risk = result.position_size * abs(result.entry_price - result.stop_loss)
     assert executable_risk <= result.risk_amount + 1e-9
@@ -94,8 +94,8 @@ def test_atr_derived_risk_distance_is_used_consistently() -> None:
         expected_distance * 2.0,
         abs=1e-9,
     )
-    assert result.position_size == pytest.approx(1300.0)
-    assert result.risk_amount == pytest.approx(20.0)
+    assert result.position_size == pytest.approx(600.0)
+    assert result.risk_amount == pytest.approx(10.0)
 
 
 @pytest.mark.parametrize("signal", ["BUY", "SELL"])
@@ -122,7 +122,7 @@ def test_jpy_quote_conversion_never_exceeds_account_risk(
 
     assert result.position_size is not None
     assert result.lot_size is not None
-    assert result.risk_amount == pytest.approx(20.0)
+    assert result.risk_amount == pytest.approx(10.0)
     assert result.position_size == pytest.approx(result.lot_size * 100000)
 
     # risk_distance is denominated in JPY for these pairs, so convert the
