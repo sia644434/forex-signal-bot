@@ -253,6 +253,8 @@ class RiskEngine:
         score = self._coerce_finite(score, "score")
         if atr is not None:
             atr = self._coerce_finite(atr, "atr")
+            if atr < 0:
+                raise ValueError("atr must be greater than or equal to zero.")
         if risk_distance is not None:
             risk_distance = self._coerce_finite(risk_distance, "risk distance")
 
