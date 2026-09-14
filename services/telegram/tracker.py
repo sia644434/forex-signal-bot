@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import html
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Awaitable, Callable
 
 from analysis.market_aware_engine import MarketAwareAnalysisEngine
 from services.market_data.service import MarketDataService
+from .tracker_store import TrackerStore, TrackerStoreError
 
 
 @dataclass
@@ -26,6 +27,57 @@ class TrackedSignal:
     updated_at: str = ""
 
 
+_STORE = TrackerStore()
+
+
+def _key(user_id: int, symbol: str, timeframe: str) -> str:
+    return f"{user_id}:{symbol}:{timeframe}"
+
+
+def _serialize(item: TrackedSignal) -> dict:
+    return asdict(item)
+
+
+def _deserialize(data: dict) -> TrackedSignal:
+    return TrackedSignal(
+        user_id=int(data["user_id"]),
+        symbol=str(data["symbol"]),
+        timeframe=str(data["timeframe"]),
+        signal=str(data["signal"]),
+        entry=data.get("entry"),
+        stop_loss=data.get("stop_loss"),
+        take_profit_1=data.get("take_profit_1"),
+        take_profit_2=data.get("take_profit_2"),
+        take_profit_3=data.get("take_profit_3"),
+        status=str(data.get("status", "ACTIVE")),
+        last_signal=str(data.get("last_signal", "")),
+        last_price=data.get("last_price"),
+        updated_at=str(data.get("updated_at", "")),
+    )
+
+
+def _load_tracks() -> dict[tuple[int, str, str], TrackedSignal]:
+    raw = _STORE.load_all()
+    tracks: dict[tuple[int, str, str], TrackedSignal] = {}
+    for key, data in raw.items():
+        try:
+            item = _deserialize(data)
+            expected_key = _key(item.user_id, item.symbol, item.timeframe)
+            if key != expected_key:
+                raise ValueError("tracker key does not match stored signal identity")
+            tracks[(item.user_id, item.symbol, item.timeframe)] = item
+        except (KeyError, TypeError, ValueError) as error:
+            raise TrackerStoreError(f"invalid tracked signal record: {key}") from error
+    return tracks
+
+
+ACTIVE_TRACKS: dict[tuple[int, str, str], TrackedSignal] = _load_tracks()
+
+
+def _persist_tracks() -> None:
+    _STORE.save_all({_key(*key): _serialize(item) for key, item in ACTIVE_TRACKS.items()})
+
+
 def track_report(user_id: int, symbol: str, timeframe: str, report) -> TrackedSignal:
     signal = str(report.signal).upper()
     item = TrackedSignal(
@@ -42,14 +94,15 @@ def track_report(user_id: int, symbol: str, timeframe: str, report) -> TrackedSi
         updated_at=datetime.now(timezone.utc).isoformat(),
     )
     ACTIVE_TRACKS[(user_id, symbol, timeframe)] = item
+    _persist_tracks()
     return item
 
 
-ACTIVE_TRACKS: dict[tuple[int, str, str], TrackedSignal] = {}
-
-
 def stop_tracking(user_id: int, symbol: str, timeframe: str) -> bool:
-    return ACTIVE_TRACKS.pop((user_id, symbol, timeframe), None) is not None
+    removed = ACTIVE_TRACKS.pop((user_id, symbol, timeframe), None) is not None
+    if removed:
+        _persist_tracks()
+    return removed
 
 
 def list_tracking(user_id: int) -> list[TrackedSignal]:
@@ -122,10 +175,6 @@ async def refresh_tracking(
     )
     old_signal, new_signal = _apply_report(item, report)
 
-    # A newly changed signal is not evaluated against TP/SL using the same
-    # candle that produced the new analysis. Its high/low may have contributed
-    # to the newly calculated levels, which could otherwise cause an immediate
-    # false stop/target event. The next refresh evaluates the new plan normally.
     if new_signal in {"BUY", "SELL", "STRONG_BUY", "STRONG_SELL"} and new_signal == old_signal:
         target_event = _target_event(item, high, low)
         if target_event:
@@ -135,6 +184,7 @@ async def refresh_tracking(
                 f"{target_event}\nقیمت فعلی: <b>{close}</b>"
             )
             ACTIVE_TRACKS.pop((item.user_id, item.symbol, item.timeframe), None)
+            _persist_tracks()
             return item
 
     if new_signal != old_signal:
@@ -144,6 +194,7 @@ async def refresh_tracking(
             f"سیگنال فعلی: <b>{html.escape(new_signal, quote=False)}</b>\n"
             f"قیمت: <b>{close}</b>"
         )
+    _persist_tracks()
     return item
 
 
