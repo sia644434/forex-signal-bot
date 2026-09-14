@@ -17,10 +17,9 @@ def test_close_only_atr_rejects_non_sequence_input():
         ATREngine().calculate("100,101,102")
 
 
-def test_atr_rejects_true_range_overflow():
-    engine = ATREngine(period=1)
+def test_true_range_helper_rejects_arithmetic_overflow():
     with pytest.raises(ValueError, match="true range"):
-        engine.calculate([1e308, -1e308])
+        ATREngine.true_range([1e308, -1e308])
 
 
 @pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
