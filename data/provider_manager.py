@@ -187,7 +187,10 @@ class ProviderManager:
 
     @staticmethod
     def _validate_result(provider_name: str, candles: object, symbol: str) -> list[Candle]:
-        if not isinstance(candles, list):
+        # Provider adapters historically returned either list or tuple. Keep
+        # that compatibility at the boundary, then canonicalize to list for
+        # all downstream consumers.
+        if not isinstance(candles, (list, tuple)):
             raise ApplicationError("Provider returned an invalid candle collection.", {"provider": provider_name, "symbol": symbol, "expected": "list[Candle]", "actual": type(candles).__name__})
         expected = symbol.strip().upper().replace("_", "")
         for index, candle in enumerate(candles):
