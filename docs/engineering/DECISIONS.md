@@ -23,51 +23,80 @@ Affected Components: Telegram, analysis, decision/risk, strategy.
 ## ADR-003 — PC Worker is for Trading Intelligence Platform workloads, not local coding-agent infrastructure
 Date: 2026-09-12
 Problem: The worker runtime had an accidental `coding_agent` workload and an Ollama bootstrap path that were unrelated to the platform's heavy application-processing responsibility.
-Chosen Solution: Keep the worker focused on genuine Forex platform workloads and remove the local coding-agent path from the active runtime.
+Chosen Solution: Keep the worker focused on genuine platform workloads and remove the local coding-agent path from the active runtime.
 Reason: A local coding agent is not part of the trading platform architecture and would create an unnecessary runtime/configuration dependency.
-Trade-offs: Legacy local-agent files may remain temporarily as cleanup debt; they are not part of the active worker path.
 Affected Components: worker runtime, worker configuration, architecture documentation.
 
-## ADR-004 — Do not carry forward non-Forex worker tasks
+## ADR-004 — Do not carry forward non-application worker tasks
 Date: 2026-09-12
-Problem: `TASK-016 — Worker Retry and Failure Lifecycle` remained in the task roadmap after the worker's accidental coding-agent/Ollama architecture was removed.
-Chosen Solution: Remove TASK-016 from the active roadmap without implementing it. Future retry/failure work must be introduced only when a concrete Forex application, Processing Queue, or Heavy Forex Worker requirement is evidenced by the repository.
-Reason: The final product architecture is strictly Forex-focused.
-Consequences: No retry-specific code is added solely for TASK-016. Evidence-backed retry requirements may still be addressed later as properly scoped Forex tasks.
-Affected Components: `docs/engineering/*`.
+Problem: A residual worker task remained after the accidental coding-agent/Ollama architecture was removed.
+Chosen Solution: Remove it from the active roadmap without implementing speculative retry-specific architecture. Future retry/failure work must be introduced only when a concrete application, Processing Queue, or Heavy Worker requirement is evidenced.
+Reason: Avoids architecture driven by a removed workload.
 
 ## ADR-005 — Engineering state must be synchronized with every verified task checkpoint
 Date: 2026-09-12
-Problem: Implementation work had advanced through TASK-027 while persistent state documents still referenced TASK-024 and older commits.
-Chosen Solution: After each verified task or state-changing checkpoint, update the authoritative engineering state documents in the repository before selecting the next task.
-Reason: Prevents `TASK_STATE.md`, `PROJECT_STATE.md`, `PHASE_STATE.md`, `TEST_STATE.md`, and the engineering changelog from becoming stale relative to code and CI evidence.
-Trade-offs: Adds small documentation commits after implementation/verification checkpoints, but substantially improves recoverability and prevents contradictory task selection.
+Problem: Implementation work had advanced while persistent state documents still referenced older checkpoints.
+Chosen Solution: After each verified task or state-changing checkpoint, update the authoritative engineering state documents before selecting the next task.
+Reason: Prevents contradictory task selection and improves recoverability.
 Affected Components: `docs/engineering/*`.
 
 ## ADR-006 — Keep public worker liveness minimal
 Date: 2026-09-12
-Problem: The PC Worker's unauthenticated `GET /health` endpoint exposed detailed runtime metadata including worker identity, host/platform information, Python version, capabilities, registered jobs, and active jobs.
-Chosen Solution: Keep `/health` unauthenticated for simple liveness checks but return only `{"status":"READY"}`. Retain detailed worker identity/readiness information behind the authenticated `/heartbeat` transport.
-Reason: This preserves compatibility with simple health probes while applying least-privilege information exposure.
-Consequences: Consumers needing worker identity or detailed readiness must use the authenticated heartbeat contract.
-Affected Components: `worker/server.py`, `tests/test_pc_worker_health_security.py`, worker monitoring/integration consumers.
+Problem: The PC Worker's unauthenticated `GET /health` endpoint exposed detailed runtime metadata.
+Chosen Solution: Keep `/health` unauthenticated for simple liveness and return only `{"status":"READY"}`. Retain detailed readiness behind authenticated heartbeat transport.
+Reason: Least-privilege information exposure.
+Affected Components: worker health/heartbeat boundary.
 
 ## ADR-007 — Canonical application-facing market-data boundary
 Date: 2026-09-12
-Problem: Production Telegram callers were directly constructing/using `MarketDataEngine`, creating an application-level ownership leak even though the engine contains important provider routing, data-quality, and freshness gates.
-Chosen Solution: Use `services/market_data/service.py` (`MarketDataService`) as the canonical application-facing market-data facade and route production candle retrieval through it. Preserve `MarketDataEngine` as the quality/freshness execution layer and `ProviderManager` as the provider routing/fallback owner.
-Reason: Consolidates application ownership without bypassing safety-critical market-data validation or provider failover behavior.
-Consequences: Application callers should not directly retrieve candles from `MarketDataEngine`. Scanner may retain explicit `ProviderManager` selection only when necessary for provider-readiness semantics, injecting it into the engine used by the service.
-Affected Components: `services/market_data/service.py`, `services/telegram/handlers/signal.py`, `services/telegram/tracker.py`, `services/telegram/scanner.py`, `services/telegram/handlers/callbacks.py`, market-data architecture documentation.
+Problem: Production Telegram callers directly constructed/used MarketDataEngine.
+Chosen Solution: Use `services/market_data/service.py` (`MarketDataService`) as the canonical application-facing facade while preserving MarketDataEngine quality/freshness gates and ProviderManager routing/fallback.
+Reason: Consolidates ownership without bypassing safety-critical validation.
+Affected Components: market-data service and production callers.
 
 ## ADR-008 — Application-scoped market-data service lifetime
 Date: 2026-09-13
-Problem: `MarketDataService()` created a new `MarketDataEngine` and `ProviderManager` for each Telegram signal, coach, and tracking refresh call. `ProviderManager` intentionally owns provider instance caching and failure cooldown state, so per-call construction discarded those reliability controls between requests.
-Chosen Solution: Create one `MarketDataService` when the Telegram application is composed and store it in `Application.bot_data`. Handlers and tracking jobs retrieve that application-scoped instance. Keep scanner-specific `ProviderManager` construction scan-scoped because scanner readiness explicitly selects currently configured providers.
-Reason: Preserves provider instance reuse and cooldown state across independent application requests while keeping lifecycle ownership explicit at the Telegram composition root and avoiding a process-global singleton.
-Consequences: Telegram handlers must obtain market data through the configured application-scoped service. Code paths that intentionally require custom provider selection may continue to construct an explicit `ProviderManager` and inject it into a dedicated `MarketDataService`.
-Affected Components: `services/market_data/service.py`, `services/telegram/client.py`, `services/telegram/handlers/signal.py`, `services/telegram/handlers/callbacks.py`, `services/telegram/tracker.py`, `services/telegram/tracker_job.py`, `tests/test_market_data_service.py`.
+Problem: Per-request MarketDataService construction discarded ProviderManager provider reuse and cooldown state.
+Chosen Solution: Create one MarketDataService at Telegram application composition and retain scanner-specific provider selection only where readiness semantics require it.
+Reason: Preserves lifecycle-owned provider state without a process-global singleton.
+Affected Components: market-data service and Telegram/scanner paths.
 
+## ADR-009 — Multi-Asset risk metadata must not inherit Forex defaults
+Date: 2026-09-14
+Problem: The repository explicitly supports Forex, Crypto, Stocks, Indices, and Commodities, but risk paths could force non-Forex symbols through Forex-only parsing and a Forex contract-size default.
+Chosen Solution: Centralize symbol normalization/classification and derive quote currency and default contract size from asset metadata. Forex remains `100000`; the current spot-like non-Forex universe defaults to `1.0` unless an explicit override is supplied.
+Reason: Prevents materially incorrect sizing and avoids rejecting supported non-Forex instruments.
+Consequences: Provider/broker-specific contract specifications remain explicit overrides rather than being guessed globally.
+Affected Components: `config/symbols.py`, `analysis/currency.py`, `analysis/risk_engine.py`, `analysis/position_sizing.py`, MarketAwareAnalysisEngine.
+
+## ADR-010 — Explicit stablecoin currency boundary
+Date: 2026-09-14
+Problem: CurrencyConversion explicitly supported USDT/USDC while some downstream sizing/settings boundaries accepted only three-letter currencies.
+Chosen Solution: Treat USDT and USDC as explicit supported stablecoin currencies across Settings, RiskEngine, PositionSizing, and CurrencyConversion, with unsupported four-letter currencies still rejected.
+Reason: Keeps BTCUSDT/other supported crypto flows internally consistent without broadening the currency universe speculatively.
+Affected Components: settings, currency conversion, risk, position sizing.
+
+## ADR-011 — Provider reconfiguration is replacement, not merge
+Date: 2026-09-14
+Problem: `ProviderManager.set_providers()` could leave removed injected instances and stale lifecycle state reachable after reconfiguration.
+Chosen Solution: Reconfiguration replaces the injected registry and prunes removed provider instances/cooldowns while preserving active factory cache state.
+Reason: A removed provider must not be silently resurrected by name after configuration/readiness refresh.
+Affected Components: `data/provider_manager.py`, provider lifecycle tests.
+
+## ADR-012 — Configured risk policy is the ceiling for dynamic sizing
+Date: 2026-09-14
+Problem: Dynamic risk selection could choose up to `2.0%` without respecting a more restrictive configured `risk_percent`, allowing a production risk budget to be silently exceeded.
+Chosen Solution: Treat configured `risk_percent` as an account-level ceiling for dynamic candidates. Dynamic logic may reduce risk but never silently exceed policy; explicit per-call overrides remain separately validated and authoritative.
+Reason: Risk policy must be enforceable at the production boundary, not merely advisory to a heuristic.
+Affected Components: `analysis/risk_engine.py`, risk sizing regression tests.
 
 ## TASK-061 — Analysis Score Contract Boundary
 The analysis layer's directional component scores are signed (`-100..100`), while DecisionEngine consumes a normalized `0..100` representation centered on neutral `50`. ConfidenceEngine must normalize directional analysis components at its input boundary using the same mapping. `volatility_score` is explicitly excluded because it is a non-directional ratio.
+
+## Current Decision Guardrails
+- Do not reintroduce Forex-only assumptions into a multi-asset repository.
+- Do not invent contract size, conversion rates, session rules, or quantity precision where repository evidence does not establish them.
+- Missing or unsupported conversion data must fail closed.
+- Configured account risk is a hard ceiling for dynamic risk selection.
+- Provider lifecycle state must reflect only the active provider configuration.
+- Exact-head GitHub Actions evidence is required before marking implementation checkpoints VERIFIED.
