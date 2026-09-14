@@ -1,3 +1,7 @@
+import math
+
+import pytest
+
 from config.settings import Settings
 
 
@@ -90,3 +94,37 @@ def test_pc_worker_heartbeat_max_age_must_be_positive(monkeypatch):
         assert "PC_WORKER_HEARTBEAT_MAX_AGE" in str(exc)
     else:
         raise AssertionError("Expected non-positive heartbeat max age to be rejected")
+
+
+def test_account_balance_is_loaded_and_positive(monkeypatch):
+    monkeypatch.setenv("ACCOUNT_BALANCE", "25000")
+
+    settings = Settings.load()
+
+    assert settings.account_balance == 25000.0
+
+    monkeypatch.setenv("ACCOUNT_BALANCE", "0")
+    with pytest.raises(ValueError, match="ACCOUNT_BALANCE"):
+        Settings.load()
+
+
+def test_settings_reject_non_finite_risk_and_balance(monkeypatch):
+    monkeypatch.setenv("ACCOUNT_BALANCE", "nan")
+    with pytest.raises(ValueError, match="ACCOUNT_BALANCE"):
+        Settings.load()
+
+    monkeypatch.setenv("ACCOUNT_BALANCE", "1000")
+    monkeypatch.setenv("RISK_PER_TRADE", str(math.nan))
+    with pytest.raises(ValueError, match="RISK_PER_TRADE"):
+        Settings.load()
+
+    monkeypatch.setenv("RISK_PER_TRADE", str(math.inf))
+    with pytest.raises(ValueError, match="RISK_PER_TRADE"):
+        Settings.load()
+
+
+def test_settings_reject_invalid_account_currency(monkeypatch):
+    monkeypatch.setenv("ACCOUNT_CURRENCY", "12$")
+
+    with pytest.raises(ValueError, match="ACCOUNT_CURRENCY"):
+        Settings.load()
