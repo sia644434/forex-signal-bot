@@ -110,6 +110,31 @@ def test_market_aware_engine_uses_configured_risk_policy_for_jpy_quotes(
     assert f"via {conversion_symbol}" in report.reasons[-1]
 
 
+def test_market_aware_engine_uses_configured_account_balance(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    market_data = FakeMarketDataService("USDJPY", 150.0)
+    settings = Settings(account_currency="USD", account_balance=25000.0, risk_per_trade=0.02)
+    engine = MarketAwareAnalysisEngine(market_data=market_data, settings=settings)
+    monkeypatch.setattr(
+        engine.analysis_engine,
+        "analyze",
+        lambda candles: AnalysisReport(score=100.0, signal="BUY", confidence=0.90),
+    )
+    monkeypatch.setattr(
+        "analysis.market_aware_engine.ATREngine.calculate",
+        lambda self, candles: type("ATRResult", (), {"atr": 1.0})(),
+    )
+
+    report = __import__("asyncio").run(
+        engine.analyze(_price_candles("USDJPY"), symbol="USDJPY", timeframe="1h")
+    )
+
+    assert report.risk_percent == pytest.approx(2.0)
+    assert report.risk_amount == pytest.approx(500.0)
+    assert report.position_size == pytest.approx(45000.0)
+
+
 def test_market_aware_engine_honors_non_default_risk_per_trade(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
