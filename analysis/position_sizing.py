@@ -8,7 +8,7 @@ quote currency and account currency differ.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_FLOOR
+from decimal import Decimal, DecimalException, ROUND_FLOOR
 import math
 
 
@@ -39,10 +39,7 @@ def calculate_position_size(
     account_currency = account_currency.strip().upper()
     quote_currency = quote_currency.strip().upper()
 
-    for name, currency in (
-        ("account_currency", account_currency),
-        ("quote_currency", quote_currency),
-    ):
+    for name, currency in (("account_currency", account_currency), ("quote_currency", quote_currency)):
         if len(currency) != 3 or not currency.isalpha():
             raise ValueError(f"{name} must be a 3-letter currency code.")
 
@@ -79,10 +76,7 @@ def calculate_position_size(
         conversion_rate = 1.0
     else:
         if quote_to_account_rate is None:
-            raise ValueError(
-                "quote_to_account_rate is required when quote_currency "
-                "differs from account_currency."
-            )
+            raise ValueError("quote_to_account_rate is required when quote_currency differs from account_currency.")
         try:
             conversion_rate = float(quote_to_account_rate)
         except (TypeError, ValueError) as error:
@@ -105,10 +99,17 @@ def calculate_position_size(
     if not math.isfinite(raw_position_size) or not math.isfinite(raw_lot_size):
         raise ValueError("calculated position size must be finite.")
 
-    decimal_risk_amount = Decimal(str(account_balance)) * Decimal(str(risk_percent)) / Decimal("100")
-    decimal_risk_per_unit = Decimal(str(risk_distance_quote)) * Decimal(str(conversion_rate))
-    decimal_raw_lot = decimal_risk_amount / decimal_risk_per_unit / Decimal(str(contract_size))
-    lot_size_decimal = decimal_raw_lot.quantize(Decimal("0.001"), rounding=ROUND_FLOOR)
+    try:
+        decimal_risk_amount = Decimal(str(account_balance)) * Decimal(str(risk_percent)) / Decimal("100")
+        decimal_risk_per_unit = Decimal(str(risk_distance_quote)) * Decimal(str(conversion_rate))
+        decimal_raw_lot = decimal_risk_amount / decimal_risk_per_unit / Decimal(str(contract_size))
+        lot_size_decimal = decimal_raw_lot.quantize(Decimal("0.001"), rounding=ROUND_FLOOR)
+    except DecimalException as error:
+        # A finite float can still exceed Decimal's active precision during
+        # quantization. Normalize that numeric-range failure to the public
+        # fail-closed ValueError contract instead of leaking Decimal internals.
+        raise ValueError("calculated lot size exceeds the supported numeric range.") from error
+
     lot_size = float(lot_size_decimal)
     if lot_size <= 0:
         raise ValueError("calculated lot size is below the supported precision.")
