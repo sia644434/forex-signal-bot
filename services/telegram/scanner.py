@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, replace
+from datetime import datetime
 import logging
 from typing import Any
 
 from analysis.full_engine import FullAnalysisEngine
+from config.symbols import get_market_type
 from core.errors import ApplicationError
 from data.factory import ProviderFactory
 from data.provider_manager import ProviderManager
@@ -33,7 +35,7 @@ class ScanResult:
     risk_reward: float | None
     error: str | None = None
     market_status: str = "OPEN"
-    last_candle_time: str | None = None
+    last_candle_time: datetime | str | None = None
 
 
 @dataclass(frozen=True)
@@ -106,7 +108,11 @@ async def scan_market(
             if not candles:
                 raise RuntimeError("empty market data")
 
-            status = evaluate_market_status(candles, timeframe)
+            status = evaluate_market_status(
+                candles,
+                timeframe,
+                symbol=symbol,
+            )
             if status.status != "OPEN":
                 return ScanResult(
                     symbol, "NO_TRADE", 0.0, 0.0, None, "UNKNOWN", "unknown", None,
@@ -138,7 +144,7 @@ async def scan_market(
 def _status_text(status: str, language: str = "fa") -> str:
     key = {
         "CLOSED": "scan_status_closed",
-        "STALE_DATA": "scan_status_stale",
+        "STALE": "scan_status_stale",
         "NO_DATA": "scan_status_no_data",
         "HOLIDAY": "scan_status_holiday",
         "UNKNOWN": "scan_status_unknown",
