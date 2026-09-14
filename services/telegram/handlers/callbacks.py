@@ -1,4 +1,5 @@
 from dataclasses import replace
+from html import escape
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from ..state import update_menu, get_user_state
@@ -151,7 +152,7 @@ async def menu_callback_handler(update: Update, context: ContextTypes.DEFAULT_TY
         else:
             lines = ["📈 <b>Tracked Signals</b>", ""]
             for item in active:
-                lines.append(f"• {item.symbol}/{item.timeframe} → <b>{item.last_signal}</b> | {item.status} | {item.last_price or '—'}")
+                lines.append(f"• {escape(str(item.symbol), quote=False)}/{escape(str(item.timeframe), quote=False)} → <b>{escape(str(item.last_signal), quote=False)}</b> | {escape(str(item.status), quote=False)} | {escape(str(item.last_price) if item.last_price is not None else '—', quote=False)}")
             text = "\n".join(lines); buttons = [[InlineKeyboardButton("⛔ Stop tracking" if language == "en" else "⛔ توقف پیگیری", callback_data="signal_untrack")], [InlineKeyboardButton("🔄 Refresh" if language == "en" else "🔄 بروزرسانی", callback_data="signal_track")], [InlineKeyboardButton(t(language, "back"), callback_data="signals")]]
         await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(buttons)); return
     if data == "signal_untrack":
