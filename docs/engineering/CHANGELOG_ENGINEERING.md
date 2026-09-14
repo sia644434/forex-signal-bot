@@ -1,5 +1,12 @@
 # Engineering Changelog
 
+## 2026-09-14 — Phase 2 closure verification
+- TASK-084 through TASK-089 are now marked VERIFIED after exact-head CI verification.
+- Code closure HEAD: `654944e059a3438e31e90aa7f4dc90b04b95110f`.
+- On that exact code HEAD, all seven required workflows/checks succeeded: Test, Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate.
+- Phase 2 Core Architecture is formally COMPLETE; no additional repository-backed Phase-2 gap was identified during the closure audit.
+- Engineering state documents were synchronized in follow-up documentation commits.
+
 ## 2026-09-14 — Post-TASK-084 cross-layer reliability audit
 - TASK-085: ProviderManager no longer sorts/deduplicates provider candles before downstream quality validation. Provider candle sequences must now already be strictly chronological with unique timestamps; malformed ordering/duplicates fail and can trigger provider failover instead of being silently repaired.
 - TASK-085: added regression coverage for non-chronological and duplicate provider responses while preserving tuple compatibility and limit behavior.
@@ -15,10 +22,10 @@
 - TASK-089: centralized Telegram access control was added. `TELEGRAM_ALLOWED_USER_IDS` is an explicit allowlist; production with a missing/invalid allowlist fails closed, while development/testing preserve the prior open behavior. All command and callback routes pass through the same authorization boundary.
 - TASK-089: added regression coverage for allowlisted users, unauthorized users, invalid configuration, production fail-closed behavior, and development compatibility.
 - TASK-089 commits: access boundary `925ba7f48a16cad20c61941d51c891d1a4f5bf8c`, route enforcement `ec6c29e531961c2e57e466be46a31474ec99e7a6`, regression coverage `55284ac27fd54de248941c1f2bf132c00e317655`.
-- Current exact `main` HEAD is `55284ac27fd54de248941c1f2bf132c00e317655`. Its seven required workflows were triggered; at the latest inspection they were still queued/in progress, so TASK-084 through TASK-089 are not yet marked VERIFIED.
+- The subsequent regression-only commit `654944e059a3438e31e90aa7f4dc90b04b95110f` preserved the tracker target contract under fresh analysis and was fully verified by the required checks.
 
 ## 2026-09-14 — TASK-084 Market Status Contract Hardening
-- Exact `main` HEAD `48b015525daf99b60294c8591cb8ed1c0fee2c35` was verified before starting the next audit step: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate all succeeded; combined status is successful.
+- Exact code HEAD `48b015525daf99b60294c8591cb8ed1c0fee2c35` was verified before starting the next audit step: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate all succeeded; combined status is successful.
 - TASK-084 identified a concrete Telegram market-status contract gap: the helper emitted `STALE_DATA` rather than canonical `STALE`, ignored its timeframe argument for a fixed 180-minute threshold, treated naive timestamps as UTC, and applied weekend closure globally.
 - TASK-084 changed market status to canonical `OPEN/CLOSED/STALE/NO_DATA`, scales stale detection to six timeframe intervals, rejects invalid/naive/future timestamps, and applies weekend closure only to non-crypto markets.
 - Scanner now passes symbol context into market-status evaluation and consumes the canonical `STALE` state.
@@ -33,7 +40,7 @@
 - TASK-083: added focused regression coverage for restrictive/non-restrictive ceilings and symmetric directional scoring.
 - TASK-083: implementation commit `d9c427b7f44a56db2c4f6c98b37e249a6df8af82`.
 - TASK-083: regression commit `cbc09a3fefa6b5d97d77119cb8196f1d21da7604`.
-- TASK-065 through TASK-083 were subsequently verified together on exact `main` HEAD `48b015525daf99b60294c8591cb8ed1c0fee2c35`; all seven required workflows succeeded and combined status is successful.
+- TASK-065 through TASK-083 were subsequently verified together on exact code HEAD `48b015525daf99b60294c8591cb8ed1c0fee2c35`; all seven required workflows succeeded and combined status is successful.
 
 ## 2026-09-14 — TASK-079 through TASK-082
 - TASK-082: ProviderManager reconfiguration now replaces the injected provider registry and prunes inactive instances/cooldowns while preserving active factory cache state.
