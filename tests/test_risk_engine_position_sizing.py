@@ -20,6 +20,43 @@ def test_risk_engine_uses_explicit_currency_context_for_eurusd() -> None:
     assert "Position sizing unavailable" not in result.reason
 
 
+def test_risk_engine_uses_asset_metadata_for_crypto_when_contract_size_is_omitted() -> None:
+    engine = RiskEngine(account_balance=1000, account_currency="USDT")
+
+    result = engine.calculate(
+        signal="BUY",
+        current_price=100000.0,
+        atr=1000.0,
+        confidence=0.90,
+        score=90,
+        symbol="BTCUSDT",
+    )
+
+    assert result.position_size == 0.013
+    assert result.lot_size == 0.013
+    assert result.position_size == result.lot_size
+    assert result.risk_amount == 20.0
+    assert "Position sizing unavailable" not in result.reason
+
+
+def test_risk_engine_supports_crypto_quote_to_usd_account_conversion() -> None:
+    engine = RiskEngine(account_balance=1000, account_currency="USD")
+
+    result = engine.calculate(
+        signal="BUY",
+        current_price=100000.0,
+        atr=1000.0,
+        confidence=0.90,
+        score=90,
+        symbol="BTCUSDT",
+        quote_to_account_rate=1.0,
+    )
+
+    assert result.position_size == 0.013
+    assert result.risk_amount == 20.0
+    assert "Position sizing unavailable" not in result.reason
+
+
 def test_risk_engine_never_falls_back_to_unitless_sizing() -> None:
     engine = RiskEngine(account_balance=1000, account_currency=None)
 
