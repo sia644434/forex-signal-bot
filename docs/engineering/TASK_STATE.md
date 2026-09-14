@@ -54,8 +54,23 @@ Evidence:
 - A first GitHub Test run exposed an incorrect expected position-size fixture; the implementation was correct and the fixture was corrected in `2a6fd7f3e874d0cda92b16b7eec04661e931d43c`.
 - Verification for the corrected head is currently in progress; no green claim is made until the required gates finish.
 
+## TASK-070
+Phase: Phase 2 — Core Architecture / Analysis/Risk Reliability
+Title: Risk-Policy Upper-Bound and Currency-Context Hardening
+Implementation Status: IMPLEMENTED — VERIFICATION PENDING
+Evidence:
+- Deeper inspection of the completed account-balance/risk-sizing path found that standalone `PositionSizing` accepted a risk percentage greater than 100%, which could request a risk budget larger than the entire account balance.
+- `RiskEngine` also accepted constructor and per-call risk policies above 100%, even though production `Settings` already caps the configured fraction at 1.0.
+- `PositionSizing` now enforces `0 < risk_percent <= 100`.
+- `RiskEngine` now enforces the same upper bound for its constructor policy and explicit per-call override.
+- `RiskEngine.account_currency` now fails closed on malformed non-empty currency contexts instead of deferring the invalid value into a later sizing failure.
+- Regression coverage verifies rejection above 100%, acceptance at exactly 100%, malformed account-currency rejection, and override-bound enforcement.
+- Implementation commits: `39464db41d3b3478ec79322e455bf188607f7743` and `6d3eb873f6beb664ffe135002a9fba7a91f976a3`.
+- Regression commits: `917c8690331083a2cebc8d806b9c3849ec431322` and `24350c2eaf3de319d55a1dfd440e5daa3a16b901`.
+- Verification is pending on the resulting head; no green claim is made until the required gates finish.
+
 ## Current Phase 2 Audit Frontier
-After TASK-065 through TASK-069 verification, continue the evidence-backed audit of:
+After TASK-065 through TASK-070 verification, continue the evidence-backed audit of:
 `RiskEngine → PositionSizing → CurrencyConversion → MarketAwareAnalysisEngine`
 then proceed outward into the Telegram/Scanner/Tracker/Callbacks and Worker/Queue/Persistence paths.
 
@@ -87,7 +102,7 @@ Then:
 1. Determine the exact current `main` HEAD.
 2. Inspect GitHub Actions for that exact HEAD.
 3. Resolve every pending or failed verification before moving deeper.
-4. Do not repeat TASK-058 through TASK-069 unless their verification evidence is missing or contradicted.
+4. Do not repeat TASK-058 through TASK-070 unless their verification evidence is missing or contradicted.
 5. Continue from the first unresolved audit frontier recorded above.
 6. Inspect more architecture than the previous step and only implement concrete repository-backed gaps.
 7. Add focused regression coverage for every confirmed defect.
