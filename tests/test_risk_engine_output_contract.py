@@ -20,7 +20,37 @@ def test_setup_rejects_arithmetic_overflow_before_emitting_non_finite_levels(sig
         )
 
 
-def test_normal_risk_plan_output_remains_finite() -> None:
+@pytest.mark.parametrize("signal", ["BUY", "SELL"])
+def test_setup_rejects_risk_distance_that_crosses_zero(signal: str) -> None:
+    engine = RiskEngine(account_balance=1000, account_currency="USD")
+
+    with pytest.raises(ValueError, match="risk plan levels must be greater than zero"):
+        engine.calculate(
+            signal=signal,
+            current_price=1.0,
+            risk_distance=1.01,
+            confidence=0.90,
+            score=100.0 if signal == "BUY" else 0.0,
+            symbol="EURUSD",
+        )
+
+
+@pytest.mark.parametrize("signal", ["BUY", "SELL"])
+def test_setup_rejects_non_positive_generated_take_profit_levels(signal: str) -> None:
+    engine = RiskEngine(account_balance=1000, account_currency="USD")
+
+    with pytest.raises(ValueError, match="risk plan levels must be greater than zero"):
+        engine.calculate(
+            signal=signal,
+            current_price=1.0,
+            risk_distance=0.34,
+            confidence=0.90,
+            score=100.0 if signal == "BUY" else 0.0,
+            symbol="EURUSD",
+        )
+
+
+def test_normal_risk_plan_output_remains_finite_and_directional() -> None:
     engine = RiskEngine(account_balance=1000, account_currency="USD")
     result = engine.calculate(
         signal="BUY",
@@ -48,3 +78,6 @@ def test_normal_risk_plan_output_remains_finite() -> None:
     ):
         if value is not None:
             assert math.isfinite(value)
+
+    assert result.stop_loss < result.entry_price
+    assert result.entry_price < result.take_profit_1 < result.take_profit_2 < result.take_profit_3
