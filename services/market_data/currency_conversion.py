@@ -39,13 +39,15 @@ class CurrencyConversionService:
             raise TypeError("market_data_service must be a MarketDataService.")
         self.market_data_service = market_data_service
 
-    @staticmethod
-    def _normalize_currency(currency: str, name: str) -> str:
+    @classmethod
+    def _normalize_currency(cls, currency: str, name: str) -> str:
         if not isinstance(currency, str):
             raise TypeError(f"{name} must be a string.")
         normalized = currency.strip().upper()
-        if len(normalized) != 3 or not normalized.isalpha():
-            raise ValueError(f"{name} must be a 3-letter currency code.")
+        if not normalized.isalpha() or (
+            len(normalized) != 3 and normalized not in cls._USD_EQUIVALENT_CURRENCIES
+        ):
+            raise ValueError(f"{name} must be a supported currency code.")
         return normalized
 
     @staticmethod
@@ -101,16 +103,11 @@ class CurrencyConversionService:
         if source == target:
             return CurrencyConversion(source, target, 1.0, "", False, datetime.now().astimezone())
 
-        # The current crypto universe quotes in USDT. Keep this assumption
-        # explicit and isolated so it can later be replaced by a live stablecoin
-        # market when provider support is available.
         if source in self._USD_EQUIVALENT_CURRENCIES and target == "USD":
             return CurrencyConversion(source, target, 1.0, f"{source}USD", False, datetime.now().astimezone())
         if source == "USD" and target in self._USD_EQUIVALENT_CURRENCIES:
             return CurrencyConversion(source, target, 1.0, f"USD{target}", False, datetime.now().astimezone())
 
-        # Bridge stablecoin-quoted instruments through USD when the account is
-        # another supported currency. The FX leg remains market-backed.
         if source in self._USD_EQUIVALENT_CURRENCIES:
             usd_leg = await self.get_conversion(source_currency="USD", target_currency=target)
             return CurrencyConversion(source, target, usd_leg.rate, usd_leg.pair_symbol, usd_leg.inverted, usd_leg.as_of)
