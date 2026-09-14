@@ -6,6 +6,13 @@ from dataclasses import dataclass
 from typing import Optional
 
 
+_SUPPORTED_STABLECOINS = frozenset({"USDT", "USDC"})
+
+
+def _is_supported_currency_code(currency: str) -> bool:
+    return (len(currency) == 3 and currency.isalpha()) or currency in _SUPPORTED_STABLECOINS
+
+
 def _get_env(name: str, default: Optional[str] = None) -> Optional[str]:
     value = os.getenv(name)
     if value is None:
@@ -129,8 +136,8 @@ class Settings:
             currency = self.account_currency.strip().upper()
             if not currency:
                 raise ValueError("ACCOUNT_CURRENCY cannot be empty when configured.")
-            if len(currency) != 3 or not currency.isalpha():
-                raise ValueError("ACCOUNT_CURRENCY must be a 3-letter ISO currency code.")
+            if not _is_supported_currency_code(currency):
+                raise ValueError("ACCOUNT_CURRENCY must be a 3-letter ISO currency code or USDT/USDC.")
             object.__setattr__(self, "account_currency", currency)
         if not math.isfinite(self.account_balance) or self.account_balance <= 0:
             raise ValueError("ACCOUNT_BALANCE must be finite and greater than 0.")
