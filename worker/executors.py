@@ -19,7 +19,15 @@ def _frame(payload: dict[str, Any]) -> pd.DataFrame:
     frame = pd.DataFrame(data)
     if "close" not in frame.columns:
         raise ValueError("close column is required")
-    return frame.copy()
+    try:
+        close = pd.to_numeric(frame["close"], errors="raise").astype(float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("close values must be numeric") from exc
+    if len(close) < 2 or not np.isfinite(close.to_numpy()).all() or (close <= 0).any():
+        raise ValueError("close values must be finite and greater than zero")
+    frame = frame.copy()
+    frame["close"] = close
+    return frame
 
 
 def _xy(payload: dict[str, Any]) -> tuple[np.ndarray, np.ndarray, int]:
@@ -28,6 +36,8 @@ def _xy(payload: dict[str, Any]) -> tuple[np.ndarray, np.ndarray, int]:
     test = int(payload.get("test_size", max(1, len(x) // 5)))
     if x.ndim != 2 or len(x) <= test + 1 or len(y) != len(x):
         raise ValueError("X/y dimensions or sample count are invalid")
+    if not np.isfinite(x).all() or not np.isfinite(y).all():
+        raise ValueError("X/y values must be finite")
     return x, y, test
 
 
@@ -35,44 +45,85 @@ def _metrics(y: np.ndarray, pred: np.ndarray) -> dict[str, float]:
     return {"mae": float(mean_absolute_error(y, pred)), "rmse": float(mean_squared_error(y, pred) ** 0.5)}
 
 
+def _backtest_slice(
+    df: pd.DataFrame,
+    start: int = 0,
+    threshold: float = 0.0,
+    fee: float = 0.0,
+) -> dict[str, Any]:
+    if start < 0 or start >= len(df):
+        raise ValueError("backtest start is outside the dataset")
+    returns = df["close"].pct_change().fillna(0.0)
+    previous_returns = returns.shift(1).fillna(0.0)
+    signal = np.sign(previous_returns)
+    if threshold:
+        signal = signal.where(previous_returns.abs() >= threshold, 0.0)
+    strategy = signal * returns - fee * signal.abs()
+    test_strategy = strategy.iloc[start:]
+    equity = (1.0 + test_strategy).cumprod()
+    if equity.empty or not np.isfinite(equity.to_numpy()).all() or (equity <= 0).any():
+        raise ValueError("backtest produced a non-finite or non-positive equity path")
+    return {
+        "trades": int((signal.iloc[start:] != 0).sum()),
+        "return": float(equity.iloc[-1] - 1),
+        "max_drawdown": float((equity / equity.cummax() - 1).min()),
+        "final_equity": float(equity.iloc[-1]),
+    }
+
+
 def backtest(payload: dict[str, Any]) -> dict[str, Any]:
     df = _frame(payload)
     threshold = float(payload.get("signal_threshold", 0.0))
     fee = float(payload.get("fee", 0.0))
-    returns = df["close"].pct_change().fillna(0.0)
-    signal = np.sign(returns.shift(1).fillna(0.0))
-    if threshold:
-        signal = signal.where(returns.shift(1).abs() >= threshold, 0.0)
-    strategy = signal * returns - fee * signal.abs()
-    equity = (1.0 + strategy).cumprod()
-    return {"trades": int((signal != 0).sum()), "return": float(equity.iloc[-1] - 1), "max_drawdown": float((equity / equity.cummax() - 1).min()), "final_equity": float(equity.iloc[-1])}
+    if not np.isfinite(threshold) or threshold < 0:
+        raise ValueError("signal_threshold must be finite and non-negative")
+    if not np.isfinite(fee) or fee < 0 or fee >= 1:
+        raise ValueError("fee must be finite and in the range [0, 1)")
+    return _backtest_slice(df, threshold=threshold, fee=fee)
 
 
 def walk_forward(payload: dict[str, Any]) -> dict[str, Any]:
     df = _frame(payload)
     train = int(payload.get("train_size", max(20, len(df) // 2)))
     test = int(payload.get("test_size", max(5, len(df) // 10)))
-    if train < 2 or test < 1:
-        raise ValueError("train_size/test_size are invalid")
+    if train < 2 or test < 1 or train + test > len(df):
+        raise ValueError("train_size/test_size are invalid for the supplied dataset")
+    threshold = float(payload.get("signal_threshold", 0.0))
+    fee = float(payload.get("fee", 0.0))
+    if not np.isfinite(threshold) or threshold < 0:
+        raise ValueError("signal_threshold must be finite and non-negative")
+    if not np.isfinite(fee) or fee < 0 or fee >= 1:
+        raise ValueError("fee must be finite and in the range [0, 1)")
     windows, start = [], 0
     while start + train + test <= len(df):
-        windows.append(backtest({"data": df.iloc[start + train:start + train + test].to_dict("records")}))
+        window = df.iloc[start:start + train + test].reset_index(drop=True)
+        result = _backtest_slice(window, start=train, threshold=threshold, fee=fee)
+        result["train_size"] = train
+        result["test_size"] = test
+        windows.append(result)
         start += test
     return {"windows": len(windows), "results": windows}
 
 
 def monte_carlo(payload: dict[str, Any]) -> dict[str, Any]:
     df = _frame(payload)
-    n = min(int(payload.get("simulations", 1000)), int(payload.get("max_simulations", 10000)))
-    horizon = min(int(payload.get("horizon", 100)), int(payload.get("max_horizon", 5000)))
+    n = int(payload.get("simulations", 1000))
+    max_n = int(payload.get("max_simulations", 10000))
+    horizon = int(payload.get("horizon", 100))
+    max_horizon = int(payload.get("max_horizon", 5000))
+    if n < 1 or max_n < 1 or n > max_n:
+        raise ValueError("simulations must be between 1 and max_simulations")
+    if horizon < 1 or max_horizon < 1 or horizon > max_horizon:
+        raise ValueError("horizon must be between 1 and max_horizon")
     rng = np.random.default_rng(payload.get("seed"))
     returns = df["close"].pct_change().dropna().to_numpy()
-    if len(returns) < 2:
-        raise ValueError("at least two returns are required")
+    if len(returns) < 2 or not np.isfinite(returns).all():
+        raise ValueError("at least two finite returns are required")
     paths = rng.choice(returns, size=(n, horizon), replace=True)
     terminal = np.prod(1 + paths, axis=1)
+    if not np.isfinite(terminal).all() or (terminal <= 0).any():
+        raise ValueError("monte carlo produced an invalid terminal distribution")
     return {"simulations": n, "horizon": horizon, "p05": float(np.quantile(terminal, .05)), "median": float(np.median(terminal)), "p95": float(np.quantile(terminal, .95))}
-
 
 def feature_engineering(payload: dict[str, Any]) -> dict[str, Any]:
     df = _frame(payload)
