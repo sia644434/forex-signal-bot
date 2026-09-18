@@ -122,3 +122,23 @@ def test_settings_is_immutable() -> None:
 
     with pytest.raises((AttributeError, TypeError)):
         settings.environment = "production"  # type: ignore[misc]
+
+
+def test_production_rejects_debug_and_invalid_worker_urls() -> None:
+    with pytest.raises(ValueError, match="DEBUG"):
+        Settings(environment="production", debug=True)
+
+    invalid_urls = [
+        "ftp://worker.example",
+        "worker.example:8765",
+        "http://user:pass@worker.example",
+        "http://worker.example/#fragment",
+    ]
+    for url in invalid_urls:
+        with pytest.raises(ValueError):
+            Settings(pc_worker_url=url, pc_worker_token="secret")
+
+
+def test_worker_token_rejects_blank_value() -> None:
+    with pytest.raises(ValueError, match="PC_WORKER_TOKEN"):
+        Settings(pc_worker_token="   ")
