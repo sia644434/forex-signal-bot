@@ -91,3 +91,7 @@ Work phases sequentially. Phase 2 is closed. Phase 3 is the active audit frontie
 ## Phase 4 — Market/Data Layer
 Status: COMPLETE
 Evidence: The Phase-4 market/data audit was completed through TASK-109. Concrete gaps in the canonical symbol/timeframe boundary and direct OANDA provider boundary were corrected in TASK-107/108. The full audited surface had no further repository-backed correctness gap requiring code changes. Exact-head GitHub Actions verification on closure HEAD `944d7b3176d201e6cf29c921d2bd27886b86a81d` shows all seven required checks completed successfully.
+
+## Phase 5 — Analysis Engine
+Status: COMPLETE
+Evidence: Phase-5 cross-layer audit completed through TASK-114. Concrete gaps in indicator numeric handling, duplicate helper definitions, market-structure input validation, and indicator primitive validation were corrected. Final code HEAD `963abbaee6bfac940944fae3b92f28b5f02dd6b4` passed all seven required checks.

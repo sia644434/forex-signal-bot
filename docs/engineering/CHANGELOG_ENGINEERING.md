@@ -1,5 +1,17 @@
 # Engineering Changelog
 
+## 2026-09-18 — Phase 5 Analysis Engine closure
+- TASK-110 hardened the canonical indicator engine input boundary: invalid, non-finite, and non-positive closes now fail closed instead of being silently skipped.
+- TASK-110 also hardened indicator score normalization so invalid/non-finite scores are rejected rather than converted into neutral values.
+- TASK-111 hardened the canonical market-structure detector against invalid/non-finite/non-positive prices.
+- TASK-112 removed a duplicate helper implementation inside `analysis/indicator_engine.py`; the duplicate definitions could silently override the earlier implementation.
+- TASK-113 hardened the reusable indicator primitive validators for finite numeric inputs while preserving the established moving-average invalid-input error contract.
+- TASK-114 completed the Phase-5 cross-layer audit across the indicator, market-structure, momentum, price-action, supply/demand, pattern, ATR, decision, confidence, full-analysis, market-aware, report, and scoring layers.
+- Dormant AI/ML scaffolding was explicitly kept outside the active Phase-5 production analysis path; no model/agent/Ollama architecture was introduced or activated.
+- Final Phase-5 code HEAD: `963abbaee6bfac940944fae3b92f28b5f02dd6b4`; all seven required checks completed successfully.
+
+# Engineering Changelog
+
 ## 2026-09-18 — Phase 4 Market/Data Layer closure
 - TASK-107 closed a direct OANDA boundary inconsistency: `supports_symbol()` rejected unsupported symbols while direct `_normalize_symbol()` still accepted arbitrary six-letter alphabetic instruments. Direct OANDA requests now fail closed outside the explicit instrument map.
 - TASK-108 closed a canonical MarketDataEngine boundary gap: the engine now validates the centralized supported-symbol registry and explicitly maps internal timeframes to provider-facing identifiers. This also corrected the `15m -> 15M` provider-boundary normalization defect.

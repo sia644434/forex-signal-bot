@@ -124,3 +124,17 @@ Problem: The platform has a centralized multi-asset symbol/timeframe contract, b
 Chosen Solution: MarketDataEngine validates the centralized supported-symbol universe and translates canonical internal timeframes explicitly into provider-facing identifiers.
 Reason: Keeps application-facing market semantics independent from provider-specific naming and prevents malformed or unsupported market-data requests from reaching providers.
 Affected Components: `data/market_data.py`, `config/symbols.py`, provider contract tests.
+
+## ADR-016 — Analysis Numeric Boundaries Must Fail Closed
+Date: 2026-09-18
+Problem: The canonical indicator and market-structure layers could accept, skip, or neutralize invalid numeric inputs at lower-level boundaries even though the top-level analysis path validated its input.
+Chosen Solution: Validate finite numeric inputs at both the canonical orchestration boundary and reusable analysis primitive boundaries; invalid scores must not be converted into neutral defaults.
+Reason: Lower-level analysis APIs are independently callable and must not silently manufacture analytical state from invalid data.
+Affected Components: `analysis/indicator_engine.py`, `analysis/market_structure/detector.py`, `analysis/indicators/*`.
+
+## ADR-017 — One Effective Implementation per Analysis Helper Contract
+Date: 2026-09-18
+Problem: `analysis/indicator_engine.py` contained duplicate helper implementations in the same class, allowing later definitions to override earlier behavior without an explicit contract.
+Chosen Solution: Remove duplicate helper blocks and keep one effective implementation for each helper.
+Reason: Duplicate definitions create silent override risk and can invalidate earlier safety hardening.
+Affected Components: `analysis/indicator_engine.py`.

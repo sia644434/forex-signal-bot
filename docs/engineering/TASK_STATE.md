@@ -254,3 +254,54 @@ Scope audited:
 Result:
 - No additional repository-backed Phase-4 code gap was identified beyond TASK-107 and TASK-108.
 - No speculative provider expansion, caching layer, retry policy rewrite, or market-session model was introduced because repository evidence did not establish a correctness defect requiring it.
+
+## TASK-110
+Phase: Phase 5 — Analysis Engine
+Title: Indicator Engine Numeric Boundary Hardening
+Implementation Status: VERIFIED — final Phase-5 code HEAD `963abbaee6bfac940944fae3b92f28b5f02dd6b4` passed all seven required checks.
+Evidence:
+- `analysis/indicator_engine.py` previously skipped invalid input values and normalized invalid/non-finite scores into a neutral fallback.
+- The canonical indicator engine now rejects null/non-numeric/non-finite/non-positive close inputs and rejects non-finite indicator scores.
+- Regression coverage was added.
+
+## TASK-111
+Phase: Phase 5 — Analysis Engine
+Title: Market Structure Numeric Boundary Hardening
+Implementation Status: VERIFIED — final Phase-5 code HEAD `963abbaee6bfac940944fae3b92f28b5f02dd6b4` passed all seven required checks.
+Evidence:
+- Canonical `analysis.market_structure.detector.MarketStructureDetector` now validates every price as finite and greater than zero before swing detection.
+- Regression coverage verifies invalid price inputs fail closed.
+
+## TASK-112
+Phase: Phase 5 — Analysis Engine
+Title: Remove Duplicate Indicator Helper Implementation
+Implementation Status: VERIFIED — final Phase-5 code HEAD `963abbaee6bfac940944fae3b92f28b5f02dd6b4` passed all seven required checks.
+Evidence:
+- `analysis/indicator_engine.py` contained duplicate helper implementations inside the same class, causing later definitions to silently override earlier hardened behavior.
+- The duplicate helper block was removed so the validated implementation is the effective implementation.
+
+## TASK-113
+Phase: Phase 5 — Analysis Engine
+Title: Indicator Primitive Validation Hardening
+Implementation Status: VERIFIED — final Phase-5 code HEAD `963abbaee6bfac940944fae3b92f28b5f02dd6b4` passed all seven required checks.
+Evidence:
+- Indicator primitive validators did not consistently reject non-finite values.
+- Base series validation, moving-average validation, and momentum validation now reject non-finite values while preserving the established ValueError contract for invalid moving-average inputs.
+- Regression coverage verifies the boundary.
+
+## TASK-114
+Phase: Phase 5 — Full Analysis Engine Closure Audit
+Implementation Status: VERIFIED — exact-head CI green on `963abbaee6bfac940944fae3b92f28b5f02dd6b4`.
+Scope audited:
+- Canonical indicator engine and primitive indicators.
+- Market structure package and detector.
+- Momentum, price action, supply/demand, candlestick, Elliott, harmonic, Brooks, Wyckoff, and SMC engines.
+- ATR and volatility handling.
+- DecisionEngine normalization, thresholds, weighting, signal/bias/strength/confidence contracts.
+- ConfidenceEngine normalization, agreement/conflict, data-quality and uncertainty contracts.
+- FullAnalysisEngine orchestration, numeric boundaries, legacy price-list compatibility, risk handoff, and report construction.
+- MarketAwareAnalysisEngine integration with currency conversion and multi-asset risk context.
+- Analysis models/report/scoring compatibility and dormant AI separation.
+Result:
+- No additional repository-backed Phase-5 correctness gap requiring code changes was identified.
+- Dormant AI/ML scaffolding remains outside active Phase-5 production analysis and was not activated or introduced into the analysis flow.
