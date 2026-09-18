@@ -101,8 +101,8 @@ class WorkerProcessingService(BaseService):
     def start(self) -> None:
         return None
 
-    def stop(self) -> None:
-        self.dispatcher.close()
+    async def stop(self) -> None:
+        await self.dispatcher.close_async(10.0)
 
     def _heartbeat_readiness(self) -> str:
         if self._last_heartbeat is None:
