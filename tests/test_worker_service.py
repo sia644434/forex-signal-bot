@@ -252,7 +252,7 @@ def test_worker_service_health_marks_stale_ready_heartbeat(monkeypatch):
 
     asyncio.run(service.heartbeat())
 
-    assert service.health()["status"] == "ok"
+    assert service.health()["status"] == "degraded"
     assert service.health()["critical"] is False
     assert service.health()["configured"] is True
     assert service.health()["readiness"] == "STALE"
@@ -282,7 +282,7 @@ def test_worker_service_health_reflects_offline_heartbeat(monkeypatch):
     heartbeat = asyncio.run(service.heartbeat())
 
     assert heartbeat["status"] == "WORKER_OFFLINE"
-    assert service.health()["status"] == "ok"
+    assert service.health()["status"] == "degraded"
     assert service.health()["critical"] is False
     assert service.health()["configured"] is True
     assert service.health()["readiness"] == "WORKER_OFFLINE"
