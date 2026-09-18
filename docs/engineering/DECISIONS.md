@@ -160,3 +160,11 @@ Problem: The canonical MarketDataService path already enforced symbol and freshn
 Chosen Solution: At the MarketAwareAnalysisEngine boundary, validate Candle identity against the canonical requested symbol and apply the canonical six-candle freshness policy before analysis/risk evaluation. Preserve existing legacy candle-like compatibility when inputs do not expose market metadata.
 Reason: The decision/risk boundary must not trust caller-supplied market identity or stale market data merely because the upstream canonical service normally validates it.
 Affected Components: `analysis/market_aware_engine.py`, `tests/test_market_aware_engine.py`.
+
+
+## ADR-021 — CI Test Runtime Must Match Production Runtime
+Date: 2026-09-19
+Problem: Production Docker runs Python 3.12 while several CI verification workflows ran their test/verification steps on Python 3.11, leaving a runtime-version mismatch in the testing gate.
+Chosen Solution: Align all affected CI verification workflows to Python 3.12, matching the production Docker runtime and the existing Test/Production Readiness workflows.
+Reason: A production verification gate should exercise the same supported runtime version used by the production container unless a separate compatibility matrix is explicitly defined.
+Affected Components: .github/workflows/security-audit.yml, real-production-e2e.yml, production-live-smoke.yml, final-integration-gate.yml, production-activation-gate.yml, production-activation-validation.yml.
