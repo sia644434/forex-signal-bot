@@ -73,8 +73,8 @@ Status: COMPLETE
 Evidence: Phase-9 closure audit completed through TASK-125. Backtest, walk-forward, and Monte Carlo executors were hardened for deterministic inputs, finite/positive price boundaries, bounded simulation parameters, correct train/test separation, deterministic seeded simulation, finite result contracts, and fail-closed invalid inputs. Code closure HEAD `d616df74377af7de1aaf798c7b876fe8acecee60` passed all seven required GitHub Actions checks.
 
 ## Phase 10 — Security / Production Hardening
-Status: IN_PROGRESS
-Evidence: Phase-10 security hardening audit corrected concrete worker HTTP input-boundary issues, hardened the production container to run as a non-root user, and restricted production CI workflow permissions. Exact-head seven-check verification is complete on `b92aae52828e7737402da30ec5d513df4c8b0dad`. Broader security review remains open for the next concrete frontier.
+Status: COMPLETE
+Evidence: Phase-10 security / production-hardening closure audit completed through TASK-127. Concrete gaps in worker HTTP input validation, production configuration, Docker build context, container privilege, and CI workflow permissions were corrected and regression-covered. Exact-head seven-check verification is complete on the final synchronized documentation HEAD.
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
@@ -89,7 +89,7 @@ Status: NOT_STARTED
 Dependency: Starts only after the active worker, decision/risk, backtesting, security, testing, and deployment closure audits are verified.
 
 ## Roadmap Rule
-Work phases sequentially. Phases 1–9 are closed according to their recorded evidence. Phase 10 is the active audit frontier. Later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
+Work phases sequentially. Phases 1–10 are closed according to their recorded evidence. Phase 11 is the next audit frontier. Later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
 
 
 ## Phase 4 — Market/Data Layer
@@ -127,4 +127,12 @@ The active objective is to close the remaining concrete gaps across the current 
 - Production CI workflows now explicitly grant only `contents: read` where write access is not required.
 - Exact audit HEAD: `b92aae52828e7737402da30ec5d513df4c8b0dad`.
 - Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate all completed successfully on that exact HEAD.
-- Phase 10 remains IN_PROGRESS because the current batch is a security-hardening checkpoint, not a declaration that every future security surface has been exhausted.
+- Phase 10 is COMPLETE. The closure audit found no additional repository-backed security/production-hardening gap requiring code changes after TASK-127.
+
+
+## Phase 10 Closure Verification
+- TASK-126 hardened the WorkerHTTPServer and production container/CI boundaries.
+- TASK-127 completed the broader Phase-10 closure audit across runtime configuration, worker transport configuration, Docker context, health exposure, secrets handling, CI permissions, dependency audit, and error/logging boundaries.
+- Final synchronized documentation HEAD is the verification target; all seven required GitHub Actions checks completed successfully on that exact HEAD.
+- No live-production smoke verification is claimed from this audit.
+- Phase 11 — Testing — is the next audit frontier.
