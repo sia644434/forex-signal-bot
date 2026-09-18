@@ -19,7 +19,7 @@
 Before marking TASK-091 through TASK-100 VERIFIED, inspect the exact `main` HEAD and confirm the complete required workflow set succeeds: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate. Also inspect combined commit status. Do not claim Railway/live-smoke verification unless fresh evidence exists.
 
 ## Next Verification Frontier
-Verify the final synchronized engineering-document HEAD. If all seven checks succeed, Phase 4 is formally closed and the roadmap advances to Phase 5. Revisit Phase 3 only when concrete repository evidence identifies a new regression or gap.
+Phase 8 is formally closed on code closure HEAD `1edbf5126c86bcde45c32cf91e365d22e20e4037`. The next verification frontier is Phase 9 — Backtesting / Simulation. Revisit earlier phases only when concrete repository evidence identifies a new regression or gap.
 
 ## New-chat Rule
 A new conversation must read `PROJECT_STATE.md`, `PHASE_STATE.md`, `TASK_STATE.md`, `TEST_STATE.md`, `ARCHITECTURE_MAP.md`, `DECISIONS.md`, and `CHANGELOG_ENGINEERING.md`, then inspect the exact current `main` HEAD and Actions status before changing code. Continue from the first unresolved frontier; do not repeat completed tasks or invent speculative work. Repository inspection/modification must use GitHub Connector only.
@@ -57,3 +57,11 @@ The prior verified baseline and earlier task evidence remain preserved in reposi
 - TASK-122 completed the full Phase-7 cross-layer audit with no additional repository-backed correctness gap.
 - All seven required GitHub Actions workflows completed successfully on the exact HEAD.
 - No live-production smoke verification is claimed from this audit.
+
+
+## Phase 8 Verification Record — 2026-09-19
+- TASK-123 and TASK-124 are verified on exact code closure HEAD `1edbf5126c86bcde45c32cf91e365d22e20e4037`.
+- The final Test workflow completed successfully with the full repository suite passing after the compatibility correction.
+- Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate all completed successfully on the same exact code HEAD.
+- No live-production smoke verification is claimed from this audit.
+- Phase 9 — Backtesting / Simulation — is the next verification frontier.
