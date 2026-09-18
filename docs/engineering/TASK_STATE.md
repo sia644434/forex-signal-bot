@@ -66,32 +66,32 @@ Evidence: Exact-head verification on `45a4bd5bb892181cb6a30c75f8b0340ecccaacc7`;
 ## TASK-091
 Phase: Phase 3 — Telegram / User-State Reliability
 Title: Durable Telegram User State Across Restarts
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 
 ## TASK-092
 Phase: Phase 3 — Telegram / Tracker Reliability
 Title: Durable Active Tracker State Across Restarts
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 
 ## TASK-093
 Phase: Phase 3 — Telegram / Tracker Execution Reliability
 Title: Activate Tracker Refresh Loop and Honor Notification Preference
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 
 ## TASK-094
 Phase: Phase 3 — Telegram / Callback Reliability
 Title: Exact-Identity Untrack Callbacks
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 
 ## TASK-095
 Phase: Phase 3 — Telegram / Multi-Asset Scanner Reliability
 Title: Multi-Asset Scanner Universe
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 
 ## TASK-096
 Phase: Phase 3 — Worker / Queue / Recovery Reliability
 Title: Lease Fencing for Stale Worker Completions
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 Evidence:
 - Concrete recovery race: an expired `RUNNING` job could be recovered to `PENDING`, re-claimed, and then have its original stale worker overwrite the newer execution.
 - Queue claims now receive unique `claim_token` values; recovery clears the old token and terminal dispatcher transitions are fenced by the current token.
@@ -101,7 +101,7 @@ Evidence:
 ## TASK-097
 Phase: Phase 3 — Worker / Queue / Recovery Reliability
 Title: Renewable Worker Queue Leases
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 Evidence:
 - A legitimate long-running dispatcher claim could expire because `claimed_at` was never renewed while the worker was still executing.
 - `WorkerQueue.renew_lease()` now refreshes only the matching `job_id + claim_token` pair.
@@ -112,7 +112,7 @@ Evidence:
 ## TASK-098
 Phase: Phase 3 — Worker / Runtime Reliability
 Title: Synchronous Worker Timeout Fencing
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 Evidence:
 - `asyncio.wait_for(asyncio.to_thread(...))` cannot terminate the underlying OS thread. A timed-out synchronous handler could therefore continue after the runtime had forgotten it was active.
 - Timed-out synchronous jobs now keep their underlying thread task tracked until it actually finishes.
@@ -122,7 +122,7 @@ Evidence:
 ## TASK-099
 Phase: Phase 3 — Telegram / Startup Reliability
 Title: Preflight Background-Service Dependencies Before Runtime Start
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 Evidence:
 - Tracker scheduling and updater availability were previously validated after `Application.start()`, allowing partial startup on dependency failure.
 - Startup now validates the updater and schedules the durable tracker job before the runtime is marked started.
@@ -130,7 +130,7 @@ Evidence:
 ## TASK-100
 Phase: Phase 3 — Market Data / Provider Reliability
 Title: Explicit Provider Symbol Capability Boundaries
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 Evidence:
 - The multi-asset scanner includes Crypto, Stocks, Indices, and Commodities, while the currently registered Finnhub and Alpha Vantage implementations are explicitly Forex-only and OANDA has a narrower instrument map.
 - Before this change, ProviderManager attempted every configured provider for every symbol, turning known capability mismatches into generic provider failures and unnecessary retries/cooldowns.
@@ -142,7 +142,7 @@ Evidence:
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
 
 ## Current Audit Frontier
-Phase 3 remains active. TASK-090 is verified. TASK-091 through TASK-101 are implemented and pending exact-head CI verification. TASK-102 addresses the concrete worker HTTP/runtime-loop lifecycle gap. Remaining frontier after TASK-102 is queue/runtime shutdown and persistence recovery, production health, and final end-to-end lifecycle. Do not create a task merely to advance the roadmap; create the next task only after a concrete repository-backed gap is demonstrated.
+Phase 3 remains active. TASK-090 through TASK-103 are verified against exact green CI. TASK-104 addresses the concrete production health-server resource lifecycle gap. Remaining frontier is restart/recovery behavior, persistence recovery, and final end-to-end lifecycle. Do not create a task merely to advance the roadmap; create the next task only after a concrete repository-backed gap is demonstrated.
 
 ## New-chat Continuation Contract
 When a new chat starts work on this repository, first read:
@@ -158,7 +158,7 @@ When a new chat starts work on this repository, first read:
 ## TASK-101
 Phase: Phase 3 — Telegram / Multi-Asset Settings Reliability
 Title: Multi-Asset Telegram Settings Consistency
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 Evidence:
 - Concrete gap: the centralized symbol registry defined Forex, Crypto, Stocks, Indices, and Commodities, and the scanner had a multi-asset universe, but Telegram Settings exposed only four Forex symbols.
 - Settings now exposes market families and dynamically renders the canonical symbols from config/symbols.py.
@@ -169,8 +169,29 @@ Evidence:
 ## TASK-102
 Phase: Phase 3 — Worker / Runtime / HTTP Reliability
 Title: Persistent Worker Runtime Loop Across HTTP Requests
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
 Evidence:
 - Concrete gap: `WorkerHTTPServer` previously called `asyncio.run(runtime.execute(...))` for every HTTP request. WorkerRuntime timeout fencing depends on an underlying synchronous thread task remaining alive after timeout; closing the per-request event loop could therefore destroy the task lifecycle before its completion callback could finalize and cache the result.
 - The HTTP server now owns one persistent asyncio event loop in a dedicated runtime thread and dispatches every `WorkerRuntime.execute()` call onto that loop with `run_coroutine_threadsafe`.
 - Regression coverage verifies a timed-out synchronous job remains `RUNNING` for duplicate requests and later becomes `COMPLETED` after the underlying thread releases.
+
+
+## TASK-103
+Phase: Phase 3 — Worker / Shutdown Reliability
+Title: Graceful Worker Queue Drain During Shutdown
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
+Evidence:
+- Concrete gap: dispatcher shutdown could close the durable queue while an active submission was still executing.
+- Dispatcher shutdown now waits for active submissions with a bounded timeout, cancels remaining submissions after the timeout, and only then closes the queue.
+- WorkerProcessingService now awaits the dispatcher shutdown path.
+- Regression coverage verifies shutdown waits for an active submission before queue close.
+
+## TASK-104
+Phase: Phase 3 — Production Lifecycle Reliability
+Title: Health Server Resource Cleanup During Partial Startup
+Implementation Status: VERIFIED — exact-head CI green on `e2b01aefcc6c1e1719873842a17cf195040b1545`
+Evidence:
+- Concrete gap: HealthServer bound its listening socket during construction, while stop() before start() returned without closing the socket. If application startup failed before the health server started, the bound socket could remain allocated.
+- HealthServer.stop() now always closes the server socket and only performs shutdown/join when the serving thread exists.
+- Application startup rollback explicitly invokes health-server cleanup before rolling back services.
+- Regression coverage verifies pre-start socket release and startup-failure cleanup.
