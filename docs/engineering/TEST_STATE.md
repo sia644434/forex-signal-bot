@@ -4,7 +4,7 @@
 - The exact verification target is always the current `main` branch HEAD; no self-referential SHA is stored here.
 - Fresh exact-head CI verification has not completed for the latest audit commits. No seven-workflow green result is claimed for the current HEAD.
 - No local execution is claimed; repository verification is performed through GitHub Actions/connector evidence only.
-- TASK-091 through TASK-100 remain pending exact-head verification unless explicitly promoted by fresh evidence on the exact current HEAD.
+- TASK-091 through TASK-101 remain pending exact-head verification unless explicitly promoted by fresh evidence on the exact current HEAD.
 
 ## Latest Audit Regression Coverage
 - Telegram state persistence, tracker persistence, tracker refresh scheduling, exact-identity callbacks, and multi-asset scanner universe through TASK-095.
@@ -13,6 +13,7 @@
 - TASK-098: timed-out synchronous WorkerRuntime jobs remain fenced/in-flight until the underlying thread finishes, preventing duplicate same-job execution.
 - TASK-099: Telegram startup dependency preflight before `Application.start()`.
 - TASK-100: provider symbol capability skipping and explicit `UnsupportedSymbol` diagnostics.
+- TASK-101: Telegram multi-asset settings categories, canonical symbol rendering, and representative symbol-selection coverage.
 
 ## Verification Contract
 Before marking TASK-091 through TASK-100 VERIFIED, inspect the exact `main` HEAD and confirm the complete required workflow set succeeds: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate. Also inspect combined commit status. Do not claim Railway/live-smoke verification unless fresh evidence exists.
