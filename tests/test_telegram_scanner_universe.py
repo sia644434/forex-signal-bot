@@ -27,3 +27,10 @@ def test_scanner_universe_is_bounded(monkeypatch):
 
     with pytest.raises(ValueError, match="at most 20"):
         _configured_scan_symbols()
+
+def test_scanner_universe_rejects_unsupported_symbols(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_SCANNER_SYMBOLS", "EURUSD,NOTAREALASSET")
+
+    with pytest.raises(ValueError, match="unsupported symbols"):
+        _configured_scan_symbols()
+
