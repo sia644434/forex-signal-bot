@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -278,6 +278,62 @@ def test_market_aware_engine_rejects_candle_symbol_mismatch(
                 symbol="USDJPY",
                 timeframe="1h",
             )
+        )
+
+    assert market_data.requests == []
+
+
+def test_market_aware_engine_rejects_stale_input_before_analysis(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    market_data = FakeMarketDataService("USDJPY", 150.0)
+    engine = MarketAwareAnalysisEngine(
+        market_data=market_data,
+        settings=Settings(account_currency="USD"),
+    )
+    stale = _price_candles("USDJPY")
+    stale[0] = Candle(
+        symbol="USDJPY",
+        timestamp=datetime.now(timezone.utc) - timedelta(hours=7),
+        open=150.0,
+        high=151.0,
+        low=149.0,
+        close=150.0,
+        volume=1.0,
+    )
+    analyze = monkeypatch.spy(engine.analysis_engine, "analyze")
+
+    with pytest.raises(ValueError, match="not fresh enough"):
+        __import__("asyncio").run(
+            engine.analyze(stale, symbol="USDJPY", timeframe="1h")
+        )
+
+    assert analyze.call_count == 0
+    assert market_data.requests == []
+
+
+def test_market_aware_engine_rejects_future_input_before_analysis(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    market_data = FakeMarketDataService("USDJPY", 150.0)
+    engine = MarketAwareAnalysisEngine(
+        market_data=market_data,
+        settings=Settings(account_currency="USD"),
+    )
+    future = _price_candles("USDJPY")
+    future[0] = Candle(
+        symbol="USDJPY",
+        timestamp=datetime.now(timezone.utc) + timedelta(minutes=1),
+        open=150.0,
+        high=151.0,
+        low=149.0,
+        close=150.0,
+        volume=1.0,
+    )
+
+    with pytest.raises(ValueError, match="timestamp cannot be in the future"):
+        __import__("asyncio").run(
+            engine.analyze(future, symbol="USDJPY", timeframe="1h")
         )
 
     assert market_data.requests == []
