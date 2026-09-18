@@ -344,3 +344,48 @@ Result:
 - No AI/model/agent dependency is part of the canonical production trading flow.
 - Existing dormant AI capability remains isolated and opt-in rather than being activated.
 - No Ollama, coding-agent, autonomous-agent, or model-orchestration architecture was introduced.
+
+
+## TASK-119
+Phase: Phase 7 — PC Worker / Heavy Processing
+Title: PC Worker readiness enforcement and malformed heartbeat hardening
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Objective:
+- Prevent stale, malformed, future-dated, or identity-less heartbeats from authorizing heavy processing.
+- Fail closed on malformed heartbeat transport responses.
+- Reflect worker readiness in service health.
+Relevant Files:
+- `services/worker/service.py`
+- `worker/client.py`
+- `tests/test_worker_service.py`
+Verification:
+- Focused regression tests added.
+- Exact resulting HEAD must pass the required seven GitHub Actions checks before VERIFIED.
+
+## TASK-120
+Phase: Phase 3 / Telegram Multi-Asset Reliability
+Title: Scanner configured-universe symbol validation
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Objective:
+- Reject unsupported symbols from `TELEGRAM_SCANNER_SYMBOLS` instead of allowing an invalid symbol to reach market-data processing.
+- Preserve the established multi-asset scanner universe.
+Relevant Files:
+- `services/telegram/scanner.py`
+- `tests/test_telegram_scanner_universe.py`
+Verification:
+- Regression coverage added for unsupported symbols.
+- Exact resulting HEAD must pass the required seven GitHub Actions checks before VERIFIED.
+
+## TASK-121
+Phase: Cross-Phase Engineering State
+Title: Multi-Asset scope correction and closure-frontier synchronization
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Objective:
+- Explicitly record that the product scope is Multi-Asset.
+- Align phase documentation with the actual repository state.
+Relevant Files:
+- `docs/engineering/PHASE_STATE.md`
+- `docs/engineering/ARCHITECTURE_MAP.md`
+Verification:
+- Documentation synchronized with the current audit frontier.
+- Documentation commit remains subject to exact-head CI verification.
