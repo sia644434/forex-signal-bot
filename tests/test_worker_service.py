@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime, timezone
 
 from config.settings import Settings
 from services.worker.service import WorkerProcessingService
@@ -66,7 +67,7 @@ def test_worker_service_uses_configured_transport(monkeypatch):
             })()
 
         def heartbeat(self):
-            return {"status": "READY", "worker_id": "worker-1", "timestamp": "2099-09-12T00:00:00+00:00"}
+            return {"status": "READY", "worker_id": "worker-1", "timestamp": datetime.now(timezone.utc).isoformat()}
 
     monkeypatch.setattr("services.worker.service.PCWorkerClient", FakeClient)
     service = WorkerProcessingService.from_settings(settings)
@@ -88,7 +89,7 @@ def test_worker_service_uses_configured_transport(monkeypatch):
     assert heartbeat["worker_id"] == "worker-1"
     assert service.health()["readiness"] == "READY"
     assert service.health()["worker_id"] == "worker-1"
-    assert service.health()["timestamp"] == "2099-09-12T00:00:00+00:00"
+    assert service.health()["timestamp"] == heartbeat["timestamp"]
     assert captured == {
         "base_url": "http://worker.example",
         "token": "secret",
