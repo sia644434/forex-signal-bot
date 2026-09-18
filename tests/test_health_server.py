@@ -93,3 +93,16 @@ def test_health_server_returns_503_for_invalid_health_payload() -> None:
             raise AssertionError("invalid health payload unexpectedly returned success")
     finally:
         server.stop()
+
+
+def test_health_server_stop_releases_socket_before_start() -> None:
+    server = HealthServer(lambda: {"status": "ok"}, host="127.0.0.1", port=0)
+    bound_port = server.port
+
+    server.stop()
+
+    assert server._thread is None
+    assert server._server.fileno() == -1
+
+    replacement = HealthServer(lambda: {"status": "ok"}, host="127.0.0.1", port=bound_port)
+    replacement.stop()
