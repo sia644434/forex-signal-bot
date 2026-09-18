@@ -46,3 +46,12 @@
 - Added deterministic seeded Monte Carlo regression coverage and fail-closed invalid-input coverage.
 - Code closure HEAD: `d616df74377af7de1aaf798c7b876fe8acecee60`; all seven required GitHub Actions checks completed successfully.
 - Phase 9 is COMPLETE; Phase 10 — Security / Production Hardening — is the next audit frontier.
+
+
+## 2026-09-19 — Phase 10 Security / Production Hardening checkpoint
+- TASK-126 hardened `WorkerHTTPServer` request validation against malformed JSON shapes, invalid timeout/priority values, oversized identifiers, and non-object payloads.
+- Added regression coverage in `tests/test_pc_worker_health_security.py`.
+- Hardened the production Docker image to run as a dedicated non-root user.
+- Restricted production CI workflow permissions to `contents: read` where write access is unnecessary.
+- Exact audit HEAD: `b92aae52828e7737402da30ec5d513df4c8b0dad`; all seven required GitHub Actions checks completed successfully.
+- Phase 10 remains open for additional concrete security/production-hardening audit work.
