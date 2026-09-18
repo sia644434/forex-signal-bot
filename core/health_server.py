@@ -79,9 +79,8 @@ class HealthServer:
         self._thread.start()
 
     def stop(self) -> None:
-        if not self._thread:
-            return
-        self._server.shutdown()
+        if self._thread:
+            self._server.shutdown()
+            self._thread.join(timeout=2)
+            self._thread = None
         self._server.server_close()
-        self._thread.join(timeout=2)
-        self._thread = None
