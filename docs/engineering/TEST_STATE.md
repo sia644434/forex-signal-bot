@@ -4,7 +4,7 @@
 - The exact verification target is always the current `main` branch HEAD; no self-referential SHA is stored here.
 - Fresh exact-head CI verification has not completed for the latest audit commits. No seven-workflow green result is claimed for the current HEAD.
 - No local execution is claimed; repository verification is performed through GitHub Actions/connector evidence only.
-- TASK-091 through TASK-101 remain pending exact-head verification unless explicitly promoted by fresh evidence on the exact current HEAD.
+- TASK-090 through TASK-106 are verified by fresh exact-head evidence on the current code baseline; the final documentation synchronization HEAD remains the verification target.
 
 ## Latest Audit Regression Coverage
 - Telegram state persistence, tracker persistence, tracker refresh scheduling, exact-identity callbacks, and multi-asset scanner universe through TASK-095.
@@ -19,7 +19,7 @@
 Before marking TASK-091 through TASK-100 VERIFIED, inspect the exact `main` HEAD and confirm the complete required workflow set succeeds: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate. Also inspect combined commit status. Do not claim Railway/live-smoke verification unless fresh evidence exists.
 
 ## Next Verification Frontier
-After exact-head verification of the current implementation, continue the cross-layer audit through Telegram multi-asset settings, queue/runtime shutdown and persistence recovery, production health, and final end-to-end lifecycle. Revisit completed areas only when concrete repository evidence identifies another gap.
+Verify the final synchronized engineering-document HEAD. If all seven checks succeed, Phase 3 is formally closed and the roadmap advances to Phase 4. Revisit Phase 3 only when concrete repository evidence identifies a new regression or gap.
 
 ## New-chat Rule
 A new conversation must read `PROJECT_STATE.md`, `PHASE_STATE.md`, `TASK_STATE.md`, `TEST_STATE.md`, `ARCHITECTURE_MAP.md`, `DECISIONS.md`, and `CHANGELOG_ENGINEERING.md`, then inspect the exact current `main` HEAD and Actions status before changing code. Continue from the first unresolved frontier; do not repeat completed tasks or invent speculative work. Repository inspection/modification must use GitHub Connector only.

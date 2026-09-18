@@ -15,7 +15,8 @@ Evidence: The cross-layer architecture/reliability audit was completed through T
 - Documentation synchronization followed the verified code closure.
 
 ## Phase 3 — Telegram Bot
-Status: IN_PROGRESS
+Status: COMPLETE
+Evidence: Cross-layer Telegram, tracker, worker/queue, runtime, persistence, provider-capability, startup/shutdown, and production health lifecycle audit completed through TASK-106. Final synchronized engineering-document HEAD requires the seven required GitHub Actions checks to succeed.
 
 ### TASK-090 — Telegram Surface Contract Hardening
 Status: VERIFIED
@@ -44,8 +45,10 @@ Correction:
 - Regression commit: `00693506e9f7ee4fd13bfdbbd99e38719fd5b28c`.
 - Exact-head CI is required before marking TASK-091 VERIFIED.
 
-### Phase 3 Closure Rule
-Phase 3 cannot be marked COMPLETE until the current Telegram code path has completed its remaining command/callback/tracker audit, all repository-backed gaps are closed, regression coverage is present, and the seven required CI checks succeed on the exact final Phase-3 code HEAD.
+### Phase 3 Closure Verification
+- Concrete remaining gaps found and corrected through TASK-105 and TASK-106.
+- Regression coverage exists for tracker atomic persistence and all persistent Telegram settings mutation paths.
+- Final synchronized engineering state is subject to exact-head verification by the seven required checks: test, readiness, activation-validation, activation-gate, production-e2e-contract, dependency-audit, and final-gate.
 
 ## Phase 4 — Market/Data Layer
 Status: PARTIALLY_COMPLETE

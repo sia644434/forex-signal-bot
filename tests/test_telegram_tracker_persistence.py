@@ -59,3 +59,13 @@ def test_tracker_store_rejects_mismatched_identity(tmp_path, monkeypatch) -> Non
 
     with pytest.raises(TrackerStoreError):
         tracker_module._load_tracks()
+
+
+def test_tracker_store_atomic_write_leaves_no_fixed_temp_file(tmp_path) -> None:
+    path = tmp_path / "telegram_tracker.json"
+    store = TrackerStore(str(path))
+    store.save_all({"1004:EURUSD:M15": {"user_id": 1004, "symbol": "EURUSD", "timeframe": "M15", "signal": "BUY"}})
+    store.save_all({})
+    assert path.read_text(encoding="utf-8") == "{}"
+    assert not (tmp_path / "telegram_tracker.tmp").exists()
+    assert not list(tmp_path.glob(".telegram_tracker.json.*.tmp"))

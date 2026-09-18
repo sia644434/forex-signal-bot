@@ -3,18 +3,18 @@
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
 - Current Commit: See `main` branch head; this field intentionally avoids a self-referential commit SHA because this file is itself committed as part of the synchronization.
-- Overall Status: `PRODUCTION_VERIFIED / AUDIT_IN_PROGRESS`
-- Current Phase: Phase 3 — Telegram / Worker / Cross-Layer Reliability Audit
-- Current Task Frontier: TASK-091 through TASK-100 are implemented and pending exact-head CI verification.
-- Last Verified Task: TASK-090 — Telegram Surface Contract Hardening, exact-head verified on `45a4bd5bb892181cb6a30c75f8b0340ecccaacc7` with all seven required checks successful.
+- Overall Status: `PRODUCTION_VERIFIED / PHASE_3_CLOSURE_VERIFICATION`
+- Current Phase: Phase 3 — Telegram / Worker / Cross-Layer Reliability — closure verification
+- Current Task Frontier: TASK-105/106 are the final concrete Phase-3 hardening tasks; no further repository-backed Phase-3 gap is currently open.
+- Last Verified Task: TASK-106 — Complete Persistent Settings Mutation Contract, exact-head verified on `dd97c74c19827c2147b763b2814de35b82e2366c` with all seven required checks successful. TASK-105 is also verified on that exact HEAD.
 - Known Blockers: No known blocker for the previously verified Railway deployment path. Current audit commits must not be treated as live-production verified until their exact `main` HEAD passes the required GitHub Actions gates.
 - Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Current audit changes remain unverified until exact-head CI evidence exists.
-- Broken Tests: No fresh exact-head workflow result is currently available for the latest audit commits; therefore no green state is claimed.
+- Broken Tests: None identified on the latest exact-head verification.
 - CI Status: Fresh seven-workflow verification is still required for the current audit HEAD. No green state is claimed until exact-head evidence exists.
 - Deployment Status: No new live-production smoke is claimed from TASK-091 through TASK-100. The previously verified Railway path remains historical deployment evidence.
 - Architecture Status: Canonical production flow remains `MarketDataService → MarketDataEngine → ProviderManager → FullAnalysisEngine → DecisionEngine → ConfidenceEngine → RiskEngine → PositionSizing/CurrencyConversion` where applicable. The PC Worker is restricted to heavy application processing. The `ai/` package remains dormant/unwired future Phase 6 capability and is not active production trading architecture. No local coding-agent/Ollama architecture is part of the active worker path.
 - Production Readiness: `VERIFIED` for the previously observed Railway deployment path; current audit commits are not claimed as fresh production verification.
-- Last State Update: 2026-09-15
+- Last State Update: 2026-09-18
 
 ## Current Audit Checkpoint
 
@@ -37,7 +37,7 @@
 - TASK-100: explicit provider symbol capability boundaries and fail-closed diagnostics for unsupported market/provider combinations.
 
 ### Current concrete frontier
-The remaining repository-backed gaps are Telegram multi-asset settings consistency, queue/runtime shutdown and persistence recovery, production health, and final end-to-end lifecycle consistency. Do not add speculative features; only create new tasks when code/tests/configuration demonstrate a concrete correctness or reliability gap.
+The Phase-3 concrete audit frontier is closed after TASK-105/106. Do not add speculative Phase-3 tasks. The next work item is Phase 4 only after the synchronized engineering state passes the final seven-check verification.
 
 ## Multi-Asset Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported families are Forex, Crypto, Stocks, Indices, and Commodities. Market-specific semantics such as quote currency, contract size, session, provider support, and conversion requirements must be explicit and fail closed when unavailable.

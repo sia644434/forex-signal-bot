@@ -57,3 +57,10 @@
 - Verified ProviderManager lifecycle and application-scoped market-data service lifetime.
 - Hardened Telegram journal ordering, atomic mutations, corruption fail-closed behavior, structure validation, and entry-schema validation.
 - Hardened service startup/shutdown cleanup and worker queue resource lifecycle.
+
+
+## 2026-09-18 — Phase 3 closure hardening
+- TASK-105 closed a concrete persistence consistency gap: Telegram TrackerStore used a fixed temporary path and did not fsync before replacement. It now uses unique same-directory temporary files, fsync, atomic replace, and cleanup.
+- TASK-106 closed a concrete persistence API gap: the persistent settings wrapper did not explicitly persist setdefault, pop, and popitem. These mutation paths are now covered and regression-tested.
+- The full Phase-3 audit was rechecked across Telegram surface/callbacks/settings, tracker persistence/refresh, worker queue fencing/renewal/recovery, synchronous timeout fencing, worker runtime lifecycle, startup/shutdown cleanup, provider capability boundaries, and production health resource lifecycle.
+- No additional repository-backed Phase-3 gap was found after TASK-105/106. Phase 3 is ready for final synchronized seven-check verification.

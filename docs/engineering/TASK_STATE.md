@@ -195,3 +195,25 @@ Evidence:
 - HealthServer.stop() now always closes the server socket and only performs shutdown/join when the serving thread exists.
 - Application startup rollback explicitly invokes health-server cleanup before rolling back services.
 - Regression coverage verifies pre-start socket release and startup-failure cleanup.
+
+
+## TASK-105
+Phase: Phase 3 — Telegram / Persistence Reliability
+Title: Atomic Telegram Tracker Persistence Hardening
+Implementation Status: VERIFIED — exact-head CI green on dd97c74c19827c2147b763b2814de35b82e2366c
+Evidence:
+- The Telegram user-state store already used unique same-directory temporary files with flush/fsync/replace semantics, but the tracker store still used a fixed .tmp path without fsync.
+- Tracker persistence now uses a unique same-directory temporary file, flushes and fsyncs the payload, atomically replaces the destination, and cleans up the temporary file.
+- Regression coverage verifies the persistent tracker path remains clean after repeated writes.
+
+## TASK-106
+Phase: Phase 3 — Telegram / User-State Reliability
+Title: Complete Persistent Settings Mutation Contract
+Implementation Status: VERIFIED — exact-head CI green on dd97c74c19827c2147b763b2814de35b82e2366c
+Evidence:
+- The persistent settings wrapper covered assignment, deletion, update, and clear, but standard dict mutation paths setdefault, pop, and popitem were not explicitly persistence-aware.
+- All supported mutating dict operations now persist the owning user state.
+- Regression coverage verifies these mutations survive an in-memory restart/reload cycle.
+
+## Phase 3 Closure Audit
+The Phase 3 cross-layer audit is complete at the code level. No additional repository-backed Telegram, tracker, worker queue, runtime lifecycle, persistence, provider-capability, or end-to-end reliability gap was identified after TASK-105/106. Phase 3 is only considered formally closed when the final synchronized engineering-document HEAD also passes all seven required checks.
