@@ -1,146 +1,82 @@
 # Phase State
 
+## Current Cross-Phase Integrity Audit — 2026-09-19
+
+The repository is a **Multi-Asset Trading Intelligence Platform**. Supported market families are Forex, Crypto, Stocks, Indices, and Commodities. Historical wording that describes the product as Forex-only is superseded and must not be used to remove or bypass non-Forex contracts.
+
+The previous phase closures are preserved as historical evidence at their recorded exact code heads. They are not, by themselves, proof that the current `main` HEAD is green or that no cross-phase regression exists.
+
+### Current main verification state
+- Current `main` HEAD: `1aec001ff4769bb47171513ad1bdb7da5bb88c73`.
+- The repository combined status currently contains a failing Railway deployment status (`lavish-energy - forex-signal-bot`).
+- GitHub Actions workflow-run lookup for this commit returned no PR-triggered workflow runs; therefore the historical seven-workflow closure evidence must not be relabeled as fresh current-HEAD evidence.
+- No code regression has yet been proven solely from the failing external deployment status. The deployment failure is nevertheless a concrete unresolved production-verification item.
+- Because the current deployment status is not green, the repository must not advance to Phase 13 as if Phases 1–12 were freshly reverified on the current HEAD.
+
 ## Phase 1 — Baseline Stabilization / Reliability Hardening
-Status: COMPLETE
-Evidence: Baseline contract regressions were fixed and production verification was completed through live health and restart/recovery evidence.
+Status: HISTORICALLY_COMPLETE
+Evidence: Historical baseline contract/reliability verification is preserved in engineering history.
 
 ## Phase 2 — Core Architecture
-Status: COMPLETE
-Evidence: The cross-layer architecture/reliability audit was completed through TASK-089 on exact code HEAD `654944e059a3438e31e90aa7f4dc90b04b95110f`. TASK-084 through TASK-089 are implemented, regression-covered, and verified by the seven required GitHub Actions checks on that exact HEAD. No additional Phase-2 repository-backed gap was identified during the closure audit.
+Status: HISTORICALLY_COMPLETE
+Evidence: Closure was verified on exact code HEAD `654944e059a3438e31e90aa7f4dc90b04b95110f` with the required seven checks green.
 
-### Phase 2 Closure Verification
-- Exact code closure HEAD: `654944e059a3438e31e90aa7f4dc90b04b95110f`.
-- Required checks on that exact HEAD: `test`, `readiness`, `activation-validation`, `activation-gate`, `production-e2e-contract`, `dependency-audit`, and `final-gate` — all completed successfully.
-- Combined commit status was successful.
-- Documentation synchronization followed the verified code closure.
-
-## Phase 3 — Telegram Bot
-Status: COMPLETE
-Evidence: Cross-layer Telegram, tracker, worker/queue, runtime, persistence, provider-capability, startup/shutdown, and production health lifecycle audit completed through TASK-106. Final synchronized engineering-document HEAD requires the seven required GitHub Actions checks to succeed.
-
-### TASK-090 — Telegram Surface Contract Hardening
-Status: VERIFIED
-
-Repository-backed gaps identified and corrected:
-- Callback payloads are allowlisted and invalid settings requests fail closed.
-- `/settings` reports actual authenticated-user settings.
-- `/signal` enforces canonical `OPEN/CLOSED/STALE/NO_DATA` before executable analysis/tracking.
-- Tracking accepts the complete executable directional contract: `BUY`, `SELL`, `STRONG_BUY`, `STRONG_SELL`.
-- Dynamic scanner/tracker HTML output is escaped.
-- `/status` reports actual configured market-data provider readiness.
-- Regression coverage was added in `tests/test_telegram_surface_contract.py`.
-- Exact-head verification: `45a4bd5bb892181cb6a30c75f8b0340ecccaacc7`; all seven required checks succeeded.
-
-### TASK-091 — Durable Telegram User State Across Restarts
-Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
-
-Repository-backed gap:
-- `TelegramUserState` previously lived only in the process-local `USER_STATES` dictionary. Language, selected market/timeframe, analysis mode, risk level, notification preference, and current menu were therefore lost on application restart.
-
-Correction:
-- Added `services/telegram/state_store.py` with atomic JSON persistence and corruption fail-closed behavior.
-- `services/telegram/state.py` now restores persisted user state and automatically persists language, menu, and settings mutations.
-- Added regression coverage for restart restoration and corrupted-state rejection.
-- Implementation commits: `cd735888107076079f234143fecb08d1310d0041`, `21b7987c2216ca8e5f45d8d1e7f31155149b8d8a`, `e73faf2b0a47017bf22ea3e37baa56de924232f1`.
-- Regression commit: `00693506e9f7ee4fd13bfdbbd99e38719fd5b28c`.
-- Exact-head CI is required before marking TASK-091 VERIFIED.
-
-### Phase 3 Closure Verification
-- Concrete remaining gaps found and corrected through TASK-105 and TASK-106.
-- Regression coverage exists for tracker atomic persistence and all persistent Telegram settings mutation paths.
-- Final synchronized engineering state is subject to exact-head verification by the seven required checks: test, readiness, activation-validation, activation-gate, production-e2e-contract, dependency-audit, and final-gate.
+## Phase 3 — Telegram
+Status: HISTORICALLY_COMPLETE
+Evidence: TASK-090 through TASK-106 were verified at their recorded exact heads with regression coverage and required CI evidence.
 
 ## Phase 4 — Market/Data Layer
-Status: PARTIALLY_COMPLETE
+Status: HISTORICALLY_COMPLETE
+Evidence: TASK-107 through TASK-109; closure code HEAD `944d7b3176d201e6cf29c921d2bd27886b86a81d`; required seven checks were green on that closure head.
 
 ## Phase 5 — Analysis Engine
-Status: PARTIALLY_COMPLETE
-
-## Phase 6 — AI/ML
-Status: PARTIALLY_COMPLETE
-Evidence: Existing `ai/` scaffolding is dormant/unwired and intentionally not treated as active production functionality. Future activation remains a later-phase task.
-
-## Phase 7 — PC Worker / Heavy Processing
-Status: COMPLETE
-Evidence: Full Phase-7 cross-layer closure audit completed. Worker readiness gating, malformed/future/identity-less heartbeat handling, durable queue lifecycle, claim fencing, renewable leases, timeout fencing, persistent runtime-loop behavior, recovery, graceful shutdown, HTTP authentication, request validation, bounded payloads, internal-error redaction, and regression coverage were audited. No additional repository-backed Phase-7 correctness gap was identified. Exact closure HEAD `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a` passed all seven required GitHub Actions checks.
-
-## Phase 8 — Trading / Decision Engine
-Status: COMPLETE
-Evidence: Phase-8 cross-layer closure audit completed through TASK-124. TASK-123 hardened the MarketAwareAnalysisEngine boundary so market-aware risk cannot consume mismatched-symbol or stale/future Candle inputs, while preserving the established legacy candle-like compatibility contract. DecisionEngine, ConfidenceEngine, RiskEngine, PositionSizing, CurrencyConversion, and MarketAwareAnalysisEngine were audited for multi-asset propagation, numeric safety, risk-policy enforcement, conversion direction/freshness, quantity semantics, and fail-closed behavior. No additional repository-backed Phase-8 correctness gap was identified. Code closure HEAD `1edbf5126c86bcde45c32cf91e365d22e20e4037` passed all seven required GitHub Actions checks.
-
-## Phase 9 — Backtesting / Simulation
-Status: COMPLETE
-Evidence: Phase-9 closure audit completed through TASK-125. Backtest, walk-forward, and Monte Carlo executors were hardened for deterministic inputs, finite/positive price boundaries, bounded simulation parameters, correct train/test separation, deterministic seeded simulation, finite result contracts, and fail-closed invalid inputs. Code closure HEAD `d616df74377af7de1aaf798c7b876fe8acecee60` passed all seven required GitHub Actions checks.
-
-## Phase 10 — Security / Production Hardening
-Status: COMPLETE
-Evidence: Phase-10 security / production-hardening closure audit completed through TASK-127. Concrete gaps in worker HTTP input validation, production configuration, Docker build context, container privilege, and CI workflow permissions were corrected and regression-covered. Exact-head seven-check verification is complete on the final synchronized documentation HEAD.
-
-## Phase 11 — Testing
-Status: COMPLETE
-Evidence: Full Phase-11 testing/verification audit completed through TASK-128. Concrete CI-test parity gap was identified and corrected: workflows using Python 3.11 were aligned to the production Docker runtime Python 3.12. The complete required seven-workflow verification set passed on the final Phase-11 synchronized HEAD. No additional repository-backed testing gap requiring code changes was identified.
-
-### Phase 11 Closure Verification
-- TASK-128 completed the testing/verification closure audit.
-- CI test/runtime parity was corrected across Security Audit, Production E2E, Production Live Smoke, Final Integration Gate, Production Activation Gate, and Production Activation Validation; Test and Production Readiness were already on Python 3.12.
-- Final synchronized HEAD: b457ea33796b5833622cda4c9e7f5ecf13eabfc3; exact-head seven-workflow verification completed successfully.
-- No live-production smoke verification is claimed from this audit.
-
-## Phase 12 — Deployment
-Status: COMPLETE
-Evidence: Railway live health and restart/recovery verification completed for the intentional Railway-connected fork.
-
-## Phase 13 — Final Production Audit
-Status: NOT_STARTED
-Dependency: Starts only after the active worker, decision/risk, backtesting, security, testing, and deployment closure audits are verified.
-
-## Roadmap Rule
-Work phases sequentially. Phases 1–12 are closed according to their recorded evidence. Phase 13 is the next unresolved audit frontier. Revisit earlier phases only when concrete repository evidence identifies a new regression or gap.
-
-Work phases sequentially. Phases 1–10 are closed according to their recorded evidence. Phase 11 is the next audit frontier. Later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
-
-
-## Phase 4 — Market/Data Layer
-Status: COMPLETE
-Evidence: The Phase-4 market/data audit was completed through TASK-109. Concrete gaps in the canonical symbol/timeframe boundary and direct OANDA provider boundary were corrected in TASK-107/108. The full audited surface had no further repository-backed correctness gap requiring code changes. Exact-head GitHub Actions verification on closure HEAD `944d7b3176d201e6cf29c921d2bd27886b86a81d` shows all seven required checks completed successfully.
-
-## Phase 5 — Analysis Engine
-Status: COMPLETE
-Evidence: Phase-5 cross-layer audit completed through TASK-114. Concrete gaps in indicator numeric handling, duplicate helper definitions, market-structure input validation, and indicator primitive validation were corrected. Final code HEAD `963abbaee6bfac940944fae3b92f28b5f02dd6b4` passed all seven required checks.
+Status: HISTORICALLY_COMPLETE
+Evidence: TASK-110 through TASK-114; closure code HEAD `963abbaee6bfac940944fae3b92f28b5f02dd6b4`; required seven checks were green on that closure head.
 
 ## Phase 6 — AI/ML Boundary
-Status: COMPLETE
-Evidence: TASK-115 through TASK-118 completed. The existing AI package is explicitly dormant and opt-in, excluded from production scoring, and hardened at its numeric configuration/response boundaries. Final verified code HEAD: `91a59421cbd82043cec59bc9f5fe883796a1a8da`.
+Status: HISTORICALLY_COMPLETE
+Evidence: TASK-115 through TASK-118. The `ai/` package remains dormant/unwired and outside canonical production scoring. Closure code HEAD `91a59421cbd82043cec59bc9f5fe883796a1a8da` passed the recorded required checks.
 
+## Phase 7 — PC Worker / Heavy Processing
+Status: HISTORICALLY_COMPLETE
+Evidence: TASK-119 through TASK-122; closure HEAD `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a`; all seven required checks were green on that closure head.
 
-## 2026-09-19 Multi-Asset Correction
-The repository is intentionally a **Multi-Asset Trading Intelligence Platform**. The earlier master prompt wording that described the product as Forex-only is superseded by the repository contract. Supported families remain Forex, Crypto, Stocks, Indices, and Commodities. Future audit work must preserve this scope and must not remove non-Forex functionality merely to match that prompt wording.
+## Phase 8 — Trading / Decision Engine
+Status: HISTORICALLY_COMPLETE
+Evidence: TASK-123 and TASK-124; closure HEAD `1edbf5126c86bcde45c32cf91e365d22e20e4037`; all seven required checks were green on that closure head.
 
-## Current Closure Audit
-The active objective is to close the remaining concrete gaps across the current phase frontier as one evidence-backed batch. A phase is not marked COMPLETE until implementation, focused regression tests, exact-head required CI checks, and synchronized engineering documentation all agree.
+## Phase 9 — Backtesting / Simulation
+Status: HISTORICALLY_COMPLETE
+Evidence: TASK-125; closure HEAD `d616df74377af7de1aaf798c7b876fe8acecee60`; all seven required checks were green on that closure head.
 
+## Phase 10 — Security / Production Hardening
+Status: HISTORICALLY_COMPLETE
+Evidence: TASK-126 and TASK-127; final recorded closure evidence reports all seven required checks green.
 
-## Phase 8 Closure Checkpoint
-- TASK-123: MarketAwareAnalysisEngine market-context and freshness boundary hardening.
-- TASK-124: Full Phase-8 Trading / Decision Engine cross-layer closure audit.
-- Code closure HEAD: `1edbf5126c86bcde45c32cf91e365d22e20e4037`.
-- Required checks on that exact code HEAD: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate — all `completed/success`.
-- No live-production smoke verification is claimed from this audit.
-- Phase 9 — Backtesting / Simulation — is the next audit frontier.
+## Phase 11 — Testing
+Status: HISTORICALLY_COMPLETE
+Evidence: TASK-128 aligned affected CI workflows to Python 3.12. Recorded final closure HEAD `b457ea33796b5833622cda4c9e7f5ecf13eabfc3` passed the required seven checks.
 
+## Phase 12 — Deployment
+Status: REVERIFICATION_REQUIRED
+Historical evidence: Railway live health and restart/recovery verification was previously completed for the intentional Railway-connected deployment path.
+Current issue: the current `main` HEAD has a failing Railway deployment status. The failure must be investigated and resolved or explicitly determined to be unrelated/stale before Phase 12 can be considered current-HEAD verified.
 
-## Phase 10 Closure Checkpoint — Current Audit Batch
-- TASK-126 hardened the PC Worker HTTP request boundary against invalid JSON shapes, invalid timeout/priority values, oversized identifiers, and non-object payloads.
-- The production Docker image now runs as a dedicated non-root `appuser`.
-- Production CI workflows now explicitly grant only `contents: read` where write access is not required.
-- Exact audit HEAD: `b92aae52828e7737402da30ec5d513df4c8b0dad`.
-- Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate all completed successfully on that exact HEAD.
-- Phase 10 is COMPLETE. The closure audit found no additional repository-backed security/production-hardening gap requiring code changes after TASK-127.
+## Phase 13 — Final Production Audit
+Status: BLOCKED_PENDING_PHASE_12_REVERIFICATION
+Dependency: Do not start final production closure until the current deployment status and the current cross-phase integrity audit are resolved.
 
+## Mandatory Audit Rule
+For every phase reopened by concrete evidence:
+1. Read the recorded scope and historical evidence.
+2. Inspect the current implementation at the current `main` HEAD.
+3. Search for regressions/gaps across code, tests, CI, configuration, security, deployment, and documentation.
+4. Group related defects and fix them together.
+5. Add focused regression coverage where needed.
+6. Verify the current exact HEAD with the required workflows.
+7. Re-audit the affected phase and dependent boundaries.
+8. Update engineering state only after evidence agrees with implementation.
+9. Never mark a phase COMPLETE merely because its old checklist was once completed.
 
-## Phase 10 Closure Verification
-- TASK-126 hardened the WorkerHTTPServer and production container/CI boundaries.
-- TASK-127 completed the broader Phase-10 closure audit across runtime configuration, worker transport configuration, Docker context, health exposure, secrets handling, CI permissions, dependency audit, and error/logging boundaries.
-- Final synchronized documentation HEAD is the verification target; all seven required GitHub Actions checks completed successfully on that exact HEAD.
-- No live-production smoke verification is claimed from this audit.
-- Phase 11 — Testing — is the next audit frontier.
+## Roadmap
+The next work item is **Phase-12 current-HEAD deployment re-verification plus cross-phase integrity audit**. If that audit proves earlier-phase regressions, reopen only the affected phase(s), fix them, verify them, and then continue to Phase 13.
