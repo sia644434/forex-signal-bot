@@ -8,6 +8,8 @@ from analysis.currency import get_contract_size, get_quote_currency
 from analysis.full_engine import FullAnalysisEngine
 from analysis.risk_engine import RiskEngine
 from config.settings import Settings
+from config.symbols import normalize_symbol
+from data.models import Candle
 from services.market_data.currency_conversion import CurrencyConversionService
 from services.market_data.service import MarketDataService
 
@@ -33,6 +35,22 @@ class MarketAwareAnalysisEngine:
             raise ValueError("latest candle price must be numeric and finite and greater than zero.")
         return price
 
+    @staticmethod
+    def _validate_market_context(candles, normalized_symbol: str) -> None:
+        """Reject analysis/risk inputs whose candle identity differs from the requested market."""
+        for index, candle in enumerate(candles):
+            if not isinstance(candle, Candle):
+                raise TypeError("market-aware analysis requires Candle objects.")
+            try:
+                candle_symbol = normalize_symbol(candle.symbol)
+            except (TypeError, ValueError) as error:
+                raise ValueError(f"Invalid candle symbol at index {index}.") from error
+            if candle_symbol != normalized_symbol:
+                raise ValueError(
+                    f"Candle symbol mismatch at index {index}: "
+                    f"expected {normalized_symbol}, got {candle_symbol}."
+                )
+
     async def analyze(self, candles, *, symbol: str, timeframe: str):
         if not isinstance(symbol, str):
             raise TypeError("symbol must be a string.")
@@ -51,8 +69,9 @@ class MarketAwareAnalysisEngine:
         if candle_count == 0:
             raise ValueError("candles are required for market-aware analysis")
 
-        normalized_symbol = symbol.strip().upper()
+        normalized_symbol = normalize_symbol(symbol)
         normalized_timeframe = timeframe.strip()
+        self._validate_market_context(candles, normalized_symbol)
         quote_currency = get_quote_currency(normalized_symbol)
         contract_size = get_contract_size(normalized_symbol)
 
