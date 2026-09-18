@@ -83,3 +83,24 @@ def test_journal_html_escapes_persisted_dynamic_fields(tmp_path, monkeypatch) ->
     assert "BUY<b>" not in rendered
     assert "OK<&" not in rendered
     assert "EURUSD&lt;&amp;" in rendered
+
+
+def test_settings_market_keyboard_exposes_all_supported_market_families():
+    from services.telegram.handlers.callbacks import settings_keyboard, market_symbols_keyboard
+    assert {button.callback_data for row in settings_keyboard("settings_market").inline_keyboard for button in row} >= {"market_forex", "market_crypto", "market_stock", "market_index", "market_commodity", "settings_market"}
+    for market in ("forex", "crypto", "stock", "index", "commodity"):
+        callbacks = {button.callback_data for row in market_symbols_keyboard(market).inline_keyboard for button in row}
+        assert callbacks
+        assert all(value.startswith("market_") or value == "settings_market" for value in callbacks)
+
+
+def test_apply_setting_accepts_canonical_multi_asset_symbols():
+    state = TelegramUserState(user_id=1)
+    assert _apply_setting(state, "market_BTCUSDT") == "Market BTCUSDT"
+    assert state.settings["market_symbol"] == "BTCUSDT"
+    assert _apply_setting(state, "market_AAPL") == "Market AAPL"
+    assert state.settings["market_symbol"] == "AAPL"
+    assert _apply_setting(state, "market_SPX") == "Market SPX"
+    assert state.settings["market_symbol"] == "SPX"
+    assert _apply_setting(state, "market_XAUUSD") == "Market XAUUSD"
+    assert state.settings["market_symbol"] == "XAUUSD"
