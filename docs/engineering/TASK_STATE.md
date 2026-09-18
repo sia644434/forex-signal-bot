@@ -349,7 +349,7 @@ Result:
 ## TASK-119
 Phase: Phase 7 — PC Worker / Heavy Processing
 Title: PC Worker readiness enforcement and malformed heartbeat hardening
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a`
 Objective:
 - Prevent stale, malformed, future-dated, or identity-less heartbeats from authorizing heavy processing.
 - Fail closed on malformed heartbeat transport responses.
@@ -365,7 +365,7 @@ Verification:
 ## TASK-120
 Phase: Phase 3 / Telegram Multi-Asset Reliability
 Title: Scanner configured-universe symbol validation
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a`
 Objective:
 - Reject unsupported symbols from `TELEGRAM_SCANNER_SYMBOLS` instead of allowing an invalid symbol to reach market-data processing.
 - Preserve the established multi-asset scanner universe.
@@ -379,7 +379,7 @@ Verification:
 ## TASK-121
 Phase: Cross-Phase Engineering State
 Title: Multi-Asset scope correction and closure-frontier synchronization
-Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Implementation Status: VERIFIED — exact-head CI green on `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a`
 Objective:
 - Explicitly record that the product scope is Multi-Asset.
 - Align phase documentation with the actual repository state.
@@ -389,3 +389,11 @@ Relevant Files:
 Verification:
 - Documentation synchronized with the current audit frontier.
 - Documentation commit remains subject to exact-head CI verification.
+
+
+## TASK-122
+Phase: Phase 7 — PC Worker / Heavy Processing
+Title: Full Phase-7 Cross-Layer Closure Audit
+Implementation Status: VERIFIED — exact-head CI green on `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a`
+Scope: Worker runtime, authenticated heartbeat/readiness, HTTP boundary, durable queue lifecycle, claim fencing, renewable leases, timeout fencing, persistent runtime loop, recovery, dispatcher failure/cancellation/shutdown, and regression coverage.
+Result: No additional repository-backed Phase-7 correctness gap requiring code changes was identified. Phase 7 is closed; Phase 8 is the next audit frontier.
