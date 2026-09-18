@@ -36,3 +36,13 @@
 - No additional repository-backed Phase-8 correctness gap was identified.
 - Code closure HEAD: `1edbf5126c86bcde45c32cf91e365d22e20e4037`; all seven required GitHub Actions checks completed successfully.
 - Phase 8 is now COMPLETE; Phase 9 — Backtesting / Simulation — is the next audit frontier.
+
+
+## Phase 9 — Backtesting / Simulation Closure
+- TASK-125 completed the full Phase-9 cross-layer closure audit.
+- Hardened backtest inputs against missing, non-numeric, non-finite, and non-positive close prices.
+- Added validation for non-negative signal thresholds, bounded fees, simulation counts, and simulation horizons.
+- Corrected walk-forward evaluation so the training history is available for the first test signal while only the test segment contributes to reported performance.
+- Added deterministic seeded Monte Carlo regression coverage and fail-closed invalid-input coverage.
+- Code closure HEAD: `d616df74377af7de1aaf798c7b876fe8acecee60`; all seven required GitHub Actions checks completed successfully.
+- Phase 9 is COMPLETE; Phase 10 — Security / Production Hardening — is the next audit frontier.
