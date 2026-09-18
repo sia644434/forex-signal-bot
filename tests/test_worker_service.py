@@ -163,6 +163,71 @@ def test_worker_service_blocks_dispatch_when_heartbeat_reports_offline(monkeypat
     assert service.health()["dispatcher"]["queue"]["total"] == 0
 
 
+def test_worker_service_blocks_dispatch_when_heartbeat_timestamp_is_in_the_future(monkeypatch):
+    settings = Settings(
+        worker_queue_database_path=":memory:",
+        pc_worker_url="http://worker.example",
+        pc_worker_token="secret",
+        pc_worker_heartbeat_max_age=60,
+    )
+
+    class FakeClient:
+        def __init__(self, base_url, token, timeout):
+            pass
+
+        def submit(self, request):
+            raise AssertionError("future-dated heartbeat must not receive a job")
+
+        def heartbeat(self):
+            return {
+                "status": "READY",
+                "worker_id": "worker-1",
+                "timestamp": "2099-01-01T00:00:00+00:00",
+            }
+
+    monkeypatch.setattr("services.worker.service.PCWorkerClient", FakeClient)
+    service = WorkerProcessingService.from_settings(settings)
+
+    asyncio.run(service.heartbeat())
+    result = asyncio.run(service.submit(JobRequest("future", "backtest")))
+
+    assert result.status == "WORKER_OFFLINE"
+    assert "STALE" in (result.error or "")
+    assert service.health()["readiness"] == "STALE"
+    assert service.health()["dispatcher"]["queue"]["total"] == 0
+
+
+def test_worker_service_blocks_dispatch_when_heartbeat_identity_is_missing(monkeypatch):
+    settings = Settings(
+        worker_queue_database_path=":memory:",
+        pc_worker_url="http://worker.example",
+        pc_worker_token="secret",
+    )
+
+    class FakeClient:
+        def __init__(self, base_url, token, timeout):
+            pass
+
+        def submit(self, request):
+            raise AssertionError("malformed heartbeat must not receive a job")
+
+        def heartbeat(self):
+            return {
+                "status": "READY",
+                "timestamp": "2099-01-01T00:00:00+00:00",
+            }
+
+    monkeypatch.setattr("services.worker.service.PCWorkerClient", FakeClient)
+    service = WorkerProcessingService.from_settings(settings)
+
+    asyncio.run(service.heartbeat())
+    result = asyncio.run(service.submit(JobRequest("missing-identity", "backtest")))
+
+    assert result.status == "WORKER_OFFLINE"
+    assert "STALE" in (result.error or "")
+    assert service.health()["readiness"] == "STALE"
+
+
 def test_worker_service_health_marks_stale_ready_heartbeat(monkeypatch):
     settings = Settings(
         worker_queue_database_path=":memory:",
