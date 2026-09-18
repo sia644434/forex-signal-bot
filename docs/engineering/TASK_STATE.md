@@ -412,7 +412,7 @@ Relevant Files:
 - `tests/test_market_aware_engine.py`
 Verification:
 - Regression coverage verifies candle-symbol mismatch rejection, stale-input rejection, future-input rejection, and preserved existing market-aware contracts.
-- Exact code HEAD `1edbf512c86bcde45c32cf91e365d22e20e4037` passed all seven required GitHub Actions checks.
+- Exact code HEAD `1edbf5126c86bcde45c32cf91e365d22e20e4037` passed all seven required GitHub Actions checks.
 
 ## TASK-124
 Phase: Phase 8 — Trading / Decision Engine
