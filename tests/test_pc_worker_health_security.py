@@ -73,3 +73,35 @@ def test_worker_jobs_do_not_expose_internal_exception_details():
         assert "secret internal detail" not in json.dumps(body)
     finally:
         server.stop()
+
+
+def test_worker_jobs_reject_invalid_timeout_priority_and_shapes():
+    runtime = WorkerRuntime.create()
+    server = WorkerHTTPServer(runtime, host="127.0.0.1", port=_free_port(), token="secret")
+    server.start()
+    try:
+        for payload in (
+            b'{"job_id":"job-1","job_type":"backtest","timeout_seconds":0}',
+            b'{"job_id":"job-1","job_type":"backtest","timeout_seconds":86401}',
+            b'{"job_id":"job-1","job_type":"backtest","priority":101}',
+            b'{"job_id":"job-1","job_type":"backtest","payload":[]}',
+            b'[]',
+        ):
+            status, body = _request(server, payload)
+            assert status == 400
+            assert body == {"error": "invalid_request"}
+    finally:
+        server.stop()
+
+
+def test_worker_jobs_reject_oversized_identifiers():
+    runtime = WorkerRuntime.create()
+    server = WorkerHTTPServer(runtime, host="127.0.0.1", port=_free_port(), token="secret")
+    server.start()
+    try:
+        payload = json.dumps({"job_id": "x" * 257, "job_type": "backtest"}).encode()
+        status, body = _request(server, payload)
+        assert status == 400
+        assert body == {"error": "invalid_request"}
+    finally:
+        server.stop()
