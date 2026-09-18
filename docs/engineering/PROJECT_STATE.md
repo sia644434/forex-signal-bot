@@ -3,10 +3,10 @@
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
 - Current Commit: See `main` branch head; this field intentionally avoids a self-referential commit SHA because this file is itself committed as part of the synchronization.
-- Overall Status: `PRODUCTION_VERIFIED / PHASE_7_CLOSURE_VERIFIED`
-- Current Phase: Phase 8 — Trading / Decision Engine — audit frontier
-- Current Task Frontier: Phase 7 is closed through TASK-122. The next active audit frontier is Phase 8 — Trading / Decision Engine.
-- Last Verified Task: TASK-122 — Full Phase-7 Cross-Layer Closure Audit, exact-head verified on `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a` with all seven required checks successful.
+- Overall Status: `PRODUCTION_VERIFIED / PHASE_8_CLOSURE_VERIFIED`
+- Current Phase: Phase 9 — Backtesting / Simulation — audit frontier
+- Current Task Frontier: Phase 8 is closed through TASK-124. The next active audit frontier is Phase 9 — Backtesting / Simulation.
+- Last Verified Task: TASK-124 — Full Phase-8 Trading / Decision Engine Cross-Layer Closure Audit, exact-head verified on `1edbf5126c86bcde45c32cf91e365d22e20e4037` with all seven required checks successful.
 - Known Blockers: No known blocker for the previously verified Railway deployment path. Current audit commits must not be treated as live-production verified until their exact `main` HEAD passes the required GitHub Actions gates.
 - Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Current audit changes remain unverified until exact-head CI evidence exists.
 - Broken Tests: None identified on the latest exact-head verification.
@@ -37,7 +37,7 @@
 - TASK-100: explicit provider symbol capability boundaries and fail-closed diagnostics for unsupported market/provider combinations.
 
 ### Current concrete frontier
-The Phase-3 concrete audit frontier is closed after TASK-105/106. Phase 4 is also closed after TASK-107/108/109. The next work item is Phase 5 only after this synchronized engineering state is verified on its resulting exact HEAD. Do not add speculative Phase-4 tasks.
+Phases 3–8 are closed according to their recorded closure checkpoints. Phase 9 — Backtesting / Simulation — is the next work item. Do not add speculative tasks to closed phases.
 
 ## Multi-Asset Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported families are Forex, Crypto, Stocks, Indices, and Commodities. Market-specific semantics such as quote currency, contract size, session, provider support, and conversion requirements must be explicit and fail closed when unavailable.
@@ -84,3 +84,12 @@ Prioritize concrete correctness, reliability, security, observability, deploymen
 - TASK-119, TASK-120, TASK-121, and TASK-122 are verified.
 - Closure HEAD: `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a`; all seven required checks completed successfully.
 - No fresh live-production smoke is claimed from this audit; historical Railway verification remains separate evidence.
+
+
+## Phase 8 Closure Checkpoint
+- TASK-123 corrected the MarketAwareAnalysisEngine boundary for candle identity and freshness propagation while preserving legacy candle-like compatibility.
+- TASK-124 completed the full Phase-8 Trading / Decision Engine cross-layer closure audit with no additional repository-backed correctness gap.
+- Code closure HEAD: `1edbf5126c86bcde45c32cf91e365d22e20e4037`.
+- All seven required checks on that exact code HEAD completed successfully.
+- No live-production smoke is claimed from this audit; historical Railway evidence remains separate.
+- Next audit frontier: Phase 9 — Backtesting / Simulation.
