@@ -1,4 +1,5 @@
 import asyncio
+import threading
 
 from worker.contracts import HEAVY_JOB_TYPES, JobRequest, WorkerCapabilities
 from worker.dispatcher import WorkerDispatcher
@@ -80,7 +81,7 @@ def test_sync_handler_is_bounded_by_timeout_without_blocking_event_loop():
 
 def test_timed_out_sync_job_stays_inflight_until_underlying_thread_finishes():
     async def run():
-        finished = asyncio.Event()
+        finished = threading.Event()
         calls = 0
 
         def handler(_payload):
@@ -101,7 +102,7 @@ def test_timed_out_sync_job_stays_inflight_until_underlying_thread_finishes():
         assert duplicate.status == "RUNNING"
         assert calls == 1
 
-        await finished.wait()
+        await asyncio.to_thread(finished.wait)
         await asyncio.sleep(0)
         cached = await runtime.execute(request)
         assert cached.status == "COMPLETED"
@@ -174,6 +175,7 @@ def test_concurrent_dispatches_execute_their_own_jobs():
         assert queue.get("low").status == "COMPLETED"
         assert queue.get("high").status == "COMPLETED"
         dispatcher.close()
+
 
     asyncio.run(run())
 
