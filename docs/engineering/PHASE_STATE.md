@@ -61,16 +61,20 @@ Status: PARTIALLY_COMPLETE
 Evidence: Existing `ai/` scaffolding is dormant/unwired and intentionally not treated as active production functionality. Future activation remains a later-phase task.
 
 ## Phase 7 — PC Worker / Heavy Processing
-Status: PARTIALLY_COMPLETE
+Status: IN_PROGRESS
+Evidence: The worker/queue surface is implemented and has recovery/fencing coverage. Current closure audit is verifying readiness gating, malformed heartbeat handling, health semantics, observability, and exact-head CI before marking the phase complete.
 
 ## Phase 8 — Trading / Decision Engine
-Status: PARTIALLY_COMPLETE
+Status: IN_PROGRESS
+Evidence: Core DecisionEngine/RiskEngine/PositionSizing contracts are implemented and historically verified. Current cross-layer closure audit remains focused on multi-asset decision/risk propagation and fail-closed boundaries before phase completion.
 
 ## Phase 9 — Backtesting / Simulation
-Status: NOT_STARTED
+Status: IN_PROGRESS
+Evidence: Worker-side backtest, walk-forward, and Monte Carlo executors and regression coverage already exist. Closure audit is validating deterministic inputs, leakage boundaries, result contracts, and separation from live execution before phase completion.
 
 ## Phase 10 — Security / Production Hardening
 Status: IN_PROGRESS
+Evidence: Dependency and runtime security gates exist and worker endpoint hardening has been performed. Broader cross-layer security and production-readiness audit remains open.
 Evidence: Dependency security audit and production runtime verification are complete; broader security hardening remains a later roadmap phase/task. Worker endpoint hardening was handled as evidence-backed work.
 
 ## Phase 11 — Testing
@@ -83,6 +87,7 @@ Evidence: Railway live health and restart/recovery verification completed for th
 
 ## Phase 13 — Final Production Audit
 Status: NOT_STARTED
+Dependency: Starts only after the active worker, decision/risk, backtesting, security, testing, and deployment closure audits are verified.
 
 ## Roadmap Rule
 Work phases sequentially. Phase 2 is closed. Phase 3 is the active audit frontier. Later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
@@ -99,3 +104,10 @@ Evidence: Phase-5 cross-layer audit completed through TASK-114. Concrete gaps in
 ## Phase 6 — AI/ML Boundary
 Status: COMPLETE
 Evidence: TASK-115 through TASK-118 completed. The existing AI package is explicitly dormant and opt-in, excluded from production scoring, and hardened at its numeric configuration/response boundaries. Final verified code HEAD: `91a59421cbd82043cec59bc9f5fe883796a1a8da`.
+
+
+## 2026-09-19 Multi-Asset Correction
+The repository is intentionally a **Multi-Asset Trading Intelligence Platform**. The earlier master prompt wording that described the product as Forex-only is superseded by the repository contract. Supported families remain Forex, Crypto, Stocks, Indices, and Commodities. Future audit work must preserve this scope and must not remove non-Forex functionality merely to match that prompt wording.
+
+## Current Closure Audit
+The active objective is to close the remaining concrete gaps across the current phase frontier as one evidence-backed batch. A phase is not marked COMPLETE until implementation, focused regression tests, exact-head required CI checks, and synchronized engineering documentation all agree.
