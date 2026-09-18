@@ -152,3 +152,11 @@ Problem: NaN/Infinity could bypass ordinary range checks for AI temperature or c
 Chosen Solution: Reject non-finite configuration values and normalize non-finite AI confidence to the safe zero-confidence state.
 Reason: Invalid numerical state must never be propagated into downstream decision/reporting contracts.
 Affected Components: `config/settings.py`, `ai/parser.py`.
+
+
+## ADR-020 — Market-Aware Analysis Must Preserve Market Identity and Freshness
+Date: 2026-09-19
+Problem: The canonical MarketDataService path already enforced symbol and freshness gates, but direct MarketAwareAnalysisEngine callers could provide Candle inputs whose symbol differed from the requested market or whose latest timestamp was stale/future-dated. That could cause analysis to be associated with one market while risk sizing used another market's metadata.
+Chosen Solution: At the MarketAwareAnalysisEngine boundary, validate Candle identity against the canonical requested symbol and apply the canonical six-candle freshness policy before analysis/risk evaluation. Preserve existing legacy candle-like compatibility when inputs do not expose market metadata.
+Reason: The decision/risk boundary must not trust caller-supplied market identity or stale market data merely because the upstream canonical service normally validates it.
+Affected Components: `analysis/market_aware_engine.py`, `tests/test_market_aware_engine.py`.
