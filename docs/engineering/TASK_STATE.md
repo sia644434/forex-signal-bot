@@ -217,3 +217,40 @@ Evidence:
 
 ## Phase 3 Closure Audit
 The Phase 3 cross-layer audit is complete at the code level. No additional repository-backed Telegram, tracker, worker queue, runtime lifecycle, persistence, provider-capability, or end-to-end reliability gap was identified after TASK-105/106. Phase 3 is only considered formally closed when the final synchronized engineering-document HEAD also passes all seven required checks.
+
+
+## TASK-107
+Phase: Phase 4 — Market/Data Layer
+Title: Direct OANDA Symbol Boundary Fail-Closed Hardening
+Implementation Status: VERIFIED — exact-head CI green on 944d7b3176d201e6cf29c921d2bd27886b86a81d
+Evidence:
+- Concrete gap: OANDA `supports_symbol()` rejected unsupported symbols, but the direct provider normalization path still accepted arbitrary six-letter alphabetic symbols and could issue a request outside the declared instrument map.
+- OANDA symbol normalization now accepts only symbols explicitly present in its provider alias map and raises a validation error otherwise.
+- Regression coverage verifies unsupported direct OANDA symbols fail before any client request.
+
+## TASK-108
+Phase: Phase 4 — Market/Data Layer
+Title: Canonical Market-Data Symbol and Timeframe Boundary
+Implementation Status: VERIFIED — exact-head CI green on 0b3c29b11ad4020bfbfae23c348d713545c05eab and subsequent 944d7b3176d201e6cf29c921d2bd27886b86a81d
+Evidence:
+- Concrete gap: MarketDataEngine did not consistently enforce the centralized supported-symbol universe and its provider-facing timeframe normalization could turn canonical `15m` into `15M`, which is not the repository provider contract.
+- MarketDataEngine now validates symbols against `config/symbols.py` and maps canonical timeframes explicitly to provider-facing `M1/M5/M15/M30/H1/H4/D1/W1` identifiers.
+- Regression coverage protects the canonical boundary and timeframe mapping.
+
+## TASK-109
+Phase: Phase 4 — Market/Data Layer
+Title: Full Market/Data Layer Closure Audit
+Implementation Status: VERIFIED — exact-head CI green on 944d7b3176d201e6cf29c921d2bd27886b86a81d
+Scope audited:
+- Candle model/validation and OHLCV contracts.
+- Central symbol registry, market-family classification, and timeframe normalization.
+- MarketDataService and MarketDataEngine ownership, quality, freshness, ordering, duplicate, gap, DataFrame, and fail-closed paths.
+- ProviderManager routing, fallback, retries, cooldowns, lifecycle/reconfiguration, concurrency isolation, capability boundaries, result validation, and limits.
+- OANDA, Finnhub, and Alpha Vantage provider parsing, capability boundaries, timeframe mappings, rate-limit/error handling, and direct-provider contracts.
+- Weekend/market-closure gap semantics and freshness/future-timestamp handling.
+- Currency conversion direction, supported-pair resolution, stablecoin/USD bridge, invalid-data failure behavior, and application-scoped market-data ownership.
+- Multi-asset compatibility and explicit provider capability limitations.
+- Production configuration/readiness contracts and E2E/CI gates.
+Result:
+- No additional repository-backed Phase-4 code gap was identified beyond TASK-107 and TASK-108.
+- No speculative provider expansion, caching layer, retry policy rewrite, or market-session model was introduced because repository evidence did not establish a correctness defect requiring it.

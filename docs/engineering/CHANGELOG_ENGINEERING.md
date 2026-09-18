@@ -1,5 +1,14 @@
 # Engineering Changelog
 
+## 2026-09-18 — Phase 4 Market/Data Layer closure
+- TASK-107 closed a direct OANDA boundary inconsistency: `supports_symbol()` rejected unsupported symbols while direct `_normalize_symbol()` still accepted arbitrary six-letter alphabetic instruments. Direct OANDA requests now fail closed outside the explicit instrument map.
+- TASK-108 closed a canonical MarketDataEngine boundary gap: the engine now validates the centralized supported-symbol registry and explicitly maps internal timeframes to provider-facing identifiers. This also corrected the `15m -> 15M` provider-boundary normalization defect.
+- TASK-109 completed the Phase-4 audit across candle contracts, symbol/asset metadata, timeframe normalization, MarketDataService/Engine, ProviderManager, all registered providers, fallback/retry/cooldown, ordering/duplicates/gaps, freshness, DataQuality, DataFrame conversion, currency conversion, multi-asset compatibility, production configuration/readiness, and E2E fail-closed behavior.
+- No further repository-backed Phase-4 code gap was identified. Speculative provider expansion, caching, retry-policy redesign, and new market-session behavior were intentionally not introduced without concrete evidence.
+- Closure code HEAD: `944d7b3176d201e6cf29c921d2bd27886b86a81d`; all seven required checks completed successfully.
+
+# Engineering Changelog
+
 ## 2026-09-15 — Provider capability boundary hardening
 - TASK-100 identified a concrete multi-asset reliability gap: the scanner's multi-asset universe includes Crypto, Stocks, Indices, and Commodities, but the registered Finnhub and Alpha Vantage providers are Forex-only and OANDA has a narrower instrument map. ProviderManager previously attempted every configured provider for every symbol, turning known capability mismatches into generic failures/retries/cooldowns.
 - Added explicit `supports_symbol()` provider capability boundaries. OANDA now exposes its actual instrument acceptance; Finnhub and Alpha Vantage explicitly declare Forex-only coverage.

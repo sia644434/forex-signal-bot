@@ -86,3 +86,8 @@ Status: NOT_STARTED
 
 ## Roadmap Rule
 Work phases sequentially. Phase 2 is closed. Phase 3 is the active audit frontier. Later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
+
+
+## Phase 4 — Market/Data Layer
+Status: COMPLETE
+Evidence: The Phase-4 market/data audit was completed through TASK-109. Concrete gaps in the canonical symbol/timeframe boundary and direct OANDA provider boundary were corrected in TASK-107/108. The full audited surface had no further repository-backed correctness gap requiring code changes. Exact-head GitHub Actions verification on closure HEAD `944d7b3176d201e6cf29c921d2bd27886b86a81d` shows all seven required checks completed successfully.

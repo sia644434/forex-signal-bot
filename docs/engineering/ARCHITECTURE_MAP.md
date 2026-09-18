@@ -102,3 +102,13 @@ Focus on concrete repository-backed contract gaps: freshness propagation, conver
 
 ## Status
 The platform is explicitly Multi-Asset. Telegram ownership, market-data ownership, decision/risk ownership, provider lifecycle, queue lifecycle, journal persistence, and market-status semantics are consolidated. The `ai/` package is dormant/unwired. TASK-079 through TASK-084 extend the market/risk/Telegram reliability contract hardening without introducing speculative architecture. Phase 2 remains active.
+
+
+## Phase 4 Closure
+- Market-data ownership remains `MarketDataService → MarketDataEngine → ProviderManager → provider(s)`.
+- The canonical symbol boundary is enforced through `config/symbols.py`; MarketDataEngine rejects symbols outside the declared platform universe before provider access.
+- Internal timeframes are normalized centrally and translated explicitly to provider-facing identifiers at the MarketDataEngine boundary.
+- Provider capability boundaries are explicit: unsupported provider/market combinations fail closed instead of being treated as transient provider outages.
+- OANDA direct normalization now shares the same fail-closed instrument boundary as its declared capability contract.
+- ProviderManager retains routing/fallback/retry/cooldown responsibilities; no speculative retry or caching redesign was introduced because the audit found no repository-backed correctness defect requiring it.
+- Phase 4 audit closure HEAD: `944d7b3176d201e6cf29c921d2bd27886b86a81d`; exact-head seven-check verification succeeded.

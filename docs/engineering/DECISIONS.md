@@ -109,3 +109,18 @@ The analysis layer's directional component scores are signed (`-100..100`), whil
 - Provider lifecycle state must reflect only the active provider configuration.
 - Market status uses canonical `OPEN/CLOSED/STALE/NO_DATA` semantics.
 - Exact-head GitHub Actions evidence is required before marking implementation checkpoints VERIFIED.
+
+
+## ADR-014 — Provider Capability and Direct-Call Boundaries Must Agree
+Date: 2026-09-18
+Problem: A provider can correctly advertise a symbol capability while a lower-level direct request path still accepts a broader input set.
+Chosen Solution: Concrete providers must make direct symbol normalization no broader than their declared capability boundary.
+Reason: Direct provider callers must fail closed just like ProviderManager callers; otherwise the capability contract is only advisory.
+Affected Components: OANDA provider and provider contract tests.
+
+## ADR-015 — Canonical Market-Data Input Contract at the Engine Boundary
+Date: 2026-09-18
+Problem: The platform has a centralized multi-asset symbol/timeframe contract, but a lower-level application boundary could pass provider-facing identifiers without consistently enforcing that central contract.
+Chosen Solution: MarketDataEngine validates the centralized supported-symbol universe and translates canonical internal timeframes explicitly into provider-facing identifiers.
+Reason: Keeps application-facing market semantics independent from provider-specific naming and prevents malformed or unsupported market-data requests from reaching providers.
+Affected Components: `data/market_data.py`, `config/symbols.py`, provider contract tests.
