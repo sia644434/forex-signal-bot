@@ -55,3 +55,12 @@
 - Restricted production CI workflow permissions to `contents: read` where write access is unnecessary.
 - Exact audit HEAD: `b92aae52828e7737402da30ec5d513df4c8b0dad`; all seven required GitHub Actions checks completed successfully.
 - Phase 10 remains open for additional concrete security/production-hardening audit work.
+
+
+## 2026-09-19 — Phase 10 Security / Production Hardening closure
+- TASK-127 completed the broader security/production-hardening closure audit.
+- Hardened production configuration so `DEBUG=true` fails closed in production and PC Worker URLs reject malformed/credential-bearing/fragmented URLs; blank worker tokens are rejected.
+- Hardened WorkerHTTPServer boolean request validation for `allow_cpu_fallback`.
+- Added `.dockerignore` to prevent `.env`, logs, VCS metadata, and local development artifacts from entering Docker build context.
+- Reviewed health exposure, dependency auditing, CI permissions, secret handling, and error/logging boundaries; no additional repository-backed gap requiring code changes was identified.
+- Phase 10 is COMPLETE; Phase 11 — Testing — is the next audit frontier.
