@@ -7,7 +7,7 @@ from typing import Callable
 
 import pandas as pd
 
-from config.symbols import get_market_type
+from config.symbols import get_market_type, is_supported_symbol, normalize_timeframe as normalize_config_timeframe
 from data.base import MarketDataProvider
 from data.freshness import FreshnessPolicy, FreshnessReport
 from data.models import Candle
@@ -48,11 +48,11 @@ class MarketDataEngine:
         limit: int,
     ) -> tuple[str, str, int]:
         MarketDataProvider.validate_request(symbol, timeframe, limit)
-        return (
-            MarketDataProvider.normalize_symbol(symbol),
-            MarketDataProvider.normalize_timeframe(timeframe),
-            limit,
-        )
+        normalized_symbol = MarketDataProvider.normalize_symbol(symbol)
+        if not is_supported_symbol(normalized_symbol):
+            raise ValueError(f"Unsupported market symbol: {normalized_symbol}")
+        normalized_timeframe = normalize_config_timeframe(timeframe)
+        return (normalized_symbol, normalized_timeframe.upper().replace("1H", "H1").replace("1D", "D1").replace("1W", "W1"), limit)
 
     @staticmethod
     def _timeframe_to_timedelta(timeframe: str) -> timedelta:
