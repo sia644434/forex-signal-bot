@@ -33,3 +33,14 @@ def test_indicator_engine_score_normalization_fails_closed(value) -> None:
 def test_market_structure_rejects_invalid_prices(value) -> None:
     with pytest.raises(ValueError, match="finite and greater than zero"):
         MarketStructureDetector().analyze([1.0, value, 1.1])
+
+
+@pytest.mark.parametrize("validator_module", ["analysis.indicators.base", "analysis.indicators.moving_average", "analysis.indicators.momentum"])
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
+def test_indicator_primitives_reject_non_finite_values(validator_module, value) -> None:
+    import importlib
+
+    module = importlib.import_module(validator_module)
+    validator = getattr(module, "validate_series", None) or getattr(module, "_validate_values")
+    with pytest.raises((ValueError, TypeError), match="finite"):
+        validator([1.0, value, 2.0])
