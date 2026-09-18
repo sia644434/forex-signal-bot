@@ -19,7 +19,7 @@
 Before marking TASK-091 through TASK-100 VERIFIED, inspect the exact `main` HEAD and confirm the complete required workflow set succeeds: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate. Also inspect combined commit status. Do not claim Railway/live-smoke verification unless fresh evidence exists.
 
 ## Next Verification Frontier
-Phase 9 is formally closed on code closure HEAD `d616df74377af7de1aaf798c7b876fe8acecee60`. The next verification frontier is Phase 10 — Security / Production Hardening. Revisit earlier phases only when concrete repository evidence identifies a new regression or gap.
+Phase 11 is formally closed through TASK-128. Phase 12 is already recorded as complete, so the next unresolved verification frontier is Phase 13 — Final Production Audit. Revisit earlier phases only when concrete repository evidence identifies a new regression or gap.
 
 ## New-chat Rule
 A new conversation must read `PROJECT_STATE.md`, `PHASE_STATE.md`, `TASK_STATE.md`, `TEST_STATE.md`, `ARCHITECTURE_MAP.md`, `DECISIONS.md`, and `CHANGELOG_ENGINEERING.md`, then inspect the exact current `main` HEAD and Actions status before changing code. Continue from the first unresolved frontier; do not repeat completed tasks or invent speculative work. Repository inspection/modification must use GitHub Connector only.
