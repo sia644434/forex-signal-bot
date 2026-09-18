@@ -21,7 +21,7 @@ Canonical production ownership: `services/telegram/`.
 
 ## Market Data / Providers
 Canonical application flow: `Multi-Asset caller → MarketDataService → MarketDataEngine → ProviderManager → provider(s)`.
-`MarketDataEngine` owns final candle quality/freshness gates; `ProviderManager` owns provider routing/fallback/retry/cooldown behavior. Scanner may retain an explicitly selected ProviderManager for provider-readiness semantics but does not construct MarketDataEngine directly.
+`MarketDataEngine` owns final candle quality/freshness gates; `ProviderManager` owns provider routing/fallback/retry/cooldown behavior. Scanner may retain an explicitly selected ProviderManager for provider-readiness semantics but does not construct MarketDataEngine directly. The scanner's configurable universe is bounded and must reject symbols outside the centralized supported-symbol contract.
 TASK-036 through TASK-044 established canonical market-data ownership and lifecycle boundaries. TASK-071 hardened timestamp/provider timing boundaries. TASK-072 and TASK-077 hardened market-closure gap semantics. TASK-076 restored list/tuple provider-result compatibility. TASK-081 aligned DataQuality with centralized symbol normalization. TASK-082 made provider reconfiguration lifecycle-isolated.
 
 ## Analysis Layer
@@ -99,6 +99,9 @@ Telegram journal invalid/corrupt storage → explicit `JournalStoreError` fail-c
 Continue the cross-layer audit through:
 `ProviderManager → MarketDataService → Freshness/DataQuality → Symbol/Asset Metadata → CurrencyConversion → MarketAwareAnalysisEngine → RiskEngine → PositionSizing → Telegram/Scanner/Tracker/Callbacks → Worker/Queue/Persistence → Security/Production → Final E2E`.
 Focus on concrete repository-backed contract gaps: freshness propagation, conversion freshness/direction, quantity/contract semantics, precision/rounding, finite/overflow boundaries, and end-to-end fail-closed behavior.
+
+## Scope Correction — 2026-09-19
+The platform is explicitly **Multi-Asset**, not Forex-only. The supported application scope is Forex, Crypto, Stocks, Indices, and Commodities. Any prompt or historical task wording that says Forex-only must not be used to remove or bypass the repository's established non-Forex contracts.
 
 ## Status
 The platform is explicitly Multi-Asset. Telegram ownership, market-data ownership, decision/risk ownership, provider lifecycle, queue lifecycle, journal persistence, and market-status semantics are consolidated. The `ai/` package is dormant/unwired. TASK-079 through TASK-084 extend the market/risk/Telegram reliability contract hardening without introducing speculative architecture. Phase 2 remains active.
