@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 import math
 from dataclasses import replace
 
@@ -8,7 +9,8 @@ from analysis.currency import get_contract_size, get_quote_currency
 from analysis.full_engine import FullAnalysisEngine
 from analysis.risk_engine import RiskEngine
 from config.settings import Settings
-from config.symbols import normalize_symbol
+from config.symbols import TIMEFRAME_MINUTES, normalize_symbol, normalize_timeframe
+from data.freshness import FreshnessPolicy
 from data.models import Candle
 from services.market_data.currency_conversion import CurrencyConversionService
 from services.market_data.service import MarketDataService
@@ -51,6 +53,27 @@ class MarketAwareAnalysisEngine:
                     f"expected {normalized_symbol}, got {candle_symbol}."
                 )
 
+    @staticmethod
+    def _validate_market_freshness(candles, timeframe: str) -> None:
+        """Enforce the canonical six-candle freshness boundary at the analysis/risk boundary."""
+        try:
+            normalized_timeframe = normalize_timeframe(timeframe)
+            interval = timedelta(minutes=TIMEFRAME_MINUTES[normalized_timeframe])
+        except (KeyError, TypeError, ValueError) as error:
+            raise ValueError(f"Unsupported timeframe for market-aware analysis: {timeframe!r}") from error
+
+        now = datetime.now(timezone.utc)
+        report = FreshnessPolicy.assess(
+            candles[-1].timestamp,
+            now=now,
+            timeframe=interval,
+        )
+        if not report.is_usable:
+            raise ValueError(
+                "Market data is not fresh enough for market-aware analysis: "
+                f"status={report.status}, age={report.age}, timeframe={normalized_timeframe}"
+            )
+
     async def analyze(self, candles, *, symbol: str, timeframe: str):
         if not isinstance(symbol, str):
             raise TypeError("symbol must be a string.")
@@ -70,8 +93,9 @@ class MarketAwareAnalysisEngine:
             raise ValueError("candles are required for market-aware analysis")
 
         normalized_symbol = normalize_symbol(symbol)
-        normalized_timeframe = timeframe.strip()
+        normalized_timeframe = normalize_timeframe(timeframe)
         self._validate_market_context(candles, normalized_symbol)
+        self._validate_market_freshness(candles, normalized_timeframe)
         quote_currency = get_quote_currency(normalized_symbol)
         contract_size = get_contract_size(normalized_symbol)
 
