@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Any
 
 from analysis.indicators import (
@@ -71,16 +72,20 @@ class IndicatorEngine:
         # Normalize input
         # ----------------------------------------------------
 
+        if closes is None or isinstance(closes, (str, bytes)):
+            raise TypeError("closes must be a numeric sequence.")
+
         normalized_closes: list[float] = []
-
-        for value in closes:
+        for index, value in enumerate(closes):
             if value is None:
-                continue
-
+                raise ValueError(f"close at index {index} must be finite and greater than zero.")
             try:
-                normalized_closes.append(float(value))
-            except (TypeError, ValueError):
-                continue
+                numeric = float(value)
+            except (TypeError, ValueError, OverflowError) as error:
+                raise ValueError(f"close at index {index} must be finite and greater than zero.") from error
+            if not math.isfinite(numeric) or numeric <= 0:
+                raise ValueError(f"close at index {index} must be finite and greater than zero.")
+            normalized_closes.append(numeric)
 
         closes = normalized_closes
 
@@ -305,11 +310,10 @@ class IndicatorEngine:
 
         try:
             score = float(score)
-        except (
-            TypeError,
-            ValueError,
-        ):
-            return 50.0
+        except (TypeError, ValueError, OverflowError) as error:
+            raise ValueError("indicator score must be numeric and finite.") from error
+        if not math.isfinite(score):
+            raise ValueError("indicator score must be numeric and finite.")
 
         return max(
             0.0,
