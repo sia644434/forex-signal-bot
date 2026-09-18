@@ -413,87 +413,6 @@ class MarketStructureDetector:
 
     
     # ==================================================
-    # Swing Classification
-    # ==================================================
-
-    def classify_swings(
-        self,
-        swings: list[SwingPoint],
-    ) -> list[SwingPoint]:
-
-        classified: list[SwingPoint] = []
-
-        previous_high: float | None = None
-        previous_low: float | None = None
-
-        for swing in swings:
-
-            # ------------------------------------------
-            # Swing High
-            # ------------------------------------------
-
-            if swing.kind == "high":
-
-                if previous_high is None:
-
-                    label = "H"
-
-                elif swing.price > previous_high:
-
-                    label = "HH"
-
-                elif swing.price < previous_high:
-
-                    label = "LH"
-
-                else:
-
-                    label = "EH"
-
-                previous_high = swing.price
-
-            # ------------------------------------------
-            # Swing Low
-            # ------------------------------------------
-
-            elif swing.kind == "low":
-
-                if previous_low is None:
-
-                    label = "L"
-
-                elif swing.price > previous_low:
-
-                    label = "HL"
-
-                elif swing.price < previous_low:
-
-                    label = "LL"
-
-                else:
-
-                    label = "EL"
-
-            else:
-
-                continue
-
-            if swing.kind == "low":
-
-                previous_low = swing.price
-
-            classified.append(
-                SwingPoint(
-                    index=swing.index,
-                    price=float(swing.price),
-                    kind=label,
-                )
-            )
-
-        return classified
-
-
-    # ==================================================
     # Trend Detection
     # ==================================================
 
@@ -1045,4 +964,4 @@ class MarketStructureDetector:
 # Backward-Compatible Alias
 # ==================================================
 
-MarketStructureDetector = MarketStructureAnalyzer
+MarketStructureAnalyzer = MarketStructureDetector
