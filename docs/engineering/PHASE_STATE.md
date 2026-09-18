@@ -65,8 +65,8 @@ Status: COMPLETE
 Evidence: Full Phase-7 cross-layer closure audit completed. Worker readiness gating, malformed/future/identity-less heartbeat handling, durable queue lifecycle, claim fencing, renewable leases, timeout fencing, persistent runtime-loop behavior, recovery, graceful shutdown, HTTP authentication, request validation, bounded payloads, internal-error redaction, and regression coverage were audited. No additional repository-backed Phase-7 correctness gap was identified. Exact closure HEAD `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a` passed all seven required GitHub Actions checks.
 
 ## Phase 8 — Trading / Decision Engine
-Status: IN_PROGRESS
-Evidence: Core DecisionEngine/RiskEngine/PositionSizing contracts are implemented and historically verified. Current cross-layer closure audit remains focused on multi-asset decision/risk propagation and fail-closed boundaries before phase completion.
+Status: COMPLETE
+Evidence: Phase-8 cross-layer closure audit completed through TASK-124. TASK-123 hardened the MarketAwareAnalysisEngine boundary so market-aware risk cannot consume mismatched-symbol or stale/future Candle inputs, while preserving the established legacy candle-like compatibility contract. DecisionEngine, ConfidenceEngine, RiskEngine, PositionSizing, CurrencyConversion, and MarketAwareAnalysisEngine were audited for multi-asset propagation, numeric safety, risk-policy enforcement, conversion direction/freshness, quantity semantics, and fail-closed behavior. No additional repository-backed Phase-8 correctness gap was identified. Code closure HEAD `1edbf5126c86bcde45c32cf91e365d22e20e4037` passed all seven required GitHub Actions checks.
 
 ## Phase 9 — Backtesting / Simulation
 Status: IN_PROGRESS
@@ -90,7 +90,7 @@ Status: NOT_STARTED
 Dependency: Starts only after the active worker, decision/risk, backtesting, security, testing, and deployment closure audits are verified.
 
 ## Roadmap Rule
-Work phases sequentially. Phase 2 is closed. Phase 3 is the active audit frontier. Later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
+Work phases sequentially. Phases 1–8 are closed according to their recorded evidence. Phase 9 is the next audit frontier. Later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
 
 
 ## Phase 4 — Market/Data Layer
@@ -111,3 +111,12 @@ The repository is intentionally a **Multi-Asset Trading Intelligence Platform**.
 
 ## Current Closure Audit
 The active objective is to close the remaining concrete gaps across the current phase frontier as one evidence-backed batch. A phase is not marked COMPLETE until implementation, focused regression tests, exact-head required CI checks, and synchronized engineering documentation all agree.
+
+
+## Phase 8 Closure Checkpoint
+- TASK-123: MarketAwareAnalysisEngine market-context and freshness boundary hardening.
+- TASK-124: Full Phase-8 Trading / Decision Engine cross-layer closure audit.
+- Code closure HEAD: `1edbf5126c86bcde45c32cf91e365d22e20e4037`.
+- Required checks on that exact code HEAD: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate — all `completed/success`.
+- No live-production smoke verification is claimed from this audit.
+- Phase 9 — Backtesting / Simulation — is the next audit frontier.
