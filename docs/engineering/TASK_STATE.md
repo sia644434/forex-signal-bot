@@ -141,8 +141,8 @@ Evidence:
 ## Multi-Asset Architecture Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
 
-## Current Audit Frontier
-Phase 3 remains active. TASK-090 through TASK-103 are verified against exact green CI. TASK-104 addresses the concrete production health-server resource lifecycle gap. Remaining frontier is restart/recovery behavior, persistence recovery, and final end-to-end lifecycle. Do not create a task merely to advance the roadmap; create the next task only after a concrete repository-backed gap is demonstrated.
+## Historical Audit Frontier
+The Phase-3 frontier statement above is historical engineering context. Current active frontier is maintained by the latest phase closure records below.
 
 ## New-chat Continuation Contract
 When a new chat starts work on this repository, first read:
@@ -429,3 +429,19 @@ Result:
 - TASK-123 corrected the only concrete Phase-8 cross-layer boundary gap identified during this closure audit.
 - No additional repository-backed Phase-8 correctness gap requiring code changes was identified.
 - Phase 8 is closed; Phase 9 is the next audit frontier.
+
+
+## TASK-125
+Phase: Phase 9 — Backtesting / Simulation
+Title: Full Backtesting / Simulation Closure Audit
+Implementation Status: VERIFIED — exact-head seven-check CI green on `d616df74377af7de1aaf798c7b876fe8acecee60`
+Scope:
+- Deterministic and finite backtest inputs, positive close-price boundaries, fee/threshold validation, and finite equity outputs.
+- Walk-forward train/test boundary and prevention of scoring the training segment as test performance.
+- Monte Carlo simulation bounds, finite return handling, deterministic seeded execution, and invalid-parameter rejection.
+- Existing worker-owned execution contract and isolation from live trading execution paths.
+Result:
+- Concrete gaps in input validation and walk-forward leakage semantics were corrected in `worker/executors.py`.
+- Regression coverage was added for invalid simulation inputs, walk-forward train/test separation, and seeded Monte Carlo determinism.
+- No additional repository-backed Phase-9 correctness gap requiring code changes was identified.
+- Phase 9 is closed; Phase 10 — Security / Production Hardening — is the next audit frontier.
