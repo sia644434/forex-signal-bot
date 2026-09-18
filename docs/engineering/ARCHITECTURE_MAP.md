@@ -98,13 +98,13 @@ Telegram journal invalid/corrupt storage → explicit `JournalStoreError` fail-c
 ## Current Audit Frontier
 Continue the cross-layer audit through:
 `ProviderManager → MarketDataService → Freshness/DataQuality → Symbol/Asset Metadata → CurrencyConversion → MarketAwareAnalysisEngine → RiskEngine → PositionSizing → Telegram/Scanner/Tracker/Callbacks → Worker/Queue/Persistence → Security/Production → Final E2E`.
-Focus on concrete repository-backed contract gaps: freshness propagation, conversion freshness/direction, quantity/contract semantics, precision/rounding, finite/overflow boundaries, and end-to-end fail-closed behavior.
+Focus on the next concrete repository-backed frontier: deterministic backtest inputs, leakage boundaries, result contracts, simulation isolation from live execution, and end-to-end fail-closed behavior.
 
 ## Scope Correction — 2026-09-19
 The platform is explicitly **Multi-Asset**, not Forex-only. The supported application scope is Forex, Crypto, Stocks, Indices, and Commodities. Any prompt or historical task wording that says Forex-only must not be used to remove or bypass the repository's established non-Forex contracts.
 
 ## Status
-The platform is explicitly Multi-Asset. Telegram ownership, market-data ownership, decision/risk ownership, provider lifecycle, queue lifecycle, journal persistence, and market-status semantics are consolidated. The `ai/` package is dormant/unwired. TASK-079 through TASK-084 extend the market/risk/Telegram reliability contract hardening without introducing speculative architecture. Phase 2 remains active.
+The platform is explicitly Multi-Asset. Telegram ownership, market-data ownership, decision/risk ownership, provider lifecycle, queue lifecycle, journal persistence, and market-status semantics are consolidated. The `ai/` package is dormant/unwired. Phases 1–8 are closed according to their recorded engineering evidence. Phase 9 — Backtesting / Simulation — is the next audit frontier.
 
 
 ## Phase 4 Closure
@@ -130,3 +130,11 @@ The platform is explicitly Multi-Asset. Telegram ownership, market-data ownershi
 - Numeric configuration/response boundaries reject non-finite values.
 - No agent/model/Ollama runtime architecture is part of the active system.
 - Phase-6 code closure HEAD: `91a59421cbd82043cec59bc9f5fe883796a1a8da`; exact-head seven-check verification succeeded.
+
+
+## Phase 8 Closure
+- MarketAwareAnalysisEngine now binds market-aware analysis to the requested canonical symbol and rejects stale/future Candle inputs before analysis/risk evaluation, while preserving legacy candle-like compatibility where market metadata is unavailable.
+- DecisionEngine, ConfidenceEngine, RiskEngine, PositionSizing, CurrencyConversionService, and MarketAwareAnalysisEngine were audited as one multi-asset decision/risk chain.
+- No additional Phase-8 repository-backed correctness gap was identified after TASK-123.
+- Phase-8 code closure HEAD: `1edbf5126c86bcde45c32cf91e365d22e20e4037`; exact-head seven-check verification succeeded.
+- Phase 9 — Backtesting / Simulation — is the next audit frontier.
