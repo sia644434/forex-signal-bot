@@ -33,6 +33,23 @@ class _PersistentSettings(dict):
         super().update(*args, **kwargs)
         self._persist()
 
+    def setdefault(self, key: str, default: Any = None):
+        if key in self:
+            return self[key]
+        value = super().setdefault(key, default)
+        self._persist()
+        return value
+
+    def pop(self, key: str, *args):
+        value = super().pop(key, *args)
+        self._persist()
+        return value
+
+    def popitem(self):
+        value = super().popitem()
+        self._persist()
+        return value
+
     def clear(self) -> None:
         super().clear()
         self._persist()
