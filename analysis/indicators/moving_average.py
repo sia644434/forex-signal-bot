@@ -46,7 +46,7 @@ def _validate_values(
         try:
             numeric = float(value)
         except (TypeError, ValueError, OverflowError) as error:
-            raise TypeError(f"value at index {index} must be numeric and finite.") from error
+            raise ValueError(f"value at index {index} must be numeric and finite.") from error
         if not math.isfinite(numeric):
             raise ValueError(f"value at index {index} must be numeric and finite.")
 
