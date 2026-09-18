@@ -69,8 +69,8 @@ Status: COMPLETE
 Evidence: Phase-8 cross-layer closure audit completed through TASK-124. TASK-123 hardened the MarketAwareAnalysisEngine boundary so market-aware risk cannot consume mismatched-symbol or stale/future Candle inputs, while preserving the established legacy candle-like compatibility contract. DecisionEngine, ConfidenceEngine, RiskEngine, PositionSizing, CurrencyConversion, and MarketAwareAnalysisEngine were audited for multi-asset propagation, numeric safety, risk-policy enforcement, conversion direction/freshness, quantity semantics, and fail-closed behavior. No additional repository-backed Phase-8 correctness gap was identified. Code closure HEAD `1edbf5126c86bcde45c32cf91e365d22e20e4037` passed all seven required GitHub Actions checks.
 
 ## Phase 9 — Backtesting / Simulation
-Status: IN_PROGRESS
-Evidence: Worker-side backtest, walk-forward, and Monte Carlo executors and regression coverage already exist. Closure audit is validating deterministic inputs, leakage boundaries, result contracts, and separation from live execution before phase completion.
+Status: COMPLETE
+Evidence: Phase-9 closure audit completed through TASK-125. Backtest, walk-forward, and Monte Carlo executors were hardened for deterministic inputs, finite/positive price boundaries, bounded simulation parameters, correct train/test separation, deterministic seeded simulation, finite result contracts, and fail-closed invalid inputs. Code closure HEAD `d616df74377af7de1aaf798c7b876fe8acecee60` passed all seven required GitHub Actions checks.
 
 ## Phase 10 — Security / Production Hardening
 Status: IN_PROGRESS
