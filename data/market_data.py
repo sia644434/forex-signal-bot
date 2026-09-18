@@ -25,6 +25,16 @@ class MarketDataEngine:
         r"^(?:(?P<unit_first>[mhdw])(?P<value_first>\d+)|(?P<value>\d+)(?P<unit>[mhdw]))$",
         re.IGNORECASE,
     )
+    _PROVIDER_TIMEFRAME_ALIASES = {
+        "1m": "M1",
+        "5m": "M5",
+        "15m": "M15",
+        "30m": "M30",
+        "1h": "H1",
+        "4h": "H4",
+        "1d": "D1",
+        "1w": "W1",
+    }
 
     def __init__(
         self,
@@ -41,6 +51,11 @@ class MarketDataEngine:
         self.freshness_policy = freshness_policy
         self._clock = clock or (lambda: datetime.now(timezone.utc))
 
+    @classmethod
+    def _normalize_timeframe(cls, timeframe: str) -> str:
+        normalized = normalize_config_timeframe(timeframe)
+        return cls._PROVIDER_TIMEFRAME_ALIASES[normalized]
+
     @staticmethod
     def _validate_request(
         symbol: str,
@@ -51,8 +66,8 @@ class MarketDataEngine:
         normalized_symbol = MarketDataProvider.normalize_symbol(symbol)
         if not is_supported_symbol(normalized_symbol):
             raise ValueError(f"Unsupported market symbol: {normalized_symbol}")
-        normalized_timeframe = normalize_config_timeframe(timeframe)
-        return (normalized_symbol, normalized_timeframe.upper().replace("1H", "H1").replace("1D", "D1").replace("1W", "W1"), limit)
+        normalized_timeframe = MarketDataEngine._normalize_timeframe(timeframe)
+        return (normalized_symbol, normalized_timeframe, limit)
 
     @staticmethod
     def _timeframe_to_timedelta(timeframe: str) -> timedelta:
