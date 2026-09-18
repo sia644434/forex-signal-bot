@@ -77,7 +77,7 @@ Railway is an infrastructure target, not a core application architecture depende
 CI status must always be verified against the exact relevant commit rather than inferred from documentation. Current audit changes are not considered VERIFIED until the required workflow set for the resulting `main` HEAD completes successfully.
 
 ## Security Boundaries
-Primary boundaries are Telegram input, external market-data providers, market-data freshness/quality, currency conversion, risk/position sizing, dormant AI provider boundary reserved for a later phase, worker API/network boundary, environment secrets, persistence, and deployment runtime. Security review is not yet complete.
+Primary boundaries are Telegram input, external market-data providers, market-data freshness/quality, currency conversion, risk/position sizing, dormant AI provider boundary reserved for a later phase, worker API/network boundary, environment secrets, persistence, and deployment runtime. Phase-10 security / production-hardening review is complete through TASK-127; Phase-11 testing verification is complete through TASK-128.
 
 ## Data Flow
 Telegram request → canonical `services/telegram/` handlers/router → application/service layer → `MarketDataService` → `MarketDataEngine` → analysis → decision → risk → position sizing/currency conversion where required → safe result/NO TRADE → Telegram response.
@@ -96,15 +96,13 @@ Telegram market-status invalid/naive/future timestamps → `NO_DATA`; stale cand
 Telegram journal invalid/corrupt storage → explicit `JournalStoreError` fail-closed behavior.
 
 ## Current Audit Frontier
-Continue the cross-layer audit through:
-`ProviderManager → MarketDataService → Freshness/DataQuality → Symbol/Asset Metadata → CurrencyConversion → MarketAwareAnalysisEngine → RiskEngine → PositionSizing → Telegram/Scanner/Tracker/Callbacks → Worker/Queue/Persistence → Security/Production → Final E2E`.
-Focus on the next concrete repository-backed frontier: deterministic backtest inputs, leakage boundaries, result contracts, simulation isolation from live execution, and end-to-end fail-closed behavior.
+Phase 11 testing verification is complete. The next unresolved repository-backed frontier is Phase 13 — Final Production Audit, covering final cross-layer production contracts, deployment evidence, recovery behavior, and end-to-end fail-closed behavior.
 
 ## Scope Correction — 2026-09-19
 The platform is explicitly **Multi-Asset**, not Forex-only. The supported application scope is Forex, Crypto, Stocks, Indices, and Commodities. Any prompt or historical task wording that says Forex-only must not be used to remove or bypass the repository's established non-Forex contracts.
 
 ## Status
-The platform is explicitly Multi-Asset. Telegram ownership, market-data ownership, decision/risk ownership, provider lifecycle, queue lifecycle, journal persistence, and market-status semantics are consolidated. The `ai/` package is dormant/unwired. Phases 1–8 are closed according to their recorded engineering evidence. Phase 9 — Backtesting / Simulation — is the next audit frontier.
+The platform is explicitly Multi-Asset. Telegram ownership, market-data ownership, decision/risk ownership, provider lifecycle, queue lifecycle, journal persistence, and market-status semantics are consolidated. The `ai/` package is dormant/unwired. Phases 1–12 are closed according to their recorded engineering evidence. Phase 13 — Final Production Audit — is the next unresolved audit frontier.
 
 
 ## Phase 4 Closure
