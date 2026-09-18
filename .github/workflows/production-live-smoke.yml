@@ -3,6 +3,9 @@ name: Production Live Smoke
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   live-health:
     runs-on: ubuntu-latest
