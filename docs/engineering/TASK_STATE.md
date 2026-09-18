@@ -397,3 +397,35 @@ Title: Full Phase-7 Cross-Layer Closure Audit
 Implementation Status: VERIFIED — exact-head CI green on `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a`
 Scope: Worker runtime, authenticated heartbeat/readiness, HTTP boundary, durable queue lifecycle, claim fencing, renewable leases, timeout fencing, persistent runtime loop, recovery, dispatcher failure/cancellation/shutdown, and regression coverage.
 Result: No additional repository-backed Phase-7 correctness gap requiring code changes was identified. Phase 7 is closed; Phase 8 is the next audit frontier.
+
+
+## TASK-123
+Phase: Phase 8 — Trading / Decision Engine
+Title: MarketAwareAnalysisEngine market-context and freshness boundary hardening
+Implementation Status: VERIFIED — exact-head seven-check CI green on `1edbf5126c86bcde45c32cf91e365d22e20e4037`
+Objective:
+- Prevent mismatched candle symbols from being analyzed under a different requested market and then passed into market-specific risk sizing.
+- Propagate the canonical market-data freshness boundary into direct MarketAwareAnalysisEngine calls so stale or future-dated market candles cannot reach decision/risk evaluation.
+- Preserve the existing compatibility contract for legacy candle-like inputs that do not expose market metadata.
+Relevant Files:
+- `analysis/market_aware_engine.py`
+- `tests/test_market_aware_engine.py`
+Verification:
+- Regression coverage verifies candle-symbol mismatch rejection, stale-input rejection, future-input rejection, and preserved existing market-aware contracts.
+- Exact code HEAD `1edbf512c86bcde45c32cf91e365d22e20e4037` passed all seven required GitHub Actions checks.
+
+## TASK-124
+Phase: Phase 8 — Trading / Decision Engine
+Title: Full Phase-8 Trading / Decision Engine Cross-Layer Closure Audit
+Implementation Status: VERIFIED — exact-head seven-check CI green on `1edbf5126c86bcde45c32cf91e365d22e20e4037`
+Scope:
+- DecisionEngine score normalization, weighting, thresholds, finite-value boundaries, and signal/bias contracts.
+- ConfidenceEngine normalization, agreement/conflict, data-quality and uncertainty contracts.
+- RiskEngine directional risk plan, ATR/risk-distance handling, configured risk ceiling, output ordering, and numeric overflow boundaries.
+- PositionSizing account/quote currency units, conversion requirements, contract-size semantics, precision/rounding, and finite-range handling.
+- CurrencyConversionService direction, inversion, stablecoin/USD bridge, freshness through the canonical market-data path, and fail-closed behavior.
+- MarketAwareAnalysisEngine multi-asset symbol metadata, candle identity, freshness propagation, currency conversion, account-risk wiring, and report/risk handoff.
+Result:
+- TASK-123 corrected the only concrete Phase-8 cross-layer boundary gap identified during this closure audit.
+- No additional repository-backed Phase-8 correctness gap requiring code changes was identified.
+- Phase 8 is closed; Phase 9 is the next audit frontier.
