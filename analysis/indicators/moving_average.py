@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from collections.abc import Sequence
 
 from core.errors import ApplicationError
@@ -37,6 +39,16 @@ def _validate_values(
         raise ValueError(
             "values cannot be empty."
         )
+
+    for index, value in enumerate(values):
+        if isinstance(value, bool):
+            raise TypeError(f"value at index {index} must be numeric and finite.")
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError, OverflowError) as error:
+            raise TypeError(f"value at index {index} must be numeric and finite.") from error
+        if not math.isfinite(numeric):
+            raise ValueError(f"value at index {index} must be numeric and finite.")
 
 
 def sma(
