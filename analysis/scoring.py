@@ -141,11 +141,6 @@ class AnalysisScorer:
         )
 
 
-        components.append(
-            self._score_ai(
-                analysis_result
-            )
-        )
 
 
 

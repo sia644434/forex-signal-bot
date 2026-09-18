@@ -9,7 +9,6 @@ def test_ai_is_not_a_production_scoring_component() -> None:
         trend="sideways",
         momentum="neutral",
         indicators={},
-        ai_score=100.0,
     )
     score = AnalysisScorer().score(result)
     assert all(component.name != "ai" for component in score.components)
