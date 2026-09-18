@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from analysis.market_structure.models import (
     SwingPoint,
     MarketStructureResult,
@@ -70,6 +72,18 @@ class MarketStructureDetector:
             raise ValueError(
                 "At least 3 prices are required."
             )
+
+        for index, price in enumerate(prices):
+            try:
+                numeric = float(price)
+            except (TypeError, ValueError, OverflowError) as error:
+                raise ValueError(
+                    f"price at index {index} must be finite and greater than zero."
+                ) from error
+            if not math.isfinite(numeric) or numeric <= 0:
+                raise ValueError(
+                    f"price at index {index} must be finite and greater than zero."
+                )
 
 
     @staticmethod
