@@ -26,7 +26,7 @@ def test_worker_service_stop_closes_dispatcher_queue():
 
     assert service.health()["dispatcher"]["queue_configured"] is True
 
-    service.stop()
+    asyncio.run(service.stop())
 
     assert service.health()["dispatcher"] == {"queue_configured": False}
 
@@ -230,3 +230,36 @@ def test_worker_service_heartbeat_is_controlled_when_unconfigured():
 
     assert heartbeat == {"status": "WORKER_OFFLINE", "configured": False}
     assert service.health()["readiness"] == "UNCONFIGURED"
+
+
+
+def test_worker_dispatcher_shutdown_waits_for_active_submission_before_closing_queue():
+    queue = WorkerQueue(":memory:")
+    started = asyncio.Event()
+    release = asyncio.Event()
+
+    async def submit(_request):
+        started.set()
+        await release.wait()
+        return type("Result", (), {
+            "job_id": "drain-1",
+            "status": "COMPLETED",
+            "job_type": "backtest",
+            "output": {"ok": True},
+            "error": None,
+        })()
+
+    dispatcher = WorkerDispatcher(submit=submit, queue=queue)
+
+    async def scenario():
+        task = asyncio.create_task(dispatcher.submit(JobRequest("drain-1", "backtest")))
+        await started.wait()
+        shutdown = asyncio.create_task(dispatcher.close_async(timeout_seconds=1))
+        await asyncio.sleep(0)
+        assert not shutdown.done()
+        release.set()
+        await task
+        await shutdown
+
+    asyncio.run(scenario())
+    assert dispatcher.health() == {"queue_configured": False}
