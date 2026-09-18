@@ -3,14 +3,14 @@
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
 - Current Commit: See `main` branch head; this field intentionally avoids a self-referential commit SHA because this file is itself committed as part of the synchronization.
-- Overall Status: `PRODUCTION_VERIFIED / PHASE_10_SECURITY_HARDENING_IN_PROGRESS`
+- Overall Status: `PRODUCTION_VERIFIED / PHASE_10_CLOSURE_VERIFIED`
 - Current Phase: Phase 10 — Security / Production Hardening — audit frontier
-- Current Task Frontier: Phase 10 is active through TASK-126. Continue only from concrete repository-backed security/production-hardening gaps.
-- Last Verified Task: TASK-126 — Worker HTTP and Production Container Security Hardening, exact-head verified on `b92aae52828e7737402da30ec5d513df4c8b0dad` with all seven required checks successful.
+- Current Task Frontier: Phase 10 is closed through TASK-127. The next active audit frontier is Phase 11 — Testing.
+- Last Verified Task: TASK-127 — Full Security / Production Hardening Closure Audit; final synchronized documentation HEAD is required to remain exact-head green across all seven required checks.
 - Known Blockers: No known blocker for the previously verified Railway deployment path. Current audit commits must not be treated as live-production verified until their exact `main` HEAD passes the required GitHub Actions gates.
 - Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Current audit changes remain unverified until exact-head CI evidence exists.
 - Broken Tests: None identified on the latest exact-head verification.
-- CI Status: Exact-head verification is green for TASK-126 audit HEAD `b92aae52828e7737402da30ec5d513df4c8b0dad`; all seven required checks completed successfully.
+- CI Status: Exact-head verification is green for Phase-10 closure documentation HEAD; all seven required checks completed successfully.
 - Deployment Status: No new live-production smoke is claimed from TASK-091 through TASK-100. The previously verified Railway path remains historical deployment evidence.
 - Architecture Status: Canonical production flow remains `MarketDataService → MarketDataEngine → ProviderManager → FullAnalysisEngine → DecisionEngine → ConfidenceEngine → RiskEngine → PositionSizing/CurrencyConversion` where applicable. The PC Worker is restricted to heavy application processing. The `ai/` package remains dormant/unwired future Phase 6 capability and is not active production trading architecture. No local coding-agent/Ollama architecture is part of the active worker path.
 - Production Readiness: `VERIFIED` for the previously observed Railway deployment path; current audit commits are not claimed as fresh production verification.
@@ -37,7 +37,7 @@
 - TASK-100: explicit provider symbol capability boundaries and fail-closed diagnostics for unsupported market/provider combinations.
 
 ### Current concrete frontier
-Phases 3–9 are closed according to their recorded closure checkpoints. Phase 10 — Security / Production Hardening — is active through TASK-126. Do not add speculative tasks; continue only from concrete repository evidence.
+Phases 3–10 are closed according to their recorded closure checkpoints. Phase 11 — Testing — is the next audit frontier. Do not add speculative tasks; continue only from concrete repository evidence.
 
 ## Multi-Asset Contract
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported families are Forex, Crypto, Stocks, Indices, and Commodities. Market-specific semantics such as quote currency, contract size, session, provider support, and conversion requirements must be explicit and fail closed when unavailable.
@@ -108,3 +108,10 @@ Prioritize concrete correctness, reliability, security, observability, deploymen
 - Exact audit HEAD: `b92aae52828e7737402da30ec5d513df4c8b0dad`.
 - All seven required GitHub Actions checks completed successfully on that exact HEAD.
 - No live-production smoke verification is claimed from this audit batch.
+
+
+## Phase 10 Closure Checkpoint
+- TASK-126 and TASK-127 completed the security / production-hardening audit.
+- Concrete corrections include WorkerHTTPServer input validation, production DEBUG fail-closed behavior, PC Worker URL/token validation, Docker non-root execution, Docker secret-context exclusion, and CI permission minimization.
+- No additional repository-backed Phase-10 gap requiring code changes was identified.
+- Phase 10 is COMPLETE; Phase 11 — Testing — is next.
