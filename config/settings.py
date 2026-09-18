@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import os
+from urllib.parse import urlsplit
 from dataclasses import dataclass
 from typing import Optional
 
@@ -130,8 +131,11 @@ class Settings:
     def __post_init__(self) -> None:
         if not self.app_name.strip():
             raise ValueError("APP_NAME cannot be empty.")
-        if self.environment.lower() not in {"development", "testing", "staging", "production"}:
+        normalized_environment = self.environment.strip().lower()
+        if normalized_environment not in {"development", "testing", "staging", "production"}:
             raise ValueError("ENVIRONMENT must be development, testing, staging, or production.")
+        if normalized_environment == "production" and self.debug:
+            raise ValueError("DEBUG must be false in production.")
         if self.account_currency is not None:
             currency = self.account_currency.strip().upper()
             if not currency:
@@ -165,8 +169,18 @@ class Settings:
             raise ValueError("WORKER_QUEUE_RECOVERY_GRACE_SECONDS cannot be negative.")
         if self.pc_worker_url is not None and not self.pc_worker_url.strip():
             raise ValueError("PC_WORKER_URL cannot be empty.")
+        if self.pc_worker_url:
+            parsed_worker_url = urlsplit(self.pc_worker_url.strip())
+            if parsed_worker_url.scheme not in {"http", "https"} or not parsed_worker_url.hostname:
+                raise ValueError("PC_WORKER_URL must be an absolute HTTP(S) URL.")
+            if parsed_worker_url.username or parsed_worker_url.password:
+                raise ValueError("PC_WORKER_URL must not contain embedded credentials.")
+            if parsed_worker_url.fragment:
+                raise ValueError("PC_WORKER_URL must not contain a URL fragment.")
         if self.pc_worker_url and not self.pc_worker_token:
             raise ValueError("PC_WORKER_URL is configured but PC_WORKER_TOKEN is missing.")
+        if self.pc_worker_token is not None and not self.pc_worker_token.strip():
+            raise ValueError("PC_WORKER_TOKEN cannot be blank when configured.")
         if self.pc_worker_timeout < 1:
             raise ValueError("PC_WORKER_TIMEOUT must be at least 1 second.")
         if self.pc_worker_heartbeat_max_age < 1:
