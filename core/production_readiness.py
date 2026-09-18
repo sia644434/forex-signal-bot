@@ -50,8 +50,8 @@ class ProductionReadiness:
             else:
                 warnings.append("No market-data provider credential is configured")
 
-        if self.env.get("AI_ENABLED", "true").lower() == "true" and not self.env.get("AI_API_KEY"):
-            warnings.append("AI is enabled but AI_API_KEY is missing; AI must remain unavailable")
+        if self.env.get("AI_ENABLED", "false").lower() == "true" and not self.env.get("AI_API_KEY"):
+            warnings.append("AI is explicitly enabled but AI_API_KEY is missing; AI must remain unavailable")
 
         if not self.env.get("DEFAULT_SYMBOL"):
             warnings.append("DEFAULT_SYMBOL is not configured")

@@ -28,7 +28,6 @@ class AnalysisScorer:
     - Wyckoff
     - Smart Money Concepts
     - Liquidity
-    - AI
     """
 
 
@@ -601,29 +600,6 @@ class AnalysisScorer:
                 0.0,
             ),
             reason="Liquidity analysis score.",
-        )
-
-
-
-    # =========================
-    # AI
-    # =========================
-
-
-    @staticmethod
-    def _score_ai(
-        result: AnalysisResult,
-    ) -> SignalComponent:
-
-
-        return SignalComponent(
-            name="ai",
-            score=getattr(
-                result,
-                "ai_score",
-                0.0,
-            ),
-            reason="AI model score.",
         )
 
 
