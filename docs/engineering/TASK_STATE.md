@@ -460,3 +460,21 @@ Result:
 - All seven required GitHub Actions workflows completed successfully on the exact audit HEAD.
 - No live-production smoke verification is claimed from this task.
 - Phase 10 remains the active audit frontier for additional concrete security/production-hardening gaps.
+
+
+## TASK-127
+Phase: Phase 10 — Security / Production Hardening
+Title: Full Security / Production Hardening Closure Audit
+Implementation Status: VERIFIED — final synchronized documentation HEAD exact-head seven-check CI green
+Scope:
+- Worker HTTP authentication and request-boundary validation.
+- Production runtime configuration fail-closed behavior.
+- PC Worker URL/token configuration validation.
+- Docker non-root execution and secret/local-file exclusion from the Docker build context.
+- CI workflow permission minimization.
+- Health endpoint exposure and information disclosure boundaries.
+- Dependency security audit and secret/logging boundary review.
+Result:
+- Concrete gaps found in TASK-126 and the follow-up audit were corrected and regression-covered.
+- No additional repository-backed Phase-10 security/production-hardening gap requiring code changes was identified.
+- Phase 10 is COMPLETE; Phase 11 — Testing — is the next audit frontier.
