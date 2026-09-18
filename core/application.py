@@ -70,7 +70,10 @@ class Application:
         try:
             self.health_server.start()
         except Exception:
-            await self.services.stop_all()
+            try:
+                self.health_server.stop()
+            finally:
+                await self.services.stop_all()
             raise
 
         logger.info(
