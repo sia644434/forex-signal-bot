@@ -81,7 +81,7 @@ def test_application_start_rolls_back_services_when_health_server_fails() -> Non
     with pytest.raises(RuntimeError, match="health server failed to start"):
         run(app.start())
 
-    assert events == ["services.start", "health.start", "services.stop"]
+    assert events == ["services.start", "health.start", "health.stop", "services.stop"]
 
 
 def test_application_stop_stops_health_server_before_services() -> None:
