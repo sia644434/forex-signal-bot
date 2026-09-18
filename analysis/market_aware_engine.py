@@ -98,9 +98,10 @@ class MarketAwareAnalysisEngine:
             raise ValueError("candles are required for market-aware analysis")
 
         normalized_symbol = normalize_symbol(symbol)
-        normalized_timeframe = normalize_timeframe(timeframe)
+        normalized_timeframe = timeframe.strip()
+        canonical_timeframe = normalize_timeframe(normalized_timeframe)
         self._validate_market_context(candles, normalized_symbol)
-        self._validate_market_freshness(candles, normalized_timeframe)
+        self._validate_market_freshness(candles, canonical_timeframe)
         quote_currency = get_quote_currency(normalized_symbol)
         contract_size = get_contract_size(normalized_symbol)
 
