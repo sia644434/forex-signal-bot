@@ -30,8 +30,11 @@ class PCWorkerClient:
         )
         try:
             with urllib.request.urlopen(request, timeout=self.timeout) as response:
-                return json.loads(response.read().decode("utf-8"))
-        except (urllib.error.URLError, TimeoutError) as exc:
+                payload = json.loads(response.read().decode("utf-8"))
+            if not isinstance(payload, dict):
+                return {"status": "WORKER_OFFLINE", "configured": True, "error": "invalid heartbeat response"}
+            return payload
+        except (urllib.error.URLError, TimeoutError, ValueError) as exc:
             return {"status": "WORKER_OFFLINE", "configured": True, "error": str(exc)}
 
     def submit(self, job: JobRequest) -> JobResult:
