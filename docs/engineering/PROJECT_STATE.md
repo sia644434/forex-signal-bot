@@ -3,18 +3,18 @@
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
 - Current Commit: See `main` branch head; this field intentionally avoids a self-referential commit SHA because this file is itself committed as part of the synchronization.
-- Overall Status: `PRODUCTION_VERIFIED / PHASE_5_CLOSURE_VERIFICATION`
-- Current Phase: Phase 6 — AI/ML Boundary — closure verification
-- Current Task Frontier: TASK-115 through TASK-118 close the Phase-6 AI/ML boundary audit; no further repository-backed Phase-6 gap is currently open.
-- Last Verified Task: TASK-118 — Full AI/ML Boundary Closure Audit, exact-head verified on `91a59421cbd82043cec59bc9f5fe883796a1a8da` with all seven required checks successful.
+- Overall Status: `PRODUCTION_VERIFIED / PHASE_7_CLOSURE_VERIFIED`
+- Current Phase: Phase 8 — Trading / Decision Engine — audit frontier
+- Current Task Frontier: Phase 7 is closed through TASK-122. The next active audit frontier is Phase 8 — Trading / Decision Engine.
+- Last Verified Task: TASK-122 — Full Phase-7 Cross-Layer Closure Audit, exact-head verified on `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a` with all seven required checks successful.
 - Known Blockers: No known blocker for the previously verified Railway deployment path. Current audit commits must not be treated as live-production verified until their exact `main` HEAD passes the required GitHub Actions gates.
 - Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Current audit changes remain unverified until exact-head CI evidence exists.
 - Broken Tests: None identified on the latest exact-head verification.
-- CI Status: Exact-head verification is green for closure HEAD `91a59421cbd82043cec59bc9f5fe883796a1a8da`; all seven required checks completed successfully.
+- CI Status: Exact-head verification is green for closure HEAD `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a`; all seven required checks completed successfully.
 - Deployment Status: No new live-production smoke is claimed from TASK-091 through TASK-100. The previously verified Railway path remains historical deployment evidence.
 - Architecture Status: Canonical production flow remains `MarketDataService → MarketDataEngine → ProviderManager → FullAnalysisEngine → DecisionEngine → ConfidenceEngine → RiskEngine → PositionSizing/CurrencyConversion` where applicable. The PC Worker is restricted to heavy application processing. The `ai/` package remains dormant/unwired future Phase 6 capability and is not active production trading architecture. No local coding-agent/Ollama architecture is part of the active worker path.
 - Production Readiness: `VERIFIED` for the previously observed Railway deployment path; current audit commits are not claimed as fresh production verification.
-- Last State Update: 2026-09-18
+- Last State Update: 2026-09-19
 
 ## Current Audit Checkpoint
 
@@ -78,3 +78,9 @@ Prioritize concrete correctness, reliability, security, observability, deploymen
 - Final code HEAD: `91a59421cbd82043cec59bc9f5fe883796a1a8da`.
 - All seven required checks on that exact HEAD: `completed/success`.
 - Documentation synchronization is the final Phase-6 commit and must itself pass the same seven-check contract.
+
+
+## Phase 7 Closure Checkpoint
+- TASK-119, TASK-120, TASK-121, and TASK-122 are verified.
+- Closure HEAD: `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a`; all seven required checks completed successfully.
+- No fresh live-production smoke is claimed from this audit; historical Railway verification remains separate evidence.
