@@ -3,10 +3,10 @@
 - Project: `siasoltoon/forex-signal-bot`
 - Current Branch: `main`
 - Current Commit: See `main` branch head; this field intentionally avoids a self-referential commit SHA because this file is itself committed as part of the synchronization.
-- Overall Status: `PRODUCTION_VERIFIED / PHASE_8_CLOSURE_VERIFIED`
-- Current Phase: Phase 9 — Backtesting / Simulation — audit frontier
-- Current Task Frontier: Phase 8 is closed through TASK-124. The next active audit frontier is Phase 9 — Backtesting / Simulation.
-- Last Verified Task: TASK-124 — Full Phase-8 Trading / Decision Engine Cross-Layer Closure Audit, exact-head verified on `1edbf5126c86bcde45c32cf91e365d22e20e4037` with all seven required checks successful.
+- Overall Status: `PRODUCTION_VERIFIED / PHASE_9_CLOSURE_VERIFIED`
+- Current Phase: Phase 10 — Security / Production Hardening — audit frontier
+- Current Task Frontier: Phase 9 is closed through TASK-125. The next active audit frontier is Phase 10 — Security / Production Hardening.
+- Last Verified Task: TASK-125 — Full Phase-9 Backtesting / Simulation Closure Audit, exact-head verified on `d616df74377af7de1aaf798c7b876fe8acecee60` with all seven required checks successful.
 - Known Blockers: No known blocker for the previously verified Railway deployment path. Current audit commits must not be treated as live-production verified until their exact `main` HEAD passes the required GitHub Actions gates.
 - Known Risks: Production verification applies to the intentional Railway-connected fork `sia644434/forex-signal-bot`, synchronized by the user from this source repository. Current audit changes remain unverified until exact-head CI evidence exists.
 - Broken Tests: None identified on the latest exact-head verification.
@@ -93,3 +93,11 @@ Prioritize concrete correctness, reliability, security, observability, deploymen
 - All seven required checks on that exact code HEAD completed successfully.
 - No live-production smoke is claimed from this audit; historical Railway evidence remains separate.
 - Next audit frontier: Phase 9 — Backtesting / Simulation.
+
+
+## Phase 9 Closure Checkpoint
+- TASK-125 completed the full Backtesting / Simulation cross-layer closure audit.
+- Concrete gaps corrected: deterministic/finite simulation inputs, positive close-price validation, bounded simulation parameters, walk-forward train/test separation, and seeded Monte Carlo determinism.
+- Code closure HEAD: `d616df74377af7de1aaf798c7b876fe8acecee60`; all seven required checks completed successfully.
+- No live-production smoke verification is claimed from this audit.
+- Next audit frontier: Phase 10 — Security / Production Hardening.
