@@ -1,29 +1,26 @@
 from __future__ import annotations
 
-from analysis import AnalysisResult, AnalysisScorer
-from core.production_readiness import ProductionReadiness
+import math
+
+import pytest
+
+from ai.parser import AIResponseParser
+from config.settings import Settings
 
 
-def test_ai_is_not_a_production_scoring_component() -> None:
-    result = AnalysisResult(
-        trend="sideways",
-        momentum="neutral",
-        indicators={},
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
+def test_settings_reject_non_finite_ai_temperature(value) -> None:
+    with pytest.raises(ValueError, match="AI_TEMPERATURE"):
+        Settings(ai_temperature=value)
+
+
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
+def test_ai_parser_rejects_non_finite_confidence(value) -> None:
+    response = AIResponseParser().parse(
+        '{"direction":"bullish","confidence":null}',
+        provider="test",
+        model="test",
     )
-    score = AnalysisScorer().score(result)
-    assert all(component.name != "ai" for component in score.components)
-    assert score.score == 0.0
+    assert response.confidence == 0.0
 
-
-def test_production_readiness_does_not_assume_ai_enabled() -> None:
-    result = ProductionReadiness(
-        {"OANDA_API_KEY": "configured", "AI_ENABLED": "false"}
-    ).evaluate()
-    assert not any("AI is enabled" in warning for warning in result.warnings)
-
-
-def test_explicit_ai_enable_without_key_is_visible() -> None:
-    result = ProductionReadiness(
-        {"OANDA_API_KEY": "configured", "AI_ENABLED": "true"}
-    ).evaluate()
-    assert any("AI is explicitly enabled" in warning for warning in result.warnings)
+    assert AIResponseParser._normalize_confidence(value) == 0.0

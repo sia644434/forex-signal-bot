@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from typing import Any
 
 from ai.provider import AIResponse
@@ -170,7 +171,11 @@ class AIResponseParser:
         except (
             TypeError,
             ValueError,
+            OverflowError,
         ):
+            return 0.0
+
+        if not math.isfinite(confidence):
             return 0.0
 
         if confidence > 1:

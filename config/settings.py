@@ -153,7 +153,7 @@ class Settings:
             raise ValueError("HEALTH_HOST cannot be empty.")
         if not 0 <= self.health_port <= 65535:
             raise ValueError("PORT must be between 0 and 65535.")
-        if not 0 <= self.ai_temperature <= 2:
+        if not math.isfinite(self.ai_temperature) or not 0 <= self.ai_temperature <= 2:
             raise ValueError("AI_TEMPERATURE must be between 0 and 2.")
         if self.request_timeout < 1:
             raise ValueError("REQUEST_TIMEOUT must be at least 1 second.")
