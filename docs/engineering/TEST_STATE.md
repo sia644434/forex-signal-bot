@@ -50,3 +50,11 @@ The prior verified baseline and earlier task evidence remain preserved in reposi
 - TASK-118: repository-wide AI/ML boundary audit completed.
 - Final Phase-6 code closure HEAD: `91a59421cbd82043cec59bc9f5fe883796a1a8da`.
 - Seven required checks: all `completed/success`.
+
+
+## Current Closure Audit — 2026-09-19
+- TASK-119: worker readiness/heartbeat regression coverage added; exact-head verification pending.
+- TASK-120: scanner unsupported-symbol regression coverage added; exact-head verification pending.
+- TASK-121: engineering-state scope synchronization; exact-head verification pending.
+- Current CI rule: do not mark these tasks VERIFIED until the resulting exact `main` HEAD completes the required seven checks successfully.
+- Existing historical green verification remains valid only for the exact commits documented in the historical verification records.
