@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 
 def validate_series(
     values: list[float],
@@ -21,13 +23,15 @@ def validate_series(
             "values cannot be empty."
         )
 
-    for value in values:
-        if not isinstance(
-            value,
-            (int, float),
-        ):
+    for index, value in enumerate(values):
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise TypeError(
-                "series values must be numeric."
+                f"series value at index {index} must be numeric and finite."
+            )
+        numeric = float(value)
+        if not math.isfinite(numeric):
+            raise ValueError(
+                f"series value at index {index} must be numeric and finite."
             )
 
 
