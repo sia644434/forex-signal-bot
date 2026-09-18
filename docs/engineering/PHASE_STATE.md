@@ -95,3 +95,7 @@ Evidence: The Phase-4 market/data audit was completed through TASK-109. Concrete
 ## Phase 5 — Analysis Engine
 Status: COMPLETE
 Evidence: Phase-5 cross-layer audit completed through TASK-114. Concrete gaps in indicator numeric handling, duplicate helper definitions, market-structure input validation, and indicator primitive validation were corrected. Final code HEAD `963abbaee6bfac940944fae3b92f28b5f02dd6b4` passed all seven required checks.
+
+## Phase 6 — AI/ML Boundary
+Status: COMPLETE
+Evidence: TASK-115 through TASK-118 completed. The existing AI package is explicitly dormant and opt-in, excluded from production scoring, and hardened at its numeric configuration/response boundaries. Final verified code HEAD: `91a59421cbd82043cec59bc9f5fe883796a1a8da`.

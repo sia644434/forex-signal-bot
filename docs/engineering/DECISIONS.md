@@ -138,3 +138,17 @@ Problem: `analysis/indicator_engine.py` contained duplicate helper implementatio
 Chosen Solution: Remove duplicate helper blocks and keep one effective implementation for each helper.
 Reason: Duplicate definitions create silent override risk and can invalidate earlier safety hardening.
 Affected Components: `analysis/indicator_engine.py`.
+
+## ADR-018 — Dormant AI Must Be Explicitly Opt-In
+Date: 2026-09-19
+Problem: The repository contained dormant AI capability while the example environment enabled it by default and readiness assumed enabled state when the variable was absent.
+Chosen Solution: Make AI explicitly opt-in and keep it outside the canonical production analysis/scoring path.
+Reason: A dormant optional capability must not appear active or influence trading decisions implicitly.
+Affected Components: `.env.example`, `core/production_readiness.py`, `analysis/scoring.py`.
+
+## ADR-019 — Non-Finite AI Values Must Fail Closed
+Date: 2026-09-19
+Problem: NaN/Infinity could bypass ordinary range checks for AI temperature or confidence normalization.
+Chosen Solution: Reject non-finite configuration values and normalize non-finite AI confidence to the safe zero-confidence state.
+Reason: Invalid numerical state must never be propagated into downstream decision/reporting contracts.
+Affected Components: `config/settings.py`, `ai/parser.py`.

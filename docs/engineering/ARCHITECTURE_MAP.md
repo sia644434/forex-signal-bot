@@ -119,3 +119,11 @@ The platform is explicitly Multi-Asset. Telegram ownership, market-data ownershi
 - Canonical market structure is provided by the `analysis.market_structure` package and its `MarketStructureDetector`; its price boundary is validated before swing detection.
 - DecisionEngine and ConfidenceEngine remain deterministic analytical aggregation boundaries; no AI/model dependency was introduced into the production analysis flow.
 - Phase-5 audit closure HEAD: `963abbaee6bfac940944fae3b92f28b5f02dd6b4`; exact-head seven-check verification succeeded.
+
+## Phase 6 Closure
+- AI/ML is isolated from the canonical production trading flow.
+- `AnalysisScorer` has no AI contribution.
+- AI is explicitly opt-in and remains unavailable without credentials.
+- Numeric configuration/response boundaries reject non-finite values.
+- No agent/model/Ollama runtime architecture is part of the active system.
+- Phase-6 code closure HEAD: `91a59421cbd82043cec59bc9f5fe883796a1a8da`; exact-head seven-check verification succeeded.

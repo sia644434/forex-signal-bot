@@ -305,3 +305,42 @@ Scope audited:
 Result:
 - No additional repository-backed Phase-5 correctness gap requiring code changes was identified.
 - Dormant AI/ML scaffolding remains outside active Phase-5 production analysis and was not activated or introduced into the analysis flow.
+
+## TASK-115
+Phase: Phase 6 — AI/ML Boundary
+Title: Make Dormant AI Explicitly Opt-In
+Implementation Status: VERIFIED — `AI_ENABLED=false` is now the example default and production readiness does not assume AI is enabled.
+Evidence:
+- `.env.example` changed from `AI_ENABLED=true` to `AI_ENABLED=false`.
+- Missing AI credentials are warned about only when AI is explicitly enabled.
+
+## TASK-116
+Phase: Phase 6 — AI/ML Boundary
+Title: Remove Dormant AI From Production Scoring
+Implementation Status: VERIFIED — exact-head checks passed on `91a59421cbd82043cec59bc9f5fe883796a1a8da`.
+Evidence:
+- `AnalysisScorer` no longer adds an AI component to production score aggregation.
+- Legacy `ai_score` data cannot influence the canonical production scoring path.
+- Regression coverage verifies the boundary.
+
+## TASK-117
+Phase: Phase 6 — AI/ML Boundary
+Title: Harden Dormant AI Numeric Contracts
+Implementation Status: VERIFIED — exact-head checks passed on `91a59421cbd82043cec59bc9f5fe883796a1a8da`.
+Evidence:
+- `AI_TEMPERATURE` now rejects non-finite values.
+- AI response confidence normalization rejects non-finite values instead of allowing NaN/Infinity to enter the response contract.
+
+## TASK-118
+Phase: Phase 6 — Full AI/ML Boundary Audit
+Implementation Status: VERIFIED — exact-head seven-check verification is green.
+Scope:
+- AI context/provider/parser/prompt/orchestration packages.
+- OpenAI provider isolation and lazy client creation.
+- AI settings and production readiness.
+- Production scoring and AnalysisResult compatibility.
+- Repository-wide imports/usages confirming the AI package is not wired into the canonical production analysis path.
+Result:
+- No AI/model/agent dependency is part of the canonical production trading flow.
+- Existing dormant AI capability remains isolated and opt-in rather than being activated.
+- No Ollama, coding-agent, autonomous-agent, or model-orchestration architecture was introduced.

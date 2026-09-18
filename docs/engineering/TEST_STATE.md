@@ -42,3 +42,11 @@ The prior verified baseline and earlier task evidence remain preserved in reposi
 - Final Phase-5 code closure HEAD: `963abbaee6bfac940944fae3b92f28b5f02dd6b4`.
 - All seven required checks on that exact HEAD: `completed/success`.
 - The final test workflow reported the full repository suite passing after the final compatibility correction.
+
+## Phase 6 Verification Record
+- TASK-115: dormant AI made explicitly opt-in.
+- TASK-116: AI removed from production score aggregation.
+- TASK-117: AI temperature/confidence numeric boundaries hardened.
+- TASK-118: repository-wide AI/ML boundary audit completed.
+- Final Phase-6 code closure HEAD: `91a59421cbd82043cec59bc9f5fe883796a1a8da`.
+- Seven required checks: all `completed/success`.
