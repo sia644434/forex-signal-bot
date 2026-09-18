@@ -105,3 +105,16 @@ def test_worker_jobs_reject_oversized_identifiers():
         assert body == {"error": "invalid_request"}
     finally:
         server.stop()
+
+
+def test_worker_jobs_reject_non_boolean_cpu_fallback():
+    runtime = WorkerRuntime.create()
+    server = WorkerHTTPServer(runtime, host="127.0.0.1", port=_free_port(), token="secret")
+    server.start()
+    try:
+        payload = json.dumps({"job_id": "job-1", "job_type": "backtest", "allow_cpu_fallback": "false"}).encode()
+        status, body = _request(server, payload)
+        assert status == 400
+        assert body == {"error": "invalid_request"}
+    finally:
+        server.stop()
