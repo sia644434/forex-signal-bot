@@ -255,3 +255,29 @@ def test_market_aware_engine_propagates_conversion_failure_fail_closed(
                 timeframe="1h",
             )
         )
+
+
+def test_market_aware_engine_rejects_candle_symbol_mismatch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    market_data = FakeMarketDataService("USDJPY", 150.0)
+    engine = MarketAwareAnalysisEngine(
+        market_data=market_data,
+        settings=Settings(account_currency="USD"),
+    )
+    monkeypatch.setattr(
+        engine.analysis_engine,
+        "analyze",
+        lambda candles: AnalysisReport(score=100.0, signal="BUY", confidence=0.90),
+    )
+
+    with pytest.raises(ValueError, match="Candle symbol mismatch"):
+        __import__("asyncio").run(
+            engine.analyze(
+                _price_candles("EURUSD"),
+                symbol="USDJPY",
+                timeframe="1h",
+            )
+        )
+
+    assert market_data.requests == []
