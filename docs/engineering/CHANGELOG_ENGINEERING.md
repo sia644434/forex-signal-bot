@@ -26,3 +26,13 @@
 - No additional repository-backed Phase-7 correctness gap requiring code changes was identified.
 - All seven required GitHub Actions workflows completed successfully on the exact closure HEAD.
 - Phase 7 is now COMPLETE; Phase 8 — Trading / Decision Engine — is the next audit frontier.
+
+
+## 2026-09-19 — Phase 8 Trading / Decision Engine closure
+- TASK-123 hardened `MarketAwareAnalysisEngine` against mismatched candle symbols and stale/future market inputs before decision/risk evaluation.
+- Preserved the existing compatibility contract for legacy candle-like inputs that do not expose market metadata.
+- Added regression coverage for symbol mismatch, stale input, and future-dated input.
+- TASK-124 completed the full Phase-8 cross-layer audit across DecisionEngine, ConfidenceEngine, RiskEngine, PositionSizing, CurrencyConversionService, and MarketAwareAnalysisEngine.
+- No additional repository-backed Phase-8 correctness gap was identified.
+- Code closure HEAD: `1edbf5126c86bcde45c32cf91e365d22e20e4037`; all seven required GitHub Actions checks completed successfully.
+- Phase 8 is now COMPLETE; Phase 9 — Backtesting / Simulation — is the next audit frontier.
