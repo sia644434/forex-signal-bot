@@ -17,6 +17,7 @@ class WorkerDispatcher:
     def __init__(self, submit: Callable[[JobRequest], Awaitable[JobResult]] | None = None, queue: WorkerQueue | None = None, recovery_grace_seconds: int = 30):
         self._submit = submit
         self._queue = queue
+        self._active_submissions: set[asyncio.Task[Any]] = set()
         if recovery_grace_seconds < 0:
             raise ValueError("Recovery grace must not be negative")
         if self._queue is not None:
@@ -47,6 +48,16 @@ class WorkerDispatcher:
             return
 
     async def submit(self, request: JobRequest) -> JobResult:
+        current_task = asyncio.current_task()
+        if current_task is not None:
+            self._active_submissions.add(current_task)
+        try:
+            return await self._submit_inner(request)
+        finally:
+            if current_task is not None:
+                self._active_submissions.discard(current_task)
+
+    async def _submit_inner(self, request: JobRequest) -> JobResult:
         if request.job_type not in HEAVY_JOB_TYPES:
             raise ValueError(f"Unsupported PC worker job type: {request.job_type}")
         if self._queue is None:
@@ -97,6 +108,18 @@ class WorkerDispatcher:
         elif result.status == "FAILED":
             self._queue.fail(request.job_id, result.error or "Worker job failed", claim_token=claim_token)
         return result
+
+    async def close_async(self, timeout_seconds: float = 10.0) -> None:
+        if timeout_seconds <= 0:
+            raise ValueError("Shutdown timeout must be greater than zero")
+        active = [task for task in self._active_submissions if not task.done()]
+        if active:
+            _, pending = await asyncio.wait(active, timeout=timeout_seconds)
+            for task in pending:
+                task.cancel()
+            if pending:
+                await asyncio.gather(*pending, return_exceptions=True)
+        self.close()
 
     def close(self) -> None:
         if self._queue is not None:
