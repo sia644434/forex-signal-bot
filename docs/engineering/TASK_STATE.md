@@ -142,7 +142,7 @@ Evidence:
 The project is a **Multi-Asset Trading Intelligence Platform**, not a Forex-only bot. Supported market families are represented centrally in `config/symbols.py`: Forex, Crypto, Stocks, Indices, and Commodities. A symbol must not be rejected merely because it is not Forex. Market-specific semantics such as quote currency, contract size, trading session, provider support, and conversion requirements must be explicit and must fail closed when unavailable.
 
 ## Current Audit Frontier
-Phase 3 remains active. TASK-090 is verified. TASK-091 through TASK-100 are implemented and pending exact-head CI verification. The remaining concrete frontier is Telegram multi-asset settings consistency, queue/runtime shutdown and persistence recovery, production health, and final end-to-end lifecycle. Provider capability boundaries are now explicit. Do not create a task merely to advance the roadmap; create the next task only after a concrete repository-backed gap is demonstrated.
+Phase 3 remains active. TASK-090 is verified. TASK-091 through TASK-101 are implemented and pending exact-head CI verification. TASK-102 addresses the concrete worker HTTP/runtime-loop lifecycle gap. Remaining frontier after TASK-102 is queue/runtime shutdown and persistence recovery, production health, and final end-to-end lifecycle. Do not create a task merely to advance the roadmap; create the next task only after a concrete repository-backed gap is demonstrated.
 
 ## New-chat Continuation Contract
 When a new chat starts work on this repository, first read:
@@ -164,3 +164,13 @@ Evidence:
 - Settings now exposes market families and dynamically renders the canonical symbols from config/symbols.py.
 - Symbol callbacks are bounded to the centralized supported-symbol registry and fail closed for unknown values.
 - Regression coverage verifies all market families and representative multi-asset selections.
+
+
+## TASK-102
+Phase: Phase 3 — Worker / Runtime / HTTP Reliability
+Title: Persistent Worker Runtime Loop Across HTTP Requests
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Evidence:
+- Concrete gap: `WorkerHTTPServer` previously called `asyncio.run(runtime.execute(...))` for every HTTP request. WorkerRuntime timeout fencing depends on an underlying synchronous thread task remaining alive after timeout; closing the per-request event loop could therefore destroy the task lifecycle before its completion callback could finalize and cache the result.
+- The HTTP server now owns one persistent asyncio event loop in a dedicated runtime thread and dispatches every `WorkerRuntime.execute()` call onto that loop with `run_coroutine_threadsafe`.
+- Regression coverage verifies a timed-out synchronous job remains `RUNNING` for duplicate requests and later becomes `COMPLETED` after the underlying thread releases.
