@@ -445,3 +445,18 @@ Result:
 - Regression coverage was added for invalid simulation inputs, walk-forward train/test separation, and seeded Monte Carlo determinism.
 - No additional repository-backed Phase-9 correctness gap requiring code changes was identified.
 - Phase 9 is closed; Phase 10 — Security / Production Hardening — is the next audit frontier.
+
+
+## TASK-126
+Phase: Phase 10 — Security / Production Hardening
+Title: Worker HTTP and Production Container Security Hardening
+Implementation Status: VERIFIED — exact-head seven-check CI green on `b92aae52828e7737402da30ec5d513df4c8b0dad`
+Scope:
+- Worker HTTP request-shape validation, bounded identifiers, bounded timeout/priority values, and object-only payload contracts.
+- Production Docker container privilege reduction through a dedicated non-root runtime user.
+- Explicit read-only contents permissions for production CI workflows that do not require repository writes.
+Result:
+- Concrete repository-backed hardening gaps were corrected in `worker/server.py` and `Dockerfile`, with focused regression coverage in `tests/test_pc_worker_health_security.py`.
+- All seven required GitHub Actions workflows completed successfully on the exact audit HEAD.
+- No live-production smoke verification is claimed from this task.
+- Phase 10 remains the active audit frontier for additional concrete security/production-hardening gaps.
