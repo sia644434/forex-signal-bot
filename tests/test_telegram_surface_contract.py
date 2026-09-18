@@ -87,7 +87,7 @@ def test_journal_html_escapes_persisted_dynamic_fields(tmp_path, monkeypatch) ->
 
 def test_settings_market_keyboard_exposes_all_supported_market_families():
     from services.telegram.handlers.callbacks import settings_keyboard, market_symbols_keyboard
-    assert {button.callback_data for row in settings_keyboard("settings_market").inline_keyboard for button in row} >= {"market_forex", "market_crypto", "market_stock", "market_index", "market_commodity", "settings_market"}
+    assert {button.callback_data for row in settings_keyboard("settings_market").inline_keyboard for button in row} >= {"market_forex", "market_crypto", "market_stock", "market_index", "market_commodity", "settings"}
     for market in ("forex", "crypto", "stock", "index", "commodity"):
         callbacks = {button.callback_data for row in market_symbols_keyboard(market).inline_keyboard for button in row}
         assert callbacks
