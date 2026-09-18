@@ -104,6 +104,9 @@ class WorkerHTTPServer:
                         raise ValueError("invalid priority")
                     if not isinstance(job_payload, dict):
                         raise ValueError("payload must be a JSON object")
+                    allow_cpu_fallback = payload.get("allow_cpu_fallback", True)
+                    if not isinstance(allow_cpu_fallback, bool):
+                        raise ValueError("invalid allow_cpu_fallback")
                     request = JobRequest(
                         job_id=job_id.strip(),
                         job_type=job_type.strip(),
