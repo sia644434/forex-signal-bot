@@ -153,3 +153,14 @@ When a new chat starts work on this repository, first read:
 - `docs/engineering/ARCHITECTURE_MAP.md`
 - `docs/engineering/DECISIONS.md`
 - `docs/engineering/CHANGELOG_ENGINEERING.md`
+
+
+## TASK-101
+Phase: Phase 3 — Telegram / Multi-Asset Settings Reliability
+Title: Multi-Asset Telegram Settings Consistency
+Implementation Status: IMPLEMENTED — PENDING EXACT-HEAD CI VERIFICATION
+Evidence:
+- Concrete gap: the centralized symbol registry defined Forex, Crypto, Stocks, Indices, and Commodities, and the scanner had a multi-asset universe, but Telegram Settings exposed only four Forex symbols.
+- Settings now exposes market families and dynamically renders the canonical symbols from config/symbols.py.
+- Symbol callbacks are bounded to the centralized supported-symbol registry and fail closed for unknown values.
+- Regression coverage verifies all market families and representative multi-asset selections.
