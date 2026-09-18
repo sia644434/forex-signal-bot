@@ -5,11 +5,11 @@ import math
 import pytest
 
 from analysis.indicator_engine import IndicatorEngine
-from analysis.market_structure import MarketStructureAnalyzer, MarketStructureDetector
+from analysis.market_structure import MarketStructureDetector
 
 
-def test_market_structure_analyzer_alias_matches_detector() -> None:
-    assert MarketStructureAnalyzer is MarketStructureDetector
+def test_market_structure_detector_comes_from_canonical_package() -> None:
+    assert MarketStructureDetector.__module__ == "analysis.market_structure.detector"
 
 
 @pytest.mark.parametrize("value", [None, math.nan, math.inf, -math.inf, 0.0, -1.0])
@@ -27,3 +27,9 @@ def test_indicator_engine_rejects_non_numeric_sequence() -> None:
 def test_indicator_engine_score_normalization_fails_closed(value) -> None:
     with pytest.raises(ValueError, match="indicator score must be numeric and finite"):
         IndicatorEngine._normalize_score(value)
+
+
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf, 0.0, -1.0, "bad"])
+def test_market_structure_rejects_invalid_prices(value) -> None:
+    with pytest.raises(ValueError, match="finite and greater than zero"):
+        MarketStructureDetector().analyze([1.0, value, 1.1])
