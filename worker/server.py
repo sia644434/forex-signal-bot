@@ -13,6 +13,12 @@ from .contracts import JobRequest
 from .runtime import WorkerRuntime
 
 
+MAX_JOB_BODY_BYTES = 5_000_000
+MAX_JOB_TIMEOUT_SECONDS = 86_400
+MAX_JOB_ID_LENGTH = 256
+MAX_JOB_TYPE_LENGTH = 128
+
+
 class WorkerHTTPServer:
     """Threaded HTTP boundary backed by one persistent asyncio runtime loop."""
 
@@ -77,16 +83,33 @@ class WorkerHTTPServer:
                     if length <= 0:
                         self._json(400, {"error": "invalid_request"})
                         return
-                    if length > 5_000_000:
+                    if length > MAX_JOB_BODY_BYTES:
                         self._json(413, {"error": "payload_too_large"})
                         return
                     payload = json.loads(self.rfile.read(length))
+                    if not isinstance(payload, dict):
+                        raise ValueError("request body must be a JSON object")
+                    job_id = payload["job_id"]
+                    job_type = payload["job_type"]
+                    timeout_seconds = payload.get("timeout_seconds", 3600)
+                    priority = payload.get("priority", 50)
+                    job_payload = payload.get("payload", {})
+                    if not isinstance(job_id, str) or not job_id.strip() or len(job_id) > MAX_JOB_ID_LENGTH:
+                        raise ValueError("invalid job_id")
+                    if not isinstance(job_type, str) or not job_type.strip() or len(job_type) > MAX_JOB_TYPE_LENGTH:
+                        raise ValueError("invalid job_type")
+                    if isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, int) or not 1 <= timeout_seconds <= MAX_JOB_TIMEOUT_SECONDS:
+                        raise ValueError("invalid timeout_seconds")
+                    if isinstance(priority, bool) or not isinstance(priority, int) or not 0 <= priority <= 100:
+                        raise ValueError("invalid priority")
+                    if not isinstance(job_payload, dict):
+                        raise ValueError("payload must be a JSON object")
                     request = JobRequest(
-                        job_id=str(payload["job_id"]),
-                        job_type=str(payload["job_type"]),
-                        payload=dict(payload.get("payload", {})),
-                        priority=int(payload.get("priority", 50)),
-                        timeout_seconds=min(int(payload.get("timeout_seconds", 3600)), 86_400),
+                        job_id=job_id.strip(),
+                        job_type=job_type.strip(),
+                        payload=job_payload,
+                        priority=priority,
+                        timeout_seconds=timeout_seconds,
                         allow_cpu_fallback=bool(payload.get("allow_cpu_fallback", True)),
                     )
                     future = asyncio.run_coroutine_threadsafe(runtime_ref.execute(request), self.server.runtime_loop)
