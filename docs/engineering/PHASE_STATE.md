@@ -74,8 +74,7 @@ Evidence: Phase-9 closure audit completed through TASK-125. Backtest, walk-forwa
 
 ## Phase 10 — Security / Production Hardening
 Status: IN_PROGRESS
-Evidence: Dependency and runtime security gates exist and worker endpoint hardening has been performed. Broader cross-layer security and production-readiness audit remains open.
-Evidence: Dependency security audit and production runtime verification are complete; broader security hardening remains a later roadmap phase/task. Worker endpoint hardening was handled as evidence-backed work.
+Evidence: Phase-10 security hardening audit corrected concrete worker HTTP input-boundary issues, hardened the production container to run as a non-root user, and restricted production CI workflow permissions. Exact-head seven-check verification is complete on `b92aae52828e7737402da30ec5d513df4c8b0dad`. Broader security review remains open for the next concrete frontier.
 
 ## Phase 11 — Testing
 Status: IN_PROGRESS
@@ -90,7 +89,7 @@ Status: NOT_STARTED
 Dependency: Starts only after the active worker, decision/risk, backtesting, security, testing, and deployment closure audits are verified.
 
 ## Roadmap Rule
-Work phases sequentially. Phases 1–8 are closed according to their recorded evidence. Phase 9 is the next audit frontier. Later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
+Work phases sequentially. Phases 1–9 are closed according to their recorded evidence. Phase 10 is the active audit frontier. Later phases must not be treated as complete merely because related cross-phase hardening was performed earlier. Temporary cross-phase checks remain allowed only when backed by a concrete dependency or regression.
 
 
 ## Phase 4 — Market/Data Layer
@@ -120,3 +119,12 @@ The active objective is to close the remaining concrete gaps across the current 
 - Required checks on that exact code HEAD: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate — all `completed/success`.
 - No live-production smoke verification is claimed from this audit.
 - Phase 9 — Backtesting / Simulation — is the next audit frontier.
+
+
+## Phase 10 Closure Checkpoint — Current Audit Batch
+- TASK-126 hardened the PC Worker HTTP request boundary against invalid JSON shapes, invalid timeout/priority values, oversized identifiers, and non-object payloads.
+- The production Docker image now runs as a dedicated non-root `appuser`.
+- Production CI workflows now explicitly grant only `contents: read` where write access is not required.
+- Exact audit HEAD: `b92aae52828e7737402da30ec5d513df4c8b0dad`.
+- Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate all completed successfully on that exact HEAD.
+- Phase 10 remains IN_PROGRESS because the current batch is a security-hardening checkpoint, not a declaration that every future security surface has been exhausted.
