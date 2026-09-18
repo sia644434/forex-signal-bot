@@ -61,8 +61,8 @@ Status: PARTIALLY_COMPLETE
 Evidence: Existing `ai/` scaffolding is dormant/unwired and intentionally not treated as active production functionality. Future activation remains a later-phase task.
 
 ## Phase 7 — PC Worker / Heavy Processing
-Status: IN_PROGRESS
-Evidence: The worker/queue surface is implemented and has recovery/fencing coverage. Current closure audit is verifying readiness gating, malformed heartbeat handling, health semantics, observability, and exact-head CI before marking the phase complete.
+Status: COMPLETE
+Evidence: Full Phase-7 cross-layer closure audit completed. Worker readiness gating, malformed/future/identity-less heartbeat handling, durable queue lifecycle, claim fencing, renewable leases, timeout fencing, persistent runtime-loop behavior, recovery, graceful shutdown, HTTP authentication, request validation, bounded payloads, internal-error redaction, and regression coverage were audited. No additional repository-backed Phase-7 correctness gap was identified. Exact closure HEAD `d34a8836ff5a2e1c8820540dd1d6cc5bff473f8a` passed all seven required GitHub Actions checks.
 
 ## Phase 8 — Trading / Decision Engine
 Status: IN_PROGRESS
