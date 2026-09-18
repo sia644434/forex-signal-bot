@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 import hmac
 import json
@@ -13,6 +14,8 @@ from .runtime import WorkerRuntime
 
 
 class WorkerHTTPServer:
+    """Threaded HTTP boundary backed by one persistent asyncio runtime loop."""
+
     def __init__(self, runtime: WorkerRuntime, host: str | None = None, port: int | None = None, token: str | None = None):
         self.runtime = runtime
         self.host = host or os.getenv("PC_WORKER_HOST", "127.0.0.1")
@@ -20,8 +23,17 @@ class WorkerHTTPServer:
         self.token = token or os.getenv("PC_WORKER_TOKEN", "")
         if not self.token:
             raise ValueError("PC_WORKER_TOKEN must be configured")
+
         runtime_ref = runtime
         token_ref = self.token
+        self._loop = asyncio.new_event_loop()
+        self._loop_thread = threading.Thread(
+            target=self._run_loop,
+            name="pc-worker-runtime-loop",
+            daemon=True,
+        )
+        self._started = threading.Event()
+        self._stopped = threading.Event()
 
         class Handler(BaseHTTPRequestHandler):
             def _authorized(self) -> bool:
@@ -39,17 +51,17 @@ class WorkerHTTPServer:
 
             def do_GET(self) -> None:  # noqa: N802
                 if self.path != "/health":
-                    self._json(404, {"error": "not_found"}); return
-                # Keep the unauthenticated liveness endpoint deliberately minimal.
-                # Detailed worker identity/capability/job information remains behind
-                # the authenticated heartbeat/job boundary.
+                    self._json(404, {"error": "not_found"})
+                    return
                 self._json(200, {"status": "READY"})
 
             def do_POST(self) -> None:  # noqa: N802
                 if self.path not in {"/jobs", "/heartbeat"}:
-                    self._json(404, {"error": "not_found"}); return
+                    self._json(404, {"error": "not_found"})
+                    return
                 if not self._authorized():
-                    self._json(401, {"error": "unauthorized"}); return
+                    self._json(401, {"error": "unauthorized"})
+                    return
                 if self.path == "/heartbeat":
                     self._json(200, {
                         "status": "READY",
@@ -57,19 +69,38 @@ class WorkerHTTPServer:
                         "timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
                     })
                     return
-                if not self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() == "application/json":
-                    self._json(415, {"error": "unsupported_media_type"}); return
+                if self.headers.get("Content-Type", "").split(";", 1)[0].strip().lower() != "application/json":
+                    self._json(415, {"error": "unsupported_media_type"})
+                    return
                 try:
                     length = int(self.headers.get("Content-Length", "0"))
                     if length <= 0:
-                        self._json(400, {"error": "invalid_request"}); return
+                        self._json(400, {"error": "invalid_request"})
+                        return
                     if length > 5_000_000:
-                        self._json(413, {"error": "payload_too_large"}); return
+                        self._json(413, {"error": "payload_too_large"})
+                        return
                     payload = json.loads(self.rfile.read(length))
-                    request = JobRequest(job_id=str(payload["job_id"]), job_type=str(payload["job_type"]), payload=dict(payload.get("payload", {})), priority=int(payload.get("priority", 50)), timeout_seconds=min(int(payload.get("timeout_seconds", 3600)), 86_400), allow_cpu_fallback=bool(payload.get("allow_cpu_fallback", True)))
-                    import asyncio
-                    result = asyncio.run(runtime_ref.execute(request))
-                    self._json(200, {"job_id": result.job_id, "status": result.status, "job_type": result.job_type, "output": result.output, "error": result.error, "worker_id": result.worker_id})
+                    request = JobRequest(
+                        job_id=str(payload["job_id"]),
+                        job_type=str(payload["job_type"]),
+                        payload=dict(payload.get("payload", {})),
+                        priority=int(payload.get("priority", 50)),
+                        timeout_seconds=min(int(payload.get("timeout_seconds", 3600)), 86_400),
+                        allow_cpu_fallback=bool(payload.get("allow_cpu_fallback", True)),
+                    )
+                    future = asyncio.run_coroutine_threadsafe(runtime_ref.execute(request), self.server.runtime_loop)
+                    result = future.result(timeout=request.timeout_seconds + 5)
+                    self._json(200, {
+                        "job_id": result.job_id,
+                        "status": result.status,
+                        "job_type": result.job_type,
+                        "output": result.output,
+                        "error": result.error,
+                        "worker_id": result.worker_id,
+                    })
+                except TimeoutError:
+                    self._json(504, {"error": "worker_timeout"})
                 except (KeyError, ValueError, TypeError, json.JSONDecodeError):
                     self._json(400, {"error": "invalid_request"})
                 except Exception:
@@ -78,15 +109,46 @@ class WorkerHTTPServer:
             def log_message(self, format: str, *args: Any) -> None:
                 return
 
-        self._server = ThreadingHTTPServer((self.host, self.port), Handler)
+        class RuntimeHTTPServer(ThreadingHTTPServer):
+            allow_reuse_address = True
+
+            def __init__(self, address, request_handler):
+                super().__init__(address, request_handler)
+                self.runtime_loop = self_loop
+
+        self_loop = self._loop
+        self._server = RuntimeHTTPServer((self.host, self.port), Handler)
         self._thread = threading.Thread(target=self._server.serve_forever, name="pc-worker-http", daemon=True)
 
+    def _run_loop(self) -> None:
+        asyncio.set_event_loop(self._loop)
+        self._started.set()
+        try:
+            self._loop.run_forever()
+        finally:
+            pending = asyncio.all_tasks(self._loop)
+            for task in pending:
+                task.cancel()
+            if pending:
+                self._loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            self._loop.close()
+            self._stopped.set()
+
     def start(self) -> None:
+        if self._thread.is_alive():
+            return
+        self._loop_thread.start()
+        if not self._started.wait(timeout=5):
+            raise RuntimeError("Worker runtime event loop failed to start")
         self._thread.start()
 
     def stop(self) -> None:
         self._server.shutdown()
         self._server.server_close()
+        if self._loop.is_running():
+            self._loop.call_soon_threadsafe(self._loop.stop)
+        self._loop_thread.join(timeout=10)
+        self._thread.join(timeout=10)
 
 
 __all__ = ["WorkerHTTPServer"]
