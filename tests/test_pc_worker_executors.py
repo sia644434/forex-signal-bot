@@ -50,3 +50,27 @@ def test_random_forest():
     result = random_forest_training({"X": x, "y": y, "n_estimators": 20})
     assert result["model"] == "random_forest"
     assert result["rmse"] >= 0
+
+
+def test_backtest_rejects_invalid_market_data_and_parameters():
+    import pytest
+
+    with pytest.raises(ValueError):
+        backtest({"data": [{"close": 100}, {"close": float("nan")}]})
+    with pytest.raises(ValueError):
+        backtest({"data": [{"close": 100}, {"close": 101}], "fee": -0.01})
+    with pytest.raises(ValueError):
+        monte_carlo({"data": candles(), "simulations": 0})
+
+
+def test_walk_forward_uses_training_history_without_scoring_it():
+    data = candles(80)
+    result = walk_forward({"data": data, "train_size": 40, "test_size": 20})
+    assert result["windows"] == 2
+    assert all(window["train_size"] == 40 and window["test_size"] == 20 for window in result["results"])
+    assert all(window["final_equity"] > 0 for window in result["results"])
+
+
+def test_monte_carlo_is_deterministic_with_seed():
+    payload = {"data": candles(), "simulations": 100, "horizon": 20, "seed": 123}
+    assert monte_carlo(payload) == monte_carlo(payload)
