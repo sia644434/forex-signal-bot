@@ -138,7 +138,7 @@ class WorkerProcessingService(BaseService):
 
         health: dict[str, Any] = {
             "service": self.name,
-            "status": "ok",
+            "status": "ok" if readiness == "READY" else "degraded",
             "critical": self.critical,
             "configured": self.configured,
             "readiness": readiness,
