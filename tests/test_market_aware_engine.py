@@ -301,14 +301,15 @@ def test_market_aware_engine_rejects_stale_input_before_analysis(
         close=150.0,
         volume=1.0,
     )
-    analyze = monkeypatch.spy(engine.analysis_engine, "analyze")
+    calls = []
+    monkeypatch.setattr(engine.analysis_engine, "analyze", lambda candles: calls.append(candles))
 
     with pytest.raises(ValueError, match="not fresh enough"):
         __import__("asyncio").run(
             engine.analyze(stale, symbol="USDJPY", timeframe="1h")
         )
 
-    assert analyze.call_count == 0
+    assert calls == []
     assert market_data.requests == []
 
 
