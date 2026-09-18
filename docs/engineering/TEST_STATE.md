@@ -19,7 +19,7 @@
 Before marking TASK-091 through TASK-100 VERIFIED, inspect the exact `main` HEAD and confirm the complete required workflow set succeeds: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate. Also inspect combined commit status. Do not claim Railway/live-smoke verification unless fresh evidence exists.
 
 ## Next Verification Frontier
-Phase 8 is formally closed on code closure HEAD `1edbf5126c86bcde45c32cf91e365d22e20e4037`. The next verification frontier is Phase 9 — Backtesting / Simulation. Revisit earlier phases only when concrete repository evidence identifies a new regression or gap.
+Phase 9 is formally closed on code closure HEAD `d616df74377af7de1aaf798c7b876fe8acecee60`. The next verification frontier is Phase 10 — Security / Production Hardening. Revisit earlier phases only when concrete repository evidence identifies a new regression or gap.
 
 ## New-chat Rule
 A new conversation must read `PROJECT_STATE.md`, `PHASE_STATE.md`, `TASK_STATE.md`, `TEST_STATE.md`, `ARCHITECTURE_MAP.md`, `DECISIONS.md`, and `CHANGELOG_ENGINEERING.md`, then inspect the exact current `main` HEAD and Actions status before changing code. Continue from the first unresolved frontier; do not repeat completed tasks or invent speculative work. Repository inspection/modification must use GitHub Connector only.
@@ -65,3 +65,12 @@ The prior verified baseline and earlier task evidence remain preserved in reposi
 - Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate all completed successfully on the same exact code HEAD.
 - No live-production smoke verification is claimed from this audit.
 - Phase 9 — Backtesting / Simulation — is the next verification frontier.
+
+
+## Phase 9 Verification Record
+- TASK-125: Full Backtesting / Simulation Closure Audit.
+- Code closure HEAD: `d616df74377af7de1aaf798c7b876fe8acecee60`.
+- Regression coverage: invalid price/parameter rejection, walk-forward train/test separation, seeded Monte Carlo determinism.
+- Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate all completed successfully on the same exact code HEAD.
+- No live-production smoke verification is claimed from this audit.
+- Phase 10 — Security / Production Hardening — is the next verification frontier.
