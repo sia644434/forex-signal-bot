@@ -61,6 +61,32 @@ def test_user_state_persists_language_menu_and_settings(tmp_path, monkeypatch) -
     assert restored.settings == {"market_symbol": "GBPUSD", "timeframe": "H1"}
 
 
+def test_persistent_settings_mutation_methods_survive_reload(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(state_module, "_STORE", TelegramStateStore(str(tmp_path / "telegram_state.json")))
+    state_module.USER_STATES.clear()
+
+    state = state_module.get_user_state(4501)
+    state.settings.setdefault("notifications_enabled", False)
+    state.settings["timeframe"] = "H1"
+    state.settings.setdefault("market_symbol", "EURUSD")
+    state.settings.pop("timeframe")
+    state.settings["extra"] = "value"
+    state.settings.popitem()
+
+    state_module.USER_STATES.clear()
+    restored = state_module.get_user_state(4501)
+
+    assert restored.settings == {
+        "notifications_enabled": False,
+        "market_symbol": "EURUSD",
+    }
+
+    restored.settings.clear()
+    state_module.USER_STATES.clear()
+    cleared = state_module.get_user_state(4501)
+    assert cleared.settings == {}
+
+
 def test_corrupted_user_state_fails_closed(tmp_path, monkeypatch) -> None:
     path = tmp_path / "telegram_state.json"
     path.write_text("{not-json", encoding="utf-8")
