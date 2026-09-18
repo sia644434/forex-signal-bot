@@ -108,22 +108,29 @@ class WorkerProcessingService(BaseService):
         if self._last_heartbeat is None:
             return "UNKNOWN"
 
-        status = str(self._last_heartbeat.get("status", "UNKNOWN"))
+        status = str(self._last_heartbeat.get("status", "UNKNOWN")).strip().upper()
         if status != "READY":
-            return status
+            return status or "UNKNOWN"
+
+        worker_id = self._last_heartbeat.get("worker_id")
+        if not isinstance(worker_id, str) or not worker_id.strip():
+            return "STALE"
 
         timestamp = self._last_heartbeat.get("timestamp")
-        if not timestamp:
+        if not isinstance(timestamp, str) or not timestamp.strip():
             return "STALE"
 
         try:
-            heartbeat_time = datetime.fromisoformat(str(timestamp))
+            heartbeat_time = datetime.fromisoformat(timestamp)
             if heartbeat_time.tzinfo is None:
-                heartbeat_time = heartbeat_time.replace(tzinfo=timezone.utc)
+                return "STALE"
+            heartbeat_time = heartbeat_time.astimezone(timezone.utc)
         except (TypeError, ValueError):
             return "STALE"
 
         age = (datetime.now(timezone.utc) - heartbeat_time).total_seconds()
+        if age < 0:
+            return "STALE"
         return "READY" if age <= self._heartbeat_max_age else "STALE"
 
     def health(self) -> dict[str, Any]:
