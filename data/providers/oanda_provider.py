@@ -42,8 +42,8 @@ class OandaProvider(MarketDataProvider):
     @classmethod
     def supports_symbol(cls, symbol: str) -> bool:
         try:
-            cls._normalize_symbol(symbol)
-            return True
+            normalized = cls.normalize_symbol(symbol)
+            return normalized in cls._SYMBOL_ALIASES
         except (TypeError, ValueError):
             return False
 
