@@ -61,6 +61,12 @@ def _configured_scan_symbols() -> tuple[str, ...]:
         raise ValueError("TELEGRAM_SCANNER_SYMBOLS must contain at least one symbol")
     if len(symbols) > 20:
         raise ValueError("TELEGRAM_SCANNER_SYMBOLS must contain at most 20 symbols")
+    unsupported = tuple(symbol for symbol in symbols if get_market_type(symbol) == "unknown")
+    if unsupported:
+        raise ValueError(
+            "TELEGRAM_SCANNER_SYMBOLS contains unsupported symbols: "
+            + ", ".join(unsupported)
+        )
     return symbols
 
 
