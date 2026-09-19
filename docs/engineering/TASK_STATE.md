@@ -543,3 +543,14 @@ Implementation Status: IMPLEMENTED — pending exact-head CI verification
 - Added PC Worker-owned `time_machine` workload registration/executor.
 - Added focused deterministic and counterfactual regression coverage in `tests/test_time_machine.py`.
 - The workload never uses future candles for a historical step and remains isolated from live execution.
+
+
+## TASK-134
+Phase: Phase 18 — Strategy Intelligence
+Title: Strategy Lifecycle, DNA, Retirement, and Champion/Challenger
+Implementation Status: IMPLEMENTED — pending exact-head CI verification
+- Added canonical strategy records with DNA, parent lineage, versioning, observations, and lifecycle status.
+- Added market/symbol/timeframe/regime-aware observation storage with sample-quality weighting.
+- Added performance evaluation, pause/retirement handling, and champion/challenger comparison/promotion contracts.
+- Added a PC Worker `strategy_evaluation` workload for heavier batch evaluation.
+- Added focused strategy lifecycle and worker executor regression coverage.
