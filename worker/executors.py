@@ -11,6 +11,8 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
+from analysis.portfolio_engine import PortfolioEngine
+
 
 def _frame(payload: dict[str, Any]) -> pd.DataFrame:
     data = payload.get("data", payload.get("candles"))
@@ -260,6 +262,60 @@ def gru_training(payload: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+
+def correlation_matrix(payload: dict[str, Any]) -> dict[str, Any]:
+    returns = payload.get("returns")
+    if not isinstance(returns, dict):
+        raise ValueError("returns mapping is required")
+    return {"correlation": PortfolioEngine.correlation_matrix(returns)}
+
+
+def portfolio_stress(payload: dict[str, Any]) -> dict[str, Any]:
+    positions = payload.get("positions")
+    shocks = payload.get("shocks")
+    if not isinstance(positions, list) or not isinstance(shocks, dict):
+        raise ValueError("positions list and shocks mapping are required")
+    engine = PortfolioEngine()
+    snapshot = engine.snapshot(positions)
+    return engine.stress(snapshot, shocks)
+
+
+def stress_sensitivity(payload: dict[str, Any]) -> dict[str, Any]:
+    positions = payload.get("positions")
+    shocks = payload.get("shocks")
+    if not isinstance(positions, list) or not isinstance(shocks, dict):
+        raise ValueError("positions list and shocks mapping are required")
+    engine = PortfolioEngine()
+    snapshot = engine.snapshot(positions)
+    scenarios = payload.get("scenarios", [-0.20, -0.10, 0.10, 0.20])
+    results = []
+    for level in scenarios:
+        numeric = float(level)
+        if not np.isfinite(numeric):
+            raise ValueError("scenario shock must be finite")
+        scenario_shocks = {symbol: numeric for symbol in shocks}
+        results.append({"shock": numeric, **engine.stress(snapshot, scenario_shocks)})
+    return {"scenarios": results}
+
+
+def counterfactual_batch(payload: dict[str, Any]) -> dict[str, Any]:
+    from analysis.counterfactual_engine import CounterfactualEngine
+    cases = payload.get("cases")
+    if not isinstance(cases, list):
+        raise ValueError("cases list is required")
+    engine = CounterfactualEngine()
+    results = []
+    for case in cases:
+        if not isinstance(case, dict):
+            raise ValueError("each counterfactual case must be an object")
+        results.append(engine.evaluate(
+            case.get("baseline_decision", "WAIT"),
+            confidence=float(case.get("confidence", 0.0)),
+            conflict=bool(case.get("conflict", False)),
+            risk_valid=bool(case.get("risk_valid", True)),
+        ).summary())
+    return {"count": len(results), "results": results}
+
 def register_real_executors(runtime) -> None:
     mapping = {
         "backtest": backtest, "walk_forward": walk_forward, "monte_carlo": monte_carlo,
@@ -271,7 +327,7 @@ def register_real_executors(runtime) -> None:
         "timeseries_training": timeseries_training, "ensemble_training": ensemble_training,
         "deep_learning_training": deep_learning_training, "transformer_training": transformer_training,
         "lstm_training": lstm_training, "gru_training": gru_training,
-        "medium_model_training": medium_model_training,
+        "medium_model_training": medium_model_training, "correlation_matrix": correlation_matrix, "portfolio_stress": portfolio_stress, "stress_sensitivity": stress_sensitivity, "counterfactual_batch": counterfactual_batch,
     }
     for name, handler in mapping.items():
         runtime.register(name, handler)
