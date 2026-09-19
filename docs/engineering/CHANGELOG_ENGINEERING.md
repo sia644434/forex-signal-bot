@@ -139,3 +139,9 @@ Railway remains deferred until required capabilities and final regression/securi
 - Added PC Worker-owned strategy evaluation workload for heavier batches.
 - Added focused lifecycle and worker regression tests.
 - Exact-head CI verification remains pending; no production verification is claimed.
+
+
+## 2026-09-19 — Strategy / Research Expansion
+- TASK-135 extended strategy intelligence with weakness detection, explicit DNA adaptation, continuous evaluation, rollback, and audit events.
+- TASK-136 added deterministic robustness matrix analysis and temporal leakage detection, routed as a PC Worker workload.
+- Current exact-head CI verification remains pending; Railway remains a later external gate.
