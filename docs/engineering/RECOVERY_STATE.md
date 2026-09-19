@@ -95,3 +95,11 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - IN_PROGRESS: exact-head Actions verification.
 - REMAINING: deeper research/strategy integration, alerts/reports, security/performance, full regression, Railway final gate.
 - NEXT_ACTION: verify CI at the resulting head; fix any actual failure before marking verified.
+
+
+## 2026-09-19 — TASK-140 Research-Gated Strategy Adaptation
+- TASK-139 exact-head Actions were verified green on `7a8b864ca82a54218f79d33663cf08472513c5d0`.
+- Implemented TASK-140: strategy DNA adaptation is now proposal-first and production mutation requires research validation evidence.
+- Current task: TASK-140.
+- IN_PROGRESS: exact-head Actions verification for TASK-140.
+- NEXT_ACTION: inspect exact-head CI; fix only real failures, then continue to the next large missing capability.
