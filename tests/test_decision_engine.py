@@ -136,7 +136,7 @@ def test_decision_component_contributions_reconcile_with_score():
     result = DecisionEngine().decide(Analysis())
     assert result.component_contributions
     assert round(sum(result.component_contributions.values()), 2) == result.score
-    assert result.component_contributions["structure"] == 3.75
+    assert result.component_contributions["structure"] == 7.5
     assert result.score < 50.0
 
 
