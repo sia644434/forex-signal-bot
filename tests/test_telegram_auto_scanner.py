@@ -168,3 +168,38 @@ def test_auto_scanner_schedule_only_validates_configuration(monkeypatch):
     client_module.TelegramClient._schedule_auto_scanner(client)
 
     assert any("configured" in message[0] for message in messages)
+
+
+@pytest.mark.asyncio
+async def test_continuous_scanner_loop_survives_cycle_failure(monkeypatch):
+    import asyncio
+    import services.telegram.client as client_module
+
+    calls = []
+
+    async def fake_scan(context):
+        calls.append(context)
+        if len(calls) == 1:
+            raise RuntimeError("temporary cycle failure")
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(client_module, "run_continuous_market_scan", fake_scan)
+
+    sleep_calls = 0
+    async def fake_sleep(seconds):
+        nonlocal sleep_calls
+        sleep_calls += 1
+        if sleep_calls in {1, 2}:
+            return
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(client_module.asyncio, "sleep", fake_sleep)
+
+    client = client_module.TelegramClient.__new__(client_module.TelegramClient)
+    client.application = SimpleNamespace(bot=object())
+
+    with pytest.raises(asyncio.CancelledError):
+        await client._run_auto_scanner_loop(60)
+
+    assert len(calls) == 2
+    assert sleep_calls == 2
