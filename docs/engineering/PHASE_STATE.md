@@ -96,3 +96,10 @@ Status: IMPLEMENTATION
 Current task: TASK-133
 Completed foundations: paper trading, shadow comparison, market replay, and deterministic Time Machine orchestration.
 Remaining: exact-head CI verification; strategy lifecycle/DNA/champion-challenger; news/macro real-data integration; advanced stress/sensitivity robustness; alert/report completion; final security/performance/regression; Railway final gate.
+
+
+## Phase 18 — Strategy Intelligence
+Status: IMPLEMENTATION
+Current task: TASK-134
+Completed foundation: strategy DNA/registry, observations by market/symbol/timeframe/regime, lifecycle state, retirement, champion/challenger comparison and worker batch evaluation.
+Remaining: richer adaptation/continuous evaluation/rollback integration, exact-head CI verification, news/macro providers, advanced robustness, alert/report completion, final security/performance/regression, Railway final gate.
