@@ -2,7 +2,7 @@
 
 - Project: `siasoltoon/forex-signal-bot`
 - Branch: `main`
-- Current HEAD: `0b03dde31133a089a1d862253ba7e6662e6ab799`
+- Current HEAD: `6024a5dfbc7d1e6f13632fa83ea9c8a4f2f5266b`
 - Product: **Multi-Asset Trading Intelligence Platform**
 - Supported market families: Forex, Crypto, Stocks, Indices, Commodities
 - Historical phase closures: Phases 1–11 have recorded closure evidence at their respective exact code heads.
