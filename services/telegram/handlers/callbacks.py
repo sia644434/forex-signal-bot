@@ -31,7 +31,7 @@ ALLOWED_CALLBACKS |= {f"market_{symbol}" for symbol in get_all_symbols()}
 def main_menu_keyboard(language: str = "fa"):
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("📊 Smart Analysis" if language == "en" else "📊 تحلیل هوشمند", callback_data="analysis"), InlineKeyboardButton("📡 Live Signal" if language == "en" else "📡 سیگنال زنده", callback_data="signals")],
-        [InlineKeyboardButton("🔎 Market Scanner" if language == "en" else "🔎 اسکن بازار", callback_data="scanner"), InlineKeyboardButton("🧠 AI Coach", callback_data="coach")],
+        [InlineKeyboardButton("🔎 Market Scanner" if language == "en" else "🔎 اسکن بازار", callback_data="scanner"), InlineKeyboardButton("🧠 Analysis Coach", callback_data="coach")],
         [InlineKeyboardButton("📒 Trading Journal" if language == "en" else "📒 ژورنال معاملات", callback_data="journal"), InlineKeyboardButton("⚙️ Settings" if language == "en" else "⚙️ تنظیمات", callback_data="settings")],
     ])
 
@@ -159,7 +159,7 @@ async def menu_callback_handler(update: Update, context: ContextTypes.DEFAULT_TY
         try:
             report = await _run_signal_report(state, get_market_data_service(context.application)); await query.edit_message_text(explain_report(report), parse_mode="HTML", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "retry"), callback_data="coach")], [InlineKeyboardButton(t(language, "back"), callback_data="home")]]))
         except Exception:
-            await query.edit_message_text("❌ AI Coach could not obtain valid analysis." if language == "en" else "❌ مربی نتوانست تحلیل معتبر دریافت کند.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "back"), callback_data="home")]]))
+            await query.edit_message_text("❌ Analysis Coach could not obtain valid analysis." if language == "en" else "❌ مربی نتوانست تحلیل معتبر دریافت کند.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(language, "back"), callback_data="home")]]))
         return
     if data == "journal":
         if not user: return
