@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import math
 from uuid import uuid4
 
@@ -81,8 +81,8 @@ class PaperTradingEngine:
 
     def snapshot(self) -> dict[str, object]:
         return {
-            "open": [position.__dict__ for position in self._open.values()],
-            "closed": [trade.__dict__ for trade in self._closed],
+            "open": [asdict(position) for position in self._open.values()],
+            "closed": [asdict(trade) for trade in self._closed],
             "realized_pnl": sum(trade.pnl for trade in self._closed),
         }
 
