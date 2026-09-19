@@ -35,4 +35,12 @@ def test_default_scanner_universe_covers_every_supported_market():
     from services.telegram.scanner import DEFAULT_SCAN_SYMBOLS
 
     assert DEFAULT_SCAN_SYMBOLS == get_all_symbols()
-    assert len(DEFAULT_SCAN_SYMBOLS) > 20
+    assert len(DEFAULT_SCAN_SYMBOLS) == 63
+
+
+def test_scanner_env_override_accepts_complete_supported_universe(monkeypatch):
+    from config.symbols import get_all_symbols
+    from services.telegram.scanner import _configured_scan_symbols
+
+    monkeypatch.setenv("TELEGRAM_SCANNER_SYMBOLS", ",".join(get_all_symbols()))
+    assert _configured_scan_symbols() == get_all_symbols()
