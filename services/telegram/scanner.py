@@ -10,7 +10,7 @@ from typing import Any
 
 from analysis.full_engine import FullAnalysisEngine
 from analysis.opportunity_engine import OpportunityEngine
-from config.symbols import get_market_type
+from config.symbols import get_all_symbols, get_market_type
 from core.errors import ApplicationError
 from data.factory import ProviderFactory
 from data.provider_manager import ProviderManager
