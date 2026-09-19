@@ -78,6 +78,19 @@ class MultiTimeframeAnalysisEngine:
             f"{name}={float(value):+.2f}"
             for name, value in contributions.items()
         ) or "none"
+        directional_contributions = getattr(report, "directional_contributions", {}) or {}
+        directional_text = ",".join(
+            f"{name}={float(value):+.2f}"
+            for name, value in directional_contributions.items()
+        ) or "none"
+        positive_directional = sorted(
+            ((name, float(value)) for name, value in directional_contributions.items() if float(value) > 0),
+            key=lambda item: (-item[1], item[0]),
+        )
+        negative_directional = sorted(
+            ((name, float(value)) for name, value in directional_contributions.items() if float(value) < 0),
+            key=lambda item: (item[1], item[0]),
+        )
         component_order = (
             "smart_money_score",
             "structure_score",
@@ -136,6 +149,10 @@ class MultiTimeframeAnalysisEngine:
             f"m15_rr={'none' if getattr(report, 'risk_reward', None) is None else format(float(report.risk_reward), '.2f')}",
             f"m15_score_delta={score - 50.0:+.2f}",
             f"m15_score_contributions={contribution_text}",
+            f"m15_directional_contributions={directional_text}",
+            f"m15_directional_total={sum(float(value) for value in directional_contributions.values()):+.2f}",
+            f"m15_directional_positive={','.join(f'{name}:{value:+.2f}' for name, value in positive_directional) or 'none'}",
+            f"m15_directional_negative={','.join(f'{name}:{value:+.2f}' for name, value in negative_directional) or 'none'}",
             f"m15_contribution_total={sum(float(value) for value in contributions.values()):.2f}",
             f"m15_market_regime={market_regime}",
             f"m15_risk_level={risk_level}",
