@@ -156,3 +156,11 @@ Status: IMPLEMENTATION
 - Persistent negative expectancy with sample >= 100 and absolute drawdown >= 0.20 transitions to RETIRED with an explicit reason.
 - Research validation retains OOS, overfitting, and robustness diagnostics for auditability.
 - Exact-head CI verification remains pending.
+
+
+## TASK-145 — Broad Capability Expansion
+Status: IMPLEMENTATION
+- Current frontier: paper trading lifecycle/equity, alert/report contracts, and macro data orchestration hardening.
+- Implemented: mark-to-market paper equity, deterministic alert deduplication/severity, report alert context, macro cache, and collect-and-assess diagnostics.
+- Exact-head CI verification remains pending on `54e4b3be86ba2d6f8cf6be4e96b8c56de56536f2`.
+- After verification, continue closing remaining capability gaps before the Railway final gate.
