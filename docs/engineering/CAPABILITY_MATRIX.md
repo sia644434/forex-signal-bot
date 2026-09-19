@@ -44,3 +44,7 @@ Large historical, simulation, optimization, multi-symbol, multi-timeframe, corre
 | Shadow trading | IMPLEMENTED_CURRENT | `services/paper_trading.py` comparison contract | `tests/test_paper_trading.py` | Live/paper decision streams | RAILWAY | 20 | pending CI |
 | Market replay | IMPLEMENTED_CURRENT | `worker/executors.py::market_replay` | `tests/test_market_replay_executor.py` | Historical candles/full analysis | PC_WORKER | 20 | pending CI |
 | Time Machine | IMPLEMENTED_CURRENT | `analysis/time_machine.py` + `worker/executors.py::time_machine` | `tests/test_time_machine.py` | Replay + counterfactual | PC_WORKER | 20 | pending CI |
+
+| News provider integration | IMPLEMENTED_CURRENT | `analysis/macro_risk.py::NewsAPIProvider` | `tests/test_macro_risk.py` | NEWSAPI_API_KEY | RAILWAY | 11 | pending CI |
+| Macro/FRED provider integration | IMPLEMENTED_CURRENT | `analysis/macro_risk.py::FREDProvider` | `tests/test_macro_risk.py` | FRED_API_KEY | RAILWAY | 11 | pending CI |
+| Macro event risk gating | IMPLEMENTED_CURRENT | `MacroRiskEngine.assess` + FullAnalysisEngine + DecisionEngine | `tests/test_macro_risk.py`, `tests/test_full_engine.py` | Macro context | RAILWAY | 11 | pending CI |
