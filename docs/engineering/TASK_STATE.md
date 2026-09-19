@@ -621,3 +621,15 @@ Evidence:
 - `apply_adaptation()` requires admissible validation evidence: positive OOS, positive OOS ratio >= 0.5, robust evidence, and no leakage/overfitting warning.
 - Stale proposals are rejected and applied adaptations persist validation evidence plus an auditable change record.
 - Regression coverage verifies proposal-only behavior and rejection of insufficient validation.
+
+## TASK-141
+Phase: Phase 18 — Strategy Intelligence / Research Integration
+Title: Version-Bound Research Validation and Continuous Strategy Evaluation Integration
+Implementation Status: IMPLEMENTED — exact-head CI verification pending
+Evidence:
+- Strategy validation evidence is now bound to the exact strategy version and canonical DNA fingerprint.
+- Champion/challenger eligibility rejects stale or mismatched validation evidence.
+- Adaptation application requires validation for the proposal's current version/DNA and clears prior validation after the DNA version changes.
+- PC Worker strategy evaluation can consume research-validation input directly and materialize admissible validation evidence before lifecycle comparison.
+- Regression coverage was expanded for version/DNA binding, research-backed validation, and stale evidence rejection.
+
