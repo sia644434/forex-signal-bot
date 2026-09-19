@@ -174,7 +174,7 @@ class ProviderManager:
         for attempt in range(1, self.retries + 2):
             try:
                 candles = await provider.get_candles(symbol=symbol, timeframe=timeframe, limit=limit)
-                validated = self._validate_result(provider_name, candles, symbol)
+                validated = self._validate_result(provider_name, candles, symbol, timeframe)
                 if not validated:
                     raise ApplicationError("Provider returned no candles.", {"provider": provider_name, "symbol": symbol, "timeframe": timeframe})
                 return validated
@@ -192,7 +192,24 @@ class ProviderManager:
         return "".join(character for character in symbol.strip().upper() if character not in "_/ -")
 
     @staticmethod
-    def _validate_result(provider_name: str, candles: object, symbol: str) -> list[Candle]:
+    def _timeframe_interval(timeframe: str):
+        normalized = timeframe.strip().upper()
+        aliases = {
+            "M1": "1m", "M5": "5m", "M15": "15m", "M30": "30m",
+            "H1": "1h", "H4": "4h", "D1": "1d", "W1": "1w",
+            "1M": "1m", "5M": "5m", "15M": "15m", "30M": "30m",
+            "1H": "1h", "4H": "4h", "1D": "1d", "1W": "1w",
+        }
+        from data.market_data import MarketDataEngine
+        return MarketDataEngine._timeframe_to_timedelta(aliases.get(normalized, normalized))
+
+    @staticmethod
+    def _validate_result(
+        provider_name: str,
+        candles: object,
+        symbol: str,
+        timeframe: str | None = None,
+    ) -> list[Candle]:
         if not isinstance(candles, (list, tuple)):
             raise ApplicationError("Provider returned an invalid candle collection.", {"provider": provider_name, "symbol": symbol, "expected": "list[Candle]", "actual": type(candles).__name__})
         expected = ProviderManager._canonical_symbol_for_validation(symbol)
@@ -206,7 +223,21 @@ class ProviderManager:
             if previous_timestamp is not None and candle.timestamp <= previous_timestamp:
                 raise ApplicationError("Provider returned non-chronological or duplicate candles.", {"provider": provider_name, "symbol": symbol, "index": index})
             previous_timestamp = candle.timestamp
-        return list(candles)
+        result = list(candles)
+        if timeframe is not None and result:
+            try:
+                DataQuality.validate(
+                    result,
+                    expected_symbol=symbol,
+                    expected_interval=ProviderManager._timeframe_interval(timeframe),
+                    market_type=get_market_type(symbol),
+                )
+            except (TypeError, ValueError) as error:
+                raise ApplicationError(
+                    "Provider returned invalid market data quality.",
+                    {"provider": provider_name, "symbol": symbol, "timeframe": timeframe, "reason": str(error)[:500]},
+                ) from error
+        return result
 
     @staticmethod
     def _normalize_candles(candles: list[Candle], *, limit: int) -> list[Candle]:
