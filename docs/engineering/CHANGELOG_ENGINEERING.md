@@ -167,3 +167,13 @@ Railway remains deferred until required capabilities and final regression/securi
 - Added admissible validation evidence with OOS stability, robustness, leakage and overfitting gates.
 - Champion/challenger promotion now requires research validation evidence for both sides.
 - Updated Worker strategy evaluation and regression tests.
+
+
+## 2026-09-19 — TASK-140
+### Research-Gated Strategy Adaptation
+- Added proposal-first strategy DNA adaptation.
+- Added validation-gated application with OOS/stability/robustness requirements.
+- Added stale-proposal protection and validation metadata in audit events.
+- Preserved rollback and lifecycle auditability.
+- Added regression coverage.
+- CI verification pending at exact head.
