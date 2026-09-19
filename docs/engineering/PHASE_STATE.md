@@ -117,3 +117,10 @@ Status: IMPLEMENTATION
 Current task: TASK-135
 Completed: strategy DNA/registry, lifecycle, champion/challenger, adaptation, weakness detection, continuous evaluation, rollback, and audit trail.
 Remaining: exact-head CI verification and deeper research integration.
+
+
+## 2026-09-19 — TASK-137 Macro / News Risk Expansion
+- Added real NewsAPI and FRED adapters with explicit external-dependency diagnostics.
+- Added macro event proximity assessment and integrated NORMAL/ELEVATED/CRISIS risk into the full analysis and decision boundary.
+- Added regression tests for providers, macro assessment, and full-pipeline gating.
+- Exact-head CI verification remains pending; no production verification is claimed for the new commits.
