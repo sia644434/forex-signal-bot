@@ -197,3 +197,7 @@ Railway remains deferred until required capabilities and final regression/securi
 ## 2026-09-19 — TASK-142 CI Repair
 - Fixed StrategyRecord construction so validation-aware evaluation history is always initialized.
 - The previous HEAD failed 8 tests with AttributeError; this was a direct regression from TASK-142 and is now corrected.
+
+## 2026-09-19 — TASK-143 Robustness-Gated Research Validation
+- Research-backed strategy validation now derives `robust` from the existing RobustnessEngine rather than trusting caller-provided state.
+- Added regression coverage for automatic robustness gating.
