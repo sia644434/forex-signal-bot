@@ -575,3 +575,15 @@ Implementation Status: IMPLEMENTED — pending exact-head CI verification
 - Added return/drawdown dispersion and positive-case ratio outputs without claiming statistical significance.
 - Added temporal leakage detection that rejects feature timestamps later than target timestamps.
 - Added PC Worker-owned `robustness_analysis` workload and regression coverage.
+
+
+## TASK-137
+Phase: Phase 11 — Event / News / Macro Risk
+Title: Real News/Macro Provider Integration and Decision Risk Boundary
+Implementation Status: IMPLEMENTED — pending exact-head CI verification
+- Added real NewsAPI and FRED provider adapters using bounded standard-library HTTP.
+- Missing provider credentials are explicit `EXTERNAL_DEPENDENCY` diagnostics; no synthetic macro data is generated.
+- Added macro event proximity assessment with NORMAL/ELEVATED/CRISIS states.
+- Integrated macro risk into FullAnalysisEngine and AnalysisReport.
+- DecisionEngine now blocks on CRISIS macro risk and downgrades executable directional signals to WAIT under ELEVATED risk.
+- Added focused provider, risk-assessment, and full-pipeline regression tests.
