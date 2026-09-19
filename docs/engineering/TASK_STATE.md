@@ -666,3 +666,15 @@ Evidence:
 - Persistent negative expectancy with sufficient sample and elevated drawdown is automatically retired.
 - Research-backed worker validation persists OOS/overfitting/robustness diagnostics with the validation evidence.
 - Focused regression coverage added for validation-gated lifecycle transitions, automatic retirement, and research diagnostics.
+
+
+## TASK-145
+Phase: Phase 20/22 — Paper Trading / Alerts / Macro Risk
+Title: Paper Equity Lifecycle, Deterministic Alert Policy, and Macro Collection Hardening
+Implementation Status: IMPLEMENTED — exact-head CI verification pending
+Evidence:
+- Paper trading now supports mark-to-market and combined realized/unrealized equity snapshots while remaining isolated from live execution.
+- Added a transport-neutral alert policy with severity classification and deterministic deduplication.
+- AnalysisReport now exposes an alert context contract for downstream Telegram/dashboard surfaces.
+- MacroRiskEngine now provides bounded caching and a collect_and_assess orchestration path with provider diagnostics preserved.
+- Added focused regression coverage for paper equity, alert policy/report contracts, and macro cache/assessment behavior.
