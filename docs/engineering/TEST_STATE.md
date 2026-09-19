@@ -1,9 +1,9 @@
 # Test State
 
 ## Current Verification State
-- Current `main` HEAD: `0b03dde31133a089a1d862253ba7e6662e6ab799`.
+- Current `main` HEAD: `6024a5dfbc7d1e6f13632fa83ea9c8a4f2f5266b`.
 - Historical phase closure checks remain preserved at their recorded exact heads.
-- The current combined GitHub status is **not green** because the Railway deployment status `lavish-energy - forex-signal-bot` is failing.
+- The current repository CI verification is being tracked separately from the external Railway deployment status; Railway verification is intentionally deferred to the final external gate.
 - The current commit has no PR-triggered workflow runs returned by the workflow-run lookup.
 - Therefore historical seven-workflow closure evidence must not be represented as fresh current-HEAD verification.
 - No local execution is claimed.
