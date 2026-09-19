@@ -21,6 +21,17 @@ def test_health_server_serves_json_health() -> None:
         server.stop()
 
 
+def test_health_server_accepts_health_query_string() -> None:
+    server = HealthServer(lambda: {"status": "ok"}, host="127.0.0.1", port=0)
+    server.start()
+    try:
+        with urlopen(f"http://127.0.0.1:{server.port}/health?probe=railway", timeout=2) as response:
+            assert response.status == 200
+            assert json.loads(response.read()) == {"status": "ok"}
+    finally:
+        server.stop()
+
+
 def test_health_server_returns_service_failure_as_503() -> None:
     payload = {
         "application": {"status": "degraded"},
