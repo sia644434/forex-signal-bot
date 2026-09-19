@@ -2,6 +2,14 @@ from __future__ import annotations
 
 from telegram import BotCommand
 from telegram.ext import Application
+from apscheduler.events import (
+    EVENT_JOB_ERROR,
+    EVENT_JOB_EXECUTED,
+    EVENT_JOB_MAX_INSTANCES,
+    EVENT_JOB_MISSED,
+    JobExecutionEvent,
+    JobSubmissionEvent,
+)
 
 from core.logger import setup_logger
 from services.market_data.service import install_market_data_service
@@ -16,6 +24,46 @@ from services.telegram.auto_scanner import (
 
 
 logger = setup_logger()
+
+_SCANNER_SCHEDULER_EVENTS = (
+    EVENT_JOB_EXECUTED
+    | EVENT_JOB_ERROR
+    | EVENT_JOB_MISSED
+    | EVENT_JOB_MAX_INSTANCES
+)
+
+
+def _log_scanner_scheduler_event(event) -> None:
+    """Log scheduler-level outcomes for the continuous scanner job."""
+    if getattr(event, "job_id", None) != AUTO_SCANNER_JOB_NAME:
+        return
+
+    code = getattr(event, "code", None)
+    if code == EVENT_JOB_EXECUTED:
+        logger.info(
+            "Automatic scanner scheduler event: executed job=%s scheduled=%s",
+            event.job_id,
+            getattr(event, "scheduled_run_time", None),
+        )
+    elif code == EVENT_JOB_ERROR:
+        logger.error(
+            "Automatic scanner scheduler event: ERROR job=%s scheduled=%s exception=%r",
+            event.job_id,
+            getattr(event, "scheduled_run_time", None),
+            getattr(event, "exception", None),
+        )
+    elif code == EVENT_JOB_MISSED:
+        logger.error(
+            "Automatic scanner scheduler event: MISSED job=%s scheduled=%s",
+            event.job_id,
+            getattr(event, "scheduled_run_time", None),
+        )
+    elif code == EVENT_JOB_MAX_INSTANCES:
+        logger.error(
+            "Automatic scanner scheduler event: MAX_INSTANCES job=%s scheduled=%s",
+            event.job_id,
+            getattr(event, "scheduled_run_times", None),
+        )
 
 
 class TelegramClient:
@@ -42,13 +90,27 @@ class TelegramClient:
         if job_queue is None:
             raise RuntimeError("Telegram JobQueue is unavailable; automatic market scanning cannot run.")
         interval = auto_scanner_interval_seconds()
-        job_queue.run_repeating(
+        job_queue.scheduler.add_listener(
+            _log_scanner_scheduler_event,
+            _SCANNER_SCHEDULER_EVENTS,
+        )
+        job = job_queue.run_repeating(
             run_continuous_market_scan,
             interval=interval,
             first=5,
             name=AUTO_SCANNER_JOB_NAME,
+            job_kwargs={
+                "max_instances": 1,
+                "coalesce": True,
+                "misfire_grace_time": max(30, interval * 2),
+            },
         )
-        logger.info("Continuous multi-timeframe scanner scheduled every %s seconds.", interval)
+        logger.info(
+            "Continuous multi-timeframe scanner scheduled: job=%s interval=%ss first=5s next_run=%s",
+            AUTO_SCANNER_JOB_NAME,
+            interval,
+            job.next_t if hasattr(job, "next_t") else getattr(job, "next_run_time", None),
+        )
 
     def _schedule_tracker_refresh(self) -> None:
         """Start the durable active-signal refresh loop required by tracking."""
