@@ -48,6 +48,8 @@ def test_strategy_evaluation_can_build_validation_from_research_data():
     assert evidence["robust"] is True
     assert evidence["validated_version"] == 1
     assert evidence["dna_fingerprint"]
+    assert evidence["diagnostics"]["robustness"]["case_count"] == 9
+    assert evidence["diagnostics"]["overfitting"]["overfitting_warning"] is False
 
 
 def test_strategy_evaluation_rejects_stale_validation_identity():
