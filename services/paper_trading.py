@@ -4,6 +4,7 @@ from dataclasses import asdict, dataclass
 import math
 from uuid import uuid4
 
+from services.paper_store import PaperTradingStore
 from services.shadow_store import ShadowComparisonStore
 
 
@@ -32,9 +33,18 @@ class ClosedPaperTrade:
 class PaperTradingEngine:
     """Deterministic paper-trading ledger isolated from live execution."""
 
-    def __init__(self) -> None:
+    def __init__(self, store: PaperTradingStore | None = None) -> None:
+        self._store = store
         self._open: dict[str, PaperPosition] = {}
         self._closed: list[ClosedPaperTrade] = []
+        if store is not None:
+            snapshot = store.load()
+            self._open = {item["position_id"]: PaperPosition(**item) for item in snapshot.get("open", [])}
+            self._closed = [ClosedPaperTrade(**item) for item in snapshot.get("closed", [])]
+
+    def _persist(self) -> None:
+        if self._store is not None:
+            self._store.save(self.snapshot())
 
     @staticmethod
     def _positive(value: object, name: str) -> float:
@@ -63,6 +73,7 @@ class PaperTradingEngine:
         if position.position_id in self._open:
             raise ValueError("position_id already exists")
         self._open[position.position_id] = position
+        self._persist()
         return position
 
     def close(self, position_id: str, exit_price: float, closed_at: str) -> ClosedPaperTrade:
@@ -79,6 +90,7 @@ class PaperTradingEngine:
             position.entry_price, exit_value, pnl, str(closed_at),
         )
         self._closed.append(trade)
+        self._persist()
         return trade
 
     def mark_to_market(self, prices: dict[str, float]) -> float:
