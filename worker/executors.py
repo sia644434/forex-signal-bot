@@ -394,6 +394,25 @@ def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
         comparison = engine.compare(str(payload["champion_id"]), str(payload["challenger_id"]))
     return {"comparison": comparison, "strategies": engine.snapshot()}
 
+
+def robustness_analysis(payload: dict[str, Any]) -> dict[str, Any]:
+    from analysis.robustness_engine import RobustnessEngine
+    prices = payload.get("prices", payload.get("close"))
+    if not isinstance(prices, list):
+        raise ValueError("prices list is required")
+    engine = RobustnessEngine()
+    result = engine.evaluate(
+        prices,
+        thresholds=payload.get("thresholds", (0.0, 0.001, 0.002)),
+        fees=payload.get("fees", (0.0, 0.0001, 0.0002)),
+    )
+    rows = payload.get("temporal_rows")
+    if rows is not None:
+        if not isinstance(rows, list):
+            raise ValueError("temporal_rows must be a list")
+        result["leakage"] = engine.temporal_leakage_check(rows)
+    return result
+
 def register_real_executors(runtime) -> None:
     mapping = {
         "backtest": backtest, "walk_forward": walk_forward, "monte_carlo": monte_carlo,
@@ -405,7 +424,7 @@ def register_real_executors(runtime) -> None:
         "timeseries_training": timeseries_training, "ensemble_training": ensemble_training,
         "deep_learning_training": deep_learning_training, "transformer_training": transformer_training,
         "lstm_training": lstm_training, "gru_training": gru_training,
-        "medium_model_training": medium_model_training, "correlation_matrix": correlation_matrix, "portfolio_stress": portfolio_stress, "stress_sensitivity": stress_sensitivity, "counterfactual_batch": counterfactual_batch, "market_replay": market_replay, "time_machine": time_machine, "strategy_evaluation": strategy_evaluation,
+        "medium_model_training": medium_model_training, "correlation_matrix": correlation_matrix, "portfolio_stress": portfolio_stress, "stress_sensitivity": stress_sensitivity, "counterfactual_batch": counterfactual_batch, "market_replay": market_replay, "time_machine": time_machine, "strategy_evaluation": strategy_evaluation, "robustness_analysis": robustness_analysis,
     }
     for name, handler in mapping.items():
         runtime.register(name, handler)
