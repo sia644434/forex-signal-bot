@@ -7,7 +7,7 @@ import os
 from typing import Any
 
 from config.symbols import normalize_timeframe
-from services.market_data.service import get_market_data_service
+from services.market_data.service import MarketDataService
 from services.telegram.scanner import _configured_scan_symbols, get_scanner_provider_manager
 from services.telegram.state import get_user_state
 from services.telegram.access import _allowed_user_ids
@@ -175,11 +175,10 @@ class ContinuousMarketScanner:
         if not self._should_scan_now(now):
             return 0
         async with self._lock:
-            market_data = get_market_data_service(application)
             # Refresh provider configuration before each automatic cycle so
             # newly available configured providers are picked up without restart.
             provider_manager = get_scanner_provider_manager(application)
-            market_data.provider_manager = provider_manager
+            market_data = MarketDataService(provider_manager=provider_manager)
             symbols = _configured_scan_symbols()
             semaphore = asyncio.Semaphore(4)
 
