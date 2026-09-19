@@ -7,6 +7,12 @@ from core.logger import setup_logger
 from services.market_data.service import install_market_data_service
 from services.telegram.router import register_routes
 from services.telegram.tracker_job import refresh_all_tracked_signals, tracker_refresh_interval_seconds
+from services.telegram.auto_scanner import (
+    AUTO_SCANNER_JOB_NAME,
+    auto_scanner_enabled,
+    auto_scanner_interval_seconds,
+    run_continuous_market_scan,
+)
 
 
 logger = setup_logger()
@@ -26,6 +32,23 @@ class TelegramClient:
         self.market_data_service = install_market_data_service(self.application)
         register_routes(self.application)
         logger.info("Telegram client configured and routes registered.")
+
+    def _schedule_auto_scanner(self) -> None:
+        """Start the continuous multi-timeframe opportunity scanner."""
+        if not auto_scanner_enabled():
+            logger.info("Continuous automatic scanner is disabled.")
+            return
+        job_queue = self.application.job_queue
+        if job_queue is None:
+            raise RuntimeError("Telegram JobQueue is unavailable; automatic market scanning cannot run.")
+        interval = auto_scanner_interval_seconds()
+        job_queue.run_repeating(
+            run_continuous_market_scan,
+            interval=interval,
+            first=5,
+            name=AUTO_SCANNER_JOB_NAME,
+        )
+        logger.info("Continuous multi-timeframe scanner scheduled every %s seconds.", interval)
 
     def _schedule_tracker_refresh(self) -> None:
         """Start the durable active-signal refresh loop required by tracking."""
@@ -73,6 +96,7 @@ class TelegramClient:
         # marked running. A startup dependency failure must not leave a
         # partially-started Telegram runtime behind.
         self._schedule_tracker_refresh()
+        self._schedule_auto_scanner()
 
         await self.application.start()
         logger.info("Telegram application runtime started.")
