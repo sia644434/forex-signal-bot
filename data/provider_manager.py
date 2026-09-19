@@ -4,6 +4,7 @@ import asyncio
 import math
 import time
 from contextvars import ContextVar
+from datetime import timedelta
 from dataclasses import dataclass
 from typing import Iterable
 
@@ -192,16 +193,22 @@ class ProviderManager:
         return "".join(character for character in symbol.strip().upper() if character not in "_/ -")
 
     @staticmethod
-    def _timeframe_interval(timeframe: str):
+    def _timeframe_interval(timeframe: str) -> timedelta:
         normalized = timeframe.strip().upper()
         aliases = {
-            "M1": "1m", "M5": "5m", "M15": "15m", "M30": "30m",
-            "H1": "1h", "H4": "4h", "D1": "1d", "W1": "1w",
-            "1M": "1m", "5M": "5m", "15M": "15m", "30M": "30m",
-            "1H": "1h", "4H": "4h", "1D": "1d", "1W": "1w",
+            "M1": timedelta(minutes=1), "M5": timedelta(minutes=5),
+            "M15": timedelta(minutes=15), "M30": timedelta(minutes=30),
+            "H1": timedelta(hours=1), "H4": timedelta(hours=4),
+            "D1": timedelta(days=1), "W1": timedelta(weeks=1),
+            "1M": timedelta(minutes=1), "5M": timedelta(minutes=5),
+            "15M": timedelta(minutes=15), "30M": timedelta(minutes=30),
+            "1H": timedelta(hours=1), "4H": timedelta(hours=4),
+            "1D": timedelta(days=1), "1W": timedelta(weeks=1),
         }
-        from data.market_data import MarketDataEngine
-        return MarketDataEngine._timeframe_to_timedelta(aliases.get(normalized, normalized))
+        try:
+            return aliases[normalized]
+        except KeyError as error:
+            raise ValueError(f"Unsupported timeframe: {timeframe!r}") from error
 
     @staticmethod
     def _validate_result(
