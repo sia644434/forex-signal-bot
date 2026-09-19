@@ -123,3 +123,11 @@ Railway remains deferred until required capabilities and final regression/securi
 - Added shadow decision comparison without coupling to live execution.
 - Added worker-owned market replay producing traceable historical decision output.
 - Added focused regression coverage.
+
+
+## 2026-09-19 — Time Machine foundation
+- Added deterministic historical Time Machine orchestration over candle prefixes.
+- Added traceable counterfactual evaluation per replay step.
+- Registered `time_machine` as a PC Worker-owned heavy workload.
+- Added focused deterministic and counterfactual regression coverage.
+- Exact-head CI verification remains pending; no production verification is claimed.
