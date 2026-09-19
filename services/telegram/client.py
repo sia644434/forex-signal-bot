@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from telegram import BotCommand
 from telegram.ext import Application
 from apscheduler.events import (
@@ -79,35 +81,47 @@ class TelegramClient:
         register_routes(self.application)
         logger.info("Telegram client configured and routes registered.")
 
+    async def _run_auto_scanner_loop(self, interval: int) -> None:
+        """Own the continuous scanner lifecycle independently of APScheduler.
+
+        The scanner is a critical long-running loop. Keeping it on the
+        application's asyncio lifecycle avoids silently losing executions when
+        a scheduler job is paused, missed, or otherwise unavailable.
+        """
+        logger.info(
+            "Continuous scanner loop started: interval=%ss first_run=5s",
+            interval,
+        )
+        try:
+            await asyncio.sleep(5)
+            while True:
+                await run_continuous_market_scan(
+                    type(
+                        "ScannerContext",
+                        (),
+                        {
+                            "bot": self.application.bot,
+                            "application": self.application,
+                        },
+                    )()
+                )
+                await asyncio.sleep(interval)
+        except asyncio.CancelledError:
+            logger.info("Continuous scanner loop cancelled.")
+            raise
+        except Exception:
+            logger.exception("Continuous scanner loop stopped unexpectedly.")
+            raise
+
     def _schedule_auto_scanner(self) -> None:
         """Start the continuous multi-timeframe opportunity scanner."""
         if not auto_scanner_enabled():
             logger.info("Continuous automatic scanner is disabled.")
             return
-        job_queue = self.application.job_queue
-        if job_queue is None:
-            raise RuntimeError("Telegram JobQueue is unavailable; automatic market scanning cannot run.")
         interval = auto_scanner_interval_seconds()
-        job_queue.scheduler.add_listener(
-            _log_scanner_scheduler_event,
-            _SCANNER_SCHEDULER_EVENTS,
-        )
-        job = job_queue.run_repeating(
-            run_continuous_market_scan,
-            interval=interval,
-            first=5,
-            name=AUTO_SCANNER_JOB_NAME,
-            job_kwargs={
-                "max_instances": 1,
-                "coalesce": True,
-                "misfire_grace_time": max(30, interval * 2),
-            },
-        )
         logger.info(
-            "Continuous multi-timeframe scanner scheduled: job=%s interval=%ss first=5s next_run=%s",
-            AUTO_SCANNER_JOB_NAME,
+            "Continuous multi-timeframe scanner configured: interval=%ss first_run=5s",
             interval,
-            getattr(job, "next_t", getattr(job, "next_run_time", None)),
         )
 
     def _schedule_tracker_refresh(self) -> None:
@@ -160,6 +174,17 @@ class TelegramClient:
 
         await self.application.start()
         logger.info("Telegram application runtime started.")
+
+        if auto_scanner_enabled():
+            interval = auto_scanner_interval_seconds()
+            self.application.create_task(
+                self._run_auto_scanner_loop(interval),
+                name=AUTO_SCANNER_JOB_NAME,
+            )
+            logger.info(
+                "Continuous scanner loop started after application startup: interval=%ss",
+                interval,
+            )
 
         await updater.start_polling()
         logger.info("Telegram polling started successfully.")
