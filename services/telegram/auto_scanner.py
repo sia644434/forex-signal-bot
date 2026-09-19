@@ -73,7 +73,17 @@ class ContinuousMarketScanner:
     def _eligible_symbols_for_session(symbols: tuple[str, ...], now: datetime) -> tuple[str, ...]:
         if now.weekday() < 5:
             return symbols
-        return tuple(symbol for symbol in symbols if get_market_type(symbol) == "crypto")
+        if now.weekday() == 5:
+            return tuple(symbol for symbol in symbols if get_market_type(symbol) == "crypto")
+        # Sunday: crypto is open continuously; FX and commodities generally
+        # reopen around 21:00 UTC. Stocks and indices remain closed.
+        if now.hour < 21:
+            return tuple(symbol for symbol in symbols if get_market_type(symbol) == "crypto")
+        return tuple(
+            symbol
+            for symbol in symbols
+            if get_market_type(symbol) in {"crypto", "forex", "commodity"}
+        )
 
     async def _fetch_timeframe(
         self,
