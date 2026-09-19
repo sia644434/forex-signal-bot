@@ -1,7 +1,7 @@
 # Test State
 
 ## Current Verification State
-- Current `main` HEAD: `1aec001ff4769bb47171513ad1bdb7da5bb88c73`.
+- Current `main` HEAD: `0b03dde31133a089a1d862253ba7e6662e6ab799`.
 - Historical phase closure checks remain preserved at their recorded exact heads.
 - The current combined GitHub status is **not green** because the Railway deployment status `lavish-energy - forex-signal-bot` is failing.
 - The current commit has no PR-triggered workflow runs returned by the workflow-run lookup.
@@ -21,7 +21,7 @@ Before marking any reopened task or phase VERIFIED:
 The repository retains historical exact-head evidence for Phases 1–11, including the seven-check closure sets documented in `PHASE_STATE.md` and `TASK_STATE.md`. Historical evidence remains useful but is not a substitute for current-HEAD verification.
 
 ## Current Frontier
-Phase 12 deployment re-verification and the cross-phase integrity audit are the current verification frontier. Phase 13 is blocked until that frontier is resolved.
+Phase 13 current-HEAD code audit is the current verification frontier. Railway deployment/recovery is intentionally deferred until code work is complete.
 
 ## New-chat Rule
 Repository inspection/modification uses GitHub Connector only. Do not invent test success, deployment success, live-smoke evidence, or phase completion.
