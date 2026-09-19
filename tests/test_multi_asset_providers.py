@@ -64,3 +64,8 @@ async def test_alphavantage_index_daily_is_supported():
 async def test_alphavantage_commodity_close_only_data_is_not_promoted_to_fake_ohlc():
     with pytest.raises(Exception, match="no usable OHLC"):
         await AlphaVantageProvider(client=AlphaFake()).get_candles("WTI","1d",10)
+
+
+def test_finnhub_normalizes_spx_to_supported_index_symbol():
+    from data.providers.clients.finnhub import FinnhubClient
+    assert FinnhubClient._index_symbol("SPX") == "^GSPC"
