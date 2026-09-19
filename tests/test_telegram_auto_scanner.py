@@ -144,7 +144,6 @@ async def test_continuous_scan_wrapper_logs_and_reraises_job_failure(monkeypatch
     import services.telegram.auto_scanner as auto_scanner_module
     from types import SimpleNamespace
 
-    scanner = SimpleNamespace(run_once=pytest.raises)
     class FailingScanner:
         async def run_once(self, bot, application):
             raise RuntimeError("scanner boom")
