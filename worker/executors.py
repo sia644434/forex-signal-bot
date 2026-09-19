@@ -394,8 +394,10 @@ def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
         if validation is not None:
             if not isinstance(validation, dict):
                 raise ValueError("strategy validation must be an object")
+            strategy_id = str(item["strategy_id"])
+            dna = item.get("dna") or {}
             engine.attach_validation(
-                str(item["strategy_id"]),
+                strategy_id,
                 StrategyValidationEvidence(
                     oos_positive=bool(validation.get("oos_positive", False)),
                     positive_oos_ratio=float(validation.get("positive_oos_ratio", 0.0)),
@@ -403,6 +405,8 @@ def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
                     leakage_detected=bool(validation.get("leakage_detected", False)),
                     robust=bool(validation.get("robust", False)),
                     source=str(validation.get("source", "research_validation")),
+                    validated_version=int(validation.get("validated_version", 1)),
+                    dna_fingerprint=str(validation.get("dna_fingerprint", engine.dna_fingerprint(dna))),
                 ),
             )
     comparison = None
