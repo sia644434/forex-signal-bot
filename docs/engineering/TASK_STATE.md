@@ -492,6 +492,16 @@ Evidence:
 - Phase 11 is COMPLETE; Phase 13 — Final Production Audit — is the next unresolved phase frontier.
 
 
+## TASK-131
+Phase: Phase 19 — Scanner / Opportunity / Heatmap
+Title: Explainable Opportunity Ranking and Heatmap Foundation
+Implementation Status: IMPLEMENTED — pending exact-head CI verification
+- Added analysis/opportunity_engine.py.
+- Integrated opportunity ranking into the Telegram multi-asset scanner.
+- Added deterministic rank, score, rationale, and heatmap strength output.
+- Added focused regression coverage.
+- Large scanner workloads remain PC Worker-owned through the established heavy-scan contract.
+
 ## TASK-130
 Phase: Phase 16 — Portfolio / Risk Intelligence
 Title: Multi-Asset Portfolio Exposure, Correlation, Drawdown and Stress Foundation
