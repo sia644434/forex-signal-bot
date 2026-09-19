@@ -7,7 +7,7 @@ The repository is a **Multi-Asset Trading Intelligence Platform**. Supported mar
 The previous phase closures are preserved as historical evidence at their recorded exact code heads. They are not, by themselves, proof that the current `main` HEAD is green or that no cross-phase regression exists.
 
 ### Current main verification state
-- Current `main` HEAD: `4478ff72b7104bfdfdf05d69e787c3342fab134c`.
+- Current `main` HEAD: `6024a5dfbc7d1e6f13632fa83ea9c8a4f2f5266b`.
 - The repository combined status currently contains a failing Railway deployment status (`lavish-energy - forex-signal-bot`).
 - GitHub Actions workflow-run lookup for this commit returned no PR-triggered workflow runs; therefore the historical seven-workflow closure evidence must not be relabeled as fresh current-HEAD evidence.
 - No code regression has yet been proven solely from the failing external deployment status. The deployment failure is nevertheless a concrete unresolved production-verification item.
