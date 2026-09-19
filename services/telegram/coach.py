@@ -18,7 +18,7 @@ def explain_report(report: AnalysisReport) -> str:
     confidence = max(0.0, min(1.0, float(report.confidence))) * 100
     action = _SIGNAL_ACTIONS.get(str(report.signal).upper(), "فعلاً از ورود عجولانه خودداری کنید.")
     lines = [
-        "🧠 <b>AI Coach — توضیح تصمیم</b>",
+        "🧠 <b>مربی تحلیل — توضیح تصمیم</b>",
         "",
         f"بازار: <b>{report.symbol}</b>",
         f"تایم‌فریم: <b>{report.timeframe}</b>",
