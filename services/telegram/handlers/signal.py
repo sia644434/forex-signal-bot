@@ -44,6 +44,29 @@ def _format_number(value: float | None) -> str:
     return "—" if value is None else f"{value:.2f}"
 
 
+def _format_provider_diagnostics(exc: Exception) -> str:
+    """Expose safe provider failure reasons without secrets or raw payloads."""
+    details = getattr(exc, "details", None)
+    failures = details.get("failures") if isinstance(details, dict) else None
+    if not isinstance(failures, list):
+        return ""
+    latest: dict[str, str] = {}
+    for item in failures:
+        if not isinstance(item, dict):
+            continue
+        provider = str(item.get("provider") or "").strip()
+        if not provider:
+            continue
+        message = str(item.get("message") or item.get("error_type") or "unknown failure").strip()
+        latest[provider] = message[:180]
+    if not latest:
+        return ""
+    lines = ["", "🔎 <b>وضعیت تأمین‌کننده‌ها</b>"]
+    for provider, message in list(latest.items())[:4]:
+        lines.append(f"• {_escape(provider)}: {_escape(message)}")
+    return "\n".join(lines)
+
+
 def _format_signal_failure(exc: Exception, symbol: str, timeframe: str) -> str:
     """Turn internal signal-generation failures into actionable user-facing messages."""
     detail = str(exc).lower()
@@ -77,6 +100,7 @@ def _format_signal_failure(exc: Exception, symbol: str, timeframe: str) -> str:
             f"⏱ تایم‌فریم: <b>{_escape(timeframe)}</b>\n\n"
             "📡 سرویس‌های تأمین داده بازار در حال حاضر داده معتبر ارائه نکردند.\n\n"
             "⛔ هیچ سیگنالی بدون داده معتبر صادر نمی‌شود. لطفاً چند دقیقه بعد دوباره تلاش کنید."
+            + _format_provider_diagnostics(exc)
         )
 
     if "unsupported market symbol" in detail:
