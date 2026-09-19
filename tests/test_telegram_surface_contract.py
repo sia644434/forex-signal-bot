@@ -109,3 +109,23 @@ def test_apply_setting_accepts_canonical_multi_asset_symbols():
 def test_market_category_callbacks_are_accepted_by_menu_handler_contract():
     from services.telegram.handlers.callbacks import ALLOWED_CALLBACKS
     assert {"market_forex", "market_crypto", "market_stock", "market_index", "market_commodity"}.issubset(ALLOWED_CALLBACKS)
+
+
+def test_signal_failure_includes_safe_provider_diagnostics():
+    from core.errors import ApplicationError
+    from services.telegram.handlers.signal import _format_signal_failure
+
+    error = ApplicationError(
+        "All market data providers failed.",
+        {
+            "failures": [
+                {"provider": "finnhub", "attempt": 3, "error_type": "RuntimeError", "message": "status=error: symbol not found"},
+                {"provider": "twelvedata", "attempt": 3, "error_type": "ApplicationError", "message": "Twelve Data API error for BTC/USDT: symbol not found"},
+            ]
+        },
+    )
+    rendered = _format_signal_failure(error, "BTCUSDT", "M15")
+    assert "finnhub" in rendered
+    assert "twelvedata" in rendered
+    assert "symbol not found" in rendered
+    assert "All market data providers failed" not in rendered
