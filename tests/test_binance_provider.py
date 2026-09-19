@@ -93,7 +93,7 @@ async def test_binance_provider_maps_every_supported_timeframe(timeframe, expect
 
 @pytest.mark.asyncio
 async def test_binance_provider_filters_an_open_candle():
-    rows = _recent_rows("M15", count=2, close_last=False)
+    rows = _recent_rows("M15", count=3, close_last=False)
     client = FakeBinance(rows=rows)
 
     result = await BinanceProvider(client=client).get_candles("BTCUSDT", "M15", 10)
