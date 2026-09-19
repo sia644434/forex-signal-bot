@@ -140,7 +140,7 @@ def test_decision_component_contributions_reconcile_with_score():
     assert result.directional_contributions["structure"] == 0.0
     assert result.directional_contributions["smart_money"] == -3.5
     assert result.directional_contributions["elliott"] == 0.45
-    assert round(sum(result.directional_contributions.values()), 2) == round(result.score - 50.0, 2)
+    assert abs(sum(result.directional_contributions.values()) - (result.score - 50.0)) <= 0.01
     assert result.score < 50.0
 
 
