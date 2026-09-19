@@ -48,3 +48,8 @@ Large historical, simulation, optimization, multi-symbol, multi-timeframe, corre
 | News provider integration | IMPLEMENTED_CURRENT | `analysis/macro_risk.py::NewsAPIProvider` | `tests/test_macro_risk.py` | NEWSAPI_API_KEY | RAILWAY | 11 | pending CI |
 | Macro/FRED provider integration | IMPLEMENTED_CURRENT | `analysis/macro_risk.py::FREDProvider` | `tests/test_macro_risk.py` | FRED_API_KEY | RAILWAY | 11 | pending CI |
 | Macro event risk gating | IMPLEMENTED_CURRENT | `MacroRiskEngine.assess` + FullAnalysisEngine + DecisionEngine | `tests/test_macro_risk.py`, `tests/test_full_engine.py` | Macro context | RAILWAY | 11 | pending CI |
+
+| Out-of-sample validation | IMPLEMENTED_CURRENT | `analysis/research_engine.py::out_of_sample` | `tests/test_research_engine.py` | Historical prices | PC_WORKER | 14/17 | pending CI |
+| Rolling walk-forward validation | IMPLEMENTED_CURRENT | `analysis/research_engine.py::walk_forward` + `worker/executors.py::research_validation` | `tests/test_research_engine.py`, worker contract | Historical prices/parameter grid | PC_WORKER | 14/17 | pending CI |
+| Overfitting diagnostics | IMPLEMENTED_CURRENT | `analysis/research_engine.py::overfitting_diagnostics` | `tests/test_research_engine.py` | OOS results | PC_WORKER | 17 | pending CI |
+| Temporal leakage enforcement/check | IMPLEMENTED_CURRENT | `analysis/research_engine.py::temporal_leakage_check` | `tests/test_research_engine.py` | Feature/target timestamps | PC_WORKER | 17 | pending CI |
