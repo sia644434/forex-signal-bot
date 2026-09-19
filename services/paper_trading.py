@@ -79,12 +79,39 @@ class PaperTradingEngine:
         self._closed.append(trade)
         return trade
 
-    def snapshot(self) -> dict[str, object]:
+    def mark_to_market(self, prices: dict[str, float]) -> float:
+        """Return unrealized PnL for currently open positions using supplied prices."""
+        total = 0.0
+        for position in self._open.values():
+            try:
+                price = float(prices[position.symbol])
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ValueError(f"missing or invalid mark price for {position.symbol}") from exc
+            if not math.isfinite(price) or price <= 0:
+                raise ValueError(f"mark price for {position.symbol} must be finite and positive")
+            direction = 1.0 if position.side == "BUY" else -1.0
+            total += (price - position.entry_price) * position.quantity * direction
+        return total
+
+    def equity_snapshot(self, prices: dict[str, float]) -> dict[str, float]:
+        realized = float(sum(trade.pnl for trade in self._closed))
+        unrealized = float(self.mark_to_market(prices))
+        equity = realized + unrealized
         return {
+            "realized_pnl": realized,
+            "unrealized_pnl": unrealized,
+            "equity_pnl": equity,
+        }
+
+    def snapshot(self, prices: dict[str, float] | None = None) -> dict[str, object]:
+        payload: dict[str, object] = {
             "open": [asdict(position) for position in self._open.values()],
             "closed": [asdict(trade) for trade in self._closed],
             "realized_pnl": sum(trade.pnl for trade in self._closed),
         }
+        if prices is not None:
+            payload["equity"] = self.equity_snapshot(prices)
+        return payload
 
 
 @dataclass(frozen=True, slots=True)
