@@ -728,3 +728,17 @@ Scope:
 - Reconcile capability-matrix statuses with the implemented roadmap through TASK-147.
 - Retain explicit external dependency boundaries for macro/news data rather than claiming a canonical economic calendar without a suitable provider.
 - Finalize only after Railway is synchronized to the current HEAD and fresh live health/restart evidence is captured.
+
+
+## TASK-149
+Phase: Phase 13 — Final Production Audit / Telegram User-Facing Reliability
+Title: Explicit Market Closure and Signal Failure Messaging
+Implementation Status: IN_PROGRESS
+Scope:
+- Classify weekend market closure before requiring candle availability, so closed-market requests remain explainable even when the provider returns no fresh candle.
+- Replace the generic signal-generation failure message with actionable Persian user-facing categories for market closure, stale data, provider unavailability, unsupported symbols, and timeouts.
+- Preserve fail-closed behavior: no synthetic or stale signal is generated.
+- Add regression coverage for weekend closure without candles.
+Evidence:
+- Implementation commits: c50d4230d48853351e57964e3e573e7c8e5f113d, fa27e46de245c33e5453e3ba146a83c6b5993c9a, ecf8d8d6e0685b6cb965bd4ea9adc63117a6a720, 4232b741ed8761dddda3e4693e8c82475cdd4b44, f80251d41d3bdd0e57930da468b16eb808c8daa0.
+- Exact-head CI verification is pending.
