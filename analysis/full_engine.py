@@ -283,6 +283,7 @@ class FullAnalysisEngine:
             fair_value_gap=smc_result.fair_value_gap, premium_discount=smc_result.premium_discount,
             reasons=analysis_result.reasons + decision.reasons + confidence_result.warnings + [risk_result.reason, f"ATR: {atr_value}", f"ATR Percentage: {atr_percentage}", f"Market Condition: {risk_result.market_condition}", f"Trade Grade: {trade_grade}"],
             indicators=indicator_snapshot.values,
+            component_scores={name: float(value) for name, value in component_scores.items()},
             market_regime=analysis_result.market_regime,
             scenario=analysis_result.scenario,
             statistical_context=analysis_result.statistical_context,
