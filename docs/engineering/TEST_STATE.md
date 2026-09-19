@@ -1,27 +1,30 @@
 # Test State
 
 ## Current Verification State
-- Current `main` HEAD: `6024a5dfbc7d1e6f13632fa83ea9c8a4f2f5266b`.
+- Current `main` HEAD: `7e978faa986ed6088511c0aee3a1fa4510a02408`.
+- The complete current-head required GitHub Actions set is green:
+  - Test — success
+  - Production E2E Contract Gate — success
+  - Security Audit — success
+  - Production Activation Validation — success
+  - Production Readiness — success
+  - Production Activation Gate — success
+  - Final Integration Gate — success
+- The combined commit status still reports a failing Railway deployment status. Railway is intentionally deferred to the final external gate.
 - Historical phase closure checks remain preserved at their recorded exact heads.
-- The current repository CI verification is being tracked separately from the external Railway deployment status; Railway verification is intentionally deferred to the final external gate.
-- The current commit has no PR-triggered workflow runs returned by the workflow-run lookup.
-- Therefore historical seven-workflow closure evidence must not be represented as fresh current-HEAD verification.
-- No local execution is claimed.
+- No live Railway health or restart/recovery success is claimed for the current HEAD.
 
 ## Verification Contract
 Before marking any reopened task or phase VERIFIED:
 1. Inspect the exact current `main` HEAD.
-2. Run/inspect the complete required workflow set for the resulting HEAD.
+2. Inspect the complete required workflow set for the resulting HEAD.
 3. Inspect combined commit status.
 4. For deployment changes, require fresh deployment health/recovery evidence.
-5. Re-run focused regressions and dependent cross-layer checks.
+5. Re-audit focused regressions and dependent cross-layer boundaries.
 6. Update engineering state only after all evidence agrees.
 
-## Historical Verification
-The repository retains historical exact-head evidence for Phases 1–11, including the seven-check closure sets documented in `PHASE_STATE.md` and `TASK_STATE.md`. Historical evidence remains useful but is not a substitute for current-HEAD verification.
-
 ## Current Frontier
-Phase 13 current-HEAD code audit is the current verification frontier. Railway deployment/recovery is intentionally deferred until code work is complete.
+The code/test/CI portion of Phase 13 is VERIFIED at `7e978faa986ed6088511c0aee3a1fa4510a02408`. The only remaining production gate is the deferred Railway synchronization, live health smoke, and restart/recovery verification.
 
 ## New-chat Rule
 Repository inspection/modification uses GitHub Connector only. Do not invent test success, deployment success, live-smoke evidence, or phase completion.
