@@ -4,13 +4,18 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import threading
 from collections.abc import Callable
+from urllib.parse import urlsplit
 
 
 class _HealthHandler(BaseHTTPRequestHandler):
     server_version = "ForexSignalHealth/1.0"
 
     def do_GET(self) -> None:  # noqa: N802
-        if self.path != "/health":
+        # HTTP request-targets may include a query string. Railway's edge
+        # and health probes should be able to append probe metadata without
+        # turning the canonical /health endpoint into a 404.
+        request_path = urlsplit(self.path).path
+        if request_path != "/health":
             self.send_error(404)
             return
 
