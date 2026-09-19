@@ -32,6 +32,7 @@ class TelegramClient:
         )
 
         self.market_data_service = install_market_data_service(self.application)
+        self._auto_scanner_task: asyncio.Task | None = None
         register_routes(self.application)
         logger.info("Telegram client configured and routes registered.")
 
@@ -47,11 +48,10 @@ class TelegramClient:
         all-day scanner.
         """
         logger.info(
-            "Continuous scanner loop started: interval=%ss first_run=5s",
+            "Continuous scanner loop started: interval=%ss first_run=immediate",
             interval,
         )
         try:
-            await asyncio.sleep(5)
             while True:
                 cycle_started_at = asyncio.get_running_loop().time()
                 try:
@@ -144,14 +144,16 @@ class TelegramClient:
 
         if auto_scanner_enabled():
             interval = auto_scanner_interval_seconds()
-            self.application.create_task(
+            self._auto_scanner_task = asyncio.create_task(
                 self._run_auto_scanner_loop(interval),
                 name=AUTO_SCANNER_JOB_NAME,
             )
             logger.info(
-                "Continuous scanner loop started after application startup: interval=%ss",
+                "Continuous scanner task created: interval=%ss task=%s",
                 interval,
+                self._auto_scanner_task.get_name(),
             )
+            await asyncio.sleep(0)
 
         await updater.start_polling()
         logger.info("Telegram polling started successfully.")
@@ -167,6 +169,11 @@ class TelegramClient:
 
         if self.application.running:
             await self.application.stop()
+
+        if self._auto_scanner_task is not None and not self._auto_scanner_task.done():
+            self._auto_scanner_task.cancel()
+            await asyncio.gather(self._auto_scanner_task, return_exceptions=True)
+        self._auto_scanner_task = None
 
         await self.application.shutdown()
         logger.info("Telegram bot stopped.")
