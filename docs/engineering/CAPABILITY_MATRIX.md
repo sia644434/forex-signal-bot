@@ -65,3 +65,9 @@ Large historical, simulation, optimization, multi-symbol, multi-timeframe, corre
 | Validation-gated strategy lifecycle | IMPLEMENTED_CURRENT | analysis/strategy_intelligence.py::evaluate | tests/test_strategy_intelligence.py | Version-bound research validation | RAILWAY / PC_WORKER | 18 | pending CI |
 | Research validation diagnostics | IMPLEMENTED_CURRENT | worker/executors.py::strategy_evaluation + StrategyValidationEvidence | tests/test_strategy_worker_executor.py | OOS/walk-forward + robustness | PC_WORKER | 18 | pending CI |
 | Automatic strategy retirement guard | IMPLEMENTED_CURRENT | analysis/strategy_intelligence.py::evaluate | tests/test_strategy_intelligence.py | Sample/expectancy/drawdown | RAILWAY / PC_WORKER | 18 | pending CI |
+
+
+| Paper equity / mark-to-market | IMPLEMENTED_CURRENT | services/paper_trading.py | tests/test_paper_trading.py | Paper ledger | RAILWAY | 20 | pending CI |
+| Deterministic alert policy | IMPLEMENTED_CURRENT | services/alert_engine.py | tests/test_alert_engine.py | Reports/signals | RAILWAY | 22 | pending CI |
+| Report alert contract | IMPLEMENTED_CURRENT | analysis/report.py::alert_context | tests/test_alert_report_contract.py | Analysis report | RAILWAY | 22 | pending CI |
+| Macro collection cache/orchestration | IMPLEMENTED_CURRENT | analysis/macro_risk.py | tests/test_macro_risk.py | External providers | RAILWAY | 21 | pending CI |
