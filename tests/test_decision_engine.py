@@ -137,6 +137,10 @@ def test_decision_component_contributions_reconcile_with_score():
     assert result.component_contributions
     assert round(sum(result.component_contributions.values()), 2) == result.score
     assert result.component_contributions["structure"] == 7.5
+    assert result.directional_contributions["structure"] == -7.5
+    assert result.directional_contributions["smart_money"] == -6.5
+    assert result.directional_contributions["elliott"] == 0.45
+    assert round(sum(result.directional_contributions.values()), 2) == round(result.score - 50.0, 2)
     assert result.score < 50.0
 
 
@@ -172,3 +176,5 @@ def test_decision_component_contributions_are_directionally_symmetric():
     assert round(bullish.score + bearish.score, 2) == 100.0
     assert bullish.signal == "BUY"
     assert bearish.signal == "SELL"
+    for name in bullish.directional_contributions:
+        assert round(bullish.directional_contributions[name] + bearish.directional_contributions[name], 4) == 0.0
