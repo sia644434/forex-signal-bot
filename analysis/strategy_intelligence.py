@@ -19,6 +19,7 @@ class StrategyValidationEvidence:
     source: str = "research_validation"
     validated_version: int | None = None
     dna_fingerprint: str | None = None
+    diagnostics: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if not 0 <= float(self.positive_oos_ratio) <= 1:
@@ -161,7 +162,7 @@ class StrategyIntelligenceEngine:
         if record.status != "RETIRED":
             if perf["sample"] >= 20 and perf["expectancy"] < 0:
                 record.status = "PAUSED"
-            elif perf["sample"] >= 50 and perf["expectancy"] > 0:
+            elif perf["sample"] >= 50 and perf["expectancy"] > 0 and self._validation_is_current(record):
                 record.status = "CHALLENGER"
         validation_ready = self._validation_is_current(record)
         snapshot = StrategyEvaluationSnapshot(
