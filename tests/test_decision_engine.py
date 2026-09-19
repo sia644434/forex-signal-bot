@@ -117,3 +117,58 @@ def test_supply_demand_uses_explicit_score_not_trend_score():
     assert bullish.score > bearish.score
 
 
+
+
+def test_decision_component_contributions_reconcile_with_score():
+    class Analysis:
+        smart_money_score = -35.0
+        structure_score = 20.0
+        trend_score = -20.0
+        price_action_score = 0.0
+        supply_demand_score = -20.0
+        momentum_score = -10.0
+        candlestick_score = 0.0
+        elliott_score = 15.0
+        harmonic_score = -25.0
+        brooks_score = -20.0
+        wyckoff_score = -20.0
+
+    result = DecisionEngine().decide(Analysis())
+    assert result.component_contributions
+    assert round(sum(result.component_contributions.values()), 2) == result.score
+    assert result.component_contributions["structure"] == 3.75
+    assert result.score < 50.0
+
+
+def test_decision_component_contributions_are_directionally_symmetric():
+    class Bullish:
+        smart_money_score = 35.0
+        structure_score = 20.0
+        trend_score = 20.0
+        price_action_score = 20.0
+        supply_demand_score = 20.0
+        momentum_score = 10.0
+        candlestick_score = 10.0
+        elliott_score = 15.0
+        harmonic_score = 25.0
+        brooks_score = 20.0
+        wyckoff_score = 20.0
+
+    class Bearish:
+        smart_money_score = -35.0
+        structure_score = -20.0
+        trend_score = -20.0
+        price_action_score = -20.0
+        supply_demand_score = -20.0
+        momentum_score = -10.0
+        candlestick_score = -10.0
+        elliott_score = -15.0
+        harmonic_score = -25.0
+        brooks_score = -20.0
+        wyckoff_score = -20.0
+
+    bullish = DecisionEngine().decide(Bullish())
+    bearish = DecisionEngine().decide(Bearish())
+    assert round(bullish.score + bearish.score, 2) == 100.0
+    assert bullish.signal == "BUY"
+    assert bearish.signal == "SELL"
