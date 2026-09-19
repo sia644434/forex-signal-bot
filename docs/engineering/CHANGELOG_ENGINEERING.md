@@ -177,3 +177,12 @@ Railway remains deferred until required capabilities and final regression/securi
 - Preserved rollback and lifecycle auditability.
 - Added regression coverage.
 - CI verification pending at exact head.
+
+
+## 2026-09-19 — TASK-141 Strategy Validation Identity + Research Integration
+- Bound strategy validation evidence to the exact strategy version and canonical DNA fingerprint.
+- Added fail-closed rejection for stale validation evidence during attachment and champion/challenger comparison.
+- Adaptation validation now targets the proposal's base version/DNA and invalidates prior evidence after a DNA change.
+- PC Worker strategy evaluation can derive validation evidence directly from OOS/walk-forward research input, including overfitting and optional temporal-leakage diagnostics.
+- Added focused regression coverage for research-backed validation and stale identity rejection.
+- Exact-head CI verification remains pending.
