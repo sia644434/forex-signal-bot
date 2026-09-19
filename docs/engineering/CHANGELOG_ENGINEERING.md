@@ -152,3 +152,11 @@ Railway remains deferred until required capabilities and final regression/securi
 - Added macro event proximity assessment and integrated NORMAL/ELEVATED/CRISIS risk into the full analysis and decision boundary.
 - Added regression tests for providers, macro assessment, and full-pipeline gating.
 - Exact-head CI verification remains pending; no production verification is claimed for the new commits.
+
+
+## 2026-09-19 — TASK-138 Advanced Research Validation
+- Added deterministic out-of-sample and rolling walk-forward research validation.
+- Added train/test divergence and OOS stability diagnostics to expose overfitting risk without claiming statistical certainty.
+- Added temporal leakage checks and routed the heavy research workload to PC Worker.
+- Added focused regression and worker contract coverage.
+- Exact-head CI and production verification remain pending.
