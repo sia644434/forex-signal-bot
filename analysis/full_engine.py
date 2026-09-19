@@ -285,6 +285,7 @@ class FullAnalysisEngine:
             indicators=indicator_snapshot.values,
             component_scores={name: float(value) for name, value in component_scores.items()},
             decision_contributions={name: float(value) for name, value in decision.component_contributions.items()},
+            directional_contributions={name: float(value) for name, value in decision.directional_contributions.items()},
             market_regime=analysis_result.market_regime,
             scenario=analysis_result.scenario,
             statistical_context=analysis_result.statistical_context,
