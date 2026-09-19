@@ -77,3 +77,13 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - Added macro event proximity assessment and integrated NORMAL/ELEVATED/CRISIS risk into the full analysis and decision boundary.
 - Added regression tests for providers, macro assessment, and full-pipeline gating.
 - Exact-head CI verification remains pending; no production verification is claimed for the new commits.
+
+
+## 2026-09-19 — TASK-138 Advanced Research Validation
+- CURRENT_PHASE: Phase 14/17 capability expansion.
+- CURRENT_TASK: TASK-138.
+- LAST_VERIFIED_COMMIT: historical verified frontier remains unchanged; current research commits are unverified pending CI.
+- COMPLETED_CURRENT: OOS validation, rolling walk-forward validation, train/test divergence diagnostics, temporal leakage checks, and PC Worker routing.
+- IN_PROGRESS: exact-head CI verification.
+- REMAINING: richer robustness scenarios, strategy/research integration, alert/report completion, security/performance/regression, Railway final gate.
+- NEXT_ACTION: verify the current head and fix regressions before claiming TASK-138 verified.
