@@ -22,11 +22,10 @@ def test_scanner_universe_env_override_is_normalized_and_deduplicated(monkeypatc
     assert _configured_scan_symbols() == ("EURUSD", "BTCUSDT")
 
 
-def test_scanner_universe_is_bounded(monkeypatch):
-    monkeypatch.setenv("TELEGRAM_SCANNER_SYMBOLS", ",".join(f"SYM{i}" for i in range(21)))
+def test_scanner_universe_accepts_full_supported_universe(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_SCANNER_SYMBOLS", ",".join(DEFAULT_SCAN_SYMBOLS))
 
-    with pytest.raises(ValueError, match="at most 20"):
-        _configured_scan_symbols()
+    assert _configured_scan_symbols() == DEFAULT_SCAN_SYMBOLS
 
 def test_scanner_universe_rejects_unsupported_symbols(monkeypatch):
     monkeypatch.setenv("TELEGRAM_SCANNER_SYMBOLS", "EURUSD,NOTAREALASSET")
