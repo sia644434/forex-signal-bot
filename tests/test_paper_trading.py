@@ -1,7 +1,10 @@
 import json
 
+import json
+
 import pytest
 
+from services.paper_store import PaperTradingStore, PaperTradingStoreError
 from services.paper_trading import PaperTradingEngine, ShadowComparisonLedger, compare_shadow_decision
 from services.shadow_store import ShadowComparisonStore, ShadowComparisonStoreError
 
@@ -82,3 +85,23 @@ def test_shadow_comparison_store_writes_atomically(tmp_path):
     store = ShadowComparisonStore(str(path))
     store.save_all([{"timestamp": "now", "paper_decision": "BUY", "reference_decision": "BUY", "agreement": True}])
     assert json.loads(path.read_text(encoding="utf-8"))[0]["agreement"] is True
+
+
+def test_paper_trading_persists_and_reloads(tmp_path):
+    path = tmp_path / "paper.json"
+    first = PaperTradingEngine(PaperTradingStore(str(path)))
+    first.open("BTCUSDT", "BUY", 2, 100, "2026-09-19T09:00:00Z", position_id="p1")
+    second = PaperTradingEngine(PaperTradingStore(str(path)))
+    assert second.snapshot()["open"][0]["position_id"] == "p1"
+    trade = second.close("p1", 110, "2026-09-19T10:00:00Z")
+    assert trade.pnl == 20
+    third = PaperTradingEngine(PaperTradingStore(str(path)))
+    assert third.snapshot()["realized_pnl"] == 20
+    assert third.snapshot()["open"] == []
+
+
+def test_paper_trading_store_rejects_invalid_structure(tmp_path):
+    path = tmp_path / "paper.json"
+    path.write_text(json.dumps({"open": "bad", "closed": []}), encoding="utf-8")
+    with pytest.raises(PaperTradingStoreError):
+        PaperTradingStore(str(path)).load()
