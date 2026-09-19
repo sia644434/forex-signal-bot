@@ -228,6 +228,18 @@ class FullAnalysisEngine:
         )
 
         decision = self.decision_engine.decide(analysis_result)
+
+        # Persist the exact final decision into the shared analysis contract
+        # before confidence evaluation. This prevents ConfidenceEngine from
+        # silently falling back to a neutral 50.0 score.
+        analysis_result = AnalysisResult(
+            **{
+                **analysis_result.__dict__,
+                "decision_score": decision.score,
+                "total_score": decision.score,
+                "final_direction": decision.bias,
+            }
+        )
         confidence_result = self.confidence_engine.evaluate(analysis_result)
         risk_result = self.risk_engine.calculate(signal=decision.signal, current_price=closes[-1], atr=atr_value, confidence=confidence_result.confidence, score=decision.score)
 
@@ -260,17 +272,21 @@ class FullAnalysisEngine:
             confidence_grade = "VERY_LOW"
 
         structure_name = "BOS" if structure.bos else "NORMAL"
-        trade_quality = min(100, max(0, int((confidence_value * 50) + (self._directional_strength(decision_score) * 0.5))))
-        if trade_quality >= 90:
-            trade_grade = "A+"
-        elif trade_quality >= 80:
-            trade_grade = "A"
-        elif trade_quality >= 70:
-            trade_grade = "B"
-        elif trade_quality >= 50:
-            trade_grade = "C"
-        else:
-            trade_grade = "D"
+        trade_quality = risk_result.trade_quality
+        if trade_quality is None:
+            trade_quality = min(100, max(0, int((confidence_value * 50) + (self._directional_strength(decision_score) * 0.5))))
+        trade_grade = risk_result.trade_grade
+        if not trade_grade:
+            if trade_quality >= 90:
+                trade_grade = "A+"
+            elif trade_quality >= 80:
+                trade_grade = "A"
+            elif trade_quality >= 70:
+                trade_grade = "B"
+            elif trade_quality >= 50:
+                trade_grade = "C"
+            else:
+                trade_grade = "D"
 
         return AnalysisReport(
             trend=structure.trend, structure=structure_name, score=decision_score, signal=decision.signal, confidence=confidence_value,
