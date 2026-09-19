@@ -131,3 +131,11 @@ Railway remains deferred until required capabilities and final regression/securi
 - Registered `time_machine` as a PC Worker-owned heavy workload.
 - Added focused deterministic and counterfactual regression coverage.
 - Exact-head CI verification remains pending; no production verification is claimed.
+
+
+## 2026-09-19 — Strategy Intelligence foundation
+- Added canonical strategy lifecycle registry with strategy DNA, lineage, observations, versioning, pause/retirement, and audit-friendly snapshots.
+- Added sample-aware champion/challenger comparison and promotion contract.
+- Added PC Worker-owned strategy evaluation workload for heavier batches.
+- Added focused lifecycle and worker regression tests.
+- Exact-head CI verification remains pending; no production verification is claimed.
