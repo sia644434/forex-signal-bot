@@ -93,3 +93,10 @@
 - Removed the obsolete dedicated automation branch trigger from the main test workflow.
 - Explicitly restricted remaining production verification workflows to contents: read where no write access is required.
 - Railway remains intentionally unverified until the resulting code HEAD is ready for the final external deployment gate.
+
+
+## 2026-09-19 — Phase 13 Code Audit: Multi-Asset User-Facing Contract Cleanup
+- Re-audited the Telegram user-facing surface for stale product terminology after confirming the canonical product scope is multi-asset.
+- Replaced legacy Forex/AI branding in the Telegram home/start/back surfaces with the multi-asset trading-intelligence product name.
+- Renamed the deterministic report-explanation feature from AI Coach to Analysis Coach in user-facing Telegram text; the underlying coach remains deterministic and report-based.
+- Rechecked repository-wide markers for TODO/FIXME, unsafe dynamic execution, insecure HTTP verification bypasses, provider capability boundaries, and multi-asset risk metadata. No additional concrete defect was identified in those scanned surfaces.
