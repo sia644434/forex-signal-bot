@@ -234,3 +234,11 @@ Railway remains deferred until required capabilities and final regression/securi
 - Corrected only the malformed test source in `151ea57b8e050ebc638074f46e31d5c01a5e9430`; no production gate was weakened.
 - Re-ran the full seven-workflow required set on the corrected HEAD; all seven completed successfully.
 - The expanded roadmap is now at an exact-head CI-verified frontier. Railway remains an external verification dependency.
+
+
+## 2026-09-19 — Telegram market availability and signal failure messaging
+- Added explicit weekend market-closure classification before candle availability checks.
+- Replaced the generic `/signal` failure response with user-facing explanations for closed markets, stale market data, provider unavailability, unsupported symbols, and timeouts.
+- Preserved fail-closed behavior: stale or unavailable data never produces a synthetic signal.
+- Added regression coverage for weekend closure when no candles are available.
+- Exact-head CI verification remains pending.
