@@ -12,6 +12,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from analysis.portfolio_engine import PortfolioEngine
+from analysis.full_engine import FullAnalysisEngine
+from data.models import Candle
+from datetime import datetime
 
 
 def _frame(payload: dict[str, Any]) -> pd.DataFrame:
@@ -316,6 +319,36 @@ def counterfactual_batch(payload: dict[str, Any]) -> dict[str, Any]:
         ).summary())
     return {"count": len(results), "results": results}
 
+
+def market_replay(payload: dict[str, Any]) -> dict[str, Any]:
+    raw = payload.get("candles")
+    if not isinstance(raw, list) or len(raw) < 5:
+        raise ValueError("at least five candles are required")
+    candles = []
+    for item in raw:
+        if not isinstance(item, dict):
+            raise ValueError("each replay candle must be an object")
+        timestamp = item.get("timestamp")
+        if isinstance(timestamp, str):
+            timestamp = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        if not isinstance(timestamp, datetime) or timestamp.tzinfo is None:
+            raise ValueError("replay timestamps must be timezone-aware")
+        candles.append(Candle(
+            symbol=str(item.get("symbol", "UNKNOWN")),
+            timestamp=timestamp,
+            open=float(item["open"]),
+            high=float(item["high"]),
+            low=float(item["low"]),
+            close=float(item["close"]),
+            volume=float(item.get("volume", 0.0)),
+        ))
+    engine = FullAnalysisEngine()
+    trace = []
+    for index in range(5, len(candles) + 1):
+        report = engine.analyze(candles[:index])
+        trace.append({"index": index - 1, "signal": report.signal, "score": report.score, "confidence": report.confidence})
+    return {"candles": len(candles), "steps": len(trace), "trace": trace}
+
 def register_real_executors(runtime) -> None:
     mapping = {
         "backtest": backtest, "walk_forward": walk_forward, "monte_carlo": monte_carlo,
@@ -327,7 +360,7 @@ def register_real_executors(runtime) -> None:
         "timeseries_training": timeseries_training, "ensemble_training": ensemble_training,
         "deep_learning_training": deep_learning_training, "transformer_training": transformer_training,
         "lstm_training": lstm_training, "gru_training": gru_training,
-        "medium_model_training": medium_model_training, "correlation_matrix": correlation_matrix, "portfolio_stress": portfolio_stress, "stress_sensitivity": stress_sensitivity, "counterfactual_batch": counterfactual_batch,
+        "medium_model_training": medium_model_training, "correlation_matrix": correlation_matrix, "portfolio_stress": portfolio_stress, "stress_sensitivity": stress_sensitivity, "counterfactual_batch": counterfactual_batch, "market_replay": market_replay,
     }
     for name, handler in mapping.items():
         runtime.register(name, handler)
