@@ -213,6 +213,10 @@ class AnalysisReport:
     )
 
 
+    # Raw component scores used by M15 diagnostics.
+    component_scores: dict[str, float] = field(default_factory=dict)
+
+
     
     # ==================================================
     # Confidence Helpers
