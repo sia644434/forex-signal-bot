@@ -349,6 +349,20 @@ def market_replay(payload: dict[str, Any]) -> dict[str, Any]:
         trace.append({"index": index - 1, "signal": report.signal, "score": report.score, "confidence": report.confidence})
     return {"candles": len(candles), "steps": len(trace), "trace": trace}
 
+
+def time_machine(payload: dict[str, Any]) -> dict[str, Any]:
+    from analysis.time_machine import TimeMachineEngine
+    candles = payload.get("candles")
+    if not isinstance(candles, list):
+        raise ValueError("candles list is required")
+    engine = TimeMachineEngine()
+    return engine.run(
+        candles,
+        start_index=int(payload.get("start_index", 5)),
+        step=int(payload.get("step", 1)),
+        counterfactual=payload.get("counterfactual"),
+    )
+
 def register_real_executors(runtime) -> None:
     mapping = {
         "backtest": backtest, "walk_forward": walk_forward, "monte_carlo": monte_carlo,
@@ -360,7 +374,7 @@ def register_real_executors(runtime) -> None:
         "timeseries_training": timeseries_training, "ensemble_training": ensemble_training,
         "deep_learning_training": deep_learning_training, "transformer_training": transformer_training,
         "lstm_training": lstm_training, "gru_training": gru_training,
-        "medium_model_training": medium_model_training, "correlation_matrix": correlation_matrix, "portfolio_stress": portfolio_stress, "stress_sensitivity": stress_sensitivity, "counterfactual_batch": counterfactual_batch, "market_replay": market_replay,
+        "medium_model_training": medium_model_training, "correlation_matrix": correlation_matrix, "portfolio_stress": portfolio_stress, "stress_sensitivity": stress_sensitivity, "counterfactual_batch": counterfactual_batch, "market_replay": market_replay, "time_machine": time_machine,
     }
     for name, handler in mapping.items():
         runtime.register(name, handler)
