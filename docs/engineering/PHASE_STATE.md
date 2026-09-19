@@ -124,3 +124,11 @@ Remaining: exact-head CI verification and deeper research integration.
 - Added macro event proximity assessment and integrated NORMAL/ELEVATED/CRISIS risk into the full analysis and decision boundary.
 - Added regression tests for providers, macro assessment, and full-pipeline gating.
 - Exact-head CI verification remains pending; no production verification is claimed for the new commits.
+
+
+## 2026-09-19 — TASK-141
+Phase 18 — Strategy Intelligence / Research Integration
+Status: IMPLEMENTATION
+Current task: TASK-141
+Completed: validation identity binding to strategy version/DNA, research-backed worker strategy evaluation, stale validation rejection, and focused regression coverage.
+Remaining: exact-head CI verification; deeper continuous evaluation/history integration; final research/strategy hardening and later Railway gate.
