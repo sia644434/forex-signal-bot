@@ -129,8 +129,12 @@ class FREDProvider:
 
 
 class MacroRiskEngine:
-    def __init__(self, providers: list[Any] | None = None) -> None:
+    def __init__(self, providers: list[Any] | None = None, *, cache_ttl_seconds: int = 300) -> None:
+        if cache_ttl_seconds < 0:
+            raise ValueError("cache_ttl_seconds must be non-negative")
         self.providers = providers or [NewsAPIProvider(), FREDProvider()]
+        self.cache_ttl_seconds = cache_ttl_seconds
+        self._cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
 
 
     @staticmethod
@@ -164,7 +168,20 @@ class MacroRiskEngine:
             "proximity_minutes": proximity_minutes,
         }
 
-    def collect(self, *, query: str = "economy OR inflation OR interest rates", series_ids: list[str] | None = None) -> dict[str, Any]:
+    def collect(self, *, query: str = "economy OR inflation OR interest rates", series_ids: list[str] | None = None, now: datetime | None = None) -> dict[str, Any]:
+        current = now or datetime.now(timezone.utc)
+        if current.tzinfo is None:
+            current = current.replace(tzinfo=timezone.utc)
+        cache_key = json.dumps({"query": query, "series_ids": series_ids or []}, sort_keys=True)
+        cached = self._cache.get(cache_key)
+        if cached is not None and self.cache_ttl_seconds > 0:
+            age = (current - cached[0]).total_seconds()
+            if 0 <= age <= self.cache_ttl_seconds:
+                result = dict(cached[1])
+                result["status"] = "CACHED"
+                result["cache_age_seconds"] = round(age, 3)
+                return result
+
         events: list[MacroEvent] = []
         diagnostics: list[dict[str, str]] = []
         for provider in self.providers:
@@ -179,12 +196,47 @@ class MacroRiskEngine:
             except Exception as exc:
                 diagnostics.append({"provider": getattr(provider, "name", "unknown"), "status": "DEGRADED", "error": str(exc)})
         events.sort(key=lambda item: item.timestamp or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
-        return {
+        result = {
             "events": [self._serialize(event) for event in events],
             "count": len(events),
             "status": "OK" if events else ("EXTERNAL_DEPENDENCY" if diagnostics else "NO_DATA"),
             "diagnostics": diagnostics,
+            "cache_age_seconds": 0.0,
         }
+        self._cache[cache_key] = (current, result)
+        return result
+
+    def collect_and_assess(
+        self,
+        *,
+        query: str = "economy OR inflation OR interest rates",
+        series_ids: list[str] | None = None,
+        now: datetime | None = None,
+        proximity_minutes: int = 120,
+    ) -> dict[str, Any]:
+        current = now or datetime.now(timezone.utc)
+        if current.tzinfo is None:
+            current = current.replace(tzinfo=timezone.utc)
+        collected = self.collect(query=query, series_ids=series_ids, now=current)
+        events = []
+        for item in collected["events"]:
+            timestamp = _timestamp(item.get("timestamp"))
+            if timestamp is not None:
+                events.append(MacroEvent(
+                    provider=str(item["provider"]),
+                    event_id=str(item["event_id"]),
+                    title=str(item["title"]),
+                    timestamp=timestamp,
+                    impact=str(item["impact"]),
+                    category=str(item["category"]),
+                    url=item.get("url"),
+                    source=item.get("source"),
+                ))
+        assessed = self.assess(events, now=current, proximity_minutes=proximity_minutes)
+        assessed["provider_status"] = collected["status"]
+        assessed["provider_diagnostics"] = collected["diagnostics"]
+        assessed["collected_count"] = collected["count"]
+        return assessed
 
     @staticmethod
     def _serialize(event: MacroEvent) -> dict[str, Any]:
