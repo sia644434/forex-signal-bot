@@ -53,3 +53,7 @@ Large historical, simulation, optimization, multi-symbol, multi-timeframe, corre
 | Rolling walk-forward validation | IMPLEMENTED_CURRENT | `analysis/research_engine.py::walk_forward` + `worker/executors.py::research_validation` | `tests/test_research_engine.py`, worker contract | Historical prices/parameter grid | PC_WORKER | 14/17 | pending CI |
 | Overfitting diagnostics | IMPLEMENTED_CURRENT | `analysis/research_engine.py::overfitting_diagnostics` | `tests/test_research_engine.py` | OOS results | PC_WORKER | 17 | pending CI |
 | Temporal leakage enforcement/check | IMPLEMENTED_CURRENT | `analysis/research_engine.py::temporal_leakage_check` | `tests/test_research_engine.py` | Feature/target timestamps | PC_WORKER | 17 | pending CI |
+
+
+| Version-bound strategy validation | IMPLEMENTED_CURRENT | analysis/strategy_intelligence.py::StrategyValidationEvidence | tests/test_strategy_intelligence.py | Strategy DNA/version + research evidence | PC_WORKER + RAILWAY | 18 | pending CI |
+| Research-backed strategy evaluation | IMPLEMENTED_CURRENT | worker/executors.py::strategy_evaluation + analysis/research_engine.py | tests/test_strategy_worker_executor.py | Historical prices/OOS/walk-forward | PC_WORKER | 18 | pending CI |
