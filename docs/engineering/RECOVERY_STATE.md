@@ -170,3 +170,12 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - Resume point is no longer CI repair. The remaining gate is external deployment verification against the current HEAD.
 - Do not claim current production verification from the older deployed commit `8bf2a77840b72add70b98cbf1a3b2187f85763f2`.
 - NEXT_ACTION: synchronize Railway with the current HEAD, run live `/health` smoke, perform controlled restart/recovery, then update production state only after fresh evidence succeeds.
+
+
+## Recovery Frontier — TASK-150 Multi-Asset Data — 2026-09-19
+- CURRENT_HEAD: `4017c2d5305cae00ea6fcbd948ece4e4f500500c`.
+- Extended real market-data provider coverage for Stocks, Crypto, and Indices through Finnhub and Stocks/Indices/Commodities through Alpha Vantage.
+- Added focused provider routing and OHLC-safety regression tests.
+- Exact-head Actions verification is pending for this frontier.
+- Important boundary: Alpha Vantage commodity history currently exposes price observations without canonical OHLC fields for the configured WTI/BRENT/Gold/Silver endpoints; the implementation deliberately refuses to fabricate OHLC candles. Commodity signal generation remains blocked until a real OHLC-capable provider path is added.
+- NEXT_ACTION: verify exact-head CI; repair only concrete failures; then add an OHLC-capable commodity provider/path and live data capability verification for every market family.
