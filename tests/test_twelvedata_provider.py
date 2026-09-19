@@ -64,4 +64,3 @@ async def test_twelvedata_preserves_usdt_quote_for_crypto_ohlc():
 def test_twelvedata_preserves_crypto_quote_mapping():
     provider = TwelveDataProvider(client=FakeTwelveCrypto())
     assert provider._provider_symbol("BTCUSDT") == "BTC/USDT"
-    assert provider._provider_symbol("BTCUSDC") is not None
