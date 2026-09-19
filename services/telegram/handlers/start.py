@@ -17,7 +17,7 @@ async def start_handler(
         ],
         [
             InlineKeyboardButton("🔎 اسکن بازار", callback_data="scanner"),
-            InlineKeyboardButton("🧠 AI Coach", callback_data="coach"),
+            InlineKeyboardButton("🧠 Analysis Coach", callback_data="coach"),
         ],
         [
             InlineKeyboardButton("📒 ژورنال معاملات", callback_data="journal"),
@@ -27,7 +27,7 @@ async def start_handler(
 
     if update.message:
         await update.message.reply_text(
-            "🤖 Forex AI Intelligence Platform\n\n"
+            "🤖 Multi-Asset Trading Intelligence Platform\n\n"
             "سلام 👋\n\n"
             "ربات آماده است. یکی از بخش‌ها را انتخاب کنید:",
             reply_markup=InlineKeyboardMarkup(keyboard),
