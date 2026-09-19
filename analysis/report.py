@@ -97,6 +97,8 @@ class AnalysisReport:
     conflict_state: str = "INSUFFICIENT_EVIDENCE"
     signal_decay: str = "INVALID"
     crisis_mode: str = "NORMAL"
+    macro_risk_level: str = "NORMAL"
+    macro_events: list[dict[str, Any]] = field(default_factory=list)
 
 
     risk_level: str = "normal"
@@ -482,6 +484,8 @@ class AnalysisReport:
             "conflict_state": self.conflict_state,
             "signal_decay": self.signal_decay,
             "crisis_mode": self.crisis_mode,
+            "macro_risk_level": self.macro_risk_level,
+            "macro_events": self.macro_events,
 
 
             "risk_management": self.risk_summary(),
