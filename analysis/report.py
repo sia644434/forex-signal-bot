@@ -425,6 +425,32 @@ class AnalysisReport:
 
 
     # ==================================================
+    # Alert Context
+    # ==================================================
+
+    def alert_context(self) -> dict[str, Any]:
+        """Return a deterministic, transport-neutral alert contract."""
+        signal = str(self.signal).upper()
+        confidence = max(0.0, min(1.0, float(self.confidence)))
+        executable = signal in {"BUY", "SELL", "STRONG_BUY", "STRONG_SELL"}
+        risk = str(self.macro_risk_level).upper()
+        eligible = executable and (confidence >= 0.60 or risk in {"CRISIS", "EXTREME"})
+        severity = "CRITICAL" if risk in {"CRISIS", "EXTREME"} else (
+            "HIGH" if signal in {"STRONG_BUY", "STRONG_SELL"} and confidence >= 0.75
+            else "MEDIUM" if eligible else "INFO"
+        )
+        return {
+            "eligible": eligible,
+            "symbol": self.symbol,
+            "signal": signal,
+            "confidence": confidence,
+            "severity": severity,
+            "risk_level": risk,
+            "dedupe_key": f"{self.symbol}:{signal}:{severity}",
+        }
+
+
+    # ==================================================
     # Compact Output
     # ==================================================
 
