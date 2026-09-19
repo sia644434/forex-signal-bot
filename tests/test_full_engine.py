@@ -184,3 +184,18 @@ def test_full_engine_accepts_timeframe_aware_signal_age():
     candles = make_candles([1.0, 1.1, 1.05, 1.2, 1.15, 1.3])
     result = FullAnalysisEngine().analyze(candles, signal_max_age_seconds=900)
     assert isinstance(result, AnalysisReport)
+
+
+def test_full_engine_passes_final_decision_score_into_confidence_contract(monkeypatch):
+    engine = FullAnalysisEngine()
+    captured = {}
+    original_evaluate = engine.confidence_engine.evaluate
+
+    def capture(analysis):
+        captured["analysis"] = analysis
+        return original_evaluate(analysis)
+
+    monkeypatch.setattr(engine.confidence_engine, "evaluate", capture)
+    report = engine.analyze(make_candles([1.0, 1.1, 1.2, 1.15, 1.25, 1.3, 1.28, 1.35]))
+    assert captured["analysis"].decision_score == pytest.approx(report.score)
+    assert captured["analysis"].total_score == pytest.approx(report.score)
