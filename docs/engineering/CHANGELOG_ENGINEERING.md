@@ -117,3 +117,9 @@ Historical Phases 1–13 are not treated as the end of product development.
 Added CAPABILITY_MATRIX.md to distinguish historical verified capabilities from capabilities required by the new Master Engineering Prompt.
 Added TASK-129: statistical analysis, scenario classification, counterfactual analysis, signal decay, crisis-mode state, and decision gating.
 Railway remains deferred until required capabilities and final regression/security verification are complete.
+
+## 2026-09-19 — Paper, shadow and replay foundation
+- Added isolated paper trading and PnL ledger.
+- Added shadow decision comparison without coupling to live execution.
+- Added worker-owned market replay producing traceable historical decision output.
+- Added focused regression coverage.
