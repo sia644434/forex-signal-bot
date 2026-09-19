@@ -73,6 +73,11 @@ class MultiTimeframeAnalysisEngine:
         buy_gap = max(0.0, 60.0 - score)
         sell_gap = max(0.0, score - 40.0)
         components = getattr(report, "component_scores", {}) or {}
+        contributions = getattr(report, "decision_contributions", {}) or {}
+        contribution_text = ",".join(
+            f"{name}={float(value):+.2f}"
+            for name, value in contributions.items()
+        ) or "none"
         component_order = (
             "smart_money_score",
             "structure_score",
@@ -129,6 +134,9 @@ class MultiTimeframeAnalysisEngine:
             f"m15_scenario={str(getattr(report, 'scenario', 'UNKNOWN')).upper()}",
             f"m15_decay={str(getattr(report, 'signal_decay', 'UNKNOWN')).upper()}",
             f"m15_rr={'none' if getattr(report, 'risk_reward', None) is None else format(float(report.risk_reward), '.2f')}",
+            f"m15_score_delta={score - 50.0:+.2f}",
+            f"m15_score_contributions={contribution_text}",
+            f"m15_contribution_total={sum(float(value) for value in contributions.values()):.2f}",
             f"m15_market_regime={market_regime}",
             f"m15_risk_level={risk_level}",
             f"m15_volatility={'none' if volatility is None else format(float(volatility), '.2f')}",
