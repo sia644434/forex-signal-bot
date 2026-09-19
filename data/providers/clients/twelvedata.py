@@ -29,5 +29,8 @@ class TwelveDataClient:
         if not isinstance(data, dict):
             raise RuntimeError("Invalid Twelve Data response.")
         if data.get("status") == "error":
-            raise RuntimeError(str(data.get("message") or data))
+            message = str(data.get("message") or "unknown API error").strip()
+            code = data.get("code")
+            suffix = f" (code={code})" if code is not None else ""
+            raise RuntimeError(f"Twelve Data API error for {symbol}: {message}{suffix}")
         return data
