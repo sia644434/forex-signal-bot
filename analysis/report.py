@@ -91,6 +91,13 @@ class AnalysisReport:
 
     decision_bias: str = "neutral"
 
+    market_regime: str = "UNCERTAIN"
+    scenario: str = "NO_TRADE"
+    statistical_context: dict[str, Any] = field(default_factory=dict)
+    conflict_state: str = "INSUFFICIENT_EVIDENCE"
+    signal_decay: str = "INVALID"
+    crisis_mode: str = "NORMAL"
+
 
     risk_level: str = "normal"
 
@@ -469,6 +476,12 @@ class AnalysisReport:
 
 
             "decision_bias": self.decision_bias,
+            "market_regime": self.market_regime,
+            "scenario": self.scenario,
+            "statistical_context": self.statistical_context,
+            "conflict_state": self.conflict_state,
+            "signal_decay": self.signal_decay,
+            "crisis_mode": self.crisis_mode,
 
 
             "risk_management": self.risk_summary(),
