@@ -83,14 +83,33 @@ class TwelveDataProvider(MarketDataProvider):
         canonical = self.normalize_symbol(symbol)
         provider_symbol = self._provider_symbol(canonical)
         interval = self._interval(timeframe)
+        is_crypto = get_market_type(canonical) == "crypto"
         try:
-            crypto_exchange = "Binance" if get_market_type(canonical) == "crypto" else None
-            response = await self.client.get_time_series(provider_symbol, interval, limit, exchange=crypto_exchange)
+            response = await self.client.get_time_series(
+                provider_symbol,
+                interval,
+                limit,
+                exchange="Binance" if is_crypto else None,
+            )
         except Exception as error:
-            raise ApplicationError("Failed to fetch Twelve Data candles.", {"provider": self.name, "symbol": canonical, "timeframe": interval}) from error
+            reason = str(error).strip()
+            details = {
+                "provider": self.name,
+                "symbol": canonical,
+                "provider_symbol": provider_symbol,
+                "timeframe": interval,
+            }
+            if reason:
+                details["reason"] = reason[:300]
+            raise ApplicationError("Failed to fetch Twelve Data candles.", details) from error
         values = response.get("values")
         if not isinstance(values, list):
-            raise ApplicationError("Twelve Data response has no OHLC values.", {"provider": self.name, "symbol": canonical})
+            details = {"provider": self.name, "symbol": canonical, "provider_symbol": provider_symbol}
+            if isinstance(response, dict):
+                for key in ("status", "message", "code"):
+                    if response.get(key) is not None:
+                        details[key] = str(response[key])[:200]
+            raise ApplicationError("Twelve Data response has no OHLC values.", details)
         candles: list[Candle] = []
         for item in reversed(values):
             if not isinstance(item, dict):
@@ -109,5 +128,5 @@ class TwelveDataProvider(MarketDataProvider):
                 continue
         candles = self.normalize_candles(candles, expected_symbol=canonical, deduplicate=True)
         if not candles:
-            raise ApplicationError("Twelve Data returned no usable OHLC candles.", {"provider": self.name, "symbol": canonical})
+            raise ApplicationError("Twelve Data returned no usable OHLC candles.", {"provider": self.name, "symbol": canonical, "provider_symbol": provider_symbol})
         return self.apply_limit(candles, limit)
