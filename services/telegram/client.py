@@ -41,6 +41,10 @@ class TelegramClient:
         The scanner is a critical long-running loop. Keeping it on the
         application's asyncio lifecycle avoids silently losing executions when
         a scheduler job is paused, missed, or otherwise unavailable.
+
+        Individual cycle failures are isolated so a transient provider,
+        network, or unexpected application error cannot permanently stop the
+        all-day scanner.
         """
         logger.info(
             "Continuous scanner loop started: interval=%ss first_run=5s",
@@ -49,22 +53,35 @@ class TelegramClient:
         try:
             await asyncio.sleep(5)
             while True:
-                await run_continuous_market_scan(
-                    SimpleNamespace(
-                        bot=self.application.bot,
-                        application=self.application,
+                cycle_started_at = asyncio.get_running_loop().time()
+                try:
+                    await run_continuous_market_scan(
+                        SimpleNamespace(
+                            bot=self.application.bot,
+                            application=self.application,
+                        )
                     )
-                )
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    logger.exception(
+                        "Automatic scanner cycle failed; loop will continue after %ss.",
+                        interval,
+                    )
+                finally:
+                    elapsed = asyncio.get_running_loop().time() - cycle_started_at
+                    logger.debug(
+                        "Continuous scanner cycle loop iteration finished: duration_seconds=%.3f",
+                        elapsed,
+                    )
                 await asyncio.sleep(interval)
         except asyncio.CancelledError:
             logger.info("Continuous scanner loop cancelled.")
             raise
-        except Exception:
-            logger.exception("Continuous scanner loop stopped unexpectedly.")
-            raise
+
 
     def _schedule_auto_scanner(self) -> None:
-        """Start the continuous multi-timeframe opportunity scanner."""
+        """Validate and log the continuous multi-timeframe opportunity scanner."""
         if not auto_scanner_enabled():
             logger.info("Continuous automatic scanner is disabled.")
             return
