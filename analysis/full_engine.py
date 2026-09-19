@@ -24,6 +24,7 @@ from analysis.smc_engine import SMCEngine
 from analysis.statistical_engine import StatisticalEngine
 from analysis.scenario_engine import ScenarioEngine
 from analysis.signal_state import evaluate_signal_state
+from analysis.portfolio_risk_guard import PortfolioExposure, PortfolioRiskGuard
 
 
 class FullAnalysisEngine:
@@ -47,6 +48,7 @@ class FullAnalysisEngine:
         self.atr_engine = ATREngine()
         self.statistical_engine = StatisticalEngine()
         self.scenario_engine = ScenarioEngine()
+        self.portfolio_risk_guard = PortfolioRiskGuard()
 
     @staticmethod
     def _require_finite(value: object, name: str) -> float:
@@ -105,7 +107,17 @@ class FullAnalysisEngine:
         ]
         return candle_data, closes
 
-    def analyze(self, candles: list[Candle] | list[float], *, macro_risk: dict[str, object] | None = None) -> AnalysisReport:
+    def analyze(
+        self,
+        candles: list[Candle] | list[float],
+        *,
+        macro_risk: dict[str, object] | None = None,
+        portfolio_exposures: list[PortfolioExposure] | None = None,
+        portfolio_candidate: PortfolioExposure | None = None,
+        portfolio_equity: float | None = None,
+        portfolio_max_symbol_weight: float = 0.35,
+        portfolio_max_gross_exposure: float = 1.0,
+    ) -> AnalysisReport:
         candle_data, closes = self._normalize_candles(candles)
         atr_result = self.atr_engine.calculate(closes)
         atr_value = self._require_finite(atr_result.atr if atr_result.atr is not None else 0.0, "ATR")
@@ -177,6 +189,19 @@ class FullAnalysisEngine:
         if not isinstance(macro_events, list):
             raise ValueError("macro_risk.events must be a list")
 
+        portfolio_blocked = False
+        portfolio_flags: list[str] = []
+        if portfolio_candidate is not None:
+            portfolio_result = self.portfolio_risk_guard.can_add(
+                list(portfolio_exposures or []),
+                portfolio_candidate,
+                max_symbol_weight=portfolio_max_symbol_weight,
+                max_gross_exposure=portfolio_max_gross_exposure,
+                equity=portfolio_equity,
+            )
+            portfolio_blocked = bool(portfolio_result["blocked"])
+            portfolio_flags = list(portfolio_result["after"].risk_flags)
+
         analysis_result = AnalysisResult(
             trend=structure.trend, momentum=momentum_result.state, indicators=indicator_snapshot.values, candles=candle_data,
             supply_demand=supply_demand_result.zone, trend_score=component_scores["trend_score"], momentum_score=component_scores["momentum_score"],
@@ -194,6 +219,8 @@ class FullAnalysisEngine:
             macro_risk_level=macro_level,
             macro_events=macro_events,
             crisis_mode=signal_state.crisis_mode if signal_state else "NORMAL",
+            portfolio_risk_blocked=portfolio_blocked,
+            portfolio_risk_flags=portfolio_flags,
         )
 
         decision = self.decision_engine.decide(analysis_result)
@@ -260,4 +287,6 @@ class FullAnalysisEngine:
             macro_events=analysis_result.macro_events,
             signal_decay=analysis_result.signal_decay,
             crisis_mode=analysis_result.crisis_mode,
+            portfolio_risk_blocked=analysis_result.portfolio_risk_blocked,
+            portfolio_risk_flags=analysis_result.portfolio_risk_flags,
         )
