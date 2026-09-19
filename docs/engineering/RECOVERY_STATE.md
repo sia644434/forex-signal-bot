@@ -59,3 +59,14 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - IN_PROGRESS: exact-head CI verification remains pending; strategy intelligence foundation is implemented.
 - REMAINING: deeper strategy adaptation/continuous evaluation; news/macro real providers; advanced stress/sensitivity robustness; alert/report completion; final security/performance/regression; Railway final gate.
 - NEXT_ACTION: continue with the next large missing capability while preserving state-first incremental inspection.
+
+
+## Current Handoff Update — TASK-136 — 2026-09-19
+- CURRENT_PHASE: Phase 17/18 capability expansion.
+- CURRENT_TASK: TASK-136.
+- LAST_VERIFIED_COMMIT: 7e978faa986ed6088511c0aee3a1fa4510a02408.
+- NEW_UNVERIFIED_COMMITS: strategy lifecycle fix/expansion through robustness research implementation.
+- IN_PROGRESS: exact-head CI verification for the current code frontier.
+- COMPLETED_CURRENT: strategy adaptation, weakness detection, continuous evaluation, rollback/audit trail, robustness matrix, temporal leakage detection, and PC Worker robustness workload.
+- REMAINING: news/macro real providers, alert/report completion, richer OOS/overfitting research, final security/performance/regression, Railway final gate.
+- NEXT_ACTION: verify current-head CI, fix any regressions, then continue with the next large missing capability without repeating a full repository audit.
