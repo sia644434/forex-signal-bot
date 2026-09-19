@@ -1,6 +1,9 @@
+import json
+
 import pytest
 
 from services.paper_trading import PaperTradingEngine, ShadowComparisonLedger, compare_shadow_decision
+from services.shadow_store import ShadowComparisonStore, ShadowComparisonStoreError
 
 
 def test_paper_trading_round_trip():
@@ -52,3 +55,30 @@ def test_shadow_comparison_ledger_clear_resets_history():
     ledger.record("SELL", "SELL", "2026-09-19T10:00:00Z")
     ledger.clear()
     assert ledger.summary()["total"] == 0
+
+
+def test_shadow_comparison_ledger_persists_and_reloads(tmp_path):
+    path = tmp_path / "shadow.json"
+    first = ShadowComparisonLedger(ShadowComparisonStore(str(path)))
+    first.record("BUY", "BUY", "2026-09-19T10:00:00Z")
+    first.record("BUY", "SELL", "2026-09-19T10:01:00Z")
+
+    second = ShadowComparisonLedger(ShadowComparisonStore(str(path)))
+    summary = second.summary()
+    assert summary["total"] == 2
+    assert summary["agreements"] == 1
+    assert summary["disagreements"] == 1
+
+
+def test_shadow_comparison_store_rejects_invalid_structure(tmp_path):
+    path = tmp_path / "shadow.json"
+    path.write_text(json.dumps({"unexpected": "object"}), encoding="utf-8")
+    with pytest.raises(ShadowComparisonStoreError):
+        ShadowComparisonStore(str(path)).load_all()
+
+
+def test_shadow_comparison_store_writes_atomically(tmp_path):
+    path = tmp_path / "nested" / "shadow.json"
+    store = ShadowComparisonStore(str(path))
+    store.save_all([{"timestamp": "now", "paper_decision": "BUY", "reference_decision": "BUY", "agreement": True}])
+    assert json.loads(path.read_text(encoding="utf-8"))[0]["agreement"] is True
