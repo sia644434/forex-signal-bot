@@ -190,7 +190,13 @@ class ContinuousMarketScanner:
                 return False
 
             context = await self._context_for_symbol(market_data, symbol, m15)
-            decision = self._engine.analyze(context, symbol=symbol)
+            decision, diagnostics = self._engine.analyze_with_diagnostics(context, symbol=symbol)
+            if decision is None:
+                logger.info(
+                    "Automatic scanner rejected %s/M15: %s",
+                    symbol,
+                    "; ".join(diagnostics[:6]) if diagnostics else "unknown_reason",
+                )
 
             # A no-signal result is deterministic for this closed M15 candle.
             # For a signal, keep the candle unprocessed until every eligible
