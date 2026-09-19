@@ -29,3 +29,13 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - IN_PROGRESS: exact-head CI verification and continued capability implementation
 - REMAINING: portfolio/correlation/stress; strategy lifecycle; opportunity/heatmap; paper/shadow/replay; news/macro; final security/performance/regression; Railway final gate
 - NEXT_ACTION: continue implementation from TASK-129 without repeating a full repository audit unless state becomes inconsistent or a cross-cutting dependency requires it.
+
+
+## Current Handoff Update — 2026-09-19
+- CURRENT_PHASE: Phase 20 capability expansion is being developed after the historical Phase-13 audit.
+- CURRENT_TASK: TASK-132
+- LAST_VERIFIED_COMMIT: 7e978faa986ed6088511c0aee3a1fa4510a02408
+- NEW_UNVERIFIED_COMMITS: TASK-129 through TASK-132
+- IN_PROGRESS: exact-head CI verification remains pending; capability implementation continues from the Master Prompt roadmap.
+- REMAINING: Time Machine orchestration; strategy lifecycle/DNA/champion-challenger; news/macro real providers; advanced stress/sensitivity robustness; alert/report completion; final security/performance/regression; Railway final gate.
+- NEXT_ACTION: continue with missing roadmap capabilities; do not treat Railway as the next development task.
