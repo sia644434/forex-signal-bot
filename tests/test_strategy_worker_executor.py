@@ -4,11 +4,11 @@ from worker.executors import strategy_evaluation
 def test_strategy_evaluation_worker_returns_comparison():
     result = strategy_evaluation({
         "strategies": [
-            {"strategy_id": "champ", "name": "Champion", "observations": [
+            {"strategy_id": "champ", "name": "Champion", "validation": {"oos_positive": True, "positive_oos_ratio": .8, "robust": True}, "observations": [
                 {"market": "Forex", "symbol": "EURUSD", "timeframe": "1h", "regime": "TRENDING",
                  "trades": 50, "win_rate": .55, "expectancy": .01, "max_drawdown": -.10}
             ]},
-            {"strategy_id": "chall", "name": "Challenger", "observations": [
+            {"strategy_id": "chall", "name": "Challenger", "validation": {"oos_positive": True, "positive_oos_ratio": .8, "robust": True}, "observations": [
                 {"market": "Forex", "symbol": "EURUSD", "timeframe": "1h", "regime": "TRENDING",
                  "trades": 50, "win_rate": .60, "expectancy": .03, "max_drawdown": -.05}
             ]},
