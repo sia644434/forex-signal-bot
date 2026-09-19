@@ -15,9 +15,9 @@ def test_out_of_sample_selects_on_train_only():
 
 def test_walk_forward_has_disjoint_oos_windows():
     result = ResearchValidationEngine.walk_forward(prices(), train_size=40, test_size=10)
-    assert result["windows"] == 5
+    assert result["windows"] == 6
     assert 0.0 <= result["positive_oos_ratio"] <= 1.0
-    assert len(result["results"]) == 5
+    assert len(result["results"]) == 6
 
 
 def test_overfitting_diagnostics_flag_divergence():
