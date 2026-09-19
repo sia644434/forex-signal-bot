@@ -79,6 +79,7 @@ class StrategyAdaptationProposal:
     reason: str
     base_version: int
     validation_evidence: StrategyValidationEvidence | None = None
+    evaluation_history: list[StrategyEvaluationSnapshot] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.strategy_id.strip() or not self.changes:
@@ -87,6 +88,15 @@ class StrategyAdaptationProposal:
             raise ValueError("adaptation reason is required")
         if self.base_version < 1:
             raise ValueError("base_version must be positive")
+
+
+@dataclass(frozen=True, slots=True)
+class StrategyEvaluationSnapshot:
+    strategy_id: str
+    version: int
+    status: str
+    performance: dict[str, float]
+    validation_ready: bool
 
 
 @dataclass
@@ -147,13 +157,21 @@ class StrategyIntelligenceEngine:
     def evaluate(self, strategy_id: str) -> dict[str, Any]:
         record = self._records[strategy_id]
         perf = record.performance()
-        if record.status == "RETIRED":
-            return {"strategy_id": strategy_id, "status": record.status, "performance": perf}
-        if perf["sample"] >= 20 and perf["expectancy"] < 0:
-            record.status = "PAUSED"
-        elif perf["sample"] >= 50 and perf["expectancy"] > 0:
-            record.status = "CHALLENGER"
-        return {"strategy_id": strategy_id, "status": record.status, "performance": perf}
+        if record.status != "RETIRED":
+            if perf["sample"] >= 20 and perf["expectancy"] < 0:
+                record.status = "PAUSED"
+            elif perf["sample"] >= 50 and perf["expectancy"] > 0:
+                record.status = "CHALLENGER"
+        validation_ready = self._validation_is_current(record)
+        snapshot = StrategyEvaluationSnapshot(
+            strategy_id=strategy_id,
+            version=record.version,
+            status=record.status,
+            performance=perf,
+            validation_ready=validation_ready,
+        )
+        record.evaluation_history.append(snapshot)
+        return {**asdict(snapshot)}
 
     @staticmethod
     def dna_fingerprint(dna: dict[str, Any]) -> str:
@@ -171,6 +189,17 @@ class StrategyIntelligenceEngine:
         record.validation_evidence = evidence
         return {"strategy_id": strategy_id, "oos_positive": evidence.oos_positive, "positive_oos_ratio": evidence.positive_oos_ratio, "robust": evidence.robust, "source": evidence.source, "validated_version": evidence.validated_version, "dna_fingerprint": evidence.dna_fingerprint}
 
+    def _validation_is_current(self, record: StrategyRecord) -> bool:
+        evidence = record.validation_evidence
+        return bool(
+            evidence
+            and evidence.oos_positive
+            and evidence.positive_oos_ratio >= 0.5
+            and evidence.robust
+            and evidence.validated_version == record.version
+            and evidence.dna_fingerprint == self.dna_fingerprint(record.dna)
+        )
+
     def compare(self, champion_id: str, challenger_id: str) -> dict[str, Any]:
         champion = self._records[champion_id]
         challenger = self._records[challenger_id]
@@ -187,10 +216,8 @@ class StrategyIntelligenceEngine:
             and challenger_validation.positive_oos_ratio >= 0.5
             and champion_validation.robust
             and challenger_validation.robust
-            and champion_validation.validated_version == champion.version
-            and challenger_validation.validated_version == challenger.version
-            and champion_validation.dna_fingerprint == self.dna_fingerprint(champion.dna)
-            and challenger_validation.dna_fingerprint == self.dna_fingerprint(challenger.dna)
+            and self._validation_is_current(champion)
+            and self._validation_is_current(challenger)
         )
         challenger_wins = (
             comparable
@@ -296,7 +323,12 @@ class StrategyIntelligenceEngine:
         """Backward-compatible proposal-only API; production DNA is not mutated."""
         return self.propose_adaptation(strategy_id, dna_changes, reason=reason)
 
-    def continuous_evaluate(self) -> list[dict[str, Any]]:
+    def continuous_evaluate(self, validations: dict[str, StrategyValidationEvidence] | None = None) -> list[dict[str, Any]]:
+        if validations:
+            for strategy_id, evidence in validations.items():
+                if strategy_id not in self._records:
+                    raise ValueError("validation references an unknown strategy")
+                self.attach_validation(strategy_id, evidence)
         return [self.evaluate(strategy_id) for strategy_id in self._records]
 
     def rollback(self, strategy_id: str, *, reason: str) -> dict[str, Any]:
@@ -329,4 +361,4 @@ class StrategyIntelligenceEngine:
         return [asdict(record) for record in self._records.values()]
 
 
-__all__ = ["StrategyObservation", "StrategyValidationEvidence", "StrategyAdaptationProposal", "StrategyRecord", "StrategyAuditEvent", "StrategyIntelligenceEngine"]
+__all__ = ["StrategyObservation", "StrategyValidationEvidence", "StrategyAdaptationProposal", "StrategyEvaluationSnapshot", "StrategyRecord", "StrategyAuditEvent", "StrategyIntelligenceEngine"]
