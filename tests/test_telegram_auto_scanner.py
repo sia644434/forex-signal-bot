@@ -202,4 +202,5 @@ async def test_continuous_scanner_loop_survives_cycle_failure(monkeypatch):
         await client._run_auto_scanner_loop(60)
 
     assert len(calls) == 2
-    assert sleep_calls == 2
+    # The second scan raises CancelledError before the loop reaches its next sleep.
+    assert sleep_calls == 1
