@@ -59,7 +59,9 @@ class FinnhubClient:
             response.raise_for_status()
             data = response.json()
         if data.get("s") != "ok":
-            logger.warning("Finnhub returned non-ok %s status for %s: %s", endpoint, symbol, data.get("s"))
+            status = str(data.get("s") or "unknown")
+            reason = str(data.get("error") or "no candle data returned").strip()
+            raise RuntimeError(f"Finnhub API returned status={status} for {symbol}: {reason}")
         return data
 
     async def get_candles(self, symbol: str, resolution: str, from_timestamp: int, to_timestamp: int) -> Optional[dict[str, Any]]:
