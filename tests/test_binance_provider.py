@@ -47,7 +47,19 @@ def _recent_rows(timeframe="M15", count=2, *, close_last=True):
             int(close_time.timestamp() * 1000), "625625", 100, "6", "300000", "0",
         ])
     if not close_last:
-        rows[-1][6] = int((datetime.now(timezone.utc) + timedelta(minutes=1)).timestamp() * 1000)
+        now = datetime.now(timezone.utc)
+        _, interval = BINANCE_TIMEFRAMES[timeframe]
+        aligned_seconds = int(now.timestamp()) - (int(now.timestamp()) % int(interval.total_seconds()))
+        current_open = datetime.fromtimestamp(aligned_seconds, tz=timezone.utc)
+        current_last_open = datetime.fromtimestamp(rows[-1][0] / 1000, tz=timezone.utc)
+        shift = current_open - current_last_open
+        if shift.total_seconds() > 0:
+            for row in rows:
+                opened = datetime.fromtimestamp(row[0] / 1000, tz=timezone.utc) + shift
+                close_time = opened + interval - timedelta(milliseconds=1)
+                row[0] = int(opened.timestamp() * 1000)
+                row[6] = int(close_time.timestamp() * 1000)
+        rows[-1][6] = int((now + timedelta(minutes=1)).timestamp() * 1000)
     return rows
 
 
