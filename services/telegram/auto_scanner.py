@@ -250,7 +250,7 @@ class ContinuousMarketScanner:
                 logger.info(
                     "Automatic scanner rejected %s/M15: %s",
                     symbol,
-                    "; ".join(diagnostics[:6]) if diagnostics else "unknown_reason",
+                    "; ".join(diagnostics) if diagnostics else "unknown_reason",
                 )
                 if diagnostics and diagnostics[0].startswith("m15_signal="):
                     signal = diagnostics[0].split("=", 1)[1].upper()
