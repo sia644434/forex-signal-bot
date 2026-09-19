@@ -123,3 +123,8 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - Exact-head CI exposed a missing StrategyRecord initialization for evaluation_history.
 - Fixed in `e89da517d4b9a8d552901e2562cfeee2e54aab72`.
 - Recheck Actions on the new HEAD before continuing.
+
+## TASK-143 Recovery Frontier
+- Added automatic RobustnessEngine gating to research-backed strategy validation.
+- Latest code/test commits: `af993591e329e8e160328ef16298bc4421c17344`, `192143e665b66444b3e789289e5f7ba06f01a1ec`.
+- Exact-head Actions verification pending; resume by checking latest main HEAD workflows.
