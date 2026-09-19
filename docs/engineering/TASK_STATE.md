@@ -633,3 +633,14 @@ Evidence:
 - PC Worker strategy evaluation can consume research-validation input directly and materialize admissible validation evidence before lifecycle comparison.
 - Regression coverage was expanded for version/DNA binding, research-backed validation, and stale evidence rejection.
 
+
+## TASK-142
+Phase: Phase 18 — Strategy Intelligence / Continuous Evaluation
+Title: Validation-Aware Continuous Evaluation History
+Implementation Status: IMPLEMENTED — exact-head CI verification pending
+Evidence:
+- Added immutable evaluation snapshots containing strategy version, lifecycle status, performance, and validation readiness.
+- Continuous evaluation can ingest version/DNA-bound validation evidence before recording evaluation state.
+- Current validation is recomputed against strategy version/DNA so stale evidence cannot appear current.
+- Added focused regression coverage for validation-aware evaluation history.
+
