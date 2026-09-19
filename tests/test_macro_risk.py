@@ -31,3 +31,28 @@ def test_macro_risk_without_nearby_events_is_normal_no_data():
     )
     assert result["status"] == "NO_DATA"
     assert result["risk_level"] == "NORMAL"
+
+
+def test_macro_collection_is_cached_and_exposes_cache_status():
+    provider = NewsAPIProvider(api_key="test")
+    provider.fetch = lambda **kwargs: []
+    engine = MacroRiskEngine([provider], cache_ttl_seconds=300)
+    now = datetime.fromisoformat("2026-09-19T10:00:00+00:00")
+    first = engine.collect(now=now)
+    second = engine.collect(now=now.replace(minute=1))
+    assert first["status"] == "NO_DATA"
+    assert second["status"] == "CACHED"
+    assert second["cache_age_seconds"] == 60.0
+
+
+def test_collect_and_assess_returns_provider_diagnostics():
+    class BrokenProvider:
+        name = "broken"
+        def fetch(self, **kwargs):
+            raise MacroProviderError("offline")
+
+    result = MacroRiskEngine([BrokenProvider()]).collect_and_assess(
+        now=datetime.fromisoformat("2026-09-19T10:00:00+00:00")
+    )
+    assert result["provider_status"] == "EXTERNAL_DEPENDENCY"
+    assert result["provider_diagnostics"][0]["provider"] == "broken"
