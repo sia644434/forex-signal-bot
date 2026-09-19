@@ -103,3 +103,17 @@ Status: IMPLEMENTATION
 Current task: TASK-134
 Completed foundation: strategy DNA/registry, observations by market/symbol/timeframe/regime, lifecycle state, retirement, champion/challenger comparison and worker batch evaluation.
 Remaining: richer adaptation/continuous evaluation/rollback integration, exact-head CI verification, news/macro providers, advanced robustness, alert/report completion, final security/performance/regression, Railway final gate.
+
+
+## Current Development Frontier — 2026-09-19
+### Phase 17 — Advanced Research
+Status: IMPLEMENTATION
+Current task: TASK-136
+Completed foundation: portfolio stress/sensitivity, counterfactual batches, deterministic robustness matrix, and temporal leakage detection.
+Remaining: richer OOS/overfitting robustness, exact-head CI verification, news/macro providers, alerts/reports, final security/performance/regression, Railway final gate.
+
+### Phase 18 — Strategy Intelligence
+Status: IMPLEMENTATION
+Current task: TASK-135
+Completed: strategy DNA/registry, lifecycle, champion/challenger, adaptation, weakness detection, continuous evaluation, rollback, and audit trail.
+Remaining: exact-head CI verification and deeper research integration.
