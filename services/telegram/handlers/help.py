@@ -12,7 +12,7 @@ async def help_handler(
             "📊 تحلیل هوشمند\n"
             "📡 سیگنال زنده\n"
             "🔎 اسکن بازار\n"
-            "🧠 AI Coach\n"
+            "🧠 Analysis Coach\n"
             "📒 ژورنال معاملات\n"
             "⚙️ تنظیمات"
         )
