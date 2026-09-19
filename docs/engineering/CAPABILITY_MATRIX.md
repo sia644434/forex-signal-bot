@@ -78,3 +78,12 @@ Large historical, simulation, optimization, multi-symbol, multi-timeframe, corre
 
 | Portfolio-aware alert gating | IMPLEMENTED_CURRENT | AnalysisReport.alert_context + AlertEngine | tests/test_alert_engine.py | Alerts/decision safety | RAILWAY | 14/20 | pending CI |
 | Tracker lifecycle audit trail | IMPLEMENTED_CURRENT | services/telegram/tracker.py events | tests/test_tracker_contract.py | Telegram tracking | RAILWAY | 20 | pending CI |
+
+
+## Current Verification Frontier — 2026-09-19
+The implemented roadmap through TASK-147 has passed exact-head CI on `151ea57b8e050ebc638074f46e31d5c01a5e9430`. The following current capabilities are therefore CI-verified at this frontier: statistical/scenario/counterfactual analysis; signal decay/crisis/conflict gates; portfolio exposure/correlation/stress and pre-trade risk guard; opportunity ranking/heatmap; paper equity lifecycle; shadow comparison ledger; market replay and Time Machine; strategy lifecycle/DNA/adaptation/retirement/champion-challenger with research gates; OOS/walk-forward/overfitting/leakage/robustness research; NewsAPI/FRED macro risk collection/cache/gating; deterministic alerts/report contracts; portfolio-aware alert suppression; and tracker lifecycle audit history.
+
+### Explicit remaining boundaries
+- **Economic calendar:** no canonical release-calendar provider is currently claimed. NewsAPI publication time and FRED observation dates are not equivalent to scheduled economic release timestamps.
+- **Railway final gate:** current code/CI verification is not deployment verification. Fresh live health and restart/recovery evidence must target the current HEAD.
+- **Shadow/paper durability:** tracker lifecycle state is durable through its existing store; the ShadowComparisonLedger remains an in-process comparison ledger and is not claimed as a durable database-backed shadow history until integrated with a persistence boundary.

@@ -49,3 +49,11 @@ The historical Phase-13 code audit is not the end of feature development. The ne
 - New capabilities already added in TASK-129: statistical context, explicit scenarios, counterfactuals, signal decay, crisis mode, conflict gates.
 - Railway is intentionally deferred until the expanded capability roadmap is implemented and verified.
 - New-chat continuation: read CAPABILITY_MATRIX and RECOVERY_STATE in addition to the existing state files; continue from CURRENT_TASK and inspect only relevant code.
+
+
+## Current Development Closure — 2026-09-19
+- Current HEAD: `151ea57b8e050ebc638074f46e31d5c01a5e9430`.
+- TASK-147 exact-head repair was completed: an invalid literal escape in `tests/test_tracker_contract.py` caused compile failure and was removed without weakening production behavior.
+- All seven required GitHub Actions workflows are green on this exact HEAD: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate.
+- The expanded roadmap capabilities through TASK-147 are code/test verified at this frontier.
+- Remaining production closure is external: synchronize Railway to this HEAD and obtain fresh live `/health` smoke plus controlled restart/recovery evidence. Do not treat older Railway evidence for commit `8bf2a77840b72add70b98cbf1a3b2187f85763f2` as verification of this HEAD.

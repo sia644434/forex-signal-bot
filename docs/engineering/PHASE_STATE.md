@@ -182,3 +182,11 @@ Current HEAD: b83ff1480e842c61d798ef4aa4e356deed4bdd51
 - Telegram signal output exposes portfolio risk flags.
 - Tracker persistence now carries lifecycle event history with backward-compatible deserialization.
 - Exact-head CI verification pending; Railway remains a later external gate.
+
+
+## Current Development Closure — 2026-09-19
+- Expanded Master Prompt capability work through TASK-147 is implemented and exact-head CI verified on `151ea57b8e050ebc638074f46e31d5c01a5e9430`.
+- The seven required workflows are green on the exact HEAD.
+- Advanced intelligence, portfolio/correlation/stress, opportunity/heatmap, paper/shadow/replay/Time Machine, strategy/research lifecycle, macro/news adapters, portfolio-aware alerting, and tracker lifecycle auditing are implemented with focused regression coverage.
+- Known limitation retained intentionally: NewsAPI/FRED are real data adapters but are not a canonical economic-release calendar; FRED observation dates are not release timestamps. This remains an external provider-capability limitation, not synthetic calendar behavior.
+- Final unresolved phase dependency is deployment verification against the current Railway deployment, including live health and restart/recovery evidence.

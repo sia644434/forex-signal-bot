@@ -227,3 +227,10 @@ Railway remains deferred until required capabilities and final regression/securi
 - Added tracker lifecycle event history with backward-compatible persistence.
 - Added regression coverage.
 - Exact-head CI verification pending; no Railway or production verification claimed.
+
+
+## 2026-09-19 — TASK-147 CI repair and closure checkpoint
+- The exact-head CI run for `5dcddbc448842b78ff9482baf12b7cd0753a27e4` exposed a real syntax error in `tests/test_tracker_contract.py`: a literal escaped newline was inserted as source text.
+- Corrected only the malformed test source in `151ea57b8e050ebc638074f46e31d5c01a5e9430`; no production gate was weakened.
+- Re-ran the full seven-workflow required set on the corrected HEAD; all seven completed successfully.
+- The expanded roadmap is now at an exact-head CI-verified frontier. Railway remains an external verification dependency.

@@ -161,3 +161,12 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - Exact-head Actions verification is pending; do not mark verified until all seven required workflows succeed.
 - Continue only from this frontier; do not perform a full repository audit unless CI reveals a cross-cutting failure.
 - After CI verification, remaining closure work is production contract/performance/documentation gaps and external Railway verification, not another architectural rewrite.
+
+
+## Recovery Frontier — TASK-147 corrected HEAD — 2026-09-19
+- CURRENT_HEAD: `151ea57b8e050ebc638074f46e31d5c01a5e9430`.
+- TASK-147 exact-head CI initially failed because `tests/test_tracker_contract.py` contained an invalid literal escape. This was repaired in `151ea57b8e050ebc638074f46e31d5c01a5e9430`.
+- Exact-head verification is now GREEN across all seven required workflows: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, Final Integration Gate.
+- Resume point is no longer CI repair. The remaining gate is external deployment verification against the current HEAD.
+- Do not claim current production verification from the older deployed commit `8bf2a77840b72add70b98cbf1a3b2187f85763f2`.
+- NEXT_ACTION: synchronize Railway with the current HEAD, run live `/health` smoke, perform controlled restart/recovery, then update production state only after fresh evidence succeeds.

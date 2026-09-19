@@ -705,3 +705,26 @@ Evidence:
 - Focused alert and tracker regression coverage added.
 - Current implementation head: b83ff1480e842c61d798ef4aa4e356deed4bdd51.
 - No production/Railway verification is claimed.
+
+
+## TASK-147
+Phase: Phase 20/22 — Alert / Tracker Hardening
+Title: Portfolio-Aware Alerts and Tracker Lifecycle Audit Trail
+Implementation Status: VERIFIED — exact-head seven-workflow CI green on `151ea57b8e050ebc638074f46e31d5c01a5e9430`
+Evidence:
+- Portfolio-blocked reports are ineligible for executable alerts.
+- AlertEngine suppresses portfolio-blocked emissions.
+- Telegram signal output exposes portfolio risk block and flags.
+- Tracker records CREATED, SIGNAL_CHANGED, INVALIDATED, TARGET_REACHED, and STOPPED lifecycle events and persists them through the existing tracker store with backward-compatible deserialization.
+- The exact-head CI run initially exposed a syntax defect in the new tracker regression test; the invalid literal escape was corrected in `151ea57b8e050ebc638074f46e31d5c01a5e9430`.
+- All seven required workflows are green on the corrected HEAD.
+
+## Current Closure Task — TASK-148
+Phase: Final Production Verification
+Title: Expanded Roadmap Closure and Deployment Evidence Synchronization
+Implementation Status: IN_PROGRESS
+Scope:
+- Keep the current exact-head seven-workflow CI evidence synchronized in all engineering state documents.
+- Reconcile capability-matrix statuses with the implemented roadmap through TASK-147.
+- Retain explicit external dependency boundaries for macro/news data rather than claiming a canonical economic calendar without a suitable provider.
+- Finalize only after Railway is synchronized to the current HEAD and fresh live health/restart evidence is captured.
