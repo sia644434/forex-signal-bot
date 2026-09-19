@@ -365,7 +365,7 @@ def time_machine(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
-    from analysis.strategy_intelligence import StrategyIntelligenceEngine, StrategyObservation
+    from analysis.strategy_intelligence import StrategyIntelligenceEngine, StrategyObservation, StrategyValidationEvidence
     strategies = payload.get("strategies")
     if not isinstance(strategies, list) or not strategies:
         raise ValueError("strategies list is required")
@@ -387,6 +387,22 @@ def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
                     expectancy=float(raw.get("expectancy", 0.0)),
                     max_drawdown=float(raw.get("max_drawdown", 0.0)),
                     sample_quality=float(raw.get("sample_quality", 1.0)),
+                ),
+            )
+    for item in strategies:
+        validation = item.get("validation")
+        if validation is not None:
+            if not isinstance(validation, dict):
+                raise ValueError("strategy validation must be an object")
+            engine.attach_validation(
+                str(item["strategy_id"]),
+                StrategyValidationEvidence(
+                    oos_positive=bool(validation.get("oos_positive", False)),
+                    positive_oos_ratio=float(validation.get("positive_oos_ratio", 0.0)),
+                    overfitting_warning=bool(validation.get("overfitting_warning", False)),
+                    leakage_detected=bool(validation.get("leakage_detected", False)),
+                    robust=bool(validation.get("robust", False)),
+                    source=str(validation.get("source", "research_validation")),
                 ),
             )
     comparison = None
