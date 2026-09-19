@@ -81,7 +81,11 @@ class ContinuousMarketScanner:
         key = (symbol, normalized)
         cached = self._cache.get(key)
         if cached and not force:
-            return cached[1]
+            cached_timestamp = cached[0]
+            interval_seconds = {"M5": 300, "M15": 900, "H1": 3600, "H4": 14400, "D1": 86400, "W1": 604800}[normalized]
+            age = (datetime.now(timezone.utc) - cached_timestamp.astimezone(timezone.utc)).total_seconds()
+            if age < interval_seconds:
+                return cached[1]
 
         candles = await market_data.get_candles_list(symbol=symbol, timeframe=normalized, limit=DEFAULT_CANDLE_LIMIT)
         if not candles:
