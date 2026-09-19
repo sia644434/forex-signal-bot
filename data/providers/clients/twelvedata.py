@@ -16,13 +16,13 @@ class TwelveDataClient:
     def is_configured(self) -> bool:
         return bool(self.api_key and str(self.api_key).strip())
 
-    async def get_time_series(self, symbol: str, interval: str, outputsize: int) -> dict[str, Any]:
+    async def get_time_series(self, symbol: str, interval: str, outputsize: int, *, exchange: str | None = None) -> dict[str, Any]:
         if not self.is_configured():
             raise RuntimeError("TWELVEDATA_API_KEY is not configured.")
         async with httpx.AsyncClient(timeout=30.0) as http:
             response = await http.get(
                 self.BASE_URL,
-                params={"symbol": symbol, "interval": interval, "outputsize": outputsize, "apikey": self.api_key, "timezone": "UTC"},
+                params={"symbol": symbol, "interval": interval, "outputsize": outputsize, "apikey": self.api_key, "timezone": "UTC", **({"exchange": exchange} if exchange else {})},
             )
             response.raise_for_status()
             data = response.json()
