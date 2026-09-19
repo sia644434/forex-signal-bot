@@ -42,6 +42,30 @@ def _stale_after(timeframe: str) -> timedelta:
     return timedelta(minutes=minutes * DEFAULT_STALE_INTERVALS)
 
 
+def is_market_weekend_closed(
+    *,
+    symbol: str | None = None,
+    market_type: str | None = None,
+    now: datetime | None = None,
+) -> bool:
+    """Return whether the requested market is in the repository's weekend break."""
+    reference = now if now is not None else datetime.now(timezone.utc)
+    if (
+        not isinstance(reference, datetime)
+        or reference.tzinfo is None
+        or reference.utcoffset() is None
+    ):
+        raise ValueError("now must be a timezone-aware datetime.")
+
+    resolved_market_type = market_type.strip().lower() if isinstance(market_type, str) else None
+    if resolved_market_type is None and isinstance(symbol, str) and symbol.strip():
+        try:
+            resolved_market_type = get_market_type(normalize_symbol(symbol))
+        except (TypeError, ValueError):
+            resolved_market_type = None
+    return reference.astimezone(timezone.utc).weekday() >= 5 and resolved_market_type != "crypto"
+
+
 def evaluate_market_status(
     candles,
     timeframe: str = "M15",
