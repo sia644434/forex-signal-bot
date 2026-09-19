@@ -587,3 +587,14 @@ Implementation Status: IMPLEMENTED — pending exact-head CI verification
 - Integrated macro risk into FullAnalysisEngine and AnalysisReport.
 - DecisionEngine now blocks on CRISIS macro risk and downgrades executable directional signals to WAIT under ELEVATED risk.
 - Added focused provider, risk-assessment, and full-pipeline regression tests.
+
+
+## TASK-138
+Phase: Phase 14/17 — Advanced Research
+Title: Out-of-Sample, Walk-Forward Validation, Overfitting Diagnostics
+Implementation Status: IMPLEMENTED — exact-head CI pending
+Evidence:
+- Added `analysis/research_engine.py` with train-only parameter selection, explicit out-of-sample evaluation, rolling walk-forward windows, train/test divergence diagnostics, and temporal leakage checks.
+- Added PC Worker `research_validation` workload for heavy research execution.
+- Added focused regression coverage and worker ownership coverage.
+- No production or Railway verification is claimed yet.
