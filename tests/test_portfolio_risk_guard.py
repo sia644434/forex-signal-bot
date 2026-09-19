@@ -15,6 +15,7 @@ def test_portfolio_guard_allows_diversified_exposure():
     result = guard.can_add(
         [PortfolioExposure("EURUSD", "FOREX", "BUY", 20, 0.2)],
         PortfolioExposure("XAUUSD", "COMMODITY", "SELL", 20, 0.2),
+        max_symbol_weight=0.60,
     )
     assert result["allowed"] is True
     assert result["after"].concentration == 0.5
