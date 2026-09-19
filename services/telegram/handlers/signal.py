@@ -10,7 +10,7 @@ from analysis.market_aware_engine import MarketAwareAnalysisEngine
 from services.market_data.service import get_market_data_service
 from services.telegram.state import get_user_state
 from services.telegram.tracker import track_report
-from services.telegram.market_session import CLOSED, OPEN, evaluate_market_status, is_market_weekend_closed
+from services.telegram.market_session import OPEN, evaluate_market_status, is_market_weekend_closed
 
 logger = logging.getLogger(__name__)
 DEFAULT_SYMBOL = "EURUSD"
