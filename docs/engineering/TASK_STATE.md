@@ -647,3 +647,11 @@ Evidence:
 
 ## TASK-142 CI Repair
 Initial exact-head run failed 8 tests because StrategyRecord did not initialize evaluation_history. Fixed in `e89da517d4b9a8d552901e2562cfeee2e54aab72`. Verification pending.
+
+## TASK-143
+Phase: Phase 18 — Research/Strategy Integration
+Title: Automatic Robustness Gate for Research-Backed Strategy Validation
+Status: IMPLEMENTED — exact-head CI verification pending
+- Strategy research validation now automatically runs the existing RobustnessEngine over the same price series.
+- Manual `robust: true` is no longer trusted for research-backed validation.
+- Regression coverage verifies robustness is derived from the robustness engine.
