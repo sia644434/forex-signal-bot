@@ -413,6 +413,43 @@ def robustness_analysis(payload: dict[str, Any]) -> dict[str, Any]:
         result["leakage"] = engine.temporal_leakage_check(rows)
     return result
 
+
+def research_validation(payload: dict[str, Any]) -> dict[str, Any]:
+    from analysis.research_engine import ResearchValidationEngine
+    prices = payload.get("prices", payload.get("close"))
+    if not isinstance(prices, list):
+        raise ValueError("prices list is required")
+    engine = ResearchValidationEngine()
+    mode = str(payload.get("mode", "walk_forward")).lower()
+    if mode == "oos":
+        result = engine.out_of_sample(
+            prices,
+            train_ratio=float(payload.get("train_ratio", 0.7)),
+            thresholds=payload.get("thresholds", (0.0, 0.001, 0.002)),
+            fees=payload.get("fees", (0.0, 0.0001, 0.0002)),
+        )
+    elif mode == "walk_forward":
+        result = engine.walk_forward(
+            prices,
+            train_size=int(payload.get("train_size", 40)),
+            test_size=int(payload.get("test_size", 10)),
+            thresholds=payload.get("thresholds", (0.0, 0.001, 0.002)),
+            fees=payload.get("fees", (0.0, 0.0001, 0.0002)),
+        )
+    else:
+        raise ValueError("mode must be 'oos' or 'walk_forward'")
+    result["overfitting"] = engine.overfitting_diagnostics(
+        result,
+        max_gap=float(payload.get("max_train_test_gap", 0.10)),
+        min_positive_oos_ratio=float(payload.get("min_positive_oos_ratio", 0.5)),
+    )
+    rows = payload.get("temporal_rows")
+    if rows is not None:
+        if not isinstance(rows, list):
+            raise ValueError("temporal_rows must be a list")
+        result["leakage"] = engine.temporal_leakage_check(rows)
+    return result
+
 def register_real_executors(runtime) -> None:
     mapping = {
         "backtest": backtest, "walk_forward": walk_forward, "monte_carlo": monte_carlo,
@@ -424,7 +461,7 @@ def register_real_executors(runtime) -> None:
         "timeseries_training": timeseries_training, "ensemble_training": ensemble_training,
         "deep_learning_training": deep_learning_training, "transformer_training": transformer_training,
         "lstm_training": lstm_training, "gru_training": gru_training,
-        "medium_model_training": medium_model_training, "correlation_matrix": correlation_matrix, "portfolio_stress": portfolio_stress, "stress_sensitivity": stress_sensitivity, "counterfactual_batch": counterfactual_batch, "market_replay": market_replay, "time_machine": time_machine, "strategy_evaluation": strategy_evaluation, "robustness_analysis": robustness_analysis,
+        "medium_model_training": medium_model_training, "correlation_matrix": correlation_matrix, "portfolio_stress": portfolio_stress, "stress_sensitivity": stress_sensitivity, "counterfactual_batch": counterfactual_batch, "market_replay": market_replay, "time_machine": time_machine, "strategy_evaluation": strategy_evaluation, "robustness_analysis": robustness_analysis, "research_validation": research_validation,
     }
     for name, handler in mapping.items():
         runtime.register(name, handler)
