@@ -42,7 +42,7 @@ class FinnhubClient:
     @staticmethod
     def _index_symbol(symbol: str) -> str:
         normalized = symbol.strip().upper()
-        aliases = {"SPX": "^SPX", "NDX": "^NDX", "DJI": "^DJI", "RUT": "^RUT"}
+        aliases = {"SPX": "^GSPC", "NDX": "^NDX", "DJI": "^DJI", "RUT": "^RUT"}
         return aliases.get(normalized, normalized)
 
     async def get_quote(self, symbol: str) -> dict[str, Any]:
