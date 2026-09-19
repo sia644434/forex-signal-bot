@@ -490,3 +490,17 @@ Evidence:
 - Re-verified the complete required seven-workflow set on final HEAD: Test, Production Readiness, Production Activation Validation, Production Activation Gate, Production E2E Contract Gate, Security Audit, and Final Integration Gate — all completed successfully.
 - No additional repository-backed Phase-11 testing gap requiring code changes was identified.
 - Phase 11 is COMPLETE; Phase 13 — Final Production Audit — is the next unresolved phase frontier.
+
+
+## TASK-129
+Phase: Phase 14 — Advanced Intelligence Foundation
+Title: Statistical / Scenario / Counterfactual / Signal-State Foundation
+Implementation Status: IMPLEMENTED — pending exact-head CI verification
+- Added deterministic statistical metrics over real historical prices.
+- Added explicit scenario classification with traceable evidence.
+- Added traceable counterfactual decision analysis.
+- Added signal decay states FRESH/AGING/STALE/INVALID and crisis states NORMAL/ELEVATED/CRISIS/EXTREME.
+- Integrated scenario, regime, statistical context, conflict state, signal decay, and crisis mode into AnalysisResult and AnalysisReport.
+- DecisionEngine now blocks stale/invalid signals, crisis/extreme conditions, strong conflicts, and NO_TRADE scenarios; ordinary conflicts downgrade executable BUY/SELL to WAIT.
+- Added focused regression tests.
+- No local execution success is claimed; exact-head CI remains required.
