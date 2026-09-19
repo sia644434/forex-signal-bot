@@ -111,3 +111,10 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - Exact-head CI verification: pending.
 - Resume rule: check Actions for the latest main HEAD first; if green, mark TASK-141 VERIFIED. If red, inspect only the failing workflow/job and repair the affected boundary.
 - Next development target after verification: deeper continuous strategy evaluation/history and validation-aware lifecycle state transitions.
+
+
+## Recovery Frontier — TASK-142
+- Latest implementation scope: validation-aware continuous strategy evaluation history.
+- Exact-head CI verification: pending.
+- Resume from the latest main HEAD; inspect only affected strategy-intelligence tests if CI fails.
+- After verification, continue with richer lifecycle transitions/history and then broader strategy/research hardening.
