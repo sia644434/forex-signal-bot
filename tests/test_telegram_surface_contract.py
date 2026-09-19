@@ -129,3 +129,26 @@ def test_signal_failure_includes_safe_provider_diagnostics():
     assert "twelvedata" in rendered
     assert "symbol not found" in rendered
     assert "All market data providers failed" not in rendered
+
+
+
+def test_signal_failure_surfaces_nested_provider_reason():
+    from core.errors import ApplicationError
+    from services.telegram.handlers.signal import _format_signal_failure
+
+    error = ApplicationError(
+        "All market data providers failed.",
+        {
+            "failures": [
+                {
+                    "provider": "twelvedata",
+                    "attempt": 3,
+                    "error_type": "ApplicationError",
+                    "message": "Failed to fetch Twelve Data candles.",
+                    "details": {"reason": "Twelve Data API error for BTC/USDT: symbol not found"},
+                }
+            ]
+        },
+    )
+    rendered = _format_signal_failure(error, "BTCUSDT", "M15")
+    assert "Twelve Data API error for BTC/USDT: symbol not found" in rendered
