@@ -118,3 +118,8 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - Exact-head CI verification: pending.
 - Resume from the latest main HEAD; inspect only affected strategy-intelligence tests if CI fails.
 - After verification, continue with richer lifecycle transitions/history and then broader strategy/research hardening.
+
+## TASK-142 CI Repair
+- Exact-head CI exposed a missing StrategyRecord initialization for evaluation_history.
+- Fixed in `e89da517d4b9a8d552901e2562cfeee2e54aab72`.
+- Recheck Actions on the new HEAD before continuing.
