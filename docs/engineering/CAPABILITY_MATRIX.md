@@ -38,3 +38,9 @@
 ## Execution Rule
 
 Large historical, simulation, optimization, multi-symbol, multi-timeframe, correlation, stress, replay, and portfolio workloads belong on the PC Worker. Railway remains the control plane and light-processing boundary. A worker outage must degrade to explicit pending/deferred/no-compute states rather than crashing the core path.
+
+
+| Paper trading | IMPLEMENTED_CURRENT | `services/paper_trading.py` | `tests/test_paper_trading.py` | Decision/risk/persistence | RAILWAY | 20 | pending CI |
+| Shadow trading | IMPLEMENTED_CURRENT | `services/paper_trading.py` comparison contract | `tests/test_paper_trading.py` | Live/paper decision streams | RAILWAY | 20 | pending CI |
+| Market replay | IMPLEMENTED_CURRENT | `worker/executors.py::market_replay` | `tests/test_market_replay_executor.py` | Historical candles/full analysis | PC_WORKER | 20 | pending CI |
+| Time Machine | NOT_IMPLEMENTED | Replay UI/counterfactual orchestration still missing | Missing | Replay + counterfactual | PC_WORKER | 20 | — |
