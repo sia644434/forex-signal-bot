@@ -110,8 +110,15 @@ async def test_binance_provider_filters_an_open_candle():
 
     result = await BinanceProvider(client=client).get_candles("BTCUSDT", "M15", 10)
 
-    assert len(result) == 1
-    assert result[0].timestamp == datetime.fromtimestamp(rows[0][0] / 1000, tz=timezone.utc)
+    assert len(result) == 2
+    assert [candle.timestamp for candle in result] == [
+        datetime.fromtimestamp(rows[0][0] / 1000, tz=timezone.utc),
+        datetime.fromtimestamp(rows[1][0] / 1000, tz=timezone.utc),
+    ]
+    assert all(
+        candle.timestamp != datetime.fromtimestamp(rows[-1][0] / 1000, tz=timezone.utc)
+        for candle in result
+    )
 
 
 def test_binance_provider_is_crypto_only():
