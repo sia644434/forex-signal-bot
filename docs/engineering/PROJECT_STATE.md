@@ -40,3 +40,12 @@ Before repository changes, read:
 7. `docs/engineering/CHANGELOG_ENGINEERING.md`
 
 Then inspect the exact current `main` HEAD and current CI/deployment status.
+
+## New Master Prompt Development Frontier — 2026-09-19
+The historical Phase-13 code audit is not the end of feature development. The new Master Engineering Prompt expands the product contract and requires implementation of missing capabilities.
+- Current development phase: Phase 14 — Advanced Intelligence Foundation.
+- Current task: TASK-129.
+- Capability Matrix: docs/engineering/CAPABILITY_MATRIX.md.
+- New capabilities already added in TASK-129: statistical context, explicit scenarios, counterfactuals, signal decay, crisis mode, conflict gates.
+- Railway is intentionally deferred until the expanded capability roadmap is implemented and verified.
+- New-chat continuation: read CAPABILITY_MATRIX and RECOVERY_STATE in addition to the existing state files; continue from CURRENT_TASK and inspect only relevant code.
