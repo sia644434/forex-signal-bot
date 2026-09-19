@@ -32,11 +32,12 @@ async def test_auto_scanner_skips_duplicate_cycle_before_provider_fetch(monkeypa
     import services.telegram.auto_scanner as auto_scanner_module
 
     scanner = ContinuousMarketScanner()
-    bucket = scanner._cycle_bucket(datetime(2026, 9, 19, 20, 31, 45, tzinfo=timezone.utc))
+    bucket = "2026-09-19T20:30:00+00:00"
     scanner._state.put("cycle:last_m15", bucket)
 
     monkeypatch.setattr(auto_scanner_module, "auto_scanner_enabled", lambda: True)
     monkeypatch.setattr(scanner, "_should_scan_now", lambda now=None: True)
+    monkeypatch.setattr(scanner, "_cycle_bucket", lambda now: bucket)
     monkeypatch.setattr(
         auto_scanner_module,
         "_configured_scan_symbols",
