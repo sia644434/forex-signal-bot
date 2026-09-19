@@ -16,6 +16,8 @@ class DecisionResult:
     reasons: list[str]
     # Exact weighted contribution of each decision component. The values sum to score.
     component_contributions: dict[str, float] = field(default_factory=dict)
+    # Signed effect around the neutral midpoint (50.0). Positive is bullish, negative is bearish.
+    directional_contributions: dict[str, float] = field(default_factory=dict)
 
 
 class DecisionEngine:
@@ -206,6 +208,27 @@ class DecisionEngine:
             contributions[name] = round(normalized * self.weights[name], 4)
         return contributions
 
+    def _calculate_directional_contributions(self, analysis: Any) -> dict[str, float]:
+        """Return each component's signed effect around the neutral score of 50."""
+        structure_score = self._read_component(analysis, "structure_score")
+        trend_score = self._read_component(analysis, "trend_score")
+        raw_components = {
+            "smart_money": self._read_component(analysis, "smart_money_score"),
+            "structure": (structure_score + trend_score) / 2.0,
+            "price_action": self._read_component(analysis, "price_action_score"),
+            "supply_demand": self._read_component(analysis, "supply_demand_score"),
+            "indicators": self._read_component(analysis, "momentum_score"),
+            "candlestick": self._read_component(analysis, "candlestick_score"),
+            "elliott": self._read_component(analysis, "elliott_score"),
+            "harmonic": self._read_component(analysis, "harmonic_score"),
+            "brooks": self._read_component(analysis, "brooks_score"),
+            "wyckoff": self._read_component(analysis, "wyckoff_score"),
+        }
+        return {
+            name: round((self._clamp(float(raw), -100.0, 100.0) / 2.0) * self.weights[name], 4)
+            for name, raw in raw_components.items()
+        }
+
     def _calculate_signal(self, score: float) -> str:
         if score >= self.buy_threshold: return "BUY"
         if score <= self.sell_threshold: return "SELL"
@@ -241,6 +264,10 @@ class DecisionEngine:
         reasons: list[str] = []
         score = self._calculate_final_score(analysis, reasons)
         component_contributions = self._calculate_component_contributions(analysis)
+        directional_contributions = self._calculate_directional_contributions(analysis)
+        directional_total = round(sum(directional_contributions.values()), 2)
+        if abs(directional_total - (score - 50.0)) > 0.02:
+            raise ValueError("Directional contribution breakdown does not reconcile with score midpoint.")
         contribution_total = round(sum(component_contributions.values()), 2)
         if abs(contribution_total - score) > 0.02:
             raise ValueError("Decision contribution breakdown does not reconcile with final score.")
@@ -286,4 +313,4 @@ class DecisionEngine:
             reasons.append("Directional conflict downgraded the executable signal to WAIT")
 
         reasons = self._build_final_reasons(reasons, score, confidence, signal, strength, bias)
-        return DecisionResult(signal=signal, strength=strength, score=score, confidence=confidence, bias=bias, reasons=reasons, component_contributions=component_contributions)
+        return DecisionResult(signal=signal, strength=strength, score=score, confidence=confidence, bias=bias, reasons=reasons, component_contributions=component_contributions, directional_contributions=directional_contributions)
