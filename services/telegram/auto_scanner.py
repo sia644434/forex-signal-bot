@@ -265,12 +265,36 @@ _SCANNER: ContinuousMarketScanner | None = None
 
 
 async def run_continuous_market_scan(context) -> None:
+    """Scheduler entry point with explicit lifecycle diagnostics.
+
+    Keep this wrapper observable so a scheduler failure, missed execution, or
+    callback crash cannot silently look like a healthy continuous scanner.
+    """
     global _SCANNER
-    if _SCANNER is None:
-        _SCANNER = ContinuousMarketScanner()
-    sent = await _SCANNER.run_once(context.bot, context.application)
-    if sent:
-        logger.info("Continuous scanner cycle delivered %s validated setup(s).", sent)
+    started_at = datetime.now(timezone.utc)
+    logger.info(
+        "Automatic scanner job invoked: job=%s, utc=%s",
+        AUTO_SCANNER_JOB_NAME,
+        started_at.isoformat(),
+    )
+    try:
+        if _SCANNER is None:
+            _SCANNER = ContinuousMarketScanner()
+        sent = await _SCANNER.run_once(context.bot, context.application)
+        logger.info(
+            "Automatic scanner job completed: job=%s, sent=%s, duration_seconds=%.3f",
+            AUTO_SCANNER_JOB_NAME,
+            sent,
+            (datetime.now(timezone.utc) - started_at).total_seconds(),
+        )
+    except Exception:
+        logger.exception(
+            "Automatic scanner job crashed: job=%s, duration_seconds=%.3f",
+            AUTO_SCANNER_JOB_NAME,
+            (datetime.now(timezone.utc) - started_at).total_seconds(),
+        )
+        raise
+
 
 
 __all__ = [
