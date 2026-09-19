@@ -28,7 +28,7 @@ ProviderReference = str | MarketDataProvider
 
 
 class ProviderManager:
-    DEFAULT_PROVIDERS: tuple[str, ...] = ("oanda", "finnhub", "alphavantage", "twelvedata")
+    DEFAULT_PROVIDERS: tuple[str, ...] = ("oanda", "finnhub", "alphavantage", "binance", "twelvedata")
     DEFAULT_RETRIES = 2
 
     def __init__(self, providers: Iterable[ProviderReference] | None = None, *, retries: int = DEFAULT_RETRIES, retry_delay: float = 0.5, cooldown_seconds: float = 30.0) -> None:
