@@ -152,3 +152,12 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - Exact-head Actions verification is pending; do not mark this frontier verified until all seven required workflows complete successfully.
 - If any workflow fails, inspect only the failed job and repair the affected boundary before continuing.
 - Next after verification: continue broad capability closure across alerts/report transport, richer paper/shadow/replay persistence, research/strategy hardening, production regression/performance, and finally Railway external verification.
+
+
+## Recovery Frontier — TASK-147 — 2026-09-19
+- Current main HEAD: b83ff1480e842c61d798ef4aa4e356deed4bdd51.
+- TASK-146 portfolio risk integration is complete and previously fully green at its verified head.
+- TASK-147 makes alert eligibility portfolio-aware and adds a persistent tracker lifecycle audit trail.
+- Exact-head Actions verification is pending; do not mark verified until all seven required workflows succeed.
+- Continue only from this frontier; do not perform a full repository audit unless CI reveals a cross-cutting failure.
+- After CI verification, remaining closure work is production contract/performance/documentation gaps and external Railway verification, not another architectural rewrite.
