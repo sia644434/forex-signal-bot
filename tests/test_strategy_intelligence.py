@@ -65,6 +65,21 @@ def test_strategy_continuous_evaluation_and_promotion_audit():
     assert engine.snapshot()[1]["audit_log"][-1]["action"] == "PROMOTE"
 
 
+def test_positive_strategy_requires_current_validation_for_challenger_status():
+    engine = StrategyIntelligenceEngine()
+    engine.register("s", "Candidate")
+    result = engine.observe("s", obs(.02, 50))
+    assert result["status"] == "CANDIDATE"
+    evidence = StrategyValidationEvidence(
+        True, .8, robust=True, validated_version=1,
+        dna_fingerprint=engine.dna_fingerprint(engine._records["s"].dna),
+    )
+    engine.attach_validation("s", evidence)
+    result = engine.evaluate("s")
+    assert result["status"] == "CHALLENGER"
+    assert result["validation_ready"] is True
+
+
 def test_validation_blocks_unverified_challenger():
     engine = StrategyIntelligenceEngine()
     engine.register("champ", "Champion")
