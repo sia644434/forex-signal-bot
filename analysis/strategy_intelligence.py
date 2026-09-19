@@ -160,7 +160,14 @@ class StrategyIntelligenceEngine:
         record = self._records[strategy_id]
         perf = record.performance()
         if record.status != "RETIRED":
-            if perf["sample"] >= 20 and perf["expectancy"] < 0:
+            if (
+                perf["sample"] >= 100
+                and perf["expectancy"] < 0
+                and abs(perf["drawdown"]) >= 0.20
+            ):
+                record.status = "RETIRED"
+                record.retirement_reason = "persistent negative expectancy with elevated drawdown"
+            elif perf["sample"] >= 20 and perf["expectancy"] < 0:
                 record.status = "PAUSED"
             elif perf["sample"] >= 50 and perf["expectancy"] > 0 and self._validation_is_current(record):
                 record.status = "CHALLENGER"
