@@ -284,6 +284,7 @@ class FullAnalysisEngine:
             reasons=analysis_result.reasons + decision.reasons + confidence_result.warnings + [risk_result.reason, f"ATR: {atr_value}", f"ATR Percentage: {atr_percentage}", f"Market Condition: {risk_result.market_condition}", f"Trade Grade: {trade_grade}"],
             indicators=indicator_snapshot.values,
             component_scores={name: float(value) for name, value in component_scores.items()},
+            decision_contributions={name: float(value) for name, value in decision.component_contributions.items()},
             market_regime=analysis_result.market_regime,
             scenario=analysis_result.scenario,
             statistical_context=analysis_result.statistical_context,
