@@ -54,7 +54,6 @@ class StrategyObservation:
             raise ValueError("sample_quality must be between 0 and 1")
 
 
-@dataclass
 @dataclass(frozen=True, slots=True)
 class StrategyAuditEvent:
     action: str
@@ -63,6 +62,23 @@ class StrategyAuditEvent:
     from_version: int
     to_version: int
     metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class StrategyAdaptationProposal:
+    strategy_id: str
+    changes: dict[str, Any]
+    reason: str
+    base_version: int
+    validation_evidence: StrategyValidationEvidence | None = None
+
+    def __post_init__(self) -> None:
+        if not self.strategy_id.strip() or not self.changes:
+            raise ValueError("strategy_id and changes are required")
+        if not self.reason.strip():
+            raise ValueError("adaptation reason is required")
+        if self.base_version < 1:
+            raise ValueError("base_version must be positive")
 
 
 @dataclass
@@ -99,6 +115,7 @@ class StrategyIntelligenceEngine:
     def __init__(self) -> None:
         self._records: dict[str, StrategyRecord] = {}
         self._audit: list[StrategyAuditEvent] = []
+        self._proposals: dict[str, StrategyAdaptationProposal] = {}
 
     def register(self, strategy_id: str, name: str, dna: dict[str, Any] | None = None, *, parent_id: str | None = None) -> StrategyRecord:
         if not strategy_id.strip() or strategy_id in self._records:
@@ -221,20 +238,37 @@ class StrategyIntelligenceEngine:
                 })
         return sorted(result, key=lambda item: (item["expectancy"], item["drawdown"]))
 
-    def adapt(self, strategy_id: str, dna_changes: dict[str, Any], *, reason: str) -> dict[str, Any]:
+    def propose_adaptation(self, strategy_id: str, dna_changes: dict[str, Any], *, reason: str) -> dict[str, Any]:
         if not isinstance(dna_changes, dict) or not dna_changes:
             raise ValueError("dna_changes must be a non-empty mapping")
-        if not reason.strip():
-            raise ValueError("adaptation reason is required")
         record = self._records[strategy_id]
-        before = record.version
+        proposal = StrategyAdaptationProposal(strategy_id, dict(dna_changes), reason, record.version)
+        self._proposals[strategy_id] = proposal
+        return {"strategy_id": strategy_id, "status": "PROPOSED", "base_version": record.version, "changes": dict(dna_changes), "reason": reason}
+
+    def apply_adaptation(self, strategy_id: str, evidence: StrategyValidationEvidence) -> dict[str, Any]:
+        record = self._records[strategy_id]
+        proposal = self._proposals.get(strategy_id)
+        if proposal is None:
+            raise ValueError("no pending adaptation proposal")
+        if proposal.base_version != record.version:
+            raise ValueError("adaptation proposal is stale")
+        if evidence.overfitting_warning or evidence.leakage_detected or not evidence.oos_positive or evidence.positive_oos_ratio < 0.5 or not evidence.robust:
+            raise ValueError("adaptation validation evidence is insufficient")
         record.dna_history.append(dict(record.dna))
-        record.dna.update(dna_changes)
+        before = record.version
+        record.dna.update(proposal.changes)
         record.version += 1
-        event = StrategyAuditEvent("ADAPT", strategy_id, reason, before, record.version, {"changes": dict(dna_changes)})
+        record.validation_evidence = evidence
+        event = StrategyAuditEvent("ADAPT", strategy_id, proposal.reason, before, record.version, {"changes": dict(proposal.changes), "validation": asdict(evidence)})
         record.audit_log.append(event)
         self._audit.append(event)
-        return {"strategy_id": strategy_id, "version": record.version, "dna": dict(record.dna), "reason": reason}
+        del self._proposals[strategy_id]
+        return {"strategy_id": strategy_id, "version": record.version, "dna": dict(record.dna), "reason": proposal.reason, "validation": asdict(evidence)}
+
+    def adapt(self, strategy_id: str, dna_changes: dict[str, Any], *, reason: str) -> dict[str, Any]:
+        """Backward-compatible proposal-only API; production DNA is not mutated."""
+        return self.propose_adaptation(strategy_id, dna_changes, reason=reason)
 
     def continuous_evaluate(self) -> list[dict[str, Any]]:
         return [self.evaluate(strategy_id) for strategy_id in self._records]
@@ -269,4 +303,4 @@ class StrategyIntelligenceEngine:
         return [asdict(record) for record in self._records.values()]
 
 
-__all__ = ["StrategyObservation", "StrategyValidationEvidence", "StrategyRecord", "StrategyAuditEvent", "StrategyIntelligenceEngine"]
+__all__ = ["StrategyObservation", "StrategyValidationEvidence", "StrategyAdaptationProposal", "StrategyRecord", "StrategyAuditEvent", "StrategyIntelligenceEngine"]
