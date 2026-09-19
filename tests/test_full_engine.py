@@ -148,3 +148,33 @@ def test_full_engine_macro_elevated_downgrades_directional_signal():
     report = FullAnalysisEngine().analyze(candles, macro_risk={"risk_level": "ELEVATED", "events": []})
     assert report.macro_risk_level == "ELEVATED"
     assert report.signal in {"WAIT", "NO_TRADE", "BUY", "SELL", "NEUTRAL"}
+
+
+def test_full_engine_blocks_candidate_when_portfolio_concentration_exceeds_limit():
+    from analysis.portfolio_risk_guard import PortfolioExposure
+
+    candles = make_candles([1.0, 1.1, 1.2, 1.3, 1.4, 1.5])
+    report = FullAnalysisEngine().analyze(
+        candles,
+        portfolio_exposures=[PortfolioExposure("EUR_USD", "FOREX", "BUY", 80, 0.8)],
+        portfolio_candidate=PortfolioExposure("EUR_USD", "FOREX", "BUY", 40, 0.4),
+        portfolio_equity=200,
+    )
+    assert report.portfolio_risk_blocked is True
+    assert "SYMBOL_CONCENTRATION" in report.portfolio_risk_flags
+    assert report.signal == "NO_TRADE"
+
+
+def test_full_engine_allows_candidate_within_portfolio_limits():
+    from analysis.portfolio_risk_guard import PortfolioExposure
+
+    candles = make_candles([1.0, 1.1, 1.2, 1.3, 1.4, 1.5])
+    report = FullAnalysisEngine().analyze(
+        candles,
+        portfolio_exposures=[PortfolioExposure("EUR_USD", "FOREX", "BUY", 20, 0.2)],
+        portfolio_candidate=PortfolioExposure("XAUUSD", "COMMODITY", "SELL", 20, 0.2),
+        portfolio_equity=100,
+        portfolio_max_symbol_weight=0.60,
+    )
+    assert report.portfolio_risk_blocked is False
+    assert report.portfolio_risk_flags == []
