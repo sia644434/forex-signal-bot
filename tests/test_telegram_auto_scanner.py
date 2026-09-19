@@ -159,3 +159,41 @@ async def test_continuous_scan_wrapper_logs_and_reraises_job_failure(monkeypatch
 
     assert errors
     assert "Automatic scanner job crashed" in errors[0][0]
+
+
+def test_auto_scanner_schedule_configures_non_overlapping_job(monkeypatch):
+    import services.telegram.client as client_module
+    from types import SimpleNamespace
+
+    monkeypatch.setenv("TELEGRAM_AUTO_SCAN_INTERVAL_SECONDS", "60")
+    monkeypatch.setattr(client_module, "auto_scanner_enabled", lambda: True)
+
+    captured = {}
+    class FakeScheduler:
+        def add_listener(self, callback, mask):
+            captured["listener"] = callback
+            captured["mask"] = mask
+
+    class FakeJobQueue:
+        scheduler = FakeScheduler()
+
+        def run_repeating(self, callback, **kwargs):
+            captured["callback"] = callback
+            captured["kwargs"] = kwargs
+            return SimpleNamespace(next_t="next-run")
+
+    client = SimpleNamespace(
+        application=SimpleNamespace(job_queue=FakeJobQueue())
+    )
+    client_module.TelegramClient._schedule_auto_scanner(client)
+
+    assert captured["callback"] is client_module.run_continuous_market_scan
+    assert captured["kwargs"]["interval"] == 60
+    assert captured["kwargs"]["first"] == 5
+    assert captured["kwargs"]["name"] == client_module.AUTO_SCANNER_JOB_NAME
+    assert captured["kwargs"]["job_kwargs"] == {
+        "max_instances": 1,
+        "coalesce": True,
+        "misfire_grace_time": 120,
+    }
+    assert captured["listener"] is client_module._log_scanner_scheduler_event
