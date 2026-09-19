@@ -66,6 +66,60 @@ class MultiTimeframeAnalysisEngine:
             weight += w
         return round(total / weight, 2) if weight else 50.0
 
+    @staticmethod
+    def _m15_diagnostics(report: AnalysisReport, signal: str) -> tuple[str, ...]:
+        """Return a precise, stable explanation of why M15 is not executable."""
+        score = MultiTimeframeAnalysisEngine._direction_score(report)
+        buy_gap = max(0.0, 60.0 - score)
+        sell_gap = max(0.0, score - 40.0)
+        components = getattr(report, "component_scores", {}) or {}
+        component_order = (
+            "smart_money_score",
+            "structure_score",
+            "price_action_score",
+            "supply_demand_score",
+            "momentum_score",
+            "candlestick_score",
+            "elliott_score",
+            "harmonic_score",
+            "brooks_score",
+            "wyckoff_score",
+        )
+        component_text = ",".join(
+            f"{name}={float(components[name]):.1f}"
+            for name in component_order
+            if name in components
+        )
+        blocking_reasons = [
+            str(reason)
+            for reason in (getattr(report, "reasons", None) or [])
+            if str(reason).startswith("Execution blocked by")
+        ]
+        diagnostics = [
+            f"m15_signal={signal or 'NONE'}",
+            f"m15_score={score:.1f}",
+            "m15_thresholds=BUY>=60.0,SELL<=40.0",
+            f"m15_gap_to_buy={buy_gap:.1f}",
+            f"m15_gap_to_sell={sell_gap:.1f}",
+            f"m15_trend={str(getattr(report, 'trend', 'unknown')).upper()}",
+            f"m15_structure={str(getattr(report, 'structure', 'unknown')).upper()}",
+            f"m15_bias={str(getattr(report, 'decision_bias', 'neutral')).upper()}",
+            f"m15_confidence={float(getattr(report, 'confidence', 0.0) or 0.0):.2f}",
+            f"m15_agreement={float(getattr(report, 'agreement', 0.0) or 0.0):.2f}",
+            f"m15_votes=bull:{int(getattr(report, 'bullish_votes', 0) or 0)},bear:{int(getattr(report, 'bearish_votes', 0) or 0)},neutral:{int(getattr(report, 'neutral_votes', 0) or 0)}",
+            f"m15_quality={float(getattr(report, 'trade_quality', 0.0) or 0.0):.0f}",
+            f"m15_grade={str(getattr(report, 'trade_grade', 'UNKNOWN')).upper()}",
+            f"m15_conflict={str(getattr(report, 'conflict_state', 'UNKNOWN')).upper()}",
+            f"m15_scenario={str(getattr(report, 'scenario', 'UNKNOWN')).upper()}",
+            f"m15_decay={str(getattr(report, 'signal_decay', 'UNKNOWN')).upper()}",
+            f"m15_rr={'none' if getattr(report, 'risk_reward', None) is None else format(float(report.risk_reward), '.2f')}",
+        ]
+        if component_text:
+            diagnostics.append(f"m15_components={component_text}")
+        if blocking_reasons:
+            diagnostics.append("m15_blockers=" + "|".join(blocking_reasons))
+        return tuple(diagnostics)
+
     @classmethod
     def _aligned_higher_timeframes(cls, reports: Mapping[str, AnalysisReport], direction: str) -> int:
         count = 0
@@ -109,12 +163,7 @@ class MultiTimeframeAnalysisEngine:
         setup = reports["M15"]
         direction = str(setup.signal).upper()
         if direction not in self.EXECUTABLE:
-            return None, (
-                f"m15_signal={direction or 'NONE'}",
-                f"m15_score={self._direction_score(setup):.1f}",
-                f"m15_quality={float(setup.trade_quality or 0.0):.0f}",
-                f"m15_confidence={float(setup.confidence or 0.0):.2f}",
-            )
+            return None, self._m15_diagnostics(setup, direction)
         direction = "BUY" if "BUY" in direction else "SELL"
 
         alignment = self._alignment_score(reports)
