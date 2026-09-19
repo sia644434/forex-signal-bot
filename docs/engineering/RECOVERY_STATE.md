@@ -87,3 +87,11 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - IN_PROGRESS: exact-head CI verification.
 - REMAINING: richer robustness scenarios, strategy/research integration, alert/report completion, security/performance/regression, Railway final gate.
 - NEXT_ACTION: verify the current head and fix regressions before claiming TASK-138 verified.
+
+
+## 2026-09-19 — TASK-139 Research-Gated Strategy Lifecycle
+- CURRENT_TASK: TASK-139.
+- COMPLETED_CURRENT: research evidence is now connected to champion/challenger comparison and Worker evaluation.
+- IN_PROGRESS: exact-head Actions verification.
+- REMAINING: deeper research/strategy integration, alerts/reports, security/performance, full regression, Railway final gate.
+- NEXT_ACTION: verify CI at the resulting head; fix any actual failure before marking verified.
