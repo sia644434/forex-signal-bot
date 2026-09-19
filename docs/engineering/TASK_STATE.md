@@ -533,3 +533,13 @@ Implementation Status: IMPLEMENTED — pending exact-head CI verification
 - Added PC Worker-owned market replay executor producing a trace of decision/signal/confidence over historical candles.
 - Added focused regression coverage and worker ownership coverage.
 - Live execution paths remain separate from paper/replay processing.
+
+
+## TASK-133
+Phase: Phase 20 — Paper / Shadow / Replay
+Title: Deterministic Time Machine Replay and Counterfactual Orchestration
+Implementation Status: IMPLEMENTED — pending exact-head CI verification
+- Added `analysis/time_machine.py` with deterministic prefix-only historical replay and traceable counterfactual evaluation.
+- Added PC Worker-owned `time_machine` workload registration/executor.
+- Added focused deterministic and counterfactual regression coverage in `tests/test_time_machine.py`.
+- The workload never uses future candles for a historical step and remains isolated from live execution.
