@@ -101,3 +101,29 @@ def test_final_result_metrics_are_finite():
         result.conflict_score,
     ]
     assert all(math.isfinite(value) for value in values)
+
+
+def test_confidence_engine_uses_final_decision_score_for_direction_consistency():
+    class MismatchAnalysis:
+        smart_money_score = 80
+        structure_score = 70
+        price_action_score = 60
+        momentum_score = 60
+        elliott_score = 60
+        harmonic_score = 60
+        wyckoff_score = 60
+        decision_score = 20
+
+    result = ConfidenceEngine().evaluate(MismatchAnalysis())
+    assert result.confidence < ConfidenceEngine().evaluate(
+        type("AlignedAnalysis", (), {
+            "smart_money_score": 80,
+            "structure_score": 70,
+            "price_action_score": 60,
+            "momentum_score": 60,
+            "elliott_score": 60,
+            "harmonic_score": 60,
+            "wyckoff_score": 60,
+            "decision_score": 80,
+        })
+    ).confidence
