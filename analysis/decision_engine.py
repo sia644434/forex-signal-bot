@@ -242,7 +242,7 @@ class DecisionEngine:
             signal = "NO_TRADE"
             strength = "BLOCKED"
             flags = getattr(analysis, "portfolio_risk_flags", [])
-            reasons.append(f"Execution blocked by portfolio risk limits: {", ".join(map(str, flags)) or "RISK_LIMIT"}")
+            reasons.append(f"Execution blocked by portfolio risk limits: {", ".join(map(str, flags)) if flags else "RISK_LIMIT"}")
         elif str(getattr(analysis, "macro_risk_level", "NORMAL")).upper() == "CRISIS":
             signal = "NO_TRADE"
             strength = "BLOCKED"
