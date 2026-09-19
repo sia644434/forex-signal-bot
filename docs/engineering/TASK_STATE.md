@@ -598,3 +598,15 @@ Evidence:
 - Added PC Worker `research_validation` workload for heavy research execution.
 - Added focused regression coverage and worker ownership coverage.
 - No production or Railway verification is claimed yet.
+
+
+## TASK-139
+Phase: Phase 18 — Strategy Intelligence / Research Integration
+Title: Research-Gated Champion/Challenger Lifecycle
+Implementation Status: IMPLEMENTED — exact-head Actions verification pending
+Evidence:
+- Added `StrategyValidationEvidence` and validation admissibility checks.
+- Champion/challenger eligibility now requires positive OOS evidence, minimum OOS stability, and robustness for both strategies.
+- Temporal leakage or overfitting-warning evidence is rejected.
+- Strategy Worker accepts and attaches research validation evidence.
+- Tests updated for validated promotion and rejection of unverified challengers.
