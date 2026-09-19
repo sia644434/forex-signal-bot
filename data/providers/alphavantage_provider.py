@@ -37,7 +37,7 @@ class AlphaVantageProvider(MarketDataProvider):
     @classmethod
     def _canonical_timeframe(cls, timeframe: str) -> str:
         normalized = timeframe.strip().upper().replace(" ","")
-        aliases={"1MIN":"M1","5MIN":"M5","15MIN":"M15","30MIN":"M30","1HR":"H1","1H":"H1","1DAY":"D1","1D":"D1","1WEEK":"W1","1W":"W1","D":"D1","W":"W1"}
+        aliases={"1MIN":"M1","1M":"M1","5MIN":"M5","5M":"M5","15MIN":"M15","15M":"M15","30MIN":"M30","30M":"M30","1HR":"H1","1H":"H1","1DAY":"D1","1D":"D1","1WEEK":"W1","1W":"W1","D":"D1","W":"W1"}
         return aliases.get(normalized, normalized)
 
     @staticmethod
