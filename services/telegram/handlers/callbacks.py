@@ -21,7 +21,7 @@ ALLOWED_CALLBACKS = {
     "settings_timeframe", "settings_notifications", "analysis_quick", "analysis_full",
     "language_fa", "language_en", "mode_manual", "mode_smart", "mode_hybrid",
     "risk_low", "risk_medium", "risk_high", "notifications_on", "notifications_off",
-    "market_EURUSD", "market_GBPUSD", "market_USDJPY", "market_EURJPY",
+    "market_forex", "market_crypto", "market_stock", "market_index", "market_commodity",\n    "market_EURUSD", "market_GBPUSD", "market_USDJPY", "market_EURJPY",
     "timeframe_M5", "timeframe_M15", "timeframe_H1", "timeframe_H4",
 }
 
