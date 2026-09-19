@@ -218,6 +218,8 @@ class AnalysisReport:
 
     # Exact weighted contributions produced by DecisionEngine.
     decision_contributions: dict[str, float] = field(default_factory=dict)
+    # Signed effect around the neutral midpoint (50.0). Positive is bullish, negative is bearish.
+    directional_contributions: dict[str, float] = field(default_factory=dict)
 
 
     
