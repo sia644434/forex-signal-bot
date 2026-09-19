@@ -1,5 +1,6 @@
 import sqlite3
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from worker.contracts import JobRequest
 from worker.queue import WorkerQueue
@@ -266,4 +267,17 @@ def test_stale_claim_cannot_renew_recovered_job():
     assert second is not None and second.claim_token != first.claim_token
     unchanged = queue.renew_lease("renew-stale", first.claim_token)
     assert unchanged.claim_token == second.claim_token
+    queue.close()
+
+
+
+def test_queue_metrics_can_be_read_from_a_health_thread():
+    queue = WorkerQueue()
+    queue.enqueue(JobRequest("thread-safe", "backtest"))
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        metrics = executor.submit(queue.metrics).result()
+
+    assert metrics["pending"] == 1
+    assert metrics["total"] == 1
     queue.close()
