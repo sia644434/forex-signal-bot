@@ -436,6 +436,16 @@ def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
                 "leakage_detected": False,
                 "robust": bool(robustness_result["robust"]),
                 "source": "research_validation",
+                "diagnostics": {
+                    "research": research_result,
+                    "overfitting": diagnostics,
+                    "robustness": {
+                        "case_count": robustness_result["case_count"],
+                        "positive_case_ratio": robustness_result["positive_case_ratio"],
+                        "return_range": robustness_result["return_range"],
+                        "drawdown_range": robustness_result["drawdown_range"],
+                    },
+                },
             }
             temporal_rows = research.get("temporal_rows")
             if temporal_rows is not None:
@@ -459,8 +469,10 @@ def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
                     source=str(validation.get("source", "research_validation")),
                     validated_version=int(validation.get("validated_version", 1)),
                     dna_fingerprint=str(validation.get("dna_fingerprint", engine.dna_fingerprint(dna))),
+                    diagnostics=dict(validation.get("diagnostics", {})),
                 ),
             )
+            engine.evaluate(strategy_id)
     comparison = None
     if payload.get("champion_id") and payload.get("challenger_id"):
         comparison = engine.compare(str(payload["champion_id"]), str(payload["challenger_id"]))
