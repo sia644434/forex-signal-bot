@@ -8,6 +8,24 @@ STATUSES = {"CANDIDATE", "CHAMPION", "CHALLENGER", "RETIRED", "PAUSED"}
 
 
 @dataclass(frozen=True, slots=True)
+class StrategyValidationEvidence:
+    oos_positive: bool
+    positive_oos_ratio: float
+    overfitting_warning: bool = False
+    leakage_detected: bool = False
+    robust: bool = False
+    source: str = "research_validation"
+
+    def __post_init__(self) -> None:
+        if not 0 <= float(self.positive_oos_ratio) <= 1:
+            raise ValueError("positive_oos_ratio must be between 0 and 1")
+        if not self.source.strip():
+            raise ValueError("validation source is required")
+        if self.leakage_detected:
+            raise ValueError("validation evidence with temporal leakage cannot be accepted")
+
+
+@dataclass(frozen=True, slots=True)
 class StrategyObservation:
     market: str
     symbol: str
@@ -59,6 +77,7 @@ class StrategyRecord:
     retirement_reason: str | None = None
     dna_history: list[dict[str, Any]] = field(default_factory=list)
     audit_log: list[StrategyAuditEvent] = field(default_factory=list)
+    validation_evidence: StrategyValidationEvidence | None = None
 
     def add_observation(self, observation: StrategyObservation) -> None:
         self.observations.append(observation)
@@ -111,16 +130,41 @@ class StrategyIntelligenceEngine:
             record.status = "CHALLENGER"
         return {"strategy_id": strategy_id, "status": record.status, "performance": perf}
 
+    def attach_validation(self, strategy_id: str, evidence: StrategyValidationEvidence) -> dict[str, Any]:
+        record = self._records[strategy_id]
+        if evidence.overfitting_warning or evidence.leakage_detected:
+            raise ValueError("strategy validation evidence is not admissible")
+        record.validation_evidence = evidence
+        return {"strategy_id": strategy_id, "oos_positive": evidence.oos_positive, "positive_oos_ratio": evidence.positive_oos_ratio, "robust": evidence.robust, "source": evidence.source}
+
     def compare(self, champion_id: str, challenger_id: str) -> dict[str, Any]:
         champion = self._records[champion_id]
         challenger = self._records[challenger_id]
         cp, xp = champion.performance(), challenger.performance()
         comparable = min(cp["sample"], xp["sample"]) >= 20
-        challenger_wins = comparable and xp["score"] > cp["score"] and abs(xp["drawdown"]) <= abs(cp["drawdown"])
+        champion_validation = champion.validation_evidence
+        challenger_validation = challenger.validation_evidence
+        validation_ready = (
+            champion_validation is not None
+            and challenger_validation is not None
+            and champion_validation.oos_positive
+            and challenger_validation.oos_positive
+            and champion_validation.positive_oos_ratio >= 0.5
+            and challenger_validation.positive_oos_ratio >= 0.5
+            and champion_validation.robust
+            and challenger_validation.robust
+        )
+        challenger_wins = (
+            comparable
+            and validation_ready
+            and xp["score"] > cp["score"]
+            and abs(xp["drawdown"]) <= abs(cp["drawdown"])
+        )
         return {
             "champion": champion_id,
             "challenger": challenger_id,
             "comparable": comparable,
+            "validation_ready": validation_ready,
             "challenger_eligible": challenger_wins,
             "champion_performance": cp,
             "challenger_performance": xp,
@@ -225,4 +269,4 @@ class StrategyIntelligenceEngine:
         return [asdict(record) for record in self._records.values()]
 
 
-__all__ = ["StrategyObservation", "StrategyRecord", "StrategyAuditEvent", "StrategyIntelligenceEngine"]
+__all__ = ["StrategyObservation", "StrategyValidationEvidence", "StrategyRecord", "StrategyAuditEvent", "StrategyIntelligenceEngine"]
