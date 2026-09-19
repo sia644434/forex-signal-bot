@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
 from typing import Any
+import hashlib
+import json
 
 
 STATUSES = {"CANDIDATE", "CHAMPION", "CHALLENGER", "RETIRED", "PAUSED"}
@@ -15,6 +17,8 @@ class StrategyValidationEvidence:
     leakage_detected: bool = False
     robust: bool = False
     source: str = "research_validation"
+    validated_version: int | None = None
+    dna_fingerprint: str | None = None
 
     def __post_init__(self) -> None:
         if not 0 <= float(self.positive_oos_ratio) <= 1:
@@ -23,6 +27,10 @@ class StrategyValidationEvidence:
             raise ValueError("validation source is required")
         if self.leakage_detected:
             raise ValueError("validation evidence with temporal leakage cannot be accepted")
+        if self.validated_version is not None and self.validated_version < 1:
+            raise ValueError("validated_version must be positive")
+        if self.dna_fingerprint is not None and not self.dna_fingerprint.strip():
+            raise ValueError("dna_fingerprint must be non-empty when provided")
 
 
 @dataclass(frozen=True, slots=True)
@@ -147,12 +155,21 @@ class StrategyIntelligenceEngine:
             record.status = "CHALLENGER"
         return {"strategy_id": strategy_id, "status": record.status, "performance": perf}
 
+    @staticmethod
+    def dna_fingerprint(dna: dict[str, Any]) -> str:
+        payload = json.dumps(dna, sort_keys=True, separators=(",", ":"), default=str).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
+
     def attach_validation(self, strategy_id: str, evidence: StrategyValidationEvidence) -> dict[str, Any]:
         record = self._records[strategy_id]
         if evidence.overfitting_warning or evidence.leakage_detected:
             raise ValueError("strategy validation evidence is not admissible")
+        if evidence.validated_version != record.version:
+            raise ValueError("validation evidence does not match the current strategy version")
+        if evidence.dna_fingerprint != self.dna_fingerprint(record.dna):
+            raise ValueError("validation evidence does not match the current strategy DNA")
         record.validation_evidence = evidence
-        return {"strategy_id": strategy_id, "oos_positive": evidence.oos_positive, "positive_oos_ratio": evidence.positive_oos_ratio, "robust": evidence.robust, "source": evidence.source}
+        return {"strategy_id": strategy_id, "oos_positive": evidence.oos_positive, "positive_oos_ratio": evidence.positive_oos_ratio, "robust": evidence.robust, "source": evidence.source, "validated_version": evidence.validated_version, "dna_fingerprint": evidence.dna_fingerprint}
 
     def compare(self, champion_id: str, challenger_id: str) -> dict[str, Any]:
         champion = self._records[champion_id]
@@ -170,6 +187,10 @@ class StrategyIntelligenceEngine:
             and challenger_validation.positive_oos_ratio >= 0.5
             and champion_validation.robust
             and challenger_validation.robust
+            and champion_validation.validated_version == champion.version
+            and challenger_validation.validated_version == challenger.version
+            and champion_validation.dna_fingerprint == self.dna_fingerprint(champion.dna)
+            and challenger_validation.dna_fingerprint == self.dna_fingerprint(challenger.dna)
         )
         challenger_wins = (
             comparable
@@ -255,11 +276,16 @@ class StrategyIntelligenceEngine:
             raise ValueError("adaptation proposal is stale")
         if evidence.overfitting_warning or evidence.leakage_detected or not evidence.oos_positive or evidence.positive_oos_ratio < 0.5 or not evidence.robust:
             raise ValueError("adaptation validation evidence is insufficient")
+        expected_fingerprint = self.dna_fingerprint(record.dna)
+        if evidence.validated_version != record.version:
+            raise ValueError("adaptation validation must target the proposal base version")
+        if evidence.dna_fingerprint != expected_fingerprint:
+            raise ValueError("adaptation validation does not match the current strategy DNA")
         record.dna_history.append(dict(record.dna))
         before = record.version
         record.dna.update(proposal.changes)
         record.version += 1
-        record.validation_evidence = evidence
+        record.validation_evidence = None
         event = StrategyAuditEvent("ADAPT", strategy_id, proposal.reason, before, record.version, {"changes": dict(proposal.changes), "validation": asdict(evidence)})
         record.audit_log.append(event)
         self._audit.append(event)
