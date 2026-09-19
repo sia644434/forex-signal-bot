@@ -19,13 +19,7 @@ from .market_session import evaluate_market_status
 from .i18n import t
 
 logger = logging.getLogger(__name__)
-DEFAULT_SCAN_SYMBOLS = (
-    "EURUSD", "GBPUSD", "USDJPY",
-    "BTCUSDT", "ETHUSDT",
-    "AAPL", "NVDA",
-    "SPX", "NDX",
-    "XAUUSD", "XAGUSD", "WTI",
-)
+DEFAULT_SCAN_SYMBOLS = get_all_symbols()
 DEFAULT_TIMEFRAME = "M15"
 DEFAULT_LIMIT = 300
 SCANNER_PROVIDER_MANAGER_KEY = "scanner_provider_manager"
@@ -55,15 +49,13 @@ class ScanReadiness:
 
 
 def _configured_scan_symbols() -> tuple[str, ...]:
-    """Return a bounded, normalized scanner universe with an explicit env override."""
+    """Return the complete supported scanner universe, with an explicit env override."""
     raw = os.getenv("TELEGRAM_SCANNER_SYMBOLS", "").strip()
     if not raw:
         return DEFAULT_SCAN_SYMBOLS
     symbols = tuple(dict.fromkeys(item.strip().upper().replace("/", "") for item in raw.split(",") if item.strip()))
     if not symbols:
         raise ValueError("TELEGRAM_SCANNER_SYMBOLS must contain at least one symbol")
-    if len(symbols) > 20:
-        raise ValueError("TELEGRAM_SCANNER_SYMBOLS must contain at most 20 symbols")
     unsupported = tuple(symbol for symbol in symbols if get_market_type(symbol) == "unknown")
     if unsupported:
         raise ValueError(
@@ -124,8 +116,6 @@ async def scan_market(
     scan_symbols = _configured_scan_symbols() if symbols is None else tuple(symbols)
     if not scan_symbols:
         raise ValueError("Scanner symbol universe cannot be empty")
-    if len(scan_symbols) > 20:
-        raise ValueError("Scanner symbol universe cannot exceed 20 symbols")
     market_data = MarketDataService(provider_manager=provider_manager)
     analyzer = FullAnalysisEngine()
 
