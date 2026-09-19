@@ -142,8 +142,14 @@ def test_refresh_tracking_records_signal_change_and_updates_timestamp(monkeypatc
     assert list_tracking(1) == [item]
 
 \n
-def test_track_report_records_creation_event():
+def test_track_report_records_creation_event(monkeypatch):
     import services.telegram.tracker as tracker
+    class FakeStore:
+        def save_all(self, data):
+            self.data = data
+        def load_all(self):
+            return {}
+    monkeypatch.setattr(tracker, "_STORE", FakeStore())
     tracker.ACTIVE_TRACKS.clear()
     report = type("Report", (), {
         "signal": "BUY", "entry_price": 100.0, "stop_loss": 95.0,
