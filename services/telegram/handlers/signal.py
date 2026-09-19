@@ -65,6 +65,10 @@ def _format_signal(report, symbol: str, timeframe: str) -> str:
         f"هدف ۳: <b>{_format_price(report.take_profit_3)}</b>",
         f"⚖️ نسبت ریسک/بازده: <b>{_format_number(report.risk_reward)}</b>",
     ]
+    if getattr(report, "portfolio_risk_blocked", False):
+        lines.extend(["", "⛔ <b>محدودیت پرتفوی</b>"])
+        flags = getattr(report, "portfolio_risk_flags", []) or ["RISK_LIMIT"]
+        lines.extend(f"• {_escape(flag)}" for flag in flags[:5])
     if report.warnings:
         lines.extend(["", "⚠️ <b>هشدارها</b>"])
         lines.extend(f"• {_escape(warning)}" for warning in report.warnings[:5])
