@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import isfinite
 from typing import Any
 
@@ -14,6 +14,8 @@ class DecisionResult:
     confidence: float
     bias: str
     reasons: list[str]
+    # Exact weighted contribution of each decision component. The values sum to score.
+    component_contributions: dict[str, float] = field(default_factory=dict)
 
 
 class DecisionEngine:
@@ -182,6 +184,28 @@ class DecisionEngine:
             score = method(score, analysis, reasons)
         return round(self._clamp(score, 0.0, 100.0), 2)
 
+    def _calculate_component_contributions(self, analysis: Any) -> dict[str, float]:
+        """Return the exact weighted contributions used by the final score."""
+        structure_score = self._read_component(analysis, "structure_score")
+        trend_score = self._read_component(analysis, "trend_score")
+        raw_components = {
+            "smart_money": self._read_component(analysis, "smart_money_score"),
+            "structure": (structure_score + trend_score) / 2.0,
+            "price_action": self._read_component(analysis, "price_action_score"),
+            "supply_demand": self._read_component(analysis, "supply_demand_score"),
+            "indicators": self._read_component(analysis, "momentum_score"),
+            "candlestick": self._read_component(analysis, "candlestick_score"),
+            "elliott": self._read_component(analysis, "elliott_score"),
+            "harmonic": self._read_component(analysis, "harmonic_score"),
+            "brooks": self._read_component(analysis, "brooks_score"),
+            "wyckoff": self._read_component(analysis, "wyckoff_score"),
+        }
+        contributions: dict[str, float] = {}
+        for name, raw_value in raw_components.items():
+            normalized = self.normalize_signed_component(raw_value)
+            contributions[name] = round(normalized * self.weights[name], 4)
+        return contributions
+
     def _calculate_signal(self, score: float) -> str:
         if score >= self.buy_threshold: return "BUY"
         if score <= self.sell_threshold: return "SELL"
@@ -216,6 +240,10 @@ class DecisionEngine:
     def decide(self, analysis: Any) -> DecisionResult:
         reasons: list[str] = []
         score = self._calculate_final_score(analysis, reasons)
+        component_contributions = self._calculate_component_contributions(analysis)
+        contribution_total = round(sum(component_contributions.values()), 2)
+        if abs(contribution_total - score) > 0.02:
+            raise ValueError("Decision contribution breakdown does not reconcile with final score.")
         signal = self._calculate_signal(score)
         strength = self._calculate_strength(score)
         bias = self._calculate_bias(score)
@@ -258,4 +286,4 @@ class DecisionEngine:
             reasons.append("Directional conflict downgraded the executable signal to WAIT")
 
         reasons = self._build_final_reasons(reasons, score, confidence, signal, strength, bias)
-        return DecisionResult(signal=signal, strength=strength, score=score, confidence=confidence, bias=bias, reasons=reasons)
+        return DecisionResult(signal=signal, strength=strength, score=score, confidence=confidence, bias=bias, reasons=reasons, component_contributions=component_contributions)
