@@ -59,6 +59,27 @@ def test_scanner_env_override_accepts_complete_supported_universe(monkeypatch):
     assert _configured_scan_symbols() == get_all_symbols()
 
 
+def test_scanner_diagnostic_classification_is_stable():
+    from services.telegram.auto_scanner import ScanOutcome
+
+    scanner = ContinuousMarketScanner()
+    assert scanner._classify_diagnostics(("directional_alignment=58.0,m5=51.0",)) == ScanOutcome.DIRECTIONAL_ALIGNMENT_REJECTED
+    assert scanner._classify_diagnostics(("htf_alignment=2/4",)) == ScanOutcome.HTF_ALIGNMENT_REJECTED
+    assert scanner._classify_diagnostics(("setup_quality=64<70",)) == ScanOutcome.SETUP_QUALITY_REJECTED
+    assert scanner._classify_diagnostics(("confidence=0.61<0.65",)) == ScanOutcome.CONFIDENCE_REJECTED
+    assert scanner._classify_diagnostics(("rr=1.20",)) == ScanOutcome.RR_REJECTED
+    assert scanner._classify_diagnostics(("conflict_state=CONFLICT",)) == ScanOutcome.CONFLICT_REJECTED
+    assert scanner._classify_diagnostics(("signal_decay=STALE",)) == ScanOutcome.FRESHNESS_REJECTED
+    assert scanner._classify_diagnostics(("portfolio_risk_blocked=true",)) == ScanOutcome.PORTFOLIO_RISK_REJECTED
+
+
+def test_scanner_cycle_outcomes_are_not_boolean_collapsed():
+    from services.telegram.auto_scanner import ScanOutcome
+
+    assert ScanOutcome.VALIDATED_SENT != ScanOutcome.M15_NEUTRAL
+    assert ScanOutcome.DATA_FAILED != ScanOutcome.ALREADY_PROCESSED
+
+
 def test_notification_key_is_recipient_and_signal_specific():
     scanner = ContinuousMarketScanner()
     assert scanner._notification_key("BTCUSDT", "M15", "2026-09-19T12:00:00+00:00", "BUY", 123) != (
