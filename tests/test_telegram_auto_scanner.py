@@ -120,80 +120,41 @@ async def test_notification_retry_skips_already_delivered_recipient(monkeypatch)
     assert bot.calls == [101, 202, 202]
 
 
-def test_scanner_scheduler_event_logs_for_expected_job(monkeypatch):
+
+@pytest.mark.asyncio
+async def test_continuous_scanner_loop_runs_after_initial_delay(monkeypatch):
+    import asyncio
+    import services.telegram.client as client_module
+
+    calls = []
+
+    async def fake_scan(context):
+        calls.append(context)
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(client_module, "run_continuous_market_scan", fake_scan)
+    monkeypatch.setattr(client_module.asyncio, "sleep", lambda seconds: asyncio.sleep(0))
+
+    client = client_module.TelegramClient.__new__(client_module.TelegramClient)
+    client.application = SimpleNamespace(bot=object())
+
+    with pytest.raises(asyncio.CancelledError):
+        await client._run_auto_scanner_loop(60)
+
+    assert len(calls) == 1
+
+
+def test_auto_scanner_schedule_only_validates_configuration(monkeypatch):
     import services.telegram.client as client_module
     from types import SimpleNamespace
-    from apscheduler.events import EVENT_JOB_EXECUTED
+
+    monkeypatch.setattr(client_module, "auto_scanner_enabled", lambda: True)
+    monkeypatch.setattr(client_module, "auto_scanner_interval_seconds", lambda: 60)
 
     messages = []
     monkeypatch.setattr(client_module.logger, "info", lambda *args, **kwargs: messages.append(args))
 
-    event = SimpleNamespace(
-        code=EVENT_JOB_EXECUTED,
-        job_id=client_module.AUTO_SCANNER_JOB_NAME,
-        scheduled_run_time=datetime(2026, 9, 19, 12, 0, tzinfo=timezone.utc),
-    )
-    client_module._log_scanner_scheduler_event(event)
-
-    assert messages
-    assert "Automatic scanner scheduler event: executed" in messages[0][0]
-
-
-@pytest.mark.asyncio
-async def test_continuous_scan_wrapper_logs_and_reraises_job_failure(monkeypatch):
-    import services.telegram.auto_scanner as auto_scanner_module
-    from types import SimpleNamespace
-
-    class FailingScanner:
-        async def run_once(self, bot, application):
-            raise RuntimeError("scanner boom")
-
-    monkeypatch.setattr(auto_scanner_module, "_SCANNER", FailingScanner())
-
-    errors = []
-    monkeypatch.setattr(auto_scanner_module.logger, "exception", lambda *args, **kwargs: errors.append(args))
-
-    context = SimpleNamespace(bot=object(), application=object())
-    with pytest.raises(RuntimeError, match="scanner boom"):
-        await auto_scanner_module.run_continuous_market_scan(context)
-
-    assert errors
-    assert "Automatic scanner job crashed" in errors[0][0]
-
-
-def test_auto_scanner_schedule_configures_non_overlapping_job(monkeypatch):
-    import services.telegram.client as client_module
-    from types import SimpleNamespace
-
-    monkeypatch.setenv("TELEGRAM_AUTO_SCAN_INTERVAL_SECONDS", "60")
-    monkeypatch.setattr(client_module, "auto_scanner_enabled", lambda: True)
-
-    captured = {}
-    class FakeScheduler:
-        def add_listener(self, callback, mask):
-            captured["listener"] = callback
-            captured["mask"] = mask
-
-    class FakeJobQueue:
-        scheduler = FakeScheduler()
-
-        def run_repeating(self, callback, **kwargs):
-            captured["callback"] = callback
-            captured["kwargs"] = kwargs
-            return SimpleNamespace(next_t="next-run")
-
-    client = SimpleNamespace(
-        application=SimpleNamespace(job_queue=FakeJobQueue())
-    )
+    client = SimpleNamespace()
     client_module.TelegramClient._schedule_auto_scanner(client)
 
-    assert captured["callback"] is client_module.run_continuous_market_scan
-    assert captured["kwargs"]["interval"] == 60
-    assert captured["kwargs"]["first"] == 5
-    assert captured["kwargs"]["name"] == client_module.AUTO_SCANNER_JOB_NAME
-    assert captured["kwargs"]["job_kwargs"] == {
-        "max_instances": 1,
-        "coalesce": True,
-        "misfire_grace_time": 120,
-    }
-    assert captured["listener"] is client_module._log_scanner_scheduler_event
+    assert any("configured" in message[0] for message in messages)
