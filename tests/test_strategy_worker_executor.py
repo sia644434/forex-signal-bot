@@ -22,7 +22,7 @@ def test_strategy_evaluation_worker_returns_comparison():
 
 
 def test_strategy_evaluation_can_build_validation_from_research_data():
-    prices = [100.0 + i for i in range(61)]
+    prices = [100.0 * (1.001 ** i) for i in range(61)]
     result = strategy_evaluation({
         "strategies": [
             {
