@@ -37,6 +37,17 @@ class StrategyObservation:
 
 
 @dataclass
+@dataclass(frozen=True, slots=True)
+class StrategyAuditEvent:
+    action: str
+    strategy_id: str
+    reason: str
+    from_version: int
+    to_version: int
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
 class StrategyRecord:
     strategy_id: str
     name: str
@@ -46,6 +57,8 @@ class StrategyRecord:
     parent_id: str | None = None
     version: int = 1
     retirement_reason: str | None = None
+    dna_history: list[dict[str, Any]] = field(default_factory=list)
+    audit_log: list[StrategyAuditEvent] = field(default_factory=list)
 
     def add_observation(self, observation: StrategyObservation) -> None:
         self.observations.append(observation)
@@ -66,11 +79,19 @@ class StrategyIntelligenceEngine:
 
     def __init__(self) -> None:
         self._records: dict[str, StrategyRecord] = {}
+        self._audit: list[StrategyAuditEvent] = []
 
     def register(self, strategy_id: str, name: str, dna: dict[str, Any] | None = None, *, parent_id: str | None = None) -> StrategyRecord:
         if not strategy_id.strip() or strategy_id in self._records:
             raise ValueError("strategy_id must be unique and non-empty")
-        record = StrategyRecord(strategy_id=strategy_id, name=name, dna=dna or {}, parent_id=parent_id)
+        initial_dna = dict(dna or {})
+        record = StrategyRecord(
+            strategy_id=strategy_id,
+            name=name,
+            dna=initial_dna,
+            parent_id=parent_id,
+            dna_history=[dict(initial_dna)],
+        )
         self._records[strategy_id] = record
         return record
 
@@ -112,18 +133,96 @@ class StrategyIntelligenceEngine:
             raise ValueError("challenger is not eligible for promotion")
         self._records[champion_id].status = "RETIRED"
         self._records[challenger_id].status = "CHAMPION"
+        before = self._records[challenger_id].version
         self._records[challenger_id].version += 1
+        event = StrategyAuditEvent(
+            "PROMOTE",
+            challenger_id,
+            "eligible challenger promoted",
+            before,
+            self._records[challenger_id].version,
+            {"previous_champion": champion_id},
+        )
+        self._records[challenger_id].audit_log.append(event)
+        self._audit.append(event)
         return result
+
+
+    def weaknesses(self, strategy_id: str, *, min_sample: int = 20) -> list[dict[str, Any]]:
+        if min_sample < 1:
+            raise ValueError("min_sample must be positive")
+        record = self._records[strategy_id]
+        groups: dict[tuple[str, str, str, str], list[StrategyObservation]] = {}
+        for observation in record.observations:
+            key = (observation.market, observation.symbol, observation.timeframe, observation.regime)
+            groups.setdefault(key, []).append(observation)
+        result: list[dict[str, Any]] = []
+        for key, observations in groups.items():
+            sample = sum(o.trades for o in observations)
+            if sample < min_sample:
+                continue
+            weight = sum(max(o.trades, 1) for o in observations)
+            expectancy = sum(o.expectancy * max(o.trades, 1) for o in observations) / weight
+            drawdown = sum(o.max_drawdown * max(o.trades, 1) for o in observations) / weight
+            reasons = []
+            if expectancy < 0:
+                reasons.append("negative_expectancy")
+            if abs(drawdown) >= 0.10:
+                reasons.append("elevated_drawdown")
+            if reasons:
+                result.append({
+                    "market": key[0], "symbol": key[1], "timeframe": key[2], "regime": key[3],
+                    "sample": sample, "expectancy": expectancy, "drawdown": drawdown,
+                    "reasons": reasons,
+                })
+        return sorted(result, key=lambda item: (item["expectancy"], item["drawdown"]))
+
+    def adapt(self, strategy_id: str, dna_changes: dict[str, Any], *, reason: str) -> dict[str, Any]:
+        if not isinstance(dna_changes, dict) or not dna_changes:
+            raise ValueError("dna_changes must be a non-empty mapping")
+        if not reason.strip():
+            raise ValueError("adaptation reason is required")
+        record = self._records[strategy_id]
+        before = record.version
+        record.dna_history.append(dict(record.dna))
+        record.dna.update(dna_changes)
+        record.version += 1
+        event = StrategyAuditEvent("ADAPT", strategy_id, reason, before, record.version, {"changes": dict(dna_changes)})
+        record.audit_log.append(event)
+        self._audit.append(event)
+        return {"strategy_id": strategy_id, "version": record.version, "dna": dict(record.dna), "reason": reason}
+
+    def continuous_evaluate(self) -> list[dict[str, Any]]:
+        return [self.evaluate(strategy_id) for strategy_id in self._records]
+
+    def rollback(self, strategy_id: str, *, reason: str) -> dict[str, Any]:
+        if not reason.strip():
+            raise ValueError("rollback reason is required")
+        record = self._records[strategy_id]
+        if not record.dna_history:
+            raise ValueError("no prior DNA version is available")
+        previous = dict(record.dna_history.pop())
+        before = record.version
+        record.dna = previous
+        record.version += 1
+        event = StrategyAuditEvent("ROLLBACK", strategy_id, reason, before, record.version, {"restored_version": before - 1})
+        record.audit_log.append(event)
+        self._audit.append(event)
+        return {"strategy_id": strategy_id, "version": record.version, "dna": dict(record.dna), "reason": reason}
 
     def retire(self, strategy_id: str, reason: str) -> None:
         if not reason.strip():
             raise ValueError("retirement reason is required")
         record = self._records[strategy_id]
+        before = record.version
         record.status = "RETIRED"
         record.retirement_reason = reason
+        event = StrategyAuditEvent("RETIRE", strategy_id, reason, before, record.version)
+        record.audit_log.append(event)
+        self._audit.append(event)
 
     def snapshot(self) -> list[dict[str, Any]]:
         return [asdict(record) for record in self._records.values()]
 
 
-__all__ = ["StrategyObservation", "StrategyRecord", "StrategyIntelligenceEngine"]
+__all__ = ["StrategyObservation", "StrategyRecord", "StrategyAuditEvent", "StrategyIntelligenceEngine"]
