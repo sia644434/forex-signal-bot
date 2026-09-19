@@ -54,3 +54,6 @@ Current verification must always use the exact current `main` HEAD. Historical c
 
 ## Audit Rule
 When concrete evidence reopens a phase, audit the full phase surface and dependent boundaries, not only the old task list. Fix related concrete defects together, add regression coverage, run the required verification set, and only then restore the phase to current-HEAD verified status.
+
+## Paper / Replay Boundaries
+`services/paper_trading.py` is an isolated paper ledger and shadow comparison boundary; it does not authorize live orders. Historical market replay is a PC Worker workload and returns traceable decision observations. Time Machine orchestration remains separate until replay, counterfactuals, and persistent scenario selection are connected end-to-end.
