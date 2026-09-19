@@ -218,3 +218,12 @@ Railway remains deferred until required capabilities and final regression/securi
 - Added ShadowComparisonLedger for deterministic paper/reference comparison history and agreement-rate reporting.
 - Added focused regression coverage.
 - Exact-head CI verification remains pending; no Railway or production verification is claimed.
+
+
+## 2026-09-19 — TASK-147 Alert / Tracker Hardening
+- Made report alert eligibility aware of portfolio risk blocks.
+- Suppressed AlertEngine emissions for portfolio-blocked candidates.
+- Added Telegram display of portfolio risk block/flags.
+- Added tracker lifecycle event history with backward-compatible persistence.
+- Added regression coverage.
+- Exact-head CI verification pending; no Railway or production verification claimed.
