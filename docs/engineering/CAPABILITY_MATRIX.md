@@ -75,3 +75,6 @@ Large historical, simulation, optimization, multi-symbol, multi-timeframe, corre
 | Portfolio pre-trade risk guard | IMPLEMENTED_CURRENT | analysis/portfolio_risk_guard.py + FullAnalysisEngine/DecisionEngine integration | tests/test_portfolio_risk_guard.py, tests/test_full_engine.py | Portfolio/risk/decision | RAILWAY; heavy portfolio analysis remains PC_WORKER | 14/20 | pending CI |
 | Equity-aware gross exposure | IMPLEMENTED_CURRENT | PortfolioRiskGuard.assess/can_add | tests/test_portfolio_risk_guard.py | Portfolio equity | RAILWAY | 14/20 | pending CI |
 | Shadow comparison history | IMPLEMENTED_CURRENT | services/paper_trading.py::ShadowComparisonLedger | tests/test_paper_trading.py | Paper/shadow lifecycle | RAILWAY | 20 | pending CI |
+
+| Portfolio-aware alert gating | IMPLEMENTED_CURRENT | AnalysisReport.alert_context + AlertEngine | tests/test_alert_engine.py | Alerts/decision safety | RAILWAY | 14/20 | pending CI |
+| Tracker lifecycle audit trail | IMPLEMENTED_CURRENT | services/telegram/tracker.py events | tests/test_tracker_contract.py | Telegram tracking | RAILWAY | 20 | pending CI |
