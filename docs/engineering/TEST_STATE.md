@@ -28,3 +28,9 @@ The code/test/CI portion of Phase 13 is VERIFIED at `7e978faa986ed6088511c0aee3a
 
 ## New-chat Rule
 Repository inspection/modification uses GitHub Connector only. Do not invent test success, deployment success, live-smoke evidence, or phase completion.
+
+## New Capability Development Frontier — 2026-09-19
+Historical CI evidence is tied to 7e978faa. New commits add product capabilities and require fresh exact-head verification.
+Focused TASK-129 tests were added in tests/test_advanced_intelligence_contracts.py.
+No local execution or unverified production behavior is claimed.
+Railway remains deferred until the capability roadmap and final regression are complete.
