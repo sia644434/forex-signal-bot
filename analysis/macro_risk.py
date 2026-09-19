@@ -132,6 +132,38 @@ class MacroRiskEngine:
     def __init__(self, providers: list[Any] | None = None) -> None:
         self.providers = providers or [NewsAPIProvider(), FREDProvider()]
 
+
+    @staticmethod
+    def assess(events: list[MacroEvent], *, now: datetime | None = None, proximity_minutes: int = 120) -> dict[str, Any]:
+        if proximity_minutes < 0:
+            raise ValueError("proximity_minutes must be non-negative")
+        current = now or datetime.now(timezone.utc)
+        if current.tzinfo is None:
+            current = current.replace(tzinfo=timezone.utc)
+        relevant = []
+        for event in events:
+            if event.timestamp is None:
+                continue
+            delta = abs((event.timestamp - current).total_seconds()) / 60.0
+            if delta <= proximity_minutes:
+                relevant.append(event)
+        high = sum(event.impact == "HIGH" for event in relevant)
+        medium = sum(event.impact == "MEDIUM" for event in relevant)
+        if high:
+            level = "CRISIS" if high >= 2 else "ELEVATED"
+        elif medium:
+            level = "ELEVATED"
+        else:
+            level = "NORMAL"
+        return {
+            "status": "OK" if relevant else "NO_DATA",
+            "risk_level": level,
+            "high_impact_count": high,
+            "medium_impact_count": medium,
+            "events": [MacroRiskEngine._serialize(event) for event in relevant],
+            "proximity_minutes": proximity_minutes,
+        }
+
     def collect(self, *, query: str = "economy OR inflation OR interest rates", series_ids: list[str] | None = None) -> dict[str, Any]:
         events: list[MacroEvent] = []
         diagnostics: list[dict[str, str]] = []
