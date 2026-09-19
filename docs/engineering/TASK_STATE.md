@@ -742,3 +742,16 @@ Scope:
 Evidence:
 - Implementation commits: c50d4230d48853351e57964e3e573e7c8e5f113d, fa27e46de245c33e5453e3ba146a83c6b5993c9a, ecf8d8d6e0685b6cb965bd4ea9adc63117a6a720, 4232b741ed8761dddda3e4693e8c82475cdd4b44, f80251d41d3bdd0e57930da468b16eb808c8daa0.
 - Exact-head CI verification is pending.
+
+
+## TASK-150
+Phase: Phase 4 — Market/Data Layer / Multi-Asset Expansion
+Title: Real Multi-Asset Provider Coverage
+Implementation Status: IMPLEMENTED — exact-head CI verification pending
+Evidence:
+- Extended Finnhub from Forex-only to real Stock, Crypto, and Index candle routing while preserving the existing Forex contract.
+- Extended Alpha Vantage from FX-only to Stock, Index, and Commodity market routing with explicit timeframe capability gates.
+- ProviderManager already failovers OANDA → Finnhub → Alpha Vantage; unsupported asset classes are skipped rather than producing synthetic data.
+- Added regression coverage for Stock/Crypto/Index Finnhub routing, Alpha Vantage Stock/Index candles, and rejection of close-only commodity data as fake OHLC.
+- Commodity APIs that expose only spot/close observations are intentionally not converted into fabricated OHLC candles; a real OHLC-capable path is still required before commodity signals are enabled.
+- No production/Railway verification is claimed yet.
