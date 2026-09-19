@@ -85,16 +85,32 @@ class MultiTimeframeAnalysisEngine:
             "brooks_score",
             "wyckoff_score",
         )
+        # Keep the diagnostic exhaustive and deterministic so a single Railway
+        # cycle explains the M15 decision without requiring another code change.
+        # The component map is emitted in a fixed order when known, followed by
+        # any newly-added components in sorted order.
+        ordered_component_names = list(component_order)
+        ordered_component_names.extend(
+            sorted(name for name in components if name not in ordered_component_names)
+        )
         component_text = ",".join(
             f"{name}={float(components[name]):.1f}"
-            for name in component_order
+            for name in ordered_component_names
             if name in components
         )
+        all_reasons = [str(reason) for reason in (getattr(report, "reasons", None) or [])]
         blocking_reasons = [
-            str(reason)
-            for reason in (getattr(report, "reasons", None) or [])
-            if str(reason).startswith("Execution blocked by")
+            reason for reason in all_reasons if reason.startswith("Execution blocked by")
         ]
+        warnings = [str(item) for item in (getattr(report, "warnings", None) or [])]
+        volatility = components.get("volatility_score")
+        risk_level = str(getattr(report, "risk_level", "UNKNOWN")).upper()
+        market_regime = str(getattr(report, "market_regime", "UNKNOWN")).upper()
+        portfolio_blocked = bool(getattr(report, "portfolio_risk_blocked", False))
+        portfolio_flags = [
+            str(item) for item in (getattr(report, "portfolio_risk_flags", None) or [])
+        ]
+
         diagnostics = [
             f"m15_signal={signal or 'NONE'}",
             f"m15_score={score:.1f}",
@@ -113,11 +129,21 @@ class MultiTimeframeAnalysisEngine:
             f"m15_scenario={str(getattr(report, 'scenario', 'UNKNOWN')).upper()}",
             f"m15_decay={str(getattr(report, 'signal_decay', 'UNKNOWN')).upper()}",
             f"m15_rr={'none' if getattr(report, 'risk_reward', None) is None else format(float(report.risk_reward), '.2f')}",
+            f"m15_market_regime={market_regime}",
+            f"m15_risk_level={risk_level}",
+            f"m15_volatility={'none' if volatility is None else format(float(volatility), '.2f')}",
+            f"m15_portfolio_risk_blocked={str(portfolio_blocked).lower()}",
         ]
+        if portfolio_flags:
+            diagnostics.append("m15_portfolio_risk_flags=" + "|".join(portfolio_flags))
         if component_text:
             diagnostics.append(f"m15_components={component_text}")
         if blocking_reasons:
             diagnostics.append("m15_blockers=" + "|".join(blocking_reasons))
+        if warnings:
+            diagnostics.append("m15_warnings=" + "|".join(warnings))
+        if all_reasons:
+            diagnostics.append("m15_reasons=" + "|".join(all_reasons))
         return tuple(diagnostics)
 
     @classmethod
