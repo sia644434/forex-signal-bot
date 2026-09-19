@@ -24,3 +24,11 @@ def test_alert_engine_emits_critical_macro_alert():
 def test_alert_engine_ignores_weak_neutral_state():
     report = SimpleNamespace(symbol="BTCUSDT", signal="WAIT", confidence=0.95, macro_risk_level="NORMAL")
     assert AlertEngine().evaluate(report) is None
+
+
+def test_alert_engine_suppresses_portfolio_blocked_signal():
+    report = SimpleNamespace(
+        symbol="EURUSD", signal="STRONG_BUY", confidence=0.95,
+        macro_risk_level="NORMAL", portfolio_risk_blocked=True,
+    )
+    assert AlertEngine().evaluate(report) is None
