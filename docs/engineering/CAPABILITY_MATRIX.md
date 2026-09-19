@@ -57,3 +57,5 @@ Large historical, simulation, optimization, multi-symbol, multi-timeframe, corre
 
 | Version-bound strategy validation | IMPLEMENTED_CURRENT | analysis/strategy_intelligence.py::StrategyValidationEvidence | tests/test_strategy_intelligence.py | Strategy DNA/version + research evidence | PC_WORKER + RAILWAY | 18 | pending CI |
 | Research-backed strategy evaluation | IMPLEMENTED_CURRENT | worker/executors.py::strategy_evaluation + analysis/research_engine.py | tests/test_strategy_worker_executor.py | Historical prices/OOS/walk-forward | PC_WORKER | 18 | pending CI |
+
+| Validation-aware continuous evaluation history | IMPLEMENTED_CURRENT | analysis/strategy_intelligence.py::StrategyEvaluationSnapshot + continuous_evaluate | tests/test_strategy_intelligence.py | Strategy lifecycle + versioned validation | RAILWAY / PC_WORKER | 18 | pending CI |
