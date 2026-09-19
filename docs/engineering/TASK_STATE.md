@@ -692,3 +692,16 @@ Evidence:
 - Added focused regression coverage for equity-based gross exposure, portfolio decision gating, and shadow agreement history.
 - Current implementation head: aacee0f3fd29c4db6dddaaedcb34552deed66536.
 - No production/Railway verification is claimed.
+
+
+## TASK-147
+Phase: Phase 14/20 + Telegram lifecycle hardening
+Title: Portfolio-Aware Alerts and Tracker Lifecycle Audit Trail
+Implementation Status: IMPLEMENTED — exact-head CI verification pending
+Evidence:
+- Alert eligibility now suppresses portfolio-blocked executable signals.
+- Telegram signal rendering exposes portfolio risk flags instead of presenting a blocked trade as executable.
+- Tracker records CREATED, SIGNAL_CHANGED, INVALIDATED, TARGET_REACHED, and STOPPED lifecycle events with timestamps while remaining backward compatible with stored records without events.
+- Focused alert and tracker regression coverage added.
+- Current implementation head: b83ff1480e842c61d798ef4aa4e356deed4bdd51.
+- No production/Railway verification is claimed.
