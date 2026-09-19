@@ -19,3 +19,14 @@ def test_portfolio_guard_allows_diversified_exposure():
     )
     assert result["allowed"] is True
     assert result["after"].concentration == 0.5
+
+
+def test_portfolio_guard_uses_equity_for_gross_exposure():
+    guard = PortfolioRiskGuard()
+    snapshot = guard.assess(
+        [PortfolioExposure("EURUSD", "FOREX", "BUY", 80, 0.8)],
+        equity=100,
+        max_gross_exposure=0.75,
+    )
+    assert "GROSS_EXPOSURE" in snapshot.risk_flags
+    assert snapshot.net_exposure == 80
