@@ -44,3 +44,65 @@ def test_scanner_env_override_accepts_complete_supported_universe(monkeypatch):
 
     monkeypatch.setenv("TELEGRAM_SCANNER_SYMBOLS", ",".join(get_all_symbols()))
     assert _configured_scan_symbols() == get_all_symbols()
+
+
+def test_notification_key_is_recipient_and_signal_specific():
+    scanner = ContinuousMarketScanner()
+    assert scanner._notification_key("BTCUSDT", "M15", "2026-09-19T12:00:00+00:00", "BUY", 123) != (
+        scanner._notification_key("BTCUSDT", "M15", "2026-09-19T12:00:00+00:00", "BUY", 456)
+    )
+    assert scanner._notification_key("BTCUSDT", "M15", "2026-09-19T12:00:00+00:00", "BUY", 123) != (
+        scanner._notification_key("BTCUSDT", "M15", "2026-09-19T12:15:00+00:00", "BUY", 123)
+    )
+
+
+@pytest.mark.asyncio
+async def test_notification_retry_skips_already_delivered_recipient(monkeypatch):
+    from types import SimpleNamespace
+    import services.telegram.auto_scanner as auto_scanner_module
+
+    scanner = ContinuousMarketScanner()
+    monkeypatch.setattr(auto_scanner_module, "_chat_ids", lambda: (101, 202))
+    monkeypatch.setattr(
+        auto_scanner_module,
+        "get_user_state",
+        lambda chat_id: SimpleNamespace(
+            settings={"notifications_enabled": True},
+            language="fa",
+        ),
+    )
+    monkeypatch.setattr(auto_scanner_module, "_format_signal", lambda *args: "signal")
+
+    class FakeBot:
+        def __init__(self):
+            self.calls = []
+            self.fail_202 = True
+
+        async def send_message(self, *, chat_id, text, parse_mode):
+            self.calls.append(chat_id)
+            if chat_id == 202 and self.fail_202:
+                raise RuntimeError("temporary Telegram failure")
+
+    decision = SimpleNamespace(
+        symbol="BTCUSDT",
+        setup_timeframe="M15",
+        direction="BUY",
+        setup_report=SimpleNamespace(),
+        alignment_score=80.0,
+        lower_timeframe_score=70.0,
+        reasons=[],
+    )
+    bot = FakeBot()
+
+    first_sent, first_eligible = await scanner._notify(
+        bot, decision, "2026-09-19T12:00:00+00:00"
+    )
+    assert (first_sent, first_eligible) == (1, 2)
+    assert bot.calls == [101, 202]
+
+    bot.fail_202 = False
+    second_sent, second_eligible = await scanner._notify(
+        bot, decision, "2026-09-19T12:00:00+00:00"
+    )
+    assert (second_sent, second_eligible) == (2, 2)
+    assert bot.calls == [101, 202, 202]
