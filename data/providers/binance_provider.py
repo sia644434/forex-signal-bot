@@ -106,7 +106,15 @@ class BinanceProvider(MarketDataProvider):
                 "Binance returned no usable completed OHLC candles.",
                 {"provider": self.name, "symbol": canonical, "timeframe": interval},
             )
-        return self.validate_candles(candles, expected_symbol=canonical, require_sorted=True, reject_duplicates=True)
+        candles = self.validate_candles(candles, expected_symbol=canonical, require_sorted=True, reject_duplicates=True)
+        try:
+            self._validate_market_sequence(candles, timeframe, now)
+        except ValueError as error:
+            raise ApplicationError(
+                "Binance returned invalid or stale candle sequence.",
+                {"provider": self.name, "symbol": canonical, "timeframe": interval, "reason": str(error)},
+            ) from error
+        return candles
 
 
 __all__ = ["BinanceProvider"]
