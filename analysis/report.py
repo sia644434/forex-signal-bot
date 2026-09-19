@@ -436,7 +436,8 @@ class AnalysisReport:
         confidence = max(0.0, min(1.0, float(self.confidence)))
         executable = signal in {"BUY", "SELL", "STRONG_BUY", "STRONG_SELL"}
         risk = str(self.macro_risk_level).upper()
-        eligible = executable and (confidence >= 0.60 or risk in {"CRISIS", "EXTREME"})
+        portfolio_blocked = bool(self.portfolio_risk_blocked)
+        eligible = executable and not portfolio_blocked and (confidence >= 0.60 or risk in {"CRISIS", "EXTREME"})
         severity = "CRITICAL" if risk in {"CRISIS", "EXTREME"} else (
             "HIGH" if signal in {"STRONG_BUY", "STRONG_SELL"} and confidence >= 0.75
             else "MEDIUM" if eligible else "INFO"
@@ -448,6 +449,8 @@ class AnalysisReport:
             "confidence": confidence,
             "severity": severity,
             "risk_level": risk,
+            "portfolio_risk_blocked": portfolio_blocked,
+            "portfolio_risk_flags": list(self.portfolio_risk_flags),
             "dedupe_key": f"{self.symbol}:{signal}:{severity}",
         }
 
