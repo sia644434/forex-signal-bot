@@ -226,6 +226,13 @@ class AnalysisResult:
 
     final_direction: str = "neutral"
 
+    market_regime: str = "UNCERTAIN"
+    scenario: str = "NO_TRADE"
+    statistical_context: dict[str, Any] = field(default_factory=dict)
+    conflict_state: str = "INSUFFICIENT_EVIDENCE"
+    signal_decay: str = "INVALID"
+    crisis_mode: str = "NORMAL"
+
     # ==================================================
     # Explanation
     # ==================================================
@@ -425,6 +432,12 @@ class AnalysisResult:
             "total_score": self.total_score,
 
             "final_direction": self.final_direction,
+            "market_regime": self.market_regime,
+            "scenario": self.scenario,
+            "statistical_context": self.statistical_context,
+            "conflict_state": self.conflict_state,
+            "signal_decay": self.signal_decay,
+            "crisis_mode": self.crisis_mode,
 
             "smc": {
                 "score": self.smart_money_score,
