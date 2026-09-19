@@ -87,3 +87,18 @@ def test_validation_is_invalidated_by_version_and_dna_change():
     assert engine.snapshot()[0]["validation_evidence"] is None
     with __import__("pytest").raises(ValueError):
         engine.attach_validation("s", evidence)
+
+
+def test_continuous_evaluation_records_validation_aware_history():
+    engine = StrategyIntelligenceEngine()
+    engine.register("s", "Tracked", dna={"threshold": 1})
+    evidence = StrategyValidationEvidence(
+        True, .8, robust=True, validated_version=1,
+        dna_fingerprint=engine.dna_fingerprint(engine._records["s"].dna),
+    )
+    result = engine.continuous_evaluate({"s": evidence})
+    assert result[0]["validation_ready"] is True
+    snapshot = engine.snapshot()[0]
+    assert len(snapshot["evaluation_history"]) == 1
+    assert snapshot["evaluation_history"][0]["version"] == 1
+    assert snapshot["evaluation_history"][0]["validation_ready"] is True
