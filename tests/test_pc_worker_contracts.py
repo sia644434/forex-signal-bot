@@ -204,3 +204,8 @@ def test_dispatcher_cancellation_does_not_strand_running_job():
         dispatcher.close()
 
     asyncio.run(run())
+
+
+def test_robustness_research_is_worker_owned():
+    from worker.contracts import HEAVY_JOB_TYPES
+    assert "robustness_analysis" in HEAVY_JOB_TYPES
