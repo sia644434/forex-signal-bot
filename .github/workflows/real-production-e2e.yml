@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+
 jobs:
   production-e2e-contract:
     runs-on: ubuntu-latest
