@@ -129,8 +129,18 @@ class MultiTimeframeAnalysisEngine:
             str(item) for item in (getattr(report, "portfolio_risk_flags", None) or [])
         ]
 
+        raw_score_signal = (
+            "BUY" if score >= 60.0 else
+            "SELL" if score <= 40.0 else
+            "NEUTRAL"
+        )
+        execution_blockers = [
+            reason for reason in all_reasons
+            if reason.startswith("Execution blocked by")
+        ]
         diagnostics = [
             f"m15_signal={signal or 'NONE'}",
+            f"m15_raw_score_signal={raw_score_signal}",
             f"m15_score={score:.1f}",
             "m15_thresholds=BUY>=60.0,SELL<=40.0",
             f"m15_gap_to_buy={buy_gap:.1f}",
@@ -163,6 +173,8 @@ class MultiTimeframeAnalysisEngine:
             diagnostics.append("m15_portfolio_risk_flags=" + "|".join(portfolio_flags))
         if component_text:
             diagnostics.append(f"m15_components={component_text}")
+        if execution_blockers:
+            diagnostics.append("m15_execution_blockers=" + "|".join(execution_blockers))
         if blocking_reasons:
             diagnostics.append("m15_blockers=" + "|".join(blocking_reasons))
         if warnings:
