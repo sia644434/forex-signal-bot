@@ -104,3 +104,8 @@ def test_apply_setting_accepts_canonical_multi_asset_symbols():
     assert state.settings["market_symbol"] == "SPX"
     assert _apply_setting(state, "market_XAUUSD") == "Market XAUUSD"
     assert state.settings["market_symbol"] == "XAUUSD"
+
+
+def test_market_category_callbacks_are_accepted_by_menu_handler_contract():
+    from services.telegram.handlers.callbacks import ALLOWED_CALLBACKS
+    assert {"market_forex", "market_crypto", "market_stock", "market_index", "market_commodity"}.issubset(ALLOWED_CALLBACKS)
