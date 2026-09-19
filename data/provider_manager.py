@@ -282,7 +282,10 @@ class ProviderManager:
                 if callable(supports_symbol) and not supports_symbol(normalized_symbol):
                     skipped += 1
                     failures.append(ProviderFailure(provider_name, 0, "UnsupportedSymbol", f"Provider {provider_name} does not support symbol {normalized_symbol}"))
-                    logger.info("Skipping provider %s: symbol %s is outside its declared capability.", provider_name, normalized_symbol)
+                    # Capability gating is expected during multi-provider scans.
+                    # Keep it out of normal Railway logs; the cycle summary and
+                    # provider failures remain available when actual data retrieval fails.
+                    logger.debug("Skipping provider %s: symbol %s is outside its declared capability.", provider_name, normalized_symbol)
                     continue
                 attempted += 1
                 candles = await self._request_with_retry(provider_name, provider, symbol=normalized_symbol, timeframe=normalized_timeframe, limit=limit, failures=failures)
