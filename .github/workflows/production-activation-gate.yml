@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
+
 jobs:
   activation-gate:
     runs-on: ubuntu-latest
