@@ -81,6 +81,15 @@ def evaluate_market_status(
     weekend session break; 24/7 crypto is not classified as CLOSED merely
     because the calendar day is Saturday or Sunday.
     """
+    reference = now if now is not None else datetime.now(timezone.utc)
+    if not isinstance(reference, datetime) or reference.tzinfo is None or reference.utcoffset() is None:
+        raise ValueError("now must be a timezone-aware datetime.")
+    reference = reference.astimezone(timezone.utc)
+
+    if is_market_weekend_closed(symbol=symbol, market_type=market_type, now=reference):
+        last_candle_time = _parse_last_candle_time(candles[-1]) if candles else None
+        return MarketStatus(status=CLOSED, last_candle_time=last_candle_time)
+
     if not candles:
         return MarketStatus(status=NO_DATA)
 
@@ -93,25 +102,8 @@ def evaluate_market_status(
     if candle_time is None:
         return MarketStatus(status=NO_DATA)
 
-    reference = now if now is not None else datetime.now(timezone.utc)
-    if not isinstance(reference, datetime) or reference.tzinfo is None or reference.utcoffset() is None:
-        raise ValueError("now must be a timezone-aware datetime.")
-    reference = reference.astimezone(timezone.utc)
-
     if candle_time > reference:
         return MarketStatus(status=NO_DATA, last_candle_time=candle_time)
-
-    resolved_market_type = market_type.strip().lower() if isinstance(market_type, str) else None
-    if resolved_market_type is None and isinstance(symbol, str) and symbol.strip():
-        try:
-            resolved_market_type = get_market_type(normalize_symbol(symbol))
-        except (TypeError, ValueError):
-            resolved_market_type = None
-
-    # Crypto is explicitly 24/7 in the repository's market model. Forex,
-    # stocks, indices, and commodities retain weekend closure semantics.
-    if reference.weekday() >= 5 and resolved_market_type != "crypto":
-        return MarketStatus(status=CLOSED, last_candle_time=candle_time)
 
     age = reference - candle_time
     if age > _stale_after(normalized_timeframe):
@@ -126,5 +118,6 @@ __all__ = [
     "CLOSED",
     "STALE",
     "NO_DATA",
+    "is_market_weekend_closed",
     "evaluate_market_status",
 ]
