@@ -140,3 +140,15 @@ def test_refresh_tracking_records_signal_change_and_updates_timestamp(monkeypatc
     assert result.updated_at
     assert notifications and "سیگنال فعلی" in notifications[0]
     assert list_tracking(1) == [item]
+
+\n
+def test_track_report_records_creation_event():
+    import services.telegram.tracker as tracker
+    tracker.ACTIVE_TRACKS.clear()
+    report = type("Report", (), {
+        "signal": "BUY", "entry_price": 100.0, "stop_loss": 95.0,
+        "take_profit_1": 105.0, "take_profit_2": 110.0, "take_profit_3": 115.0,
+    })()
+    item = tracker.track_report(7, "EURUSD", "M15", report)
+    assert item.events
+    assert item.events[0]["type"] == "CREATED"
