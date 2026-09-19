@@ -146,7 +146,7 @@ class ContinuousMarketScanner:
                 return False
 
             context = await self._context_for_symbol(market_data, symbol, m15)
-            decision = self._engine.analyze(context)
+            decision = self._engine.analyze(context, symbol=symbol)
 
             # Mark the closed M15 candle as processed even when no setup exists.
             # A failed data fetch/analysis raises before this point and is retried.
