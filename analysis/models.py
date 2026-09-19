@@ -433,6 +433,8 @@ class AnalysisResult:
 
             "scores": self.score_components(),
 
+            "decision_score": self.decision_score,
+
             "total_score": self.total_score,
 
             "final_direction": self.final_direction,
