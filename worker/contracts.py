@@ -10,7 +10,7 @@ HEAVY_JOB_TYPES = {
     "ml_training", "xgboost_training", "lightgbm_training", "random_forest_training",
     "timeseries_training", "ensemble_training", "candle_batch_analysis", "dataset_build",
     "model_evaluation", "deep_learning_training", "transformer_training", "lstm_training",
-    "gru_training", "medium_model_training", "correlation_matrix", "portfolio_stress", "stress_sensitivity", "counterfactual_batch", "market_replay", "time_machine", "strategy_evaluation",
+    "gru_training", "medium_model_training", "correlation_matrix", "portfolio_stress", "stress_sensitivity", "counterfactual_batch", "market_replay", "time_machine", "strategy_evaluation", "robustness_analysis",
 }
 
 
