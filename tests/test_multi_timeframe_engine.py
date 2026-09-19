@@ -85,6 +85,51 @@ def test_multi_timeframe_rejects_low_risk_reward():
     assert engine.analyze(candles) is None
 
 
+
+def test_multi_timeframe_m15_diagnostics_expose_precise_rejection_details():
+    base = report(47, "NO_TRADE", quality=23, confidence=0.41)
+    m15 = SimpleNamespace(
+        **base.__dict__,
+        trend="bearish",
+        structure="NORMAL",
+        decision_bias="bearish",
+        agreement=0.54,
+        bullish_votes=3,
+        bearish_votes=4,
+        neutral_votes=3,
+        trade_grade="D",
+        conflict_state="CONFLICT",
+        scenario="NO_TRADE",
+        signal_decay="FRESH",
+        component_scores={
+            "smart_money_score": 30.0,
+            "structure_score": 20.0,
+            "price_action_score": -10.0,
+        },
+        reasons=["Execution blocked by insufficient directional agreement"],
+    )
+    reports = {
+        "W1": report(68),
+        "D1": report(72),
+        "H4": report(70),
+        "H1": report(67),
+        "M15": m15,
+        "M5": report(66),
+    }
+    engine = MultiTimeframeAnalysisEngine(FakeEngine(reports))
+    candles = {key: [key] for key in reports}
+    decision, diagnostics = engine.analyze_with_diagnostics(candles)
+    assert decision is None
+    assert "m15_signal=NO_TRADE" in diagnostics
+    assert "m15_score=47.0" in diagnostics
+    assert "m15_thresholds=BUY>=60.0,SELL<=40.0" in diagnostics
+    assert "m15_gap_to_buy=13.0" in diagnostics
+    assert "m15_gap_to_sell=7.0" in diagnostics
+    assert "m15_votes=bull:3,bear:4,neutral:3" in diagnostics
+    assert "m15_components=smart_money_score=30.0,structure_score=20.0,price_action_score=-10.0" in diagnostics
+    assert "m15_blockers=Execution blocked by insufficient directional agreement" in diagnostics
+
+
 def test_multi_timeframe_diagnostics_explain_missing_context():
     engine = MultiTimeframeAnalysisEngine(FakeEngine({}))
     candles = candles_by_timeframe()
