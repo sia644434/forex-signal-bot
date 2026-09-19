@@ -10,7 +10,7 @@ from analysis.market_aware_engine import MarketAwareAnalysisEngine
 from services.market_data.service import get_market_data_service
 from services.telegram.state import get_user_state
 from services.telegram.tracker import track_report
-from services.telegram.market_session import evaluate_market_status, OPEN
+from services.telegram.market_session import CLOSED, OPEN, evaluate_market_status, is_market_weekend_closed
 
 logger = logging.getLogger(__name__)
 DEFAULT_SYMBOL = "EURUSD"
@@ -42,6 +42,65 @@ def _format_price(value: float | None) -> str:
 
 def _format_number(value: float | None) -> str:
     return "—" if value is None else f"{value:.2f}"
+
+
+def _format_signal_failure(exc: Exception, symbol: str, timeframe: str) -> str:
+    """Turn internal signal-generation failures into actionable user-facing messages."""
+    detail = str(exc).lower()
+
+    if is_market_weekend_closed(symbol=symbol):
+        return (
+            "🔴 <b>بازار بسته است</b>\n\n"
+            f"💱 بازار: <b>{_escape(symbol)}</b>\n"
+            f"⏱ تایم‌فریم: <b>{_escape(timeframe)}</b>\n\n"
+            "🗓 بازار فارکس در تعطیلات آخر هفته قرار دارد و فعلاً داده زنده جدیدی "
+            "برای تولید سیگنال معاملاتی وجود ندارد.\n\n"
+            "⏳ با باز شدن بازار دوباره درخواست <b>/signal</b> را ارسال کنید.\n"
+            "⛔ در زمان بسته بودن بازار هیچ سیگنال ساختگی یا مبتنی بر داده قدیمی صادر نمی‌شود."
+        )
+
+    if "not fresh enough" in detail or "status=reject" in detail or "status=stale" in detail:
+        return (
+            "🟠 <b>سیگنال فعلاً قابل تولید نیست</b>\n\n"
+            f"💱 بازار: <b>{_escape(symbol)}</b>\n"
+            f"⏱ تایم‌فریم: <b>{_escape(timeframe)}</b>\n\n"
+            "📉 آخرین داده دریافتی به اندازه کافی تازه نیست و برای تحلیل اجرایی "
+            "قابل اعتماد محسوب نمی‌شود.\n\n"
+            "⛔ برای جلوگیری از سیگنال اشتباه، داده قدیمی استفاده نمی‌شود. "
+            "لطفاً بعداً دوباره تلاش کنید."
+        )
+
+    if "all market data providers failed" in detail:
+        return (
+            "🟠 <b>داده بازار در دسترس نیست</b>\n\n"
+            f"💱 بازار: <b>{_escape(symbol)}</b>\n"
+            f"⏱ تایم‌فریم: <b>{_escape(timeframe)}</b>\n\n"
+            "📡 سرویس‌های تأمین داده بازار در حال حاضر داده معتبر ارائه نکردند.\n\n"
+            "⛔ هیچ سیگنالی بدون داده معتبر صادر نمی‌شود. لطفاً چند دقیقه بعد دوباره تلاش کنید."
+        )
+
+    if "unsupported market symbol" in detail:
+        return (
+            "⚠️ <b>نماد انتخاب‌شده پشتیبانی نمی‌شود</b>\n\n"
+            f"نماد <b>{_escape(symbol)}</b> در پیکربندی فعلی پشتیبانی نشده است.\n"
+            "لطفاً نماد بازار را از گزینه‌های پشتیبانی‌شده انتخاب کنید."
+        )
+
+    if "timeout" in detail or "timed out" in detail:
+        return (
+            "🟠 <b>دریافت داده بازار زمان‌بر شد</b>\n\n"
+            f"برای <b>{_escape(symbol)}/{_escape(timeframe)}</b> پاسخ داده به‌موقع دریافت نشد.\n\n"
+            "⏳ لطفاً چند لحظه بعد دوباره تلاش کنید."
+        )
+
+    return (
+        "❌ <b>تولید سیگنال انجام نشد</b>\n\n"
+        f"💱 بازار: <b>{_escape(symbol)}</b>\n"
+        f"⏱ تایم‌فریم: <b>{_escape(timeframe)}</b>\n\n"
+        "داده یا یکی از مراحل تحلیل نتیجه معتبر تولید نکرد. "
+        "برای جلوگیری از نتیجه نادرست، سیگنال صادر نشد.\n\n"
+        "🔄 لطفاً چند لحظه بعد دوباره تلاش کنید."
+    )
 
 
 def _format_signal(report, symbol: str, timeframe: str) -> str:
@@ -94,6 +153,7 @@ async def signal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     status_message = await source_message.reply_text(
         f"⏳ در حال دریافت داده زنده {symbol}/{timeframe} و اجرای تحلیل کامل..."
     )
+    candles = []
     try:
         market_data = get_market_data_service(context.application)
         candles = await market_data.get_candles_list(symbol=symbol, timeframe=timeframe, limit=DEFAULT_CANDLE_LIMIT)
@@ -122,8 +182,6 @@ async def signal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     except Exception as exc:
         logger.exception("Signal generation failed for %s/%s", symbol, timeframe, exc_info=exc)
         await status_message.edit_text(
-            "❌ <b>سیگنال قابل تولید نیست.</b>\n\n"
-            "داده زنده، نرخ تبدیل یا موتور تحلیل در حال حاضر نتیجه معتبر ارائه نکرد. "
-            "هیچ سیگنال ساختگی صادر نشد.\n\n"
-            "🔄 لطفاً چند لحظه بعد دوباره تلاش کنید.", parse_mode="HTML"
+            _format_signal_failure(exc, symbol, timeframe),
+            parse_mode="HTML",
         )
