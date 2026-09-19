@@ -164,3 +164,12 @@ Status: IMPLEMENTATION
 - Implemented: mark-to-market paper equity, deterministic alert deduplication/severity, report alert context, macro cache, and collect-and-assess diagnostics.
 - Exact-head CI verification remains pending on `54e4b3be86ba2d6f8cf6be4e96b8c56de56536f2`.
 - After verification, continue closing remaining capability gaps before the Railway final gate.
+
+
+## 2026-09-19 — TASK-146 Portfolio Risk / Shadow Integration
+Status: IMPLEMENTATION
+Current HEAD: aacee0f3fd29c4db6dddaaedcb34552deed66536
+- PortfolioRiskGuard is now equity-aware for gross exposure and integrated as an optional pre-trade boundary in FullAnalysisEngine and DecisionEngine.
+- Analysis/report contracts expose portfolio risk blocking and explicit flags.
+- ShadowComparisonLedger records deterministic paper/reference decision agreement history and aggregate agreement rate.
+- Exact-head CI verification is pending. Railway remains a later external gate.
