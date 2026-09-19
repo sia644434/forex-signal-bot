@@ -80,10 +80,23 @@ class MultiTimeframeAnalysisEngine:
                 count += 1
         return count
 
-    def analyze(self, candles_by_timeframe: Mapping[str, list], symbol: str | None = None) -> MultiTimeframeDecision | None:
+    def analyze(
+        self,
+        candles_by_timeframe: Mapping[str, list],
+        symbol: str | None = None,
+    ) -> MultiTimeframeDecision | None:
+        decision, _ = self.analyze_with_diagnostics(candles_by_timeframe, symbol=symbol)
+        return decision
+
+    def analyze_with_diagnostics(
+        self,
+        candles_by_timeframe: Mapping[str, list],
+        symbol: str | None = None,
+    ) -> tuple[MultiTimeframeDecision | None, tuple[str, ...]]:
+        """Return the decision plus concise rejection diagnostics for observability."""
         missing = [tf for tf in self.TIMEFRAME_ORDER if not candles_by_timeframe.get(tf)]
         if missing:
-            return None
+            return None, (f"missing_timeframes={','.join(missing)}",)
 
         reports: dict[str, AnalysisReport] = {}
         for timeframe in self.TIMEFRAME_ORDER:
@@ -96,7 +109,12 @@ class MultiTimeframeAnalysisEngine:
         setup = reports["M15"]
         direction = str(setup.signal).upper()
         if direction not in self.EXECUTABLE:
-            return None
+            return None, (
+                f"m15_signal={direction or 'NONE'}",
+                f"m15_score={self._direction_score(setup):.1f}",
+                f"m15_quality={float(setup.trade_quality or 0.0):.0f}",
+                f"m15_confidence={float(setup.confidence or 0.0):.2f}",
+            )
         direction = "BUY" if "BUY" in direction else "SELL"
 
         alignment = self._alignment_score(reports)
@@ -112,36 +130,46 @@ class MultiTimeframeAnalysisEngine:
             f"M5 confirmation score: {lower_score:.1f}/100",
             f"M15 setup quality: {setup_quality:.0f}/100",
         ]
+        rejection_codes: list[str] = []
 
         if direction == "BUY":
             aligned = alignment >= 60.0 and lower_score >= 52.0
         else:
             aligned = alignment <= 40.0 and lower_score <= 48.0
 
+        if not (alignment >= 60.0 and lower_score >= 52.0) if direction == "BUY" else not (alignment <= 40.0 and lower_score <= 48.0):
+            rejection_codes.append(f"directional_alignment={alignment:.1f},m5={lower_score:.1f}")
         if aligned_htf < 3:
             aligned = False
+            rejection_codes.append(f"htf_alignment={aligned_htf}/4")
             reasons.append("Higher-timeframe context is not sufficiently aligned.")
         if setup_quality < 70.0:
             aligned = False
+            rejection_codes.append(f"setup_quality={setup_quality:.0f}<70")
             reasons.append("Setup quality is below the automatic notification threshold.")
         if confidence < 0.65:
             aligned = False
+            rejection_codes.append(f"confidence={confidence:.2f}<0.65")
             reasons.append("Setup confidence is below the automatic notification threshold.")
         if rr is None or float(rr) < 1.5:
             aligned = False
+            rejection_codes.append(f"rr={float(rr):.2f}" if rr is not None else "rr=none")
             reasons.append("Risk/reward is below the automatic notification threshold.")
         if str(setup.conflict_state).upper() in {"CONFLICT", "STRONG_CONFLICT"}:
             aligned = False
+            rejection_codes.append(f"conflict_state={str(setup.conflict_state).upper()}")
             reasons.append("M15 directional conflict blocks automatic notification.")
         if str(setup.signal_decay).upper() in {"STALE", "INVALID"}:
             aligned = False
+            rejection_codes.append(f"signal_decay={str(setup.signal_decay).upper()}")
             reasons.append("M15 signal freshness is no longer valid.")
         if setup.portfolio_risk_blocked:
             aligned = False
+            rejection_codes.append("portfolio_risk_blocked=true")
             reasons.append("Portfolio risk guard blocks the setup.")
 
         if not aligned:
-            return None
+            return None, tuple(rejection_codes or ("validation_failed",))
 
         return MultiTimeframeDecision(
             symbol=symbol or getattr(setup, "symbol", "UNKNOWN"),
@@ -152,7 +180,7 @@ class MultiTimeframeAnalysisEngine:
             alignment_score=alignment,
             lower_timeframe_score=lower_score,
             reasons=tuple(reasons),
-        )
+        ), ()
 
 
 __all__ = ["MultiTimeframeAnalysisEngine", "MultiTimeframeDecision"]
