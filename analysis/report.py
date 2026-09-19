@@ -99,6 +99,8 @@ class AnalysisReport:
     crisis_mode: str = "NORMAL"
     macro_risk_level: str = "NORMAL"
     macro_events: list[dict[str, Any]] = field(default_factory=list)
+    portfolio_risk_blocked: bool = False
+    portfolio_risk_flags: list[str] = field(default_factory=list)
 
 
     risk_level: str = "normal"
@@ -512,6 +514,8 @@ class AnalysisReport:
             "crisis_mode": self.crisis_mode,
             "macro_risk_level": self.macro_risk_level,
             "macro_events": self.macro_events,
+            "portfolio_risk_blocked": self.portfolio_risk_blocked,
+            "portfolio_risk_flags": self.portfolio_risk_flags,
 
 
             "risk_management": self.risk_summary(),
