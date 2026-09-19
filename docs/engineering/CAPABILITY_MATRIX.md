@@ -71,3 +71,7 @@ Large historical, simulation, optimization, multi-symbol, multi-timeframe, corre
 | Deterministic alert policy | IMPLEMENTED_CURRENT | services/alert_engine.py | tests/test_alert_engine.py | Reports/signals | RAILWAY | 22 | pending CI |
 | Report alert contract | IMPLEMENTED_CURRENT | analysis/report.py::alert_context | tests/test_alert_report_contract.py | Analysis report | RAILWAY | 22 | pending CI |
 | Macro collection cache/orchestration | IMPLEMENTED_CURRENT | analysis/macro_risk.py | tests/test_macro_risk.py | External providers | RAILWAY | 21 | pending CI |
+
+| Portfolio pre-trade risk guard | IMPLEMENTED_CURRENT | analysis/portfolio_risk_guard.py + FullAnalysisEngine/DecisionEngine integration | tests/test_portfolio_risk_guard.py, tests/test_full_engine.py | Portfolio/risk/decision | RAILWAY; heavy portfolio analysis remains PC_WORKER | 14/20 | pending CI |
+| Equity-aware gross exposure | IMPLEMENTED_CURRENT | PortfolioRiskGuard.assess/can_add | tests/test_portfolio_risk_guard.py | Portfolio equity | RAILWAY | 14/20 | pending CI |
+| Shadow comparison history | IMPLEMENTED_CURRENT | services/paper_trading.py::ShadowComparisonLedger | tests/test_paper_trading.py | Paper/shadow lifecycle | RAILWAY | 20 | pending CI |
