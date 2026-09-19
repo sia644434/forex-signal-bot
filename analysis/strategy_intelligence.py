@@ -112,6 +112,7 @@ class StrategyRecord:
     dna_history: list[dict[str, Any]] = field(default_factory=list)
     audit_log: list[StrategyAuditEvent] = field(default_factory=list)
     validation_evidence: StrategyValidationEvidence | None = None
+    evaluation_history: list[StrategyEvaluationSnapshot] = field(default_factory=list)
 
     def add_observation(self, observation: StrategyObservation) -> None:
         self.observations.append(observation)
