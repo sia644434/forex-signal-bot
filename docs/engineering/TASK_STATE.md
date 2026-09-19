@@ -644,3 +644,6 @@ Evidence:
 - Current validation is recomputed against strategy version/DNA so stale evidence cannot appear current.
 - Added focused regression coverage for validation-aware evaluation history.
 
+
+## TASK-142 CI Repair
+Initial exact-head run failed 8 tests because StrategyRecord did not initialize evaluation_history. Fixed in `e89da517d4b9a8d552901e2562cfeee2e54aab72`. Verification pending.
