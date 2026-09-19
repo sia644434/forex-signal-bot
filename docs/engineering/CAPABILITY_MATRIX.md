@@ -23,7 +23,7 @@
 | Champion/challenger | NOT_IMPLEMENTED | Missing | Missing | Strategy lifecycle | PC_WORKER | 18 | — |
 | Scanner universe | VERIFIED_HISTORICAL | `services/telegram/scanner.py` | Existing | Providers | RAILWAY / PC_WORKER for large scans | 9 | e571a972 |
 | Opportunity ranking | IMPLEMENTED_CURRENT | `analysis/opportunity_engine.py` + Telegram scanner | `tests/test_opportunity_engine.py` | Scanner/decision/risk | RAILWAY / PC_WORKER | 19 | pending CI |
-| Heatmap | NOT_IMPLEMENTED | Missing | Missing | Scanner/statistics | RAILWAY / PC_WORKER | 19 | — |
+| Heatmap | IMPLEMENTED_CURRENT | `analysis/opportunity_engine.py` | `tests/test_opportunity_engine.py` | Scanner/statistics | RAILWAY / PC_WORKER | 19 | pending CI |
 | Journal | VERIFIED_HISTORICAL | `services/telegram/journal.py` | Existing | Persistence | RAILWAY | 10/12 | e571a972 |
 | Paper trading | PARTIAL | Production policy/configuration exists; no full lifecycle ledger | Partial | Decision/risk/persistence | RAILWAY | 20 | — |
 | Shadow trading | NOT_IMPLEMENTED | Missing | Missing | Live/paper comparison | RAILWAY | 20 | — |
