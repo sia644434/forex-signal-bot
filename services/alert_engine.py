@@ -37,7 +37,8 @@ class AlertEngine:
         symbol = str(getattr(report, "symbol", "UNKNOWN")).strip().upper()
         confidence = float(getattr(report, "confidence", 0.0) or 0.0)
         risk_level = str(getattr(report, "macro_risk_level", "NORMAL")).upper()
-        if not symbol or signal in {"NEUTRAL", "WAIT", "NO_TRADE"}:
+        portfolio_blocked = bool(getattr(report, "portfolio_risk_blocked", False))
+        if not symbol or signal in {"NEUTRAL", "WAIT", "NO_TRADE"} or portfolio_blocked:
             return None
         if confidence < 0.60 and risk_level not in {"CRISIS", "EXTREME"}:
             return None
