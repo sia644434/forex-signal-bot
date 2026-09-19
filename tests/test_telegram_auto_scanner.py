@@ -15,6 +15,18 @@ def test_auto_scanner_triggers_only_at_quarter_hour_windows():
     assert not ContinuousMarketScanner._should_scan_now(datetime(2026, 9, 19, 12, 14, tzinfo=timezone.utc))
 
 
+def test_auto_scanner_session_filter_skips_closed_non_crypto_markets():
+    from config.symbols import get_market_type
+
+    symbols = ("EURUSD", "BTCUSDT", "AAPL")
+    saturday = datetime(2026, 9, 19, 12, 0, tzinfo=timezone.utc)
+    monday = datetime(2026, 9, 21, 12, 0, tzinfo=timezone.utc)
+
+    assert ContinuousMarketScanner._eligible_symbols_for_session(symbols, saturday) == ("BTCUSDT",)
+    assert ContinuousMarketScanner._eligible_symbols_for_session(symbols, monday) == symbols
+    assert get_market_type("BTCUSDT") == "crypto"
+
+
 def test_auto_scanner_interval_is_bounded(monkeypatch):
     monkeypatch.setenv("TELEGRAM_AUTO_SCAN_INTERVAL_SECONDS", "60")
     assert auto_scanner_interval_seconds() == 60
