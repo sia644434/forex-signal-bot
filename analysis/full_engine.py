@@ -166,7 +166,8 @@ class FullAnalysisEngine:
             market_regime = "RANGING"
 
         latest = candle_data[-1].timestamp
-        signal_state = evaluate_signal_state(latest, max_age_seconds=60.0, volatility=atr_percentage / 100.0) if latest.tzinfo is not None else None
+        has_real_timestamps = isinstance(candles[0], Candle)
+        signal_state = evaluate_signal_state(latest, max_age_seconds=60.0, volatility=atr_percentage / 100.0) if has_real_timestamps and latest.tzinfo is not None else None
 
         analysis_result = AnalysisResult(
             trend=structure.trend, momentum=momentum_result.state, indicators=indicator_snapshot.values, candles=candle_data,
