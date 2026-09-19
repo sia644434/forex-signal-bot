@@ -70,3 +70,10 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - COMPLETED_CURRENT: strategy adaptation, weakness detection, continuous evaluation, rollback/audit trail, robustness matrix, temporal leakage detection, and PC Worker robustness workload.
 - REMAINING: news/macro real providers, alert/report completion, richer OOS/overfitting research, final security/performance/regression, Railway final gate.
 - NEXT_ACTION: verify current-head CI, fix any regressions, then continue with the next large missing capability without repeating a full repository audit.
+
+
+## 2026-09-19 — TASK-137 Macro / News Risk Expansion
+- Added real NewsAPI and FRED adapters with explicit external-dependency diagnostics.
+- Added macro event proximity assessment and integrated NORMAL/ELEVATED/CRISIS risk into the full analysis and decision boundary.
+- Added regression tests for providers, macro assessment, and full-pipeline gating.
+- Exact-head CI verification remains pending; no production verification is claimed for the new commits.
