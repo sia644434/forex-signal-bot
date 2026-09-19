@@ -610,3 +610,14 @@ Evidence:
 - Temporal leakage or overfitting-warning evidence is rejected.
 - Strategy Worker accepts and attaches research validation evidence.
 - Tests updated for validated promotion and rejection of unverified challengers.
+
+
+## TASK-140
+Phase: Phase 18/20 — Strategy Intelligence / Research Integration
+Title: Research-Gated Strategy Adaptation
+Implementation Status: IMPLEMENTED — exact-head CI verification pending
+Evidence:
+- Strategy DNA changes are now proposal-first; the legacy `adapt()` entry point no longer mutates production DNA directly.
+- `apply_adaptation()` requires admissible validation evidence: positive OOS, positive OOS ratio >= 0.5, robust evidence, and no leakage/overfitting warning.
+- Stale proposals are rejected and applied adaptations persist validation evidence plus an auditable change record.
+- Regression coverage verifies proposal-only behavior and rejection of insufficient validation.
