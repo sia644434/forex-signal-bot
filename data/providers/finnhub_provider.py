@@ -96,7 +96,11 @@ class FinnhubProvider(MarketDataProvider):
                     method = getattr(self.client, "get_candles")
             response = await method(canonical_symbol, resolution, start, end)
         except Exception as error:
-            raise ApplicationError("Failed to fetch Finnhub candles.", {"provider":self.name,"symbol":canonical_symbol,"market":market,"timeframe":resolution,"limit":limit}) from error
+            details = {"provider":self.name,"symbol":canonical_symbol,"market":market,"timeframe":resolution,"limit":limit}
+            reason = str(error).strip()
+            if reason:
+                details["reason"] = reason[:300]
+            raise ApplicationError("Failed to fetch Finnhub candles.", details) from error
         if not isinstance(response, dict):
             raise ApplicationError("Invalid Finnhub response.", {"provider":self.name,"symbol":canonical_symbol,"timeframe":resolution,"limit":limit})
         if response.get("s") != "ok":
