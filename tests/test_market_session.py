@@ -97,3 +97,14 @@ def test_invalid_now_is_rejected() -> None:
             [candle(NOW)],
             now=datetime(2026, 9, 14, 12, 0),
         )
+
+
+def test_forex_is_closed_on_weekend_even_without_candles() -> None:
+    saturday = datetime(2026, 9, 19, 12, 0, tzinfo=timezone.utc)
+    result = evaluate_market_status(
+        [],
+        "M15",
+        symbol="EURUSD",
+        now=saturday,
+    )
+    assert result.status == CLOSED
