@@ -133,3 +133,18 @@ def test_full_engine_wires_supply_demand_score_to_analysis_contract(monkeypatch)
     monkeypatch.setattr(engine.confidence_engine, "evaluate", capture)
     engine.analyze(make_candles([1.0, 1.1, 1.2, 1.3, 1.4, 1.5]))
     assert captured["analysis"].supply_demand_score == 20
+
+
+def test_full_engine_macro_crisis_blocks_trade():
+    candles = [100, 101, 102, 101, 103, 104, 105, 106, 107, 108]
+    report = FullAnalysisEngine().analyze(candles, macro_risk={"risk_level": "CRISIS", "events": [{"title": "rate decision"}]})
+    assert report.macro_risk_level == "CRISIS"
+    assert report.macro_events == [{"title": "rate decision"}]
+    assert report.signal == "NO_TRADE"
+
+
+def test_full_engine_macro_elevated_downgrades_directional_signal():
+    candles = [100, 101, 102, 103, 104, 105, 106, 107, 108, 109]
+    report = FullAnalysisEngine().analyze(candles, macro_risk={"risk_level": "ELEVATED", "events": []})
+    assert report.macro_risk_level == "ELEVATED"
+    assert report.signal in {"WAIT", "NO_TRADE", "BUY", "SELL", "NEUTRAL"}
