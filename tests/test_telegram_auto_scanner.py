@@ -134,7 +134,16 @@ async def test_continuous_scanner_loop_runs_after_initial_delay(monkeypatch):
         raise asyncio.CancelledError
 
     monkeypatch.setattr(client_module, "run_continuous_market_scan", fake_scan)
-    monkeypatch.setattr(client_module.asyncio, "sleep", lambda seconds: asyncio.sleep(0))
+
+    sleep_calls = 0
+    async def fake_sleep(seconds):
+        nonlocal sleep_calls
+        sleep_calls += 1
+        if sleep_calls == 1:
+            return
+        raise asyncio.CancelledError
+
+    monkeypatch.setattr(client_module.asyncio, "sleep", fake_sleep)
 
     client = client_module.TelegramClient.__new__(client_module.TelegramClient)
     client.application = SimpleNamespace(bot=object())
