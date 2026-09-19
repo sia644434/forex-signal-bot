@@ -37,7 +37,7 @@ class AlphaVantageProvider(MarketDataProvider):
     @classmethod
     def _canonical_timeframe(cls, timeframe: str) -> str:
         normalized = timeframe.strip().upper().replace(" ","")
-        aliases={"1MIN":"M1","5MIN":"M5","15MIN":"M15","30MIN":"M30","1HR":"H1","1H":"H1","1DAY":"D1","1WEEK":"W1","D":"D1","W":"W1"}
+        aliases={"1MIN":"M1","5MIN":"M5","15MIN":"M15","30MIN":"M30","1HR":"H1","1H":"H1","1DAY":"D1","1D":"D1","1WEEK":"W1","1W":"W1","D":"D1","W":"W1"}
         return aliases.get(normalized, normalized)
 
     @staticmethod
@@ -98,8 +98,7 @@ class AlphaVantageProvider(MarketDataProvider):
                 interval=self._STOCK_INTERVALS.get(tf)
                 if not interval: raise ValueError(f"Unsupported Alpha Vantage stock timeframe: {timeframe!r}")
                 response=await self.client.get_stock_time_series(canonical,interval)
-                marker="time series"
-                series=self._series(response,marker)
+                series=self._series(response,"time series")
             elif market=="index":
                 interval=self._INDEX_INTERVALS.get(tf)
                 if not interval: raise ValueError(f"Unsupported Alpha Vantage index timeframe: {timeframe!r}")
@@ -113,7 +112,10 @@ class AlphaVantageProvider(MarketDataProvider):
                 series=self._series(response,"data")
             else:
                 return []
-        except AlphaVantageRateLimitError: raise
+        except AlphaVantageRateLimitError:
+            raise
+        except ApplicationError:
+            raise
         except Exception as error:
             raise ApplicationError("Failed to fetch Alpha Vantage market candles.",{"provider":self.name,"symbol":canonical,"market":market,"timeframe":tf,"limit":limit}) from error
         candles=self._candles_from_series(series,canonical,limit)
