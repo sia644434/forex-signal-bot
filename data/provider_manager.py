@@ -12,7 +12,9 @@ from core.errors import ApplicationError
 from core.logger import setup_logger
 from data.base import MarketDataProvider
 from data.factory import ProviderFactory
+from config.symbols import get_market_type
 from data.models import Candle
+from data.quality import DataQuality
 
 logger = setup_logger()
 
