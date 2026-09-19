@@ -94,6 +94,13 @@ class ContinuousMarketScanner:
         return reference.minute % TRIGGER_MINUTE_MODULUS in TRIGGER_MINUTE_OFFSETS
 
     @staticmethod
+    def _cycle_bucket(now: datetime) -> str:
+        """Return the canonical M15 bucket used to de-duplicate full cycles."""
+        reference = now.astimezone(timezone.utc).replace(second=0, microsecond=0)
+        bucket_minute = (reference.minute // TRIGGER_MINUTE_MODULUS) * TRIGGER_MINUTE_MODULUS
+        return reference.replace(minute=bucket_minute).isoformat()
+
+    @staticmethod
     def _eligible_symbols_for_session(symbols: tuple[str, ...], now: datetime) -> tuple[str, ...]:
         if now.weekday() < 5:
             return symbols
@@ -287,6 +294,15 @@ class ContinuousMarketScanner:
             # Non-crypto markets are closed over the weekend. Do not manufacture
             # failures from intentionally stale Friday candles; crypto remains
             # continuously monitored because it trades 24/7.
+            cycle_bucket = self._cycle_bucket(now)
+            cycle_state_key = "cycle:last_m15"
+            if self._state.get(cycle_state_key) == cycle_bucket:
+                logger.info(
+                    "Automatic scanner cycle skipped: M15 bucket already processed: bucket=%s",
+                    cycle_bucket,
+                )
+                return 0
+
             configured_symbols = _configured_scan_symbols()
             symbols = self._eligible_symbols_for_session(configured_symbols, now)
             if not symbols:
@@ -315,6 +331,14 @@ class ContinuousMarketScanner:
             results = await asyncio.gather(*(guarded(symbol) for symbol in symbols))
             summary = {outcome: results.count(outcome) for outcome in set(results)}
             sent_count = summary.get(ScanOutcome.VALIDATED_SENT, 0)
+
+            # Persist the completed M15 cycle only when at least one symbol
+            # produced a non-data-failure outcome. This keeps a transient
+            # provider outage retryable while preventing duplicate full fetches
+            # during the same 15-minute candle window.
+            data_failed = summary.get(ScanOutcome.DATA_FAILED, 0)
+            if data_failed < len(symbols):
+                self._state.put(cycle_state_key, cycle_bucket)
             logger.info(
                 "Automatic scanner cycle summary: symbols=%d data_failed=%d already_processed=%d "
                 "m15_no_trade=%d m15_neutral=%d m15_directional=%d "
