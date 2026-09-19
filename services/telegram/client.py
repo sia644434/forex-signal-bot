@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 
 from telegram import BotCommand
 from telegram.ext import Application
@@ -49,14 +50,10 @@ class TelegramClient:
             await asyncio.sleep(5)
             while True:
                 await run_continuous_market_scan(
-                    type(
-                        "ScannerContext",
-                        (),
-                        {
-                            "bot": self.application.bot,
-                            "application": self.application,
-                        },
-                    )()
+                    SimpleNamespace(
+                        bot=self.application.bot,
+                        application=self.application,
+                    )
                 )
                 await asyncio.sleep(interval)
         except asyncio.CancelledError:
