@@ -12,7 +12,7 @@
 | Crisis mode | IMPLEMENTED_CURRENT | `analysis/signal_state.py` + decision gates | Focused | Volatility/timestamps | RAILWAY | 15 | pending CI |
 | Decision conflict gates | IMPLEMENTED_CURRENT | `analysis/decision_engine.py` | Existing + focused | Scenario/signal state | RAILWAY | 15 | pending CI |
 | Risk/position sizing | VERIFIED_HISTORICAL | `analysis/risk_engine.py`, `position_sizing.py` | Existing | Market metadata/conversion | RAILWAY | 6/8 | e571a972 |
-| Portfolio engine | NOT_IMPLEMENTED | Missing canonical portfolio module | Missing | Positions/risk/correlation | RAILWAY / PC_WORKER for stress | 16 | — |
+| Portfolio engine | IMPLEMENTED_CURRENT | `analysis/portfolio_engine.py` | `tests/test_portfolio_engine.py` | Positions/risk/correlation | RAILWAY / PC_WORKER for stress | 16 | pending CI |
 | Correlation matrix | NOT_IMPLEMENTED | Missing canonical portfolio/statistics integration | Missing | Multi-symbol history | PC_WORKER for large matrices | 16 | — |
 | Portfolio stress | NOT_IMPLEMENTED | Missing | Missing | Portfolio/correlation | PC_WORKER | 16 | — |
 | Real backtesting | VERIFIED_HISTORICAL_PARTIAL | `worker/executors.py` | Existing | Historical data | PC_WORKER | 9 | e571a972 |
