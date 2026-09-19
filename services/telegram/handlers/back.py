@@ -11,6 +11,6 @@ async def back_handler(
     if update.callback_query:
         await update.callback_query.answer()
         await update.callback_query.edit_message_text(
-            "🤖 Forex AI Intelligence Platform\n\n"
+            "🤖 Multi-Asset Trading Intelligence Platform\n\n"
             "به منوی اصلی برگشتید."
         )
