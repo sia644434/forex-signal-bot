@@ -74,7 +74,7 @@ def test_strategy_evaluation_rejects_stale_validation_identity():
 
 
 def test_strategy_research_validation_uses_robustness_engine_result():
-    prices = [100.0 + i for i in range(61)]
+    prices = [100.0 * (1.001 ** i) for i in range(61)]
     result = strategy_evaluation({
         "strategies": [{
             "strategy_id": "robust-auto",
