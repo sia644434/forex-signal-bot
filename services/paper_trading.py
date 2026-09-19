@@ -125,3 +125,43 @@ def compare_shadow_decision(paper_decision: str, reference_decision: str) -> Sha
     paper = str(paper_decision).upper()
     reference = str(reference_decision).upper()
     return ShadowComparison(paper, reference, paper == reference)
+
+
+@dataclass(frozen=True, slots=True)
+class ShadowObservation:
+    timestamp: str
+    paper_decision: str
+    reference_decision: str
+    agreement: bool
+
+
+class ShadowComparisonLedger:
+    """In-memory audit ledger for deterministic paper/reference decision comparison."""
+
+    def __init__(self) -> None:
+        self._observations: list[ShadowObservation] = []
+
+    def record(self, paper_decision: str, reference_decision: str, timestamp: str) -> ShadowObservation:
+        comparison = compare_shadow_decision(paper_decision, reference_decision)
+        observation = ShadowObservation(
+            timestamp=str(timestamp),
+            paper_decision=comparison.paper_decision,
+            reference_decision=comparison.reference_decision,
+            agreement=comparison.agreement,
+        )
+        self._observations.append(observation)
+        return observation
+
+    def summary(self) -> dict[str, object]:
+        total = len(self._observations)
+        agreements = sum(1 for item in self._observations if item.agreement)
+        return {
+            "total": total,
+            "agreements": agreements,
+            "disagreements": total - agreements,
+            "agreement_rate": agreements / total if total else 0.0,
+            "observations": [asdict(item) for item in self._observations],
+        }
+
+    def clear(self) -> None:
+        self._observations.clear()
