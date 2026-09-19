@@ -62,13 +62,17 @@ class Application:
 
     async def start(self) -> None:
         """
-        Start application.
-        """
+        Start the health endpoint before application services.
 
-        await self.services.start_all()
+        The endpoint must be reachable during dependency startup so an
+        orchestrator can distinguish "starting/not ready" (503) from a
+        connection failure. The health contract remains degraded until all
+        critical services are ready.
+        """
 
         try:
             self.health_server.start()
+            await self.services.start_all()
         except Exception:
             try:
                 self.health_server.stop()
