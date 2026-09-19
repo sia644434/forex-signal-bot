@@ -132,6 +132,7 @@ def test_multi_timeframe_m15_diagnostics_expose_precise_rejection_details():
     decision, diagnostics = engine.analyze_with_diagnostics(candles)
     assert decision is None
     assert "m15_signal=NO_TRADE" in diagnostics
+    assert "m15_raw_score_signal=NEUTRAL" in diagnostics
     assert "m15_score=47.0" in diagnostics
     assert "m15_thresholds=BUY>=60.0,SELL<=40.0" in diagnostics
     assert "m15_gap_to_buy=13.0" in diagnostics
@@ -149,6 +150,7 @@ def test_multi_timeframe_m15_diagnostics_expose_precise_rejection_details():
     assert "m15_directional_negative=price_action:-0.75" in diagnostics
     assert "m15_contribution_total=30.75" in diagnostics
     assert "m15_components=smart_money_score=30.0,structure_score=20.0,price_action_score=-10.0" in diagnostics
+    assert "m15_execution_blockers=Execution blocked by insufficient directional agreement" in diagnostics
     assert "m15_blockers=Execution blocked by insufficient directional agreement" in diagnostics
     assert "m15_reasons=Execution blocked by insufficient directional agreement" in diagnostics
     assert len(diagnostics) >= 20
