@@ -216,6 +216,9 @@ class AnalysisReport:
     # Raw component scores used by M15 diagnostics.
     component_scores: dict[str, float] = field(default_factory=dict)
 
+    # Exact weighted contributions produced by DecisionEngine.
+    decision_contributions: dict[str, float] = field(default_factory=dict)
+
 
     
     # ==================================================
