@@ -103,3 +103,11 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - Current task: TASK-140.
 - IN_PROGRESS: exact-head Actions verification for TASK-140.
 - NEXT_ACTION: inspect exact-head CI; fix only real failures, then continue to the next large missing capability.
+
+
+## Recovery Frontier — TASK-141
+- Last implemented code commit: 537c018cc979d858f5fb790e516a81de42716d94 (strategy worker regression coverage).
+- Scope: version-bound strategy validation + research-backed worker evaluation integration.
+- Exact-head CI verification: pending.
+- Resume rule: check Actions for the latest main HEAD first; if green, mark TASK-141 VERIFIED. If red, inspect only the failing workflow/job and repair the affected boundary.
+- Next development target after verification: deeper continuous strategy evaluation/history and validation-aware lifecycle state transitions.
