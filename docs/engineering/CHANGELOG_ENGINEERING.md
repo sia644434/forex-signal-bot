@@ -193,3 +193,7 @@ Railway remains deferred until required capabilities and final regression/securi
 - Continuous evaluation can ingest current validation evidence and records an auditable history per strategy.
 - Stale version/DNA evidence is excluded from current validation state.
 - Added focused regression coverage.
+
+## 2026-09-19 — TASK-142 CI Repair
+- Fixed StrategyRecord construction so validation-aware evaluation history is always initialized.
+- The previous HEAD failed 8 tests with AttributeError; this was a direct regression from TASK-142 and is now corrected.
