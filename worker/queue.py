@@ -4,6 +4,8 @@ import json
 import sqlite3
 import time
 import uuid
+import threading
+from functools import wraps
 from dataclasses import dataclass
 from typing import Any
 
@@ -28,11 +30,20 @@ class QueueRecord:
     claim_token: str | None = None
 
 
+def _thread_safe(method):
+    @wraps(method)
+    def wrapper(self, *args, **kwargs):
+        with self._lock:
+            return method(self, *args, **kwargs)
+    return wrapper
+
+
 class WorkerQueue:
     """Durable SQLite queue with fenced leases and renewable execution claims."""
 
     def __init__(self, database_path: str = ":memory:") -> None:
-        self._connection = sqlite3.connect(database_path, timeout=30.0)
+        self._connection = sqlite3.connect(database_path, timeout=30.0, check_same_thread=False)
+        self._lock = threading.RLock()
         self._connection.row_factory = sqlite3.Row
         self._connection.execute("PRAGMA foreign_keys = ON")
         self._connection.execute("PRAGMA busy_timeout = 30000")
@@ -62,10 +73,10 @@ class WorkerQueue:
         if name not in columns:
             self._connection.execute(f"ALTER TABLE worker_jobs ADD COLUMN {name} {definition}")
 
-    def close(self) -> None:
+    @_thread_safe\n    def close(self) -> None:
         self._connection.close()
 
-    def enqueue(self, request: JobRequest) -> QueueRecord:
+    @_thread_safe\n    def enqueue(self, request: JobRequest) -> QueueRecord:
         if not request.job_id.strip():
             raise ValueError("Job ID must not be empty")
         if request.timeout_seconds <= 0:
@@ -84,7 +95,7 @@ class WorkerQueue:
             raise RuntimeError(f"Queue record was not created: {request.job_id}")
         return record
 
-    def claim_next(self) -> QueueRecord | None:
+    @_thread_safe\n    def claim_next(self) -> QueueRecord | None:
         """Atomically claim the highest-priority pending job."""
         row = self._connection.execute(
             "SELECT job_id FROM worker_jobs WHERE status = 'PENDING' ORDER BY priority DESC, rowid ASC LIMIT 1"
@@ -93,7 +104,7 @@ class WorkerQueue:
             return None
         return self._claim_job_id(row["job_id"])
 
-    def claim(self, job_id: str) -> QueueRecord | None:
+    @_thread_safe\n    def claim(self, job_id: str) -> QueueRecord | None:
         if not isinstance(job_id, str) or not job_id.strip():
             raise ValueError("Job ID must not be empty")
         return self._claim_job_id(job_id)
@@ -109,7 +120,7 @@ class WorkerQueue:
             return None
         return self.get(job_id)
 
-    def renew_lease(self, job_id: str, claim_token: str) -> QueueRecord:
+    @_thread_safe\n    def renew_lease(self, job_id: str, claim_token: str) -> QueueRecord:
         """Refresh a live claim without allowing an older worker to renew it."""
         if not isinstance(claim_token, str) or not claim_token.strip():
             raise ValueError("Claim token must not be empty")
@@ -125,7 +136,7 @@ class WorkerQueue:
             return record
         return record
 
-    def metrics(self) -> dict[str, int]:
+    @_thread_safe\n    def metrics(self) -> dict[str, int]:
         counts = {state.lower(): 0 for state in QUEUE_STATES}
         rows = self._connection.execute("SELECT status, COUNT(*) AS count FROM worker_jobs GROUP BY status").fetchall()
         for row in rows:
@@ -135,7 +146,7 @@ class WorkerQueue:
         counts["total"] = sum(counts[state.lower()] for state in QUEUE_STATES)
         return counts
 
-    def recover_stale_running(self, max_age_seconds: int) -> list[QueueRecord]:
+    @_thread_safe\n    def recover_stale_running(self, max_age_seconds: int) -> list[QueueRecord]:
         if max_age_seconds <= 0:
             raise ValueError("Recovery age must be greater than zero")
         cutoff = time.time() - max_age_seconds
@@ -145,7 +156,7 @@ class WorkerQueue:
         ).fetchall()
         return self._recover_running_rows(rows)
 
-    def recover_expired_running(self, grace_seconds: int = 30) -> list[QueueRecord]:
+    @_thread_safe\n    def recover_expired_running(self, grace_seconds: int = 30) -> list[QueueRecord]:
         if grace_seconds < 0:
             raise ValueError("Recovery grace must not be negative")
         now = time.time()
@@ -170,19 +181,19 @@ class WorkerQueue:
                 records.append(record)
         return records
 
-    def finish(self, job_id: str, *, result: dict[str, Any] | None = None, claim_token: str | None = None) -> QueueRecord:
+    @_thread_safe\n    def finish(self, job_id: str, *, result: dict[str, Any] | None = None, claim_token: str | None = None) -> QueueRecord:
         return self._transition(job_id, "COMPLETED", result=result, error=None, claim_token=claim_token)
 
-    def fail(self, job_id: str, error: str, *, claim_token: str | None = None) -> QueueRecord:
+    @_thread_safe\n    def fail(self, job_id: str, error: str, *, claim_token: str | None = None) -> QueueRecord:
         return self._transition(job_id, "FAILED", result=None, error=error, claim_token=claim_token)
 
-    def timeout(self, job_id: str, error: str = "Worker job timeout", *, claim_token: str | None = None) -> QueueRecord:
+    @_thread_safe\n    def timeout(self, job_id: str, error: str = "Worker job timeout", *, claim_token: str | None = None) -> QueueRecord:
         return self._transition(job_id, "TIMEOUT", result=None, error=error, claim_token=claim_token)
 
-    def cancel(self, job_id: str, *, claim_token: str | None = None) -> QueueRecord:
+    @_thread_safe\n    def cancel(self, job_id: str, *, claim_token: str | None = None) -> QueueRecord:
         return self._transition(job_id, "CANCELLED", result=None, error=None, claim_token=claim_token)
 
-    def get(self, job_id: str) -> QueueRecord | None:
+    @_thread_safe\n    def get(self, job_id: str) -> QueueRecord | None:
         row = self._connection.execute("SELECT * FROM worker_jobs WHERE job_id = ?", (job_id,)).fetchone()
         if row is None:
             return None
@@ -192,7 +203,7 @@ class WorkerQueue:
             result=json.loads(row["result"]) if row["result"] else None, error=row["error"], claimed_at=row["claimed_at"], claim_token=row["claim_token"],
         )
 
-    def _transition(self, job_id: str, status: str, *, result: dict[str, Any] | None, error: str | None, claim_token: str | None) -> QueueRecord:
+    @_thread_safe\n    def _transition(self, job_id: str, status: str, *, result: dict[str, Any] | None, error: str | None, claim_token: str | None) -> QueueRecord:
         if status not in QUEUE_STATES - {"PENDING", "RUNNING"}:
             raise ValueError(f"Invalid terminal queue state: {status}")
         if claim_token is None:
