@@ -9,6 +9,7 @@ import os
 from typing import Any
 
 from analysis.full_engine import FullAnalysisEngine
+from analysis.opportunity_engine import OpportunityEngine
 from config.symbols import get_market_type
 from core.errors import ApplicationError
 from data.factory import ProviderFactory
@@ -43,6 +44,8 @@ class ScanResult:
     error: str | None = None
     market_status: str = "OPEN"
     last_candle_time: datetime | str | None = None
+    opportunity_score: float = 0.0
+    opportunity_rank: int = 0
 
 
 @dataclass(frozen=True)
@@ -158,7 +161,17 @@ async def scan_market(
             logger.exception("Market scan failed for %s/%s", symbol, timeframe)
             return ScanResult(symbol, "NO_TRADE", 0.0, 0.0, None, "UNKNOWN", "unknown", None, error="scan_failed")
 
-    return sorted(await asyncio.gather(*(scan_one(s) for s in scan_symbols)), key=lambda x: (x.error is None, x.confidence, x.score), reverse=True)
+    results = list(await asyncio.gather(*(scan_one(s) for s in scan_symbols)))
+    opportunities = {item.symbol: item for item in OpportunityEngine.rank(results)}
+    enriched = [
+        replace(
+            item,
+            opportunity_score=opportunities.get(item.symbol).score if item.symbol in opportunities else 0.0,
+            opportunity_rank=opportunities.get(item.symbol).rank if item.symbol in opportunities else 0,
+        )
+        for item in results
+    ]
+    return sorted(enriched, key=lambda x: (x.opportunity_rank == 0, x.opportunity_rank))
 
 
 def _status_text(status: str, language: str = "fa") -> str:
