@@ -25,6 +25,7 @@ class TrackedSignal:
     last_signal: str = ""
     last_price: float | None = None
     updated_at: str = ""
+    events: list[dict[str, str]] | None = None
 
 
 _STORE = TrackerStore()
@@ -53,6 +54,7 @@ def _deserialize(data: dict) -> TrackedSignal:
         last_signal=str(data.get("last_signal", "")),
         last_price=data.get("last_price"),
         updated_at=str(data.get("updated_at", "")),
+        events=list(data.get("events") or []),
     )
 
 
@@ -92,6 +94,7 @@ def track_report(user_id: int, symbol: str, timeframe: str, report) -> TrackedSi
         report.take_profit_3,
         last_signal=signal,
         updated_at=datetime.now(timezone.utc).isoformat(),
+        events=[{"type": "CREATED", "signal": signal, "timestamp": datetime.now(timezone.utc).isoformat()}],
     )
     ACTIVE_TRACKS[(user_id, symbol, timeframe)] = item
     _persist_tracks()
@@ -132,6 +135,8 @@ def _apply_report(item: TrackedSignal, report) -> tuple[str, str]:
     new_signal = str(report.signal).upper()
     old_signal = item.last_signal
     item.last_signal = new_signal
+    if item.events is None:
+        item.events = []
     item.updated_at = datetime.now(timezone.utc).isoformat()
 
     if new_signal in {"BUY", "SELL", "STRONG_BUY", "STRONG_SELL"}:
@@ -142,6 +147,8 @@ def _apply_report(item: TrackedSignal, report) -> tuple[str, str]:
         item.take_profit_2 = report.take_profit_2
         item.take_profit_3 = report.take_profit_3
         item.status = "CHANGED" if new_signal != old_signal else "ACTIVE"
+        if new_signal != old_signal:
+            item.events.append({"type": "SIGNAL_CHANGED", "from": old_signal, "to": new_signal, "timestamp": item.updated_at})
     else:
         item.signal = new_signal
         item.entry = None
@@ -150,6 +157,7 @@ def _apply_report(item: TrackedSignal, report) -> tuple[str, str]:
         item.take_profit_2 = None
         item.take_profit_3 = None
         item.status = "INVALIDATED"
+        item.events.append({"type": "INVALIDATED", "from": old_signal, "to": new_signal, "timestamp": item.updated_at})
 
     return old_signal, new_signal
 
@@ -179,6 +187,9 @@ async def refresh_tracking(
         target_event = _target_event(item, high, low)
         if target_event:
             item.status = "TARGET_REACHED" if "TP" in target_event else "STOPPED"
+            if item.events is None:
+                item.events = []
+            item.events.append({"type": item.status, "detail": target_event, "timestamp": item.updated_at})
             await notify(
                 f"📢 <b>به‌روزرسانی {html.escape(item.symbol, quote=False)}</b>\n\n"
                 f"{target_event}\nقیمت فعلی: <b>{close}</b>"
