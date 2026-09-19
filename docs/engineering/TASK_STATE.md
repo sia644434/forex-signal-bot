@@ -554,3 +554,24 @@ Implementation Status: IMPLEMENTED — pending exact-head CI verification
 - Added performance evaluation, pause/retirement handling, and champion/challenger comparison/promotion contracts.
 - Added a PC Worker `strategy_evaluation` workload for heavier batch evaluation.
 - Added focused strategy lifecycle and worker executor regression coverage.
+
+
+## TASK-135
+Phase: Phase 18 — Strategy Intelligence
+Title: Strategy Adaptation, Weakness Detection, Continuous Evaluation, and Rollback
+Implementation Status: IMPLEMENTED — pending exact-head CI verification
+- Extended strategy records with DNA history and auditable lifecycle events.
+- Added weakness detection by market/symbol/timeframe/regime using sample-aware observations.
+- Added explicit adaptation and rollback operations; adaptation is traceable and rollback is reversible.
+- Added continuous evaluation across the strategy registry.
+- Added promotion/retirement audit events.
+- Added focused lifecycle and audit regression coverage.
+
+## TASK-136
+Phase: Phase 17 — Advanced Research
+Title: Robustness Matrix and Temporal Leakage Detection
+Implementation Status: IMPLEMENTED — pending exact-head CI verification
+- Added deterministic robustness matrix across configurable signal thresholds and execution fees.
+- Added return/drawdown dispersion and positive-case ratio outputs without claiming statistical significance.
+- Added temporal leakage detection that rejects feature timestamps later than target timestamps.
+- Added PC Worker-owned `robustness_analysis` workload and regression coverage.
