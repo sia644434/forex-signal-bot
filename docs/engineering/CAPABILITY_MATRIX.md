@@ -87,3 +87,14 @@ The implemented roadmap through TASK-147 has passed exact-head CI on `151ea57b8e
 - **Economic calendar:** no canonical release-calendar provider is currently claimed. NewsAPI publication time and FRED observation dates are not equivalent to scheduled economic release timestamps.
 - **Railway final gate:** current code/CI verification is not deployment verification. Fresh live health and restart/recovery evidence must target the current HEAD.
 - **Shadow/paper durability:** tracker lifecycle state is durable through its existing store; the ShadowComparisonLedger remains an in-process comparison ledger and is not claimed as a durable database-backed shadow history until integrated with a persistence boundary.
+
+
+## Multi-Asset Real Data Expansion — TASK-150
+| Capability | Status | Implementation | Test | Production boundary |
+|---|---|---|---|---|
+| Forex real candles | IMPLEMENTED_CURRENT | OANDA + Finnhub + Alpha Vantage | Existing provider suites | Requires configured provider credentials + market freshness |
+| Crypto real candles | IMPLEMENTED_CURRENT | Finnhub crypto candle routing | tests/test_multi_asset_providers.py | Requires FINNHUB_API_KEY and provider-supported symbol |
+| Stock real candles | IMPLEMENTED_CURRENT | Finnhub stock candles + Alpha Vantage time series | tests/test_multi_asset_providers.py | Intraday/realtime entitlement depends provider plan |
+| Index real candles | IMPLEMENTED_CURRENT | Finnhub index candles + Alpha Vantage INDEX_DATA | tests/test_multi_asset_providers.py | Provider symbol coverage/plan dependent |
+| Gold/Silver/WTI/BRENT real price data | PARTIAL | Alpha Vantage commodity endpoints | OHLC safety regression | Current endpoints do not provide canonical OHLC for all configured commodities; no fabricated candles allowed |
+| Multi-asset failover | IMPLEMENTED_CURRENT | ProviderManager capability-aware fallback | Existing provider-manager tests + new routing tests | Runtime credentials determine active path |
