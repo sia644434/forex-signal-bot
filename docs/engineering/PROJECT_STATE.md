@@ -2,13 +2,13 @@
 
 - Project: `siasoltoon/forex-signal-bot`
 - Branch: `main`
-- Current HEAD: `1aec001ff4769bb47171513ad1bdb7da5bb88c73`
+- Current HEAD: `0b03dde31133a089a1d862253ba7e6662e6ab799`
 - Product: **Multi-Asset Trading Intelligence Platform**
 - Supported market families: Forex, Crypto, Stocks, Indices, Commodities
 - Historical phase closures: Phases 1–11 have recorded closure evidence at their respective exact code heads.
-- Current operational state: **Phase 12 requires current-HEAD re-verification**.
+- Current operational state: **Phase 13 active code audit; Railway verification deferred to the final external gate**.
 - Current unresolved production signal: the combined status for current HEAD contains a failing Railway deployment status (`lavish-energy - forex-signal-bot`).
-- Phase 13 must not be treated as started/completed until Phase 12 and the cross-phase integrity audit are resolved.
+- Phase 13 is active for code/test/CI/cross-phase auditing; it cannot be finally closed until the code audit is complete and the deferred Railway verification is performed on the resulting HEAD.
 - No current code defect is declared solely from the Railway failure; the failure is an evidence-backed production-verification blocker that must be investigated.
 - Historical Railway/live-smoke evidence remains valid only for the deployment state and commit for which it was observed; it must not be conflated with current-HEAD verification.
 
