@@ -7,7 +7,7 @@ The repository is a **Multi-Asset Trading Intelligence Platform**. Supported mar
 The previous phase closures are preserved as historical evidence at their recorded exact code heads. They are not, by themselves, proof that the current `main` HEAD is green or that no cross-phase regression exists.
 
 ### Current main verification state
-- Current `main` HEAD: `1aec001ff4769bb47171513ad1bdb7da5bb88c73`.
+- Current `main` HEAD: `4478ff72b7104bfdfdf05d69e787c3342fab134c`.
 - The repository combined status currently contains a failing Railway deployment status (`lavish-energy - forex-signal-bot`).
 - GitHub Actions workflow-run lookup for this commit returned no PR-triggered workflow runs; therefore the historical seven-workflow closure evidence must not be relabeled as fresh current-HEAD evidence.
 - No code regression has yet been proven solely from the failing external deployment status. The deployment failure is nevertheless a concrete unresolved production-verification item.
@@ -63,8 +63,10 @@ Historical evidence: Railway live health and restart/recovery verification was p
 Current issue: the current `main` HEAD has a failing Railway deployment status. The failure must be investigated and resolved or explicitly determined to be unrelated/stale before Phase 12 can be considered current-HEAD verified.
 
 ## Phase 13 — Final Production Audit
-Status: BLOCKED_PENDING_PHASE_12_REVERIFICATION
-Dependency: Do not start final production closure until the current deployment status and the current cross-phase integrity audit are resolved.
+Status: ACTIVE_CODE_AUDIT
+Scope: Current-HEAD code, tests, CI, security, data contracts, persistence, worker boundaries, and cross-phase regressions are being audited now.
+Railway: Deferred to the final external deployment verification step after the current code audit is complete and synchronized.
+Closure dependency: Phase 13 cannot be finally closed until the code audit is complete and the deferred Railway deployment/health/recovery verification is performed on the resulting HEAD.
 
 ## Mandatory Audit Rule
 For every phase reopened by concrete evidence:
