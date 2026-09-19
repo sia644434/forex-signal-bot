@@ -136,3 +136,10 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - TASK-144 adds validation-gated challenger state, automatic retirement for persistent negative expectancy/elevated drawdown, and persisted research diagnostics.
 - Exact-head Actions verification remains pending for the latest head.
 - Resume rule: check all seven required workflows for the latest head; repair only concrete failures, then continue with remaining roadmap capabilities.
+
+
+## Recovery Frontier — TASK-145 — 2026-09-19
+- Implemented a broad next capability slice: paper equity lifecycle/mark-to-market, deterministic alert policy and report alert contract, plus macro provider caching and collect-and-assess orchestration.
+- Latest implementation head: `54e4b3be86ba2d6f8cf6be4e96b8c56de56536f2`.
+- Exact-head Actions verification is currently queued/pending; no green verification is claimed yet.
+- Resume rule: check the latest head workflows first; repair concrete failures only, then continue with the next large roadmap gap.
