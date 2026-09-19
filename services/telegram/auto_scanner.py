@@ -105,13 +105,40 @@ class ContinuousMarketScanner:
         context["M5"] = await self._fetch_timeframe(market_data, symbol, "M5", force=False)
         return context
 
-    async def _notify(self, bot, decision) -> int:
+    @staticmethod
+    def _notification_key(
+        symbol: str,
+        timeframe: str,
+        candle_key: str,
+        direction: str,
+        chat_id: int,
+    ) -> str:
+        return (
+            f"sent:{symbol}:{timeframe}:{candle_key}:{direction}:"
+            f"{chat_id}"
+        )
+
+    async def _notify(self, bot, decision, candle_key: str) -> tuple[int, int]:
         sent = 0
+        eligible = 0
         for chat_id in _chat_ids():
             try:
                 state = get_user_state(chat_id)
                 if not bool(state.settings.get("notifications_enabled", True)):
                     continue
+
+                eligible += 1
+                notification_key = self._notification_key(
+                    decision.symbol,
+                    decision.setup_timeframe,
+                    candle_key,
+                    decision.direction,
+                    chat_id,
+                )
+                if self._state.get(notification_key) == "sent":
+                    sent += 1
+                    continue
+
                 language = state.language if state.language in {"fa", "en"} else "fa"
                 message = _format_signal(
                     decision.setup_report,
@@ -129,10 +156,11 @@ class ContinuousMarketScanner:
                 if language == "en":
                     message = message.replace("تحلیل چندتایم‌فریمی", "Multi-timeframe analysis")
                 await bot.send_message(chat_id=chat_id, text=message, parse_mode="HTML")
+                self._state.put(notification_key, "sent")
                 sent += 1
             except Exception:
                 logger.exception("Automatic signal notification failed for chat %s.", chat_id)
-        return sent
+        return sent, eligible
 
     async def _scan_symbol(self, bot, market_data, symbol: str) -> bool:
         try:
@@ -148,19 +176,19 @@ class ContinuousMarketScanner:
             context = await self._context_for_symbol(market_data, symbol, m15)
             decision = self._engine.analyze(context, symbol=symbol)
 
-            # Mark the closed M15 candle as processed even when no setup exists.
-            # A failed data fetch/analysis raises before this point and is retried.
-            self._state.put(key, latest_key)
-
+            # A no-signal result is deterministic for this closed M15 candle.
+            # For a signal, keep the candle unprocessed until every eligible
+            # recipient has either already received it or receives it now.
+            # This makes Telegram delivery retryable after transient failures.
             if decision is None:
+                self._state.put(key, latest_key)
                 return False
 
-            sent = await self._notify(bot, decision)
+            sent, eligible = await self._notify(bot, decision, latest_key)
+            if eligible == 0 or sent == eligible:
+                self._state.put(key, latest_key)
+
             if sent:
-                self._state.put(
-                    f"sent:{symbol}:M15",
-                    f"{latest_key}:{decision.direction}",
-                )
                 logger.info(
                     "Automatic validated setup sent for %s/M15 (%s recipients).",
                     symbol,
