@@ -65,23 +65,23 @@ def make_application(
     return app
 
 
-def test_application_start_starts_services_before_health_server() -> None:
+def test_application_start_starts_health_server_before_services() -> None:
     events: list[str] = []
     app = make_application(events)
 
     run(app.start())
 
-    assert events == ["services.start", "health.start"]
+    assert events == ["health.start", "services.start"]
 
 
-def test_application_start_rolls_back_services_when_health_server_fails() -> None:
+def test_application_start_rolls_back_when_health_server_fails() -> None:
     events: list[str] = []
     app = make_application(events, health_start_fails=True)
 
     with pytest.raises(RuntimeError, match="health server failed to start"):
         run(app.start())
 
-    assert events == ["services.start", "health.start", "health.stop", "services.stop"]
+    assert events == ["health.start", "health.stop", "services.stop"]
 
 
 def test_application_stop_stops_health_server_before_services() -> None:
