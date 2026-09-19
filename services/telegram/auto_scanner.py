@@ -6,7 +6,7 @@ import logging
 import os
 from typing import Any
 
-from config.symbols import get_market_type, get_all_symbols, normalize_timeframe
+from config.symbols import get_market_type, normalize_timeframe
 from services.market_data.service import MarketDataService
 from services.telegram.scanner import _configured_scan_symbols, get_scanner_provider_manager
 from services.telegram.state import get_user_state
@@ -68,6 +68,12 @@ class ContinuousMarketScanner:
     def _should_scan_now(now: datetime | None = None) -> bool:
         reference = now or datetime.now(timezone.utc)
         return reference.minute % TRIGGER_MINUTE_MODULUS in TRIGGER_MINUTE_OFFSETS
+
+    @staticmethod
+    def _eligible_symbols_for_session(symbols: tuple[str, ...], now: datetime) -> tuple[str, ...]:
+        if now.weekday() < 5:
+            return symbols
+        return tuple(symbol for symbol in symbols if get_market_type(symbol) == "crypto")
 
     async def _fetch_timeframe(
         self,
@@ -210,15 +216,13 @@ class ContinuousMarketScanner:
             # Non-crypto markets are closed over the weekend. Do not manufacture
             # failures from intentionally stale Friday candles; crypto remains
             # continuously monitored because it trades 24/7.
-            symbols = _configured_scan_symbols()
-            if now.weekday() >= 5:
-                crypto_symbols = tuple(symbol for symbol in symbols if get_market_type(symbol) == "crypto")
-                if not crypto_symbols:
-                    logger.info(
-                        "Automatic scanner skipped: all configured non-crypto markets are closed (UTC weekend)."
-                    )
-                    return 0
-                symbols = crypto_symbols
+            configured_symbols = _configured_scan_symbols()
+            symbols = self._eligible_symbols_for_session(configured_symbols, now)
+            if not symbols:
+                logger.info(
+                    "Automatic scanner skipped: all configured non-crypto markets are closed (UTC weekend)."
+                )
+                return 0
 
             # Refresh provider configuration before each automatic cycle so
             # newly available configured providers are picked up without restart.
@@ -228,7 +232,7 @@ class ContinuousMarketScanner:
             logger.info(
                 "Automatic scanner cycle started: symbols=%d/%d, timeframes=%s, utc=%s",
                 len(symbols),
-                len(_configured_scan_symbols()),
+                len(configured_symbols),
                 ",".join(TIMEFRAMES),
                 now.isoformat(),
             )
