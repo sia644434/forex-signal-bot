@@ -29,6 +29,14 @@ def test_negative_expectancy_pauses_strategy():
     assert result["status"] == "PAUSED"
 
 
+def test_persistent_negative_strategy_is_retired_automatically():
+    engine = StrategyIntelligenceEngine()
+    engine.register("bad-long", "Persistently Bad")
+    result = engine.observe("bad-long", obs(-.03, 120, -.25))
+    assert result["status"] == "RETIRED"
+    assert "negative expectancy" in result["status"] or engine.snapshot()[0]["retirement_reason"]
+
+
 def test_strategy_weakness_detection_adaptation_and_rollback():
     engine = StrategyIntelligenceEngine()
     engine.register("s", "Adaptive", dna={"threshold": 1})
