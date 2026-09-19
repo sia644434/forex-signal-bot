@@ -117,7 +117,11 @@ class FullAnalysisEngine:
         portfolio_equity: float | None = None,
         portfolio_max_symbol_weight: float = 0.35,
         portfolio_max_gross_exposure: float = 1.0,
+        signal_max_age_seconds: float = 60.0,
     ) -> AnalysisReport:
+        if signal_max_age_seconds <= 0 or not math.isfinite(float(signal_max_age_seconds)):
+            raise ValueError("signal_max_age_seconds must be finite and positive.")
+
         candle_data, closes = self._normalize_candles(candles)
         atr_result = self.atr_engine.calculate(closes)
         atr_value = self._require_finite(atr_result.atr if atr_result.atr is not None else 0.0, "ATR")
@@ -179,7 +183,7 @@ class FullAnalysisEngine:
 
         latest = candle_data[-1].timestamp
         has_real_timestamps = isinstance(candles[0], Candle)
-        signal_state = evaluate_signal_state(latest, max_age_seconds=60.0, volatility=atr_percentage / 100.0) if has_real_timestamps and latest.tzinfo is not None else None
+        signal_state = evaluate_signal_state(latest, max_age_seconds=float(signal_max_age_seconds), volatility=atr_percentage / 100.0) if has_real_timestamps and latest.tzinfo is not None else None
 
         macro_context = macro_risk or {}
         macro_level = str(macro_context.get("risk_level", "NORMAL")).upper()
