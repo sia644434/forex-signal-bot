@@ -160,3 +160,10 @@ Railway remains deferred until required capabilities and final regression/securi
 - Added temporal leakage checks and routed the heavy research workload to PC Worker.
 - Added focused regression and worker contract coverage.
 - Exact-head CI and production verification remain pending.
+
+
+## 2026-09-19 — TASK-139 Research-Gated Strategy Lifecycle
+- Connected OOS/walk-forward research evidence to strategy lifecycle decisions.
+- Added admissible validation evidence with OOS stability, robustness, leakage and overfitting gates.
+- Champion/challenger promotion now requires research validation evidence for both sides.
+- Updated Worker strategy evaluation and regression tests.
