@@ -2,11 +2,11 @@ from __future__ import annotations
 
 TRANSLATIONS = {
     "fa": {
-        "home": "🤖 پلتفرم هوش فارکس\n\nیک بخش را انتخاب کنید:",
+        "home": "🤖 پلتفرم هوشمند چندبازاره\n\nیک بخش را انتخاب کنید:",
         "analysis": "📊 تحلیل هوشمند\n\nیک حالت تحلیل را انتخاب کنید.",
         "signals": "📡 سیگنال زنده\n\nیک گزینه را انتخاب کنید.",
         "scanner": "🔎 اسکن بازار",
-        "coach": "🧠 مربی هوش مصنوعی",
+        "coach": "🧠 مربی تحلیل",
         "journal": "📒 ژورنال معاملات",
         "settings": "⚙️ تنظیمات\n\nیک گزینه تنظیمات را انتخاب کنید.",
         "language": "🌐 زبان", "analysis_mode": "🧠 حالت تحلیل", "risk": "⚖️ سطح ریسک",
@@ -30,10 +30,10 @@ TRANSLATIONS = {
         "new_signal": "📡 سیگنال جدید", "track": "📈 دنبال کردن سیگنال", "retry": "🔄 دوباره تلاش کنید",
     },
     "en": {
-        "home": "🤖 Forex AI Intelligence Platform\n\nChoose a section:",
+        "home": "🤖 Multi-Asset Trading Intelligence Platform\n\nChoose a section:",
         "analysis": "📊 Smart Analysis\n\nChoose an analysis mode.",
         "signals": "📡 Live Signal\n\nChoose an option.",
-        "scanner": "🔎 Market Scanner", "coach": "🧠 AI Coach", "journal": "📒 Trading Journal",
+        "scanner": "🔎 Market Scanner", "coach": "🧠 Analysis Coach", "journal": "📒 Trading Journal",
         "settings": "⚙️ Settings\n\nChoose a setting.",
         "language": "🌐 Language", "analysis_mode": "🧠 Analysis Mode", "risk": "⚖️ Risk Level",
         "market": "📊 Default Market", "timeframe": "⏱ Timeframe", "notifications": "🔔 Notifications",
