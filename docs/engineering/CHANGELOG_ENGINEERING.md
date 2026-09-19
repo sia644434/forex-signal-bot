@@ -102,6 +102,11 @@
 - Rechecked repository-wide markers for TODO/FIXME, unsafe dynamic execution, insecure HTTP verification bypasses, provider capability boundaries, and multi-asset risk metadata. No additional concrete defect was identified in those scanned surfaces.
 
 
+## 2026-09-19 — Portfolio and heavy research capability expansion
+- Added the multi-asset portfolio engine for exposure, concentration, risk, drawdown, correlation, and deterministic stress analysis.
+- Added PC Worker workload contracts/executors for correlation matrices, portfolio stress, sensitivity scenarios, and counterfactual batches.
+- Added focused regression coverage.
+
 ## 2026-09-19 — New Master Prompt capability roadmap begins
 Historical Phases 1–13 are not treated as the end of product development.
 Added CAPABILITY_MATRIX.md to distinguish historical verified capabilities from capabilities required by the new Master Engineering Prompt.
