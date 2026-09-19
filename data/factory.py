@@ -9,6 +9,7 @@ from data.base import MarketDataProvider
 from data.providers.alphavantage_provider import AlphaVantageProvider
 from data.providers.finnhub_provider import FinnhubProvider
 from data.providers.oanda_provider import OandaProvider
+from data.providers.twelvedata_provider import TwelveDataProvider
 
 
 class ProviderFactory:
@@ -40,6 +41,7 @@ class ProviderFactory:
         "oanda": OandaProvider,
         "finnhub": FinnhubProvider,
         "alphavantage": AlphaVantageProvider,
+        "twelvedata": TwelveDataProvider,
     }
 
     # ------------------------------------------------------------------
@@ -59,6 +61,9 @@ class ProviderFactory:
         "alpha_vantage": "alphavantage",
         "alpha-vantage": "alphavantage",
         "alpha vantage": "alphavantage",
+        "twelve_data": "twelvedata",
+        "twelve-data": "twelvedata",
+        "twelve data": "twelvedata",
     }
 
     # ------------------------------------------------------------------
