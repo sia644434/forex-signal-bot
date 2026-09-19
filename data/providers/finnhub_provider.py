@@ -85,9 +85,15 @@ class FinnhubProvider(MarketDataProvider):
             raise ApplicationError("Finnhub does not support this market.", {"provider":self.name,"symbol":canonical_symbol,"market":market})
         try:
             method_name = f"get_{endpoint}_candles"
-            method = getattr(self.client, method_name, None) if method_name in getattr(type(self.client), "__dict__", {}) else None
-            if method is None:
-                method = getattr(self.client, "get_candles")
+            # Preserve explicit instance-level test/mocking overrides while using
+            # market-specific methods on the real FinnhubClient implementation.
+            instance_get_candles = getattr(self.client, "__dict__", {}).get("get_candles")
+            if instance_get_candles is not None:
+                method = instance_get_candles
+            else:
+                method = getattr(self.client, method_name, None) if method_name in getattr(type(self.client), "__dict__", {}) else None
+                if method is None:
+                    method = getattr(self.client, "get_candles")
             response = await method(canonical_symbol, resolution, start, end)
         except Exception as error:
             raise ApplicationError("Failed to fetch Finnhub candles.", {"provider":self.name,"symbol":canonical_symbol,"market":market,"timeframe":resolution,"limit":limit}) from error
