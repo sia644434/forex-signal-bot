@@ -1,6 +1,6 @@
 import pytest
 
-from services.paper_trading import PaperTradingEngine, compare_shadow_decision
+from services.paper_trading import PaperTradingEngine, ShadowComparisonLedger, compare_shadow_decision
 
 
 def test_paper_trading_round_trip():
@@ -34,3 +34,21 @@ def test_paper_trading_rejects_missing_mark_price():
     engine.open("EURUSD", "SELL", 1, 100, "now", position_id="p2")
     with pytest.raises(ValueError):
         engine.mark_to_market({})
+
+
+def test_shadow_comparison_ledger_tracks_agreement_rate():
+    ledger = ShadowComparisonLedger()
+    ledger.record("BUY", "BUY", "2026-09-19T10:00:00Z")
+    ledger.record("BUY", "SELL", "2026-09-19T10:01:00Z")
+    summary = ledger.summary()
+    assert summary["total"] == 2
+    assert summary["agreements"] == 1
+    assert summary["disagreements"] == 1
+    assert summary["agreement_rate"] == 0.5
+
+
+def test_shadow_comparison_ledger_clear_resets_history():
+    ledger = ShadowComparisonLedger()
+    ledger.record("SELL", "SELL", "2026-09-19T10:00:00Z")
+    ledger.clear()
+    assert ledger.summary()["total"] == 0
