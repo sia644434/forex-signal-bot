@@ -16,6 +16,37 @@ def test_auto_scanner_triggers_only_at_quarter_hour_windows():
     assert not ContinuousMarketScanner._should_scan_now(datetime(2026, 9, 19, 12, 14, tzinfo=timezone.utc))
 
 
+def test_auto_scanner_cycle_bucket_is_stable_across_the_same_m15_window():
+    scanner = ContinuousMarketScanner()
+    first = datetime(2026, 9, 19, 20, 30, 42, tzinfo=timezone.utc)
+    second = datetime(2026, 9, 19, 20, 31, 45, tzinfo=timezone.utc)
+    third = datetime(2026, 9, 19, 20, 45, 0, tzinfo=timezone.utc)
+
+    assert scanner._cycle_bucket(first) == "2026-09-19T20:30:00+00:00"
+    assert scanner._cycle_bucket(first) == scanner._cycle_bucket(second)
+    assert scanner._cycle_bucket(first) != scanner._cycle_bucket(third)
+
+
+@pytest.mark.asyncio
+async def test_auto_scanner_skips_duplicate_cycle_before_provider_fetch(monkeypatch):
+    import services.telegram.auto_scanner as auto_scanner_module
+
+    scanner = ContinuousMarketScanner()
+    bucket = scanner._cycle_bucket(datetime(2026, 9, 19, 20, 31, 45, tzinfo=timezone.utc))
+    scanner._state.put("cycle:last_m15", bucket)
+
+    monkeypatch.setattr(auto_scanner_module, "auto_scanner_enabled", lambda: True)
+    monkeypatch.setattr(scanner, "_should_scan_now", lambda now=None: True)
+    monkeypatch.setattr(
+        auto_scanner_module,
+        "_configured_scan_symbols",
+        lambda: (_ for _ in ()).throw(AssertionError("provider cycle must be skipped")),
+    )
+
+    result = await scanner.run_once(object(), SimpleNamespace())
+    assert result == 0
+
+
 def test_auto_scanner_session_filter_skips_closed_non_crypto_markets():
     from config.symbols import get_market_type
 
