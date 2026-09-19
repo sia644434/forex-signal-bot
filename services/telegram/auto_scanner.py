@@ -22,6 +22,30 @@ DEFAULT_INTERVAL_SECONDS = 60
 DEFAULT_CANDLE_LIMIT = 300
 TRIGGER_MINUTE_MODULUS = 15
 TRIGGER_MINUTE_OFFSETS = frozenset({0, 1})
+
+
+class ScanOutcome:
+    """Stable outcome codes used for per-cycle observability."""
+
+    DATA_FAILED = "data_failed"
+    ALREADY_PROCESSED = "already_processed"
+    M15_NO_TRADE = "m15_no_trade"
+    M15_NEUTRAL = "m15_neutral"
+    M15_DIRECTIONAL = "m15_directional"
+    DIRECTIONAL_ALIGNMENT_REJECTED = "directional_alignment_rejected"
+    HTF_ALIGNMENT_REJECTED = "htf_alignment_rejected"
+    SETUP_QUALITY_REJECTED = "setup_quality_rejected"
+    CONFIDENCE_REJECTED = "confidence_rejected"
+    RR_REJECTED = "rr_rejected"
+    CONFLICT_REJECTED = "conflict_rejected"
+    FRESHNESS_REJECTED = "freshness_rejected"
+    PORTFOLIO_RISK_REJECTED = "portfolio_risk_rejected"
+    VALIDATED_SENT = "validated_sent"
+    VALIDATED_NO_RECIPIENT = "validated_no_recipient"
+    VALIDATED_DELIVERY_PENDING = "validated_delivery_pending"
+    VALIDATION_FAILED = "validation_failed"
+
+
 TIMEFRAMES = ("W1", "D1", "H4", "H1", "M15", "M5")
 
 
@@ -178,7 +202,31 @@ class ContinuousMarketScanner:
                 logger.exception("Automatic signal notification failed for chat %s.", chat_id)
         return sent, eligible
 
-    async def _scan_symbol(self, bot, market_data, symbol: str) -> bool:
+    @staticmethod
+    def _classify_diagnostics(diagnostics: tuple[str, ...]) -> str:
+        """Map rejection diagnostics to stable cycle counters."""
+        if not diagnostics:
+            return ScanOutcome.VALIDATION_FAILED
+        joined = "|".join(diagnostics)
+        if any(item.startswith("directional_alignment=") for item in diagnostics):
+            return ScanOutcome.DIRECTIONAL_ALIGNMENT_REJECTED
+        if any(item.startswith("htf_alignment=") for item in diagnostics):
+            return ScanOutcome.HTF_ALIGNMENT_REJECTED
+        if any(item.startswith("setup_quality=") for item in diagnostics):
+            return ScanOutcome.SETUP_QUALITY_REJECTED
+        if any(item.startswith("confidence=") for item in diagnostics):
+            return ScanOutcome.CONFIDENCE_REJECTED
+        if any(item.startswith("rr=") for item in diagnostics):
+            return ScanOutcome.RR_REJECTED
+        if any(item.startswith("conflict_state=") for item in diagnostics):
+            return ScanOutcome.CONFLICT_REJECTED
+        if any(item.startswith("signal_decay=") for item in diagnostics):
+            return ScanOutcome.FRESHNESS_REJECTED
+        if "portfolio_risk_blocked=true" in joined:
+            return ScanOutcome.PORTFOLIO_RISK_REJECTED
+        return ScanOutcome.VALIDATION_FAILED
+
+    async def _scan_symbol(self, bot, market_data, symbol: str) -> str:
         try:
             m15 = await self._fetch_timeframe(market_data, symbol, "M15", force=True)
             latest = m15[-1].timestamp
@@ -187,7 +235,7 @@ class ContinuousMarketScanner:
             key = f"processed:{symbol}:M15"
             latest_key = latest.astimezone(timezone.utc).isoformat()
             if self._state.get(key) == latest_key:
-                return False
+                return ScanOutcome.ALREADY_PROCESSED
 
             context = await self._context_for_symbol(market_data, symbol, m15)
             decision, diagnostics = self._engine.analyze_with_diagnostics(context, symbol=symbol)
@@ -197,30 +245,37 @@ class ContinuousMarketScanner:
                     symbol,
                     "; ".join(diagnostics[:6]) if diagnostics else "unknown_reason",
                 )
-
-            # A no-signal result is deterministic for this closed M15 candle.
-            # For a signal, keep the candle unprocessed until every eligible
-            # recipient has either already received it or receives it now.
-            # This makes Telegram delivery retryable after transient failures.
-            if decision is None:
+                if diagnostics and diagnostics[0].startswith("m15_signal="):
+                    signal = diagnostics[0].split("=", 1)[1].upper()
+                    outcome = (
+                        ScanOutcome.M15_NO_TRADE
+                        if signal in {"NO_TRADE", "NONE", ""}
+                        else ScanOutcome.M15_NEUTRAL
+                        if signal == "NEUTRAL"
+                        else ScanOutcome.M15_DIRECTIONAL
+                    )
+                else:
+                    outcome = self._classify_diagnostics(diagnostics)
                 self._state.put(key, latest_key)
-                return False
+                return outcome
 
             sent, eligible = await self._notify(bot, decision, latest_key)
-            if eligible == 0 or sent == eligible:
+            if eligible == 0:
                 self._state.put(key, latest_key)
-
+                return ScanOutcome.VALIDATED_NO_RECIPIENT
+            if sent == eligible:
+                self._state.put(key, latest_key)
             if sent:
                 logger.info(
                     "Automatic validated setup sent for %s/M15 (%s recipients).",
                     symbol,
                     sent,
                 )
-                return True
-            return False
+                return ScanOutcome.VALIDATED_SENT
+            return ScanOutcome.VALIDATED_DELIVERY_PENDING
         except Exception:
             logger.exception("Continuous market scan failed for %s.", symbol)
-            return False
+            return ScanOutcome.DATA_FAILED
 
     async def run_once(self, bot, application: Any) -> int:
         if not auto_scanner_enabled():
@@ -258,7 +313,34 @@ class ContinuousMarketScanner:
                     return await self._scan_symbol(bot, market_data, symbol)
 
             results = await asyncio.gather(*(guarded(symbol) for symbol in symbols))
-            sent_count = sum(bool(result) for result in results)
+            summary = {outcome: results.count(outcome) for outcome in set(results)}
+            sent_count = summary.get(ScanOutcome.VALIDATED_SENT, 0)
+            logger.info(
+                "Automatic scanner cycle summary: symbols=%d data_failed=%d already_processed=%d "
+                "m15_no_trade=%d m15_neutral=%d m15_directional=%d "
+                "directional_alignment_rejected=%d htf_alignment_rejected=%d "
+                "setup_quality_rejected=%d confidence_rejected=%d rr_rejected=%d "
+                "conflict_rejected=%d freshness_rejected=%d portfolio_risk_rejected=%d "
+                "validated_sent=%d validated_no_recipient=%d validated_delivery_pending=%d validation_failed=%d",
+                len(symbols),
+                summary.get(ScanOutcome.DATA_FAILED, 0),
+                summary.get(ScanOutcome.ALREADY_PROCESSED, 0),
+                summary.get(ScanOutcome.M15_NO_TRADE, 0),
+                summary.get(ScanOutcome.M15_NEUTRAL, 0),
+                summary.get(ScanOutcome.M15_DIRECTIONAL, 0),
+                summary.get(ScanOutcome.DIRECTIONAL_ALIGNMENT_REJECTED, 0),
+                summary.get(ScanOutcome.HTF_ALIGNMENT_REJECTED, 0),
+                summary.get(ScanOutcome.SETUP_QUALITY_REJECTED, 0),
+                summary.get(ScanOutcome.CONFIDENCE_REJECTED, 0),
+                summary.get(ScanOutcome.RR_REJECTED, 0),
+                summary.get(ScanOutcome.CONFLICT_REJECTED, 0),
+                summary.get(ScanOutcome.FRESHNESS_REJECTED, 0),
+                summary.get(ScanOutcome.PORTFOLIO_RISK_REJECTED, 0),
+                sent_count,
+                summary.get(ScanOutcome.VALIDATED_NO_RECIPIENT, 0),
+                summary.get(ScanOutcome.VALIDATED_DELIVERY_PENDING, 0),
+                summary.get(ScanOutcome.VALIDATION_FAILED, 0),
+            )
             logger.info(
                 "Automatic scanner cycle finished: symbols=%d, validated_setups_sent=%d",
                 len(symbols),
