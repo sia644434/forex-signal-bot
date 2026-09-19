@@ -83,3 +83,28 @@ def test_multi_timeframe_rejects_low_risk_reward():
     engine = MultiTimeframeAnalysisEngine(FakeEngine(reports))
     candles = {key: [key] for key in reports}
     assert engine.analyze(candles) is None
+
+
+def test_multi_timeframe_diagnostics_explain_missing_context():
+    engine = MultiTimeframeAnalysisEngine(FakeEngine({}))
+    candles = candles_by_timeframe()
+    candles.pop("M5")
+    decision, diagnostics = engine.analyze_with_diagnostics(candles)
+    assert decision is None
+    assert diagnostics == ("missing_timeframes=M5",)
+
+
+def test_multi_timeframe_diagnostics_explain_non_executable_m15():
+    reports = {
+        "W1": report(68),
+        "D1": report(72),
+        "H4": report(70),
+        "H1": report(67),
+        "M15": report(50, "NO_TRADE", quality=85, confidence=0.82, rr=2.4),
+        "M5": report(66),
+    }
+    engine = MultiTimeframeAnalysisEngine(FakeEngine(reports))
+    candles = {key: [key] for key in reports}
+    decision, diagnostics = engine.analyze_with_diagnostics(candles)
+    assert decision is None
+    assert diagnostics[0] == "m15_signal=NO_TRADE"
