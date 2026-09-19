@@ -83,3 +83,13 @@
 - No code regression is declared solely from that external deployment failure; deployment re-verification is required before Phase 13.
 - Normalized engineering state so historical closure evidence is distinguished from current-HEAD verification.
 - Phase 12 is the active re-verification frontier; Phase 13 remains blocked pending that verification.
+
+
+## 2026-09-19 — Phase 13 Code Audit: Startup Readiness and CI Surface Hardening
+- Opened Phase 13 as an active current-HEAD code audit while intentionally deferring Railway deployment verification until the code surface is synchronized.
+- Fixed application startup ordering so the HTTP health endpoint is available before service initialization; dependency startup now leaves the health endpoint returning degraded/not-ready state instead of leaving the port unavailable.
+- Added lifecycle regression coverage for health-first startup and rollback when either the health server or service startup fails.
+- Removed obsolete PR-targeted automation/provider-contract runner workflows that wrote directly to repository branches and were no longer part of the production CI contract.
+- Removed the obsolete dedicated automation branch trigger from the main test workflow.
+- Explicitly restricted remaining production verification workflows to contents: read where no write access is required.
+- Railway remains intentionally unverified until the resulting code HEAD is ready for the final external deployment gate.
