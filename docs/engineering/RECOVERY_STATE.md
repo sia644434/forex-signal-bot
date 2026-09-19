@@ -18,3 +18,14 @@
 ## Verification Rule
 
 The configured restart policy and healthchecks are mechanisms; the successful live restart/recovery observation is the evidence. The current Railway deployment path has satisfied that evidence requirement.
+
+
+## Current Engineering Handoff — 2026-09-19
+- CURRENT_PHASE: Phase 14 — Advanced Intelligence Foundation
+- CURRENT_TASK: TASK-129
+- LAST_COMPLETED_TASK: TASK-128
+- LAST_VERIFIED_COMMIT: 7e978faa986ed6088511c0aee3a1fa4510a02408
+- CURRENT_BRANCH: main
+- IN_PROGRESS: exact-head CI verification and continued capability implementation
+- REMAINING: portfolio/correlation/stress; strategy lifecycle; opportunity/heatmap; paper/shadow/replay; news/macro; final security/performance/regression; Railway final gate
+- NEXT_ACTION: continue implementation from TASK-129 without repeating a full repository audit unless state becomes inconsistent or a cross-cutting dependency requires it.
