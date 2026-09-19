@@ -28,3 +28,11 @@ def test_auto_scanner_state_store_round_trip(tmp_path):
     assert store.get("processed:BTCUSDT:M15") is None
     store.put("processed:BTCUSDT:M15", "2026-09-19T12:00:00+00:00")
     assert store.get("processed:BTCUSDT:M15") == "2026-09-19T12:00:00+00:00"
+
+
+def test_default_scanner_universe_covers_every_supported_market():
+    from config.symbols import get_all_symbols
+    from services.telegram.scanner import DEFAULT_SCAN_SYMBOLS
+
+    assert DEFAULT_SCAN_SYMBOLS == get_all_symbols()
+    assert len(DEFAULT_SCAN_SYMBOLS) > 20
