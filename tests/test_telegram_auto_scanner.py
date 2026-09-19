@@ -118,3 +118,45 @@ async def test_notification_retry_skips_already_delivered_recipient(monkeypatch)
     )
     assert (second_sent, second_eligible) == (2, 2)
     assert bot.calls == [101, 202, 202]
+
+
+def test_scanner_scheduler_event_logs_for_expected_job(monkeypatch):
+    import services.telegram.client as client_module
+    from types import SimpleNamespace
+    from apscheduler.events import EVENT_JOB_EXECUTED
+
+    messages = []
+    monkeypatch.setattr(client_module.logger, "info", lambda *args, **kwargs: messages.append(args))
+
+    event = SimpleNamespace(
+        code=EVENT_JOB_EXECUTED,
+        job_id=client_module.AUTO_SCANNER_JOB_NAME,
+        scheduled_run_time=datetime(2026, 9, 19, 12, 0, tzinfo=timezone.utc),
+    )
+    client_module._log_scanner_scheduler_event(event)
+
+    assert messages
+    assert "Automatic scanner scheduler event: executed" in messages[0][0]
+
+
+@pytest.mark.asyncio
+async def test_continuous_scan_wrapper_logs_and_reraises_job_failure(monkeypatch):
+    import services.telegram.auto_scanner as auto_scanner_module
+    from types import SimpleNamespace
+
+    scanner = SimpleNamespace(run_once=pytest.raises)
+    class FailingScanner:
+        async def run_once(self, bot, application):
+            raise RuntimeError("scanner boom")
+
+    monkeypatch.setattr(auto_scanner_module, "_SCANNER", FailingScanner())
+
+    errors = []
+    monkeypatch.setattr(auto_scanner_module.logger, "exception", lambda *args, **kwargs: errors.append(args))
+
+    context = SimpleNamespace(bot=object(), application=object())
+    with pytest.raises(RuntimeError, match="scanner boom"):
+        await auto_scanner_module.run_continuous_market_scan(context)
+
+    assert errors
+    assert "Automatic scanner job crashed" in errors[0][0]
