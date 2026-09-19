@@ -173,3 +173,12 @@ Current HEAD: aacee0f3fd29c4db6dddaaedcb34552deed66536
 - Analysis/report contracts expose portfolio risk blocking and explicit flags.
 - ShadowComparisonLedger records deterministic paper/reference decision agreement history and aggregate agreement rate.
 - Exact-head CI verification is pending. Railway remains a later external gate.
+
+
+## 2026-09-19 — TASK-147 Alert / Tracker Hardening
+Status: IMPLEMENTATION
+Current HEAD: b83ff1480e842c61d798ef4aa4e356deed4bdd51
+- Portfolio-blocked reports cannot produce executable alerts.
+- Telegram signal output exposes portfolio risk flags.
+- Tracker persistence now carries lifecycle event history with backward-compatible deserialization.
+- Exact-head CI verification pending; Railway remains a later external gate.
