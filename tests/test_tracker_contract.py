@@ -141,7 +141,7 @@ def test_refresh_tracking_records_signal_change_and_updates_timestamp(monkeypatc
     assert notifications and "سیگنال فعلی" in notifications[0]
     assert list_tracking(1) == [item]
 
-\n
+
 def test_track_report_records_creation_event(monkeypatch):
     import services.telegram.tracker as tracker
     class FakeStore:
