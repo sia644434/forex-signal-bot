@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
-import logging
 import os
 from typing import Any
 
@@ -14,8 +13,9 @@ from services.telegram.access import _allowed_user_ids
 from services.telegram.handlers.signal import _format_signal
 from services.telegram.auto_scan_state import AutoScannerStateStore
 from analysis.multi_timeframe_engine import MultiTimeframeAnalysisEngine
+from core.logger import setup_logger
 
-logger = logging.getLogger(__name__)
+logger = setup_logger()
 
 AUTO_SCANNER_JOB_NAME = "telegram-auto-multi-timeframe-scanner"
 DEFAULT_INTERVAL_SECONDS = 60
