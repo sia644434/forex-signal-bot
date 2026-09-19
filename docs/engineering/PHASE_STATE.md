@@ -140,3 +140,10 @@ Status: IMPLEMENTATION
 Current task: TASK-142
 Completed: validation-aware evaluation snapshots/history and current-evidence checks.
 Remaining: exact-head CI verification; richer lifecycle transitions/history; final strategy/research hardening; later Railway gate.
+
+## 2026-09-19 — TASK-143
+Phase 18 — Research/Strategy Integration
+Status: IMPLEMENTATION
+Current task: TASK-143
+Completed: automatic robustness gating for research-backed strategy validation.
+Remaining: exact-head CI verification and broader strategy lifecycle/research integration.
