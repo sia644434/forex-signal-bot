@@ -90,3 +90,9 @@ Historical Phases 1–13 are not the end of product development. This phase impl
 Completed: statistical engine, scenario engine, counterfactual engine, signal decay/crisis classification, analysis/report contract extensions, and decision gates.
 Remaining: exact-head CI verification; portfolio/correlation/stress; strategy lifecycle; opportunity/heatmap; paper/shadow/replay/Time Machine; news/macro real-data integration; final security/performance/regression; Railway final gate.
 Railway remains a final external gate and is not the current development frontier.
+
+## Phase 20 — Paper / Shadow / Replay
+Status: IMPLEMENTATION
+Current task: TASK-133
+Completed foundations: paper trading, shadow comparison, market replay, and deterministic Time Machine orchestration.
+Remaining: exact-head CI verification; strategy lifecycle/DNA/champion-challenger; news/macro real-data integration; advanced stress/sensitivity robustness; alert/report completion; final security/performance/regression; Railway final gate.
