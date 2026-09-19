@@ -178,3 +178,9 @@ def test_full_engine_allows_candidate_within_portfolio_limits():
     )
     assert report.portfolio_risk_blocked is False
     assert report.portfolio_risk_flags == []
+
+
+def test_full_engine_accepts_timeframe_aware_signal_age():
+    candles = make_candles([1.0, 1.1, 1.05, 1.2, 1.15, 1.3])
+    result = FullAnalysisEngine().analyze(candles, signal_max_age_seconds=900)
+    assert isinstance(result, AnalysisReport)
