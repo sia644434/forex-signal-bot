@@ -82,3 +82,11 @@ For every phase reopened by concrete evidence:
 
 ## Roadmap
 **Next and final work item: Phase 12/13 external Railway gate.** Synchronize Railway with the verified current HEAD, run live `/health` smoke, perform controlled restart/recovery, and then update the final production state only after fresh evidence agrees with the resulting deployment.
+
+## Phase 14 — Advanced Intelligence Foundation
+Status: IMPLEMENTATION
+Current task: TASK-129
+Historical Phases 1–13 are not the end of product development. This phase implements capabilities required by the new Master Engineering Prompt.
+Completed: statistical engine, scenario engine, counterfactual engine, signal decay/crisis classification, analysis/report contract extensions, and decision gates.
+Remaining: exact-head CI verification; portfolio/correlation/stress; strategy lifecycle; opportunity/heatmap; paper/shadow/replay/Time Machine; news/macro real-data integration; final security/performance/regression; Railway final gate.
+Railway remains a final external gate and is not the current development frontier.
