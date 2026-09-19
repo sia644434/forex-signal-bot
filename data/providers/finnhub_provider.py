@@ -84,7 +84,8 @@ class FinnhubProvider(MarketDataProvider):
         if endpoint is None:
             raise ApplicationError("Finnhub does not support this market.", {"provider":self.name,"symbol":canonical_symbol,"market":market})
         try:
-            method = getattr(self.client, f"get_{endpoint}_candles", None)
+            method_name = f"get_{endpoint}_candles"
+            method = getattr(self.client, method_name, None) if method_name in getattr(type(self.client), "__dict__", {}) else None
             if method is None:
                 method = getattr(self.client, "get_candles")
             response = await method(canonical_symbol, resolution, start, end)
