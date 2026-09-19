@@ -34,7 +34,12 @@ def test_strategy_weakness_detection_adaptation_and_rollback():
     engine.observe("s", StrategyObservation("Forex", "EURUSD", "1h", "RANGING", 30, .45, -.02, -.12, .9))
     weaknesses = engine.weaknesses("s")
     assert weaknesses and "negative_expectancy" in weaknesses[0]["reasons"]
-    adapted = engine.adapt("s", {"threshold": 2}, reason="reduce weak regime exposure")
+    proposal = engine.adapt("s", {"threshold": 2}, reason="reduce weak regime exposure")
+    assert proposal["status"] == "PROPOSED"
+    assert engine.snapshot()[0]["dna"]["threshold"] == 1
+    with __import__("pytest").raises(ValueError):
+        engine.apply_adaptation("s", StrategyValidationEvidence(True, 0.8, robust=False))
+    adapted = engine.apply_adaptation("s", StrategyValidationEvidence(True, 0.8, robust=True))
     assert adapted["version"] == 2
     assert adapted["dna"]["threshold"] == 2
     rolled = engine.rollback("s", reason="adaptation regressed validation")
