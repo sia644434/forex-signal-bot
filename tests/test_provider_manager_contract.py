@@ -19,7 +19,7 @@ class FakeProvider:
 
 
 def candle(minute: int, close: float = 1.1005) -> Candle:
-    return Candle(symbol="EURUSD", timestamp=datetime(2026, 1, 1, 0, minute, tzinfo=timezone.utc), open=1.1000, high=1.1010, low=1.0990, close=close, volume=100.0)
+    return Candle(symbol="EURUSD", timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc) + __import__("datetime").timedelta(minutes=15 * minute), open=1.1000, high=1.1010, low=1.0990, close=close, volume=100.0)
 
 
 @pytest.mark.asyncio
