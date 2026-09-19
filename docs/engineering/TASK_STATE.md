@@ -755,3 +755,11 @@ Evidence:
 - Added regression coverage for Stock/Crypto/Index Finnhub routing, Alpha Vantage Stock/Index candles, and rejection of close-only commodity data as fake OHLC.
 - Commodity APIs that expose only spot/close observations are intentionally not converted into fabricated OHLC candles; a real OHLC-capable path is still required before commodity signals are enabled.
 - No production/Railway verification is claimed yet.
+
+
+## TASK-150 Final Implementation Frontier — 2026-09-19
+- CURRENT_HEAD: `38f28e5068d328c40be303a58e7a67a8ca4e7e33`.
+- Added optional Twelve Data OHLC provider and registered it in ProviderFactory/ProviderManager failover.
+- Twelve Data covers the configured multi-asset universe through the common OHLC time-series contract; commodity mappings include XAU/USD, XAG/USD, WTI/USD and BRENT/USD.
+- Exact-head Actions verification is pending. Runtime commodity/asset availability remains dependent on `TWELVEDATA_API_KEY` and provider plan/symbol entitlement.
+- No live production verification is claimed.
