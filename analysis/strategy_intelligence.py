@@ -95,7 +95,7 @@ class StrategyIntelligenceEngine:
         challenger = self._records[challenger_id]
         cp, xp = champion.performance(), challenger.performance()
         comparable = min(cp["sample"], xp["sample"]) >= 20
-        challenger_wins = comparable and xp["score"] > cp["score"] and xp["drawdown"] <= cp["drawdown"]
+        challenger_wins = comparable and xp["score"] > cp["score"] and abs(xp["drawdown"]) <= abs(cp["drawdown"])
         return {
             "champion": champion_id,
             "challenger": challenger_id,
