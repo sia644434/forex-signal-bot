@@ -105,7 +105,7 @@ class FullAnalysisEngine:
         ]
         return candle_data, closes
 
-    def analyze(self, candles: list[Candle] | list[float]) -> AnalysisReport:
+    def analyze(self, candles: list[Candle] | list[float], *, macro_risk: dict[str, object] | None = None) -> AnalysisReport:
         candle_data, closes = self._normalize_candles(candles)
         atr_result = self.atr_engine.calculate(closes)
         atr_value = self._require_finite(atr_result.atr if atr_result.atr is not None else 0.0, "ATR")
@@ -169,6 +169,14 @@ class FullAnalysisEngine:
         has_real_timestamps = isinstance(candles[0], Candle)
         signal_state = evaluate_signal_state(latest, max_age_seconds=60.0, volatility=atr_percentage / 100.0) if has_real_timestamps and latest.tzinfo is not None else None
 
+        macro_context = macro_risk or {}
+        macro_level = str(macro_context.get("risk_level", "NORMAL")).upper()
+        if macro_level not in {"NORMAL", "ELEVATED", "CRISIS"}:
+            raise ValueError("macro_risk.risk_level must be NORMAL, ELEVATED, or CRISIS")
+        macro_events = macro_context.get("events", [])
+        if not isinstance(macro_events, list):
+            raise ValueError("macro_risk.events must be a list")
+
         analysis_result = AnalysisResult(
             trend=structure.trend, momentum=momentum_result.state, indicators=indicator_snapshot.values, candles=candle_data,
             supply_demand=supply_demand_result.zone, trend_score=component_scores["trend_score"], momentum_score=component_scores["momentum_score"],
@@ -183,6 +191,8 @@ class FullAnalysisEngine:
             statistical_context=statistics.summary(),
             conflict_state=conflict_state,
             signal_decay=signal_state.decay if signal_state else "INVALID",
+            macro_risk_level=macro_level,
+            macro_events=macro_events,
             crisis_mode=signal_state.crisis_mode if signal_state else "NORMAL",
         )
 
@@ -246,6 +256,8 @@ class FullAnalysisEngine:
             scenario=analysis_result.scenario,
             statistical_context=analysis_result.statistical_context,
             conflict_state=analysis_result.conflict_state,
+            macro_risk_level=analysis_result.macro_risk_level,
+            macro_events=analysis_result.macro_events,
             signal_decay=analysis_result.signal_decay,
             crisis_mode=analysis_result.crisis_mode,
         )
