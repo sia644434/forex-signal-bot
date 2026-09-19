@@ -54,18 +54,18 @@ def test_strategy_evaluation_rejects_stale_validation_identity():
     from analysis.strategy_intelligence import StrategyIntelligenceEngine
     engine = StrategyIntelligenceEngine()
     fingerprint = engine.dna_fingerprint({"threshold": 1})
-    result = strategy_evaluation({
-        "strategies": [{
-            "strategy_id": "stale",
-            "dna": {"threshold": 1},
-            "validation": {
-                "oos_positive": True,
-                "positive_oos_ratio": .8,
-                "robust": True,
-                "validated_version": 2,
-                "dna_fingerprint": fingerprint,
-            },
-            "observations": [],
-        }]
-    })
-    assert result is not None
+    with __import__("pytest").raises(ValueError, match="current strategy version"):
+        strategy_evaluation({
+            "strategies": [{
+                "strategy_id": "stale",
+                "dna": {"threshold": 1},
+                "validation": {
+                    "oos_positive": True,
+                    "positive_oos_ratio": .8,
+                    "robust": True,
+                    "validated_version": 2,
+                    "dna_fingerprint": fingerprint,
+                },
+                "observations": [],
+            }]
+        })
