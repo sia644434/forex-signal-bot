@@ -238,6 +238,14 @@ class DecisionEngine:
             signal = "NO_TRADE"
             strength = "BLOCKED"
             reasons.append("Execution blocked by insufficient directional agreement")
+        elif str(getattr(analysis, "macro_risk_level", "NORMAL")).upper() == "CRISIS":
+            signal = "NO_TRADE"
+            strength = "BLOCKED"
+            reasons.append("Execution blocked by high-impact macro event risk")
+        elif str(getattr(analysis, "macro_risk_level", "NORMAL")).upper() == "ELEVATED" and signal in {"BUY", "SELL"}:
+            signal = "WAIT"
+            strength = "WEAK"
+            reasons.append("Elevated macro event risk downgraded the executable signal to WAIT")
         elif conflict == "CONFLICT" and signal in {"BUY", "SELL"}:
             signal = "WAIT"
             strength = "WEAK"
