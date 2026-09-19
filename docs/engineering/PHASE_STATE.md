@@ -132,3 +132,11 @@ Status: IMPLEMENTATION
 Current task: TASK-141
 Completed: validation identity binding to strategy version/DNA, research-backed worker strategy evaluation, stale validation rejection, and focused regression coverage.
 Remaining: exact-head CI verification; deeper continuous evaluation/history integration; final research/strategy hardening and later Railway gate.
+
+
+## 2026-09-19 — TASK-142
+Phase 18 — Strategy Intelligence / Continuous Evaluation
+Status: IMPLEMENTATION
+Current task: TASK-142
+Completed: validation-aware evaluation snapshots/history and current-evidence checks.
+Remaining: exact-head CI verification; richer lifecycle transitions/history; final strategy/research hardening; later Railway gate.
