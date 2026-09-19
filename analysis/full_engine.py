@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 import math
 
@@ -232,13 +233,11 @@ class FullAnalysisEngine:
         # Persist the exact final decision into the shared analysis contract
         # before confidence evaluation. This prevents ConfidenceEngine from
         # silently falling back to a neutral 50.0 score.
-        analysis_result = AnalysisResult(
-            **{
-                **analysis_result.__dict__,
-                "decision_score": decision.score,
-                "total_score": decision.score,
-                "final_direction": decision.bias,
-            }
+        analysis_result = replace(
+            analysis_result,
+            decision_score=decision.score,
+            total_score=decision.score,
+            final_direction=decision.bias,
         )
         confidence_result = self.confidence_engine.evaluate(analysis_result)
         risk_result = self.risk_engine.calculate(signal=decision.signal, current_price=closes[-1], atr=atr_value, confidence=confidence_result.confidence, score=decision.score)
