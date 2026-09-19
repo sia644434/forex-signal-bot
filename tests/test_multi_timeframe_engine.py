@@ -111,6 +111,11 @@ def test_multi_timeframe_m15_diagnostics_expose_precise_rejection_details():
             "structure": 11.0,
             "price_action": 6.75,
         },
+        directional_contributions={
+            "smart_money": 3.0,
+            "structure": 1.5,
+            "price_action": -0.75,
+        },
         reasons=["Execution blocked by insufficient directional agreement"],
     )
     m15 = SimpleNamespace(**values)
@@ -138,6 +143,10 @@ def test_multi_timeframe_m15_diagnostics_expose_precise_rejection_details():
     assert "m15_portfolio_risk_blocked=false" in diagnostics
     assert "m15_score_delta=-3.00" in diagnostics
     assert "m15_score_contributions=smart_money=+13.00,structure=+11.00,price_action=+6.75" in diagnostics
+    assert "m15_directional_contributions=smart_money=+3.00,structure=+1.50,price_action=-0.75" in diagnostics
+    assert "m15_directional_total=+3.75" in diagnostics
+    assert "m15_directional_positive=smart_money:+3.00,structure:+1.50" in diagnostics
+    assert "m15_directional_negative=price_action:-0.75" in diagnostics
     assert "m15_contribution_total=30.75" in diagnostics
     assert "m15_components=smart_money_score=30.0,structure_score=20.0,price_action_score=-10.0" in diagnostics
     assert "m15_blockers=Execution blocked by insufficient directional agreement" in diagnostics
