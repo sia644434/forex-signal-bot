@@ -69,3 +69,22 @@ def test_strategy_evaluation_rejects_stale_validation_identity():
                 "observations": [],
             }]
         })
+
+
+def test_strategy_research_validation_uses_robustness_engine_result():
+    prices = [100.0 + i for i in range(61)]
+    result = strategy_evaluation({
+        "strategies": [{
+            "strategy_id": "robust-auto",
+            "dna": {"threshold": 0.001},
+            "research_validation": {
+                "prices": prices,
+                "mode": "oos",
+                "train_ratio": .7,
+                "robustness_thresholds": (0.0, 0.001),
+                "robustness_fees": (0.0, 0.0001),
+            },
+        }]
+    })
+    evidence = result["strategies"][0]["validation_evidence"]
+    assert evidence["robust"] is True
