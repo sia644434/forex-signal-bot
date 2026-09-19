@@ -243,7 +243,7 @@ class ConfidenceEngine:
             confidence *= 1.0 - (conflict_score * 0.35)
         confidence *= 0.70 + (data_quality * 0.30)
         confidence *= 1.0 - (market_uncertainty * 0.25)
-        decision_value = self._get(analysis, "decision_score", 50.0)
+        decision_value = self._get(analysis, "decision_score", self._get(analysis, "total_score", 50.0))
         if decision_value is not None:
             decision_score = self.normalize(decision_value)
             if decision_score != 50.0:
