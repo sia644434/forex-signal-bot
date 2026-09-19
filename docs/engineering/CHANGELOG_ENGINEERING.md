@@ -209,3 +209,12 @@ Railway remains deferred until required capabilities and final regression/securi
 - Added automatic retirement for persistent negative expectancy with elevated drawdown after sufficient sample.
 - Persisted OOS, overfitting, and robustness diagnostics in strategy validation evidence.
 - Added focused regression coverage.
+
+
+## 2026-09-19 — TASK-146 Portfolio Risk / Shadow Integration
+- Added equity-aware gross-exposure enforcement to PortfolioRiskGuard.
+- Integrated optional portfolio candidate checks into the analysis/decision boundary with explicit NO_TRADE fail-closed behavior.
+- Extended AnalysisResult and AnalysisReport with portfolio risk status/flags.
+- Added ShadowComparisonLedger for deterministic paper/reference comparison history and agreement-rate reporting.
+- Added focused regression coverage.
+- Exact-head CI verification remains pending; no Railway or production verification is claimed.
