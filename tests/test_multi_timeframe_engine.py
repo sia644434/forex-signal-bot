@@ -88,8 +88,8 @@ def test_multi_timeframe_rejects_low_risk_reward():
 
 def test_multi_timeframe_m15_diagnostics_expose_precise_rejection_details():
     base = report(47, "NO_TRADE", quality=23, confidence=0.41)
-    m15 = SimpleNamespace(
-        **base.__dict__,
+    values = dict(base.__dict__)
+    values.update(
         trend="bearish",
         structure="NORMAL",
         decision_bias="bearish",
@@ -108,6 +108,7 @@ def test_multi_timeframe_m15_diagnostics_expose_precise_rejection_details():
         },
         reasons=["Execution blocked by insufficient directional agreement"],
     )
+    m15 = SimpleNamespace(**values)
     reports = {
         "W1": report(68),
         "D1": report(72),
