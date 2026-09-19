@@ -18,8 +18,8 @@
 | Real backtesting | VERIFIED_HISTORICAL_PARTIAL | `worker/executors.py` | Existing | Historical data | PC_WORKER | 9 | e571a972 |
 | Walk-forward | VERIFIED_HISTORICAL_PARTIAL | `worker/executors.py` | Existing | Historical data | PC_WORKER | 9 | e571a972 |
 | Monte Carlo | VERIFIED_HISTORICAL_PARTIAL | `worker/executors.py` | Existing | Historical returns | PC_WORKER | 9 | e571a972 |
-| Stress/sensitivity research | IMPLEMENTED_CURRENT | `worker/executors.py::stress_sensitivity` | `tests/test_worker_advanced_research.py` | Portfolio/shocks | PC_WORKER | 17 | pending CI |
-| Strategy DNA/adaptation/retirement | IMPLEMENTED_CURRENT | `analysis/strategy_intelligence.py` lifecycle registry/DNA/retirement | `tests/test_strategy_intelligence.py` | Research/backtest/journal | PC_WORKER + RAILWAY | 18 | pending CI |
+| Stress/sensitivity research | IMPLEMENTED_CURRENT | `worker/executors.py::stress_sensitivity` | `tests/test_worker_advanced_research.py` | Portfolio/shocks | PC_WORKER | 17 | pending CI |\n| Robustness / temporal leakage checks | IMPLEMENTED_CURRENT | `analysis/robustness_engine.py` + `worker/executors.py::robustness_analysis` | `tests/test_robustness_engine.py` | Historical prices/timestamps | PC_WORKER | 17 | pending CI |
+| Strategy DNA/adaptation/retirement | IMPLEMENTED_CURRENT | `analysis/strategy_intelligence.py` registry/DNA/adaptation/weakness/retirement/rollback | `tests/test_strategy_intelligence.py` | Research/backtest/journal | PC_WORKER + RAILWAY | 18 | pending CI |
 | Champion/challenger | IMPLEMENTED_CURRENT | `analysis/strategy_intelligence.py::compare/promote` + worker evaluation | `tests/test_strategy_intelligence.py`, `tests/test_strategy_worker_executor.py` | Strategy lifecycle | PC_WORKER | 18 | pending CI |
 | Scanner universe | VERIFIED_HISTORICAL | `services/telegram/scanner.py` | Existing | Providers | RAILWAY / PC_WORKER for large scans | 9 | e571a972 |
 | Opportunity ranking | IMPLEMENTED_CURRENT | `analysis/opportunity_engine.py` + Telegram scanner | `tests/test_opportunity_engine.py` | Scanner/decision/risk | RAILWAY / PC_WORKER | 19 | pending CI |
