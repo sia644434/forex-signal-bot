@@ -11,9 +11,10 @@ def test_strategy_lifecycle_and_challenger_promotion():
     engine.register("s2", "Variant", parent_id="s1")
     engine.observe("s1", obs(.01, 50, -.10))
     engine.observe("s2", obs(.03, 50, -.05))
-    evidence = StrategyValidationEvidence(True, 0.8, robust=True)
-    engine.attach_validation("s1", evidence)
-    engine.attach_validation("s2", evidence)
+    evidence_s1 = StrategyValidationEvidence(True, 0.8, robust=True, validated_version=1, dna_fingerprint=engine.dna_fingerprint(engine._records["s1"].dna))
+    evidence_s2 = StrategyValidationEvidence(True, 0.8, robust=True, validated_version=1, dna_fingerprint=engine.dna_fingerprint(engine._records["s2"].dna))
+    engine.attach_validation("s1", evidence_s1)
+    engine.attach_validation("s2", evidence_s2)
     comparison = engine.compare("s1", "s2")
     assert comparison["challenger_eligible"] is True
     engine.promote("s1", "s2")
@@ -39,7 +40,7 @@ def test_strategy_weakness_detection_adaptation_and_rollback():
     assert engine.snapshot()[0]["dna"]["threshold"] == 1
     with __import__("pytest").raises(ValueError):
         engine.apply_adaptation("s", StrategyValidationEvidence(True, 0.8, robust=False))
-    adapted = engine.apply_adaptation("s", StrategyValidationEvidence(True, 0.8, robust=True))
+    adapted = engine.apply_adaptation("s", StrategyValidationEvidence(True, 0.8, robust=True, validated_version=1, dna_fingerprint=engine.dna_fingerprint(engine._records["s"].dna)))
     assert adapted["version"] == 2
     assert adapted["dna"]["threshold"] == 2
     rolled = engine.rollback("s", reason="adaptation regressed validation")
@@ -56,9 +57,10 @@ def test_strategy_continuous_evaluation_and_promotion_audit():
     engine.observe("chall", StrategyObservation("Forex", "EURUSD", "1h", "TRENDING", 50, .60, .03, -.05))
     evaluated = engine.continuous_evaluate()
     assert len(evaluated) == 2
-    evidence = StrategyValidationEvidence(True, 0.8, robust=True)
-    engine.attach_validation("champ", evidence)
-    engine.attach_validation("chall", evidence)
+    evidence_champ = StrategyValidationEvidence(True, 0.8, robust=True, validated_version=1, dna_fingerprint=engine.dna_fingerprint(engine._records["champ"].dna))
+    evidence_chall = StrategyValidationEvidence(True, 0.8, robust=True, validated_version=1, dna_fingerprint=engine.dna_fingerprint(engine._records["chall"].dna))
+    engine.attach_validation("champ", evidence_champ)
+    engine.attach_validation("chall", evidence_chall)
     engine.promote("champ", "chall")
     assert engine.snapshot()[1]["audit_log"][-1]["action"] == "PROMOTE"
 
@@ -72,3 +74,16 @@ def test_validation_blocks_unverified_challenger():
     result = engine.compare("champ", "chall")
     assert result["validation_ready"] is False
     assert result["challenger_eligible"] is False
+
+
+def test_validation_is_invalidated_by_version_and_dna_change():
+    engine = StrategyIntelligenceEngine()
+    engine.register("s", "Versioned", dna={"threshold": 1})
+    evidence = StrategyValidationEvidence(True, 0.8, robust=True, validated_version=1, dna_fingerprint=engine.dna_fingerprint(engine._records["s"].dna))
+    engine.attach_validation("s", evidence)
+    engine.propose_adaptation("s", {"threshold": 2}, reason="validated change")
+    applied = engine.apply_adaptation("s", evidence)
+    assert applied["version"] == 2
+    assert engine.snapshot()[0]["validation_evidence"] is None
+    with __import__("pytest").raises(ValueError):
+        engine.attach_validation("s", evidence)
