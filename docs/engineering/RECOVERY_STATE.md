@@ -143,3 +143,12 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - Latest implementation head: `54e4b3be86ba2d6f8cf6be4e96b8c56de56536f2`.
 - Exact-head Actions verification is currently queued/pending; no green verification is claimed yet.
 - Resume rule: check the latest head workflows first; repair concrete failures only, then continue with the next large roadmap gap.
+
+
+## Recovery Frontier — TASK-146 — 2026-09-19
+- Current main HEAD: aacee0f3fd29c4db6dddaaedcb34552deed66536.
+- Added equity-aware PortfolioRiskGuard gross exposure and integrated candidate pre-trade blocking into FullAnalysisEngine → DecisionEngine → AnalysisReport.
+- Added ShadowComparisonLedger for deterministic paper/reference decision history.
+- Exact-head Actions verification is pending; do not mark this frontier verified until all seven required workflows complete successfully.
+- If any workflow fails, inspect only the failed job and repair the affected boundary before continuing.
+- Next after verification: continue broad capability closure across alerts/report transport, richer paper/shadow/replay persistence, research/strategy hardening, production regression/performance, and finally Railway external verification.
