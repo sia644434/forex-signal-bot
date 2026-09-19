@@ -400,6 +400,7 @@ def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
             if not isinstance(prices, list):
                 raise ValueError("research_validation.prices list is required")
             research_engine = ResearchValidationEngine()
+            from analysis.robustness_engine import RobustnessEngine
             mode = str(research.get("mode", "walk_forward")).lower()
             if mode == "oos":
                 research_result = research_engine.out_of_sample(
@@ -423,12 +424,17 @@ def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
                 max_gap=float(research.get("max_train_test_gap", 0.10)),
                 min_positive_oos_ratio=float(research.get("min_positive_oos_ratio", 0.5)),
             )
+            robustness_result = RobustnessEngine.evaluate(
+                prices,
+                thresholds=research.get("robustness_thresholds", (0.0, 0.001, 0.002)),
+                fees=research.get("robustness_fees", (0.0, 0.0001, 0.0002)),
+            )
             validation = {
                 "oos_positive": bool(research_result.get("oos_positive", research_result.get("positive_oos_ratio", 0.0) > 0)),
                 "positive_oos_ratio": float(research_result.get("positive_oos_ratio", 1.0 if research_result.get("oos_positive") else 0.0)),
                 "overfitting_warning": bool(diagnostics["overfitting_warning"]),
                 "leakage_detected": False,
-                "robust": bool(research.get("robust", False)),
+                "robust": bool(robustness_result["robust"]),
                 "source": "research_validation",
             }
             temporal_rows = research.get("temporal_rows")
