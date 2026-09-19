@@ -100,3 +100,10 @@
 - Replaced legacy Forex/AI branding in the Telegram home/start/back surfaces with the multi-asset trading-intelligence product name.
 - Renamed the deterministic report-explanation feature from AI Coach to Analysis Coach in user-facing Telegram text; the underlying coach remains deterministic and report-based.
 - Rechecked repository-wide markers for TODO/FIXME, unsafe dynamic execution, insecure HTTP verification bypasses, provider capability boundaries, and multi-asset risk metadata. No additional concrete defect was identified in those scanned surfaces.
+
+
+## 2026-09-19 — New Master Prompt capability roadmap begins
+Historical Phases 1–13 are not treated as the end of product development.
+Added CAPABILITY_MATRIX.md to distinguish historical verified capabilities from capabilities required by the new Master Engineering Prompt.
+Added TASK-129: statistical analysis, scenario classification, counterfactual analysis, signal decay, crisis-mode state, and decision gating.
+Railway remains deferred until required capabilities and final regression/security verification are complete.
