@@ -8,7 +8,8 @@ class FakeTwelve:
     def is_configured(self):
         return True
 
-    async def get_time_series(self, symbol, interval, outputsize):
+    async def get_time_series(self, symbol, interval, outputsize, *, exchange=None):
+        assert exchange is None
         assert symbol == "XAU/USD"
         assert interval == "1day"
         return {
@@ -39,7 +40,8 @@ class FakeTwelveCrypto:
     def is_configured(self):
         return True
 
-    async def get_time_series(self, symbol, interval, outputsize):
+    async def get_time_series(self, symbol, interval, outputsize, *, exchange=None):
+        assert exchange == "Binance"
         assert symbol == "BTC/USDT"
         assert interval == "15min"
         return {
