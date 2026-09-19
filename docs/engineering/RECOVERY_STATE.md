@@ -179,3 +179,11 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - Exact-head Actions verification is pending for this frontier.
 - Important boundary: Alpha Vantage commodity history currently exposes price observations without canonical OHLC fields for the configured WTI/BRENT/Gold/Silver endpoints; the implementation deliberately refuses to fabricate OHLC candles. Commodity signal generation remains blocked until a real OHLC-capable provider path is added.
 - NEXT_ACTION: verify exact-head CI; repair only concrete failures; then add an OHLC-capable commodity provider/path and live data capability verification for every market family.
+
+
+## TASK-150 Final Implementation Frontier — 2026-09-19
+- CURRENT_HEAD: `38f28e5068d328c40be303a58e7a67a8ca4e7e33`.
+- Added optional Twelve Data OHLC provider and registered it in ProviderFactory/ProviderManager failover.
+- Twelve Data covers the configured multi-asset universe through the common OHLC time-series contract; commodity mappings include XAU/USD, XAG/USD, WTI/USD and BRENT/USD.
+- Exact-head Actions verification is pending. Runtime commodity/asset availability remains dependent on `TWELVEDATA_API_KEY` and provider plan/symbol entitlement.
+- No live production verification is claimed.
