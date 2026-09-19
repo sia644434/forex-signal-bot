@@ -220,5 +220,28 @@ class DecisionEngine:
         strength = self._calculate_strength(score)
         bias = self._calculate_bias(score)
         confidence = self._adjust_confidence_for_neutrality(self._calculate_confidence(score), score)
+
+        decay = str(getattr(analysis, "signal_decay", "FRESH")).upper()
+        conflict = str(getattr(analysis, "conflict_state", "")).upper()
+        crisis = str(getattr(analysis, "crisis_mode", "NORMAL")).upper()
+        scenario = str(getattr(analysis, "scenario", "")).upper()
+
+        if decay in {"STALE", "INVALID"}:
+            signal = "NO_TRADE"
+            strength = "BLOCKED"
+            reasons.append(f"Execution blocked by signal decay state: {decay}")
+        elif crisis in {"CRISIS", "EXTREME"}:
+            signal = "NO_TRADE"
+            strength = "BLOCKED"
+            reasons.append(f"Execution blocked by crisis mode: {crisis}")
+        elif conflict == "STRONG_CONFLICT" or scenario == "NO_TRADE":
+            signal = "NO_TRADE"
+            strength = "BLOCKED"
+            reasons.append("Execution blocked by insufficient directional agreement")
+        elif conflict == "CONFLICT" and signal in {"BUY", "SELL"}:
+            signal = "WAIT"
+            strength = "WEAK"
+            reasons.append("Directional conflict downgraded the executable signal to WAIT")
+
         reasons = self._build_final_reasons(reasons, score, confidence, signal, strength, bias)
         return DecisionResult(signal=signal, strength=strength, score=score, confidence=confidence, bias=bias, reasons=reasons)
