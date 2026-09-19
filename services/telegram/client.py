@@ -7,8 +7,6 @@ from apscheduler.events import (
     EVENT_JOB_EXECUTED,
     EVENT_JOB_MAX_INSTANCES,
     EVENT_JOB_MISSED,
-    JobExecutionEvent,
-    JobSubmissionEvent,
 )
 
 from core.logger import setup_logger
@@ -109,7 +107,7 @@ class TelegramClient:
             "Continuous multi-timeframe scanner scheduled: job=%s interval=%ss first=5s next_run=%s",
             AUTO_SCANNER_JOB_NAME,
             interval,
-            job.next_t if hasattr(job, "next_t") else getattr(job, "next_run_time", None),
+            getattr(job, "next_t", getattr(job, "next_run_time", None)),
         )
 
     def _schedule_tracker_refresh(self) -> None:
