@@ -81,9 +81,9 @@ class ContinuousMarketScanner:
         key = (symbol, normalized)
         cached = self._cache.get(key)
         if cached and not force:
-            cached_timestamp = cached[0]
-            interval_seconds = {"M5": 300, "M15": 900, "H1": 3600, "H4": 14400, "D1": 86400, "W1": 604800}[normalized]
-            age = (datetime.now(timezone.utc) - cached_timestamp.astimezone(timezone.utc)).total_seconds()
+            fetched_at = cached[0]
+            interval_seconds = {"5m": 300, "15m": 900, "1h": 3600, "4h": 14400, "1d": 86400, "1w": 604800}[normalized]
+            age = (datetime.now(timezone.utc) - fetched_at.astimezone(timezone.utc)).total_seconds()
             if age < interval_seconds:
                 return cached[1]
 
@@ -93,7 +93,7 @@ class ContinuousMarketScanner:
         latest = getattr(candles[-1], "timestamp", None)
         if not isinstance(latest, datetime) or latest.tzinfo is None:
             raise RuntimeError(f"Invalid latest candle timestamp for {symbol}/{normalized}.")
-        self._cache[key] = (latest, candles)
+        self._cache[key] = (datetime.now(timezone.utc), candles)
         return candles
 
     async def _context_for_symbol(self, market_data, symbol: str, m15_candles: list[Any]) -> dict[str, list[Any]]:
