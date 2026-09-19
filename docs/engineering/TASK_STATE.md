@@ -492,6 +492,15 @@ Evidence:
 - Phase 11 is COMPLETE; Phase 13 — Final Production Audit — is the next unresolved phase frontier.
 
 
+## TASK-130
+Phase: Phase 16 — Portfolio / Risk Intelligence
+Title: Multi-Asset Portfolio Exposure, Correlation, Drawdown and Stress Foundation
+Implementation Status: IMPLEMENTED — pending exact-head CI verification
+- Added `analysis/portfolio_engine.py` with position normalization, total/symbol/market exposure, concentration, total risk, drawdown, correlation matrix, and deterministic stress calculations.
+- Added worker-owned `correlation_matrix`, `portfolio_stress`, `stress_sensitivity`, and `counterfactual_batch` job types/executors.
+- Added focused portfolio and worker regression coverage.
+- Large portfolio research is explicitly PC Worker-owned.
+
 ## TASK-129
 Phase: Phase 14 — Advanced Intelligence Foundation
 Title: Statistical / Scenario / Counterfactual / Signal-State Foundation
