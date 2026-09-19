@@ -336,9 +336,11 @@ def normalize_timeframe(
         "4h": "4h",
 
         "d": "1d",
+        "d1": "1d",
         "1d": "1d",
 
         "w": "1w",
+        "w1": "1w",
         "1w": "1w",
     }
 
