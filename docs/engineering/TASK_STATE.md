@@ -678,3 +678,17 @@ Evidence:
 - AnalysisReport now exposes an alert context contract for downstream Telegram/dashboard surfaces.
 - MacroRiskEngine now provides bounded caching and a collect_and_assess orchestration path with provider diagnostics preserved.
 - Added focused regression coverage for paper equity, alert policy/report contracts, and macro cache/assessment behavior.
+
+
+## TASK-146
+Phase: Phase 14/20 — Portfolio Risk and Paper/Shadow Integration
+Title: Portfolio Pre-Trade Risk Boundary and Shadow Comparison Ledger
+Implementation Status: IMPLEMENTED — exact-head CI verification pending
+Evidence:
+- Added equity-aware portfolio gross-exposure evaluation and preserved symbol concentration limits.
+- Integrated the portfolio guard into FullAnalysisEngine so a supplied candidate can be blocked before risk planning with explicit portfolio risk flags.
+- AnalysisResult and AnalysisReport now expose portfolio risk blocking/flags and DecisionEngine fail-closes blocked candidates to NO_TRADE.
+- Added a deterministic ShadowComparisonLedger for auditable paper/reference decision agreement history.
+- Added focused regression coverage for equity-based gross exposure, portfolio decision gating, and shadow agreement history.
+- Current implementation head: aacee0f3fd29c4db6dddaaedcb34552deed66536.
+- No production/Railway verification is claimed.
