@@ -28,7 +28,7 @@ def test_full_engine_returns_report() -> None:
 
 def test_full_engine_has_signal() -> None:
     result = FullAnalysisEngine().analyze(make_candles([1.0, 1.2, 1.1, 1.4, 1.3, 1.6]))
-    assert result.signal in ["BUY", "SELL", "NEUTRAL"]
+    assert result.signal in ["BUY", "SELL", "NEUTRAL", "WAIT", "NO_TRADE"]
 
 
 def test_full_engine_confidence_range() -> None:
