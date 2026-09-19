@@ -127,8 +127,14 @@ def test_multi_timeframe_m15_diagnostics_expose_precise_rejection_details():
     assert "m15_gap_to_buy=13.0" in diagnostics
     assert "m15_gap_to_sell=7.0" in diagnostics
     assert "m15_votes=bull:3,bear:4,neutral:3" in diagnostics
+    assert "m15_market_regime=UNKNOWN" in diagnostics
+    assert "m15_risk_level=UNKNOWN" in diagnostics
+    assert "m15_volatility=none" in diagnostics
+    assert "m15_portfolio_risk_blocked=false" in diagnostics
     assert "m15_components=smart_money_score=30.0,structure_score=20.0,price_action_score=-10.0" in diagnostics
     assert "m15_blockers=Execution blocked by insufficient directional agreement" in diagnostics
+    assert "m15_reasons=Execution blocked by insufficient directional agreement" in diagnostics
+    assert len(diagnostics) >= 20
 
 
 def test_multi_timeframe_diagnostics_explain_missing_context():
