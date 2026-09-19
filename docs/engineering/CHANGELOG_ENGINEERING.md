@@ -186,3 +186,10 @@ Railway remains deferred until required capabilities and final regression/securi
 - PC Worker strategy evaluation can derive validation evidence directly from OOS/walk-forward research input, including overfitting and optional temporal-leakage diagnostics.
 - Added focused regression coverage for research-backed validation and stale identity rejection.
 - Exact-head CI verification remains pending.
+
+
+## 2026-09-19 — TASK-142 Continuous Evaluation History
+- Added immutable strategy evaluation snapshots with version and validation-readiness state.
+- Continuous evaluation can ingest current validation evidence and records an auditable history per strategy.
+- Stale version/DNA evidence is excluded from current validation state.
+- Added focused regression coverage.
