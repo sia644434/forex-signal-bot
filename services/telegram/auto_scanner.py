@@ -6,7 +6,7 @@ import logging
 import os
 from typing import Any
 
-from config.symbols import normalize_timeframe
+from config.symbols import get_market_type, get_all_symbols, normalize_timeframe
 from services.market_data.service import MarketDataService
 from services.telegram.scanner import _configured_scan_symbols, get_scanner_provider_manager
 from services.telegram.state import get_user_state
@@ -207,19 +207,44 @@ class ContinuousMarketScanner:
         if not self._should_scan_now(now):
             return 0
         async with self._lock:
+            # Non-crypto markets are closed over the weekend. Do not manufacture
+            # failures from intentionally stale Friday candles; crypto remains
+            # continuously monitored because it trades 24/7.
+            symbols = _configured_scan_symbols()
+            if now.weekday() >= 5:
+                crypto_symbols = tuple(symbol for symbol in symbols if get_market_type(symbol) == "crypto")
+                if not crypto_symbols:
+                    logger.info(
+                        "Automatic scanner skipped: all configured non-crypto markets are closed (UTC weekend)."
+                    )
+                    return 0
+                symbols = crypto_symbols
+
             # Refresh provider configuration before each automatic cycle so
             # newly available configured providers are picked up without restart.
             provider_manager = get_scanner_provider_manager(application)
             market_data = MarketDataService(provider_manager=provider_manager)
-            symbols = _configured_scan_symbols()
             semaphore = asyncio.Semaphore(4)
+            logger.info(
+                "Automatic scanner cycle started: symbols=%d/%d, timeframes=%s, utc=%s",
+                len(symbols),
+                len(_configured_scan_symbols()),
+                ",".join(TIMEFRAMES),
+                now.isoformat(),
+            )
 
             async def guarded(symbol: str) -> bool:
                 async with semaphore:
                     return await self._scan_symbol(bot, market_data, symbol)
 
             results = await asyncio.gather(*(guarded(symbol) for symbol in symbols))
-            return sum(bool(result) for result in results)
+            sent_count = sum(bool(result) for result in results)
+            logger.info(
+                "Automatic scanner cycle finished: symbols=%d, validated_setups_sent=%d",
+                len(symbols),
+                sent_count,
+            )
+            return sent_count
 
 
 _SCANNER: ContinuousMarketScanner | None = None
