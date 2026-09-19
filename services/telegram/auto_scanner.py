@@ -324,7 +324,7 @@ class ContinuousMarketScanner:
                 now.isoformat(),
             )
 
-            async def guarded(symbol: str) -> bool:
+            async def guarded(symbol: str) -> str:
                 async with semaphore:
                     return await self._scan_symbol(bot, market_data, symbol)
 
