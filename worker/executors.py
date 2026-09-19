@@ -391,6 +391,52 @@ def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
             )
     for item in strategies:
         validation = item.get("validation")
+        research = item.get("research_validation")
+        if validation is None and research is not None:
+            from analysis.research_engine import ResearchValidationEngine
+            if not isinstance(research, dict):
+                raise ValueError("research_validation must be an object")
+            prices = research.get("prices", research.get("close"))
+            if not isinstance(prices, list):
+                raise ValueError("research_validation.prices list is required")
+            research_engine = ResearchValidationEngine()
+            mode = str(research.get("mode", "walk_forward")).lower()
+            if mode == "oos":
+                research_result = research_engine.out_of_sample(
+                    prices,
+                    train_ratio=float(research.get("train_ratio", 0.7)),
+                    thresholds=research.get("thresholds", (0.0, 0.001, 0.002)),
+                    fees=research.get("fees", (0.0, 0.0001, 0.0002)),
+                )
+            elif mode == "walk_forward":
+                research_result = research_engine.walk_forward(
+                    prices,
+                    train_size=int(research.get("train_size", 40)),
+                    test_size=int(research.get("test_size", 10)),
+                    thresholds=research.get("thresholds", (0.0, 0.001, 0.002)),
+                    fees=research.get("fees", (0.0, 0.0001, 0.0002)),
+                )
+            else:
+                raise ValueError("research_validation.mode must be 'oos' or 'walk_forward'")
+            diagnostics = research_engine.overfitting_diagnostics(
+                research_result,
+                max_gap=float(research.get("max_train_test_gap", 0.10)),
+                min_positive_oos_ratio=float(research.get("min_positive_oos_ratio", 0.5)),
+            )
+            validation = {
+                "oos_positive": bool(research_result.get("oos_positive", research_result.get("positive_oos_ratio", 0.0) > 0)),
+                "positive_oos_ratio": float(research_result.get("positive_oos_ratio", 1.0 if research_result.get("oos_positive") else 0.0)),
+                "overfitting_warning": bool(diagnostics["overfitting_warning"]),
+                "leakage_detected": False,
+                "robust": bool(research.get("robust", False)),
+                "source": "research_validation",
+            }
+            temporal_rows = research.get("temporal_rows")
+            if temporal_rows is not None:
+                if not isinstance(temporal_rows, list):
+                    raise ValueError("research_validation.temporal_rows must be a list")
+                leakage = research_engine.temporal_leakage_check(temporal_rows)
+                validation["leakage_detected"] = bool(leakage["leakage_detected"])
         if validation is not None:
             if not isinstance(validation, dict):
                 raise ValueError("strategy validation must be an object")
