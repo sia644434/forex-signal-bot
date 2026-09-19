@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -21,7 +21,7 @@ def make_candle(
 ) -> Candle:
     return Candle(
         symbol=symbol,
-        timestamp=datetime.fromtimestamp(timestamp, tz=timezone.utc),
+        timestamp=datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(minutes=15 * timestamp),
         open=open_price,
         high=high,
         low=low,
@@ -147,4 +147,4 @@ async def test_manager_respects_limit(monkeypatch) -> None:
     manager = ProviderManager(providers=[provider])
     result = await manager.get_candles(symbol="EUR_USD", timeframe="M15", limit=3)
     assert len(result) == 3
-    assert [int(candle.timestamp.timestamp()) for candle in result] == [3, 4, 5]
+    assert result == [make_candle(3), make_candle(4), make_candle(5)]
