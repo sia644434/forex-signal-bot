@@ -61,11 +61,13 @@ class DataQuality:
         previous_day = previous.timestamp.weekday()
         current_day = current.timestamp.weekday()
 
-        # Only a genuine Friday -> Monday transition is treated as the normal
-        # weekend closure. Crypto is explicitly 24/7, so its Friday->Monday
-        # gap must remain visible as a data-quality failure.
-        if previous_day == 4 and current_day == 0 and current.timestamp.date() > previous.timestamp.date():
-            return delta <= timedelta(days=3, hours=6)
+        # Market closures can appear with slightly different candle labelling
+        # across providers (for example Friday -> Sunday or Friday -> Monday).
+        # For non-crypto markets, allow a gap only when the interval crosses
+        # the weekend and the excess duration is bounded by one full weekend.
+        # Crypto is explicitly 24/7 and must never receive this exemption.
+        if previous_day == 4 and current_day in {5, 6, 0} and current.timestamp.date() > previous.timestamp.date():
+            return delta <= expected_interval + timedelta(days=3, hours=6)
 
         return False
 
