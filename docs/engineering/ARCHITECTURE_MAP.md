@@ -11,6 +11,7 @@ Python multi-asset trading-intelligence application with Telegram interface, mar
 - Analysis: `analysis/full_engine.py`
 - Decision: `analysis/decision_engine.py`
 - Risk: `analysis/risk_engine.py`
+- Portfolio: `analysis/portfolio_engine.py`
 - Position sizing: `analysis/position_sizing.py`
 - Currency conversion: `services/market_data/currency_conversion.py`
 - Heavy processing: `worker/`
