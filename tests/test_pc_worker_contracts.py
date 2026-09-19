@@ -14,7 +14,7 @@ def test_requested_workloads_are_worker_owned():
         "ml_training", "xgboost_training", "lightgbm_training", "random_forest_training",
         "timeseries_training", "ensemble_training", "candle_batch_analysis", "dataset_build",
         "model_evaluation", "deep_learning_training", "transformer_training", "lstm_training",
-        "gru_training", "medium_model_training", "correlation_matrix", "portfolio_stress", "stress_sensitivity", "counterfactual_batch", "market_replay", "time_machine",
+        "gru_training", "medium_model_training", "correlation_matrix", "portfolio_stress", "stress_sensitivity", "counterfactual_batch", "market_replay", "time_machine", "strategy_evaluation",
     }
     assert expected <= HEAVY_JOB_TYPES
     assert "coding_agent" not in HEAVY_JOB_TYPES
