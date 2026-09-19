@@ -105,6 +105,7 @@ class Settings:
     OANDA_API_KEY: Optional[str] = None
     FINNHUB_API_KEY: Optional[str] = None
     ALPHAVANTAGE_API_KEY: Optional[str] = None
+    TWELVEDATA_API_KEY: Optional[str] = None
     default_symbol: str = "EURUSD"
     default_timeframe: str = "1h"
     account_currency: Optional[str] = None
@@ -204,6 +205,7 @@ class Settings:
             OANDA_API_KEY=_get_env("OANDA_API_KEY"),
             FINNHUB_API_KEY=_get_env("FINNHUB_API_KEY"),
             ALPHAVANTAGE_API_KEY=_get_env("ALPHAVANTAGE_API_KEY"),
+            TWELVEDATA_API_KEY=_get_env("TWELVEDATA_API_KEY"),
             default_symbol=_get_env("DEFAULT_SYMBOL", "EURUSD"),
             default_timeframe=_get_env("DEFAULT_TIMEFRAME", "1h"),
             account_currency=_get_env("ACCOUNT_CURRENCY"),
