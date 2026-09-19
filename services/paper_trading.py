@@ -4,6 +4,8 @@ from dataclasses import asdict, dataclass
 import math
 from uuid import uuid4
 
+from services.shadow_store import ShadowComparisonStore
+
 
 @dataclass(frozen=True, slots=True)
 class PaperPosition:
@@ -136,10 +138,33 @@ class ShadowObservation:
 
 
 class ShadowComparisonLedger:
-    """In-memory audit ledger for deterministic paper/reference decision comparison."""
+    """Deterministic paper/reference comparison ledger with optional durable storage."""
 
-    def __init__(self) -> None:
+    def __init__(self, store: ShadowComparisonStore | None = None) -> None:
+        self._store = store
         self._observations: list[ShadowObservation] = []
+        if store is not None:
+            self._observations = self._deserialize(store.load_all())
+
+    @staticmethod
+    def _deserialize(items: list[dict]) -> list[ShadowObservation]:
+        observations: list[ShadowObservation] = []
+        for item in items:
+            try:
+                observation = ShadowObservation(
+                    timestamp=str(item["timestamp"]),
+                    paper_decision=str(item["paper_decision"]).upper(),
+                    reference_decision=str(item["reference_decision"]).upper(),
+                    agreement=bool(item["agreement"]),
+                )
+            except (KeyError, TypeError, ValueError) as error:
+                raise ValueError("invalid persisted shadow comparison observation") from error
+            observations.append(observation)
+        return observations
+
+    def _persist(self) -> None:
+        if self._store is not None:
+            self._store.save_all([asdict(item) for item in self._observations])
 
     def record(self, paper_decision: str, reference_decision: str, timestamp: str) -> ShadowObservation:
         comparison = compare_shadow_decision(paper_decision, reference_decision)
@@ -150,6 +175,7 @@ class ShadowComparisonLedger:
             agreement=comparison.agreement,
         )
         self._observations.append(observation)
+        self._persist()
         return observation
 
     def summary(self) -> dict[str, object]:
@@ -165,3 +191,15 @@ class ShadowComparisonLedger:
 
     def clear(self) -> None:
         self._observations.clear()
+        self._persist()
+
+
+__all__ = [
+    "PaperPosition",
+    "ClosedPaperTrade",
+    "PaperTradingEngine",
+    "ShadowComparison",
+    "compare_shadow_decision",
+    "ShadowObservation",
+    "ShadowComparisonLedger",
+]
