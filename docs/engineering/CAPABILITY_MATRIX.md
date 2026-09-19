@@ -13,14 +13,14 @@
 | Decision conflict gates | IMPLEMENTED_CURRENT | `analysis/decision_engine.py` | Existing + focused | Scenario/signal state | RAILWAY | 15 | pending CI |
 | Risk/position sizing | VERIFIED_HISTORICAL | `analysis/risk_engine.py`, `position_sizing.py` | Existing | Market metadata/conversion | RAILWAY | 6/8 | e571a972 |
 | Portfolio engine | IMPLEMENTED_CURRENT | `analysis/portfolio_engine.py` | `tests/test_portfolio_engine.py` | Positions/risk/correlation | RAILWAY / PC_WORKER for stress | 16 | pending CI |
-| Correlation matrix | NOT_IMPLEMENTED | Missing canonical portfolio/statistics integration | Missing | Multi-symbol history | PC_WORKER for large matrices | 16 | — |
-| Portfolio stress | NOT_IMPLEMENTED | Missing | Missing | Portfolio/correlation | PC_WORKER | 16 | — |
+| Correlation matrix | IMPLEMENTED_CURRENT | `analysis/portfolio_engine.py` + `worker/executors.py::correlation_matrix` | `tests/test_portfolio_engine.py`, worker contracts | Multi-symbol history | PC_WORKER | 16 | pending CI |
+| Portfolio stress | IMPLEMENTED_CURRENT | `analysis/portfolio_engine.py` + `worker/executors.py::portfolio_stress` | `tests/test_portfolio_engine.py`, worker research tests | Portfolio/correlation | PC_WORKER | 16 | pending CI |
 | Real backtesting | VERIFIED_HISTORICAL_PARTIAL | `worker/executors.py` | Existing | Historical data | PC_WORKER | 9 | e571a972 |
 | Walk-forward | VERIFIED_HISTORICAL_PARTIAL | `worker/executors.py` | Existing | Historical data | PC_WORKER | 9 | e571a972 |
 | Monte Carlo | VERIFIED_HISTORICAL_PARTIAL | `worker/executors.py` | Existing | Historical returns | PC_WORKER | 9 | e571a972 |
-| Stress/sensitivity research | NOT_IMPLEMENTED | Missing dedicated contracts | Missing | Worker | PC_WORKER | 17 | — |
-| Strategy DNA/adaptation/retirement | NOT_IMPLEMENTED | No canonical lifecycle engine found | Missing | Research/backtest/journal | PC_WORKER + RAILWAY | 18 | — |
-| Champion/challenger | NOT_IMPLEMENTED | Missing | Missing | Strategy lifecycle | PC_WORKER | 18 | — |
+| Stress/sensitivity research | IMPLEMENTED_CURRENT | `worker/executors.py::stress_sensitivity` | `tests/test_worker_advanced_research.py` | Portfolio/shocks | PC_WORKER | 17 | pending CI |
+| Strategy DNA/adaptation/retirement | IMPLEMENTED_CURRENT | `analysis/strategy_intelligence.py` lifecycle registry/DNA/retirement | `tests/test_strategy_intelligence.py` | Research/backtest/journal | PC_WORKER + RAILWAY | 18 | pending CI |
+| Champion/challenger | IMPLEMENTED_CURRENT | `analysis/strategy_intelligence.py::compare/promote` + worker evaluation | `tests/test_strategy_intelligence.py`, `tests/test_strategy_worker_executor.py` | Strategy lifecycle | PC_WORKER | 18 | pending CI |
 | Scanner universe | VERIFIED_HISTORICAL | `services/telegram/scanner.py` | Existing | Providers | RAILWAY / PC_WORKER for large scans | 9 | e571a972 |
 | Opportunity ranking | IMPLEMENTED_CURRENT | `analysis/opportunity_engine.py` + Telegram scanner | `tests/test_opportunity_engine.py` | Scanner/decision/risk | RAILWAY / PC_WORKER | 19 | pending CI |
 | Heatmap | IMPLEMENTED_CURRENT | `analysis/opportunity_engine.py` | `tests/test_opportunity_engine.py` | Scanner/statistics | RAILWAY / PC_WORKER | 19 | pending CI |
