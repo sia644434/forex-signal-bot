@@ -363,6 +363,37 @@ def time_machine(payload: dict[str, Any]) -> dict[str, Any]:
         counterfactual=payload.get("counterfactual"),
     )
 
+
+def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
+    from analysis.strategy_intelligence import StrategyIntelligenceEngine, StrategyObservation
+    strategies = payload.get("strategies")
+    if not isinstance(strategies, list) or not strategies:
+        raise ValueError("strategies list is required")
+    engine = StrategyIntelligenceEngine()
+    for item in strategies:
+        if not isinstance(item, dict):
+            raise ValueError("each strategy must be an object")
+        engine.register(str(item["strategy_id"]), str(item.get("name", item["strategy_id"])), item.get("dna"), parent_id=item.get("parent_id"))
+        for raw in item.get("observations", []):
+            engine.observe(
+                str(item["strategy_id"]),
+                StrategyObservation(
+                    market=str(raw.get("market", "UNKNOWN")),
+                    symbol=str(raw.get("symbol", "UNKNOWN")),
+                    timeframe=str(raw.get("timeframe", "UNKNOWN")),
+                    regime=str(raw.get("regime", "UNCERTAIN")),
+                    trades=int(raw.get("trades", 0)),
+                    win_rate=float(raw.get("win_rate", 0.0)),
+                    expectancy=float(raw.get("expectancy", 0.0)),
+                    max_drawdown=float(raw.get("max_drawdown", 0.0)),
+                    sample_quality=float(raw.get("sample_quality", 1.0)),
+                ),
+            )
+    comparison = None
+    if payload.get("champion_id") and payload.get("challenger_id"):
+        comparison = engine.compare(str(payload["champion_id"]), str(payload["challenger_id"]))
+    return {"comparison": comparison, "strategies": engine.snapshot()}
+
 def register_real_executors(runtime) -> None:
     mapping = {
         "backtest": backtest, "walk_forward": walk_forward, "monte_carlo": monte_carlo,
@@ -374,7 +405,7 @@ def register_real_executors(runtime) -> None:
         "timeseries_training": timeseries_training, "ensemble_training": ensemble_training,
         "deep_learning_training": deep_learning_training, "transformer_training": transformer_training,
         "lstm_training": lstm_training, "gru_training": gru_training,
-        "medium_model_training": medium_model_training, "correlation_matrix": correlation_matrix, "portfolio_stress": portfolio_stress, "stress_sensitivity": stress_sensitivity, "counterfactual_batch": counterfactual_batch, "market_replay": market_replay, "time_machine": time_machine,
+        "medium_model_training": medium_model_training, "correlation_matrix": correlation_matrix, "portfolio_stress": portfolio_stress, "stress_sensitivity": stress_sensitivity, "counterfactual_batch": counterfactual_batch, "market_replay": market_replay, "time_machine": time_machine, "strategy_evaluation": strategy_evaluation,
     }
     for name, handler in mapping.items():
         runtime.register(name, handler)
