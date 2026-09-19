@@ -61,3 +61,7 @@ Large historical, simulation, optimization, multi-symbol, multi-timeframe, corre
 | Validation-aware continuous evaluation history | IMPLEMENTED_CURRENT | analysis/strategy_intelligence.py::StrategyEvaluationSnapshot + continuous_evaluate | tests/test_strategy_intelligence.py | Strategy lifecycle + versioned validation | RAILWAY / PC_WORKER | 18 | pending CI |
 
 | Research-backed robustness gate | IMPLEMENTED_CURRENT | worker/executors.py + analysis/robustness_engine.py | tests/test_strategy_worker_executor.py | Historical prices + robustness matrix | PC_WORKER | 18 | pending CI |
+
+| Validation-gated strategy lifecycle | IMPLEMENTED_CURRENT | analysis/strategy_intelligence.py::evaluate | tests/test_strategy_intelligence.py | Version-bound research validation | RAILWAY / PC_WORKER | 18 | pending CI |
+| Research validation diagnostics | IMPLEMENTED_CURRENT | worker/executors.py::strategy_evaluation + StrategyValidationEvidence | tests/test_strategy_worker_executor.py | OOS/walk-forward + robustness | PC_WORKER | 18 | pending CI |
+| Automatic strategy retirement guard | IMPLEMENTED_CURRENT | analysis/strategy_intelligence.py::evaluate | tests/test_strategy_intelligence.py | Sample/expectancy/drawdown | RAILWAY / PC_WORKER | 18 | pending CI |

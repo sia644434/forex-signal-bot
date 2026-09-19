@@ -201,3 +201,11 @@ Railway remains deferred until required capabilities and final regression/securi
 ## 2026-09-19 — TASK-143 Robustness-Gated Research Validation
 - Research-backed strategy validation now derives `robust` from the existing RobustnessEngine rather than trusting caller-provided state.
 - Added regression coverage for automatic robustness gating.
+
+
+## 2026-09-19 — TASK-144
+- Fixed CI research fixtures by using a stable geometric-return price series; production overfitting gates remain fail-closed.
+- Added validation-gated CHALLENGER lifecycle transition.
+- Added automatic retirement for persistent negative expectancy with elevated drawdown after sufficient sample.
+- Persisted OOS, overfitting, and robustness diagnostics in strategy validation evidence.
+- Added focused regression coverage.

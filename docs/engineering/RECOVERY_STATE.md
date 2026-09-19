@@ -128,3 +128,11 @@ The configured restart policy and healthchecks are mechanisms; the successful li
 - Added automatic RobustnessEngine gating to research-backed strategy validation.
 - Latest code/test commits: `af993591e329e8e160328ef16298bc4421c17344`, `192143e665b66444b3e789289e5f7ba06f01a1ec`.
 - Exact-head Actions verification pending; resume by checking latest main HEAD workflows.
+
+
+## Recovery Frontier — TASK-144
+- Latest implementation head: e602866e50d35cb0f477491bf88fcc1f6a0b038e.
+- TASK-143 CI exposed a research test-data issue: the prior linear price fixture produced a legitimate train/test divergence warning; the fixture was corrected to a stable geometric-return series rather than weakening the production gate.
+- TASK-144 adds validation-gated challenger state, automatic retirement for persistent negative expectancy/elevated drawdown, and persisted research diagnostics.
+- Exact-head Actions verification remains pending for the latest head.
+- Resume rule: check all seven required workflows for the latest head; repair only concrete failures, then continue with remaining roadmap capabilities.

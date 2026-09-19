@@ -147,3 +147,12 @@ Status: IMPLEMENTATION
 Current task: TASK-143
 Completed: automatic robustness gating for research-backed strategy validation.
 Remaining: exact-head CI verification and broader strategy lifecycle/research integration.
+
+
+## TASK-144 — Validation-Gated Strategy Lifecycle
+Status: IMPLEMENTATION
+- Current frontier: validation-aware lifecycle state transitions and research evidence diagnostics.
+- Positive strategies do not become CHALLENGER without current admissible validation.
+- Persistent negative expectancy with sample >= 100 and absolute drawdown >= 0.20 transitions to RETIRED with an explicit reason.
+- Research validation retains OOS, overfitting, and robustness diagnostics for auditability.
+- Exact-head CI verification remains pending.

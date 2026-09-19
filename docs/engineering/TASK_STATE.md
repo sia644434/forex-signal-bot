@@ -655,3 +655,14 @@ Status: IMPLEMENTED — exact-head CI verification pending
 - Strategy research validation now automatically runs the existing RobustnessEngine over the same price series.
 - Manual `robust: true` is no longer trusted for research-backed validation.
 - Regression coverage verifies robustness is derived from the robustness engine.
+
+
+## TASK-144
+Phase: Phase 18 — Strategy Intelligence / Research Integration
+Title: Validation-Gated Lifecycle and Research Evidence Diagnostics
+Implementation Status: IMPLEMENTED — exact-head CI verification pending
+Evidence:
+- Positive strategies now require current version/DNA-bound validation before entering CHALLENGER state.
+- Persistent negative expectancy with sufficient sample and elevated drawdown is automatically retired.
+- Research-backed worker validation persists OOS/overfitting/robustness diagnostics with the validation evidence.
+- Focused regression coverage added for validation-gated lifecycle transitions, automatic retirement, and research diagnostics.
