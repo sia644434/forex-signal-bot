@@ -21,6 +21,9 @@ from analysis.harmonic_engine import HarmonicEngine
 from analysis.brooks_engine import BrooksEngine
 from analysis.wyckoff_engine import WyckoffEngine
 from analysis.smc_engine import SMCEngine
+from analysis.statistical_engine import StatisticalEngine
+from analysis.scenario_engine import ScenarioEngine
+from analysis.signal_state import evaluate_signal_state
 
 
 class FullAnalysisEngine:
@@ -42,6 +45,8 @@ class FullAnalysisEngine:
         self.confidence_engine = ConfidenceEngine()
         self.risk_engine = RiskEngine()
         self.atr_engine = ATREngine()
+        self.statistical_engine = StatisticalEngine()
+        self.scenario_engine = ScenarioEngine()
 
     @staticmethod
     def _require_finite(value: object, name: str) -> float:
@@ -109,6 +114,8 @@ class FullAnalysisEngine:
             raise ValueError("ATR metrics must be non-negative.")
 
         structure = self.structure_detector.analyze(closes)
+        statistics = self.statistical_engine.evaluate(closes)
+        scenario = self.scenario_engine.evaluate(closes, trend=structure.trend, volatility=atr_percentage / 100.0)
         indicator_snapshot = self.indicator_engine.calculate(closes)
         momentum_result = self.momentum_engine.analyze(indicator_snapshot.values)
         price_action_result = self.price_action_engine.analyze(closes)
@@ -137,6 +144,30 @@ class FullAnalysisEngine:
         for name, value in component_scores.items():
             self._require_finite(value, name)
 
+        directional_scores = [float(value) for key, value in component_scores.items() if key != "volatility_score"]
+        positive_votes = sum(value > 0 for value in directional_scores)
+        negative_votes = sum(value < 0 for value in directional_scores)
+        if positive_votes and negative_votes:
+            conflict_state = "STRONG_CONFLICT" if min(positive_votes, negative_votes) >= 3 else "CONFLICT"
+        elif max(positive_votes, negative_votes) >= 3:
+            conflict_state = "CONSENSUS"
+        elif positive_votes or negative_votes:
+            conflict_state = "WEAK_CONSENSUS"
+        else:
+            conflict_state = "INSUFFICIENT_EVIDENCE"
+
+        if structure.trend in {"bullish", "bearish"} and atr_percentage >= 3.0:
+            market_regime = "HIGH_VOLATILITY"
+        elif structure.trend in {"bullish", "bearish"}:
+            market_regime = "TRENDING"
+        elif atr_percentage >= 3.0:
+            market_regime = "HIGH_VOLATILITY"
+        else:
+            market_regime = "RANGING"
+
+        latest = candle_data[-1].timestamp
+        signal_state = evaluate_signal_state(latest, max_age_seconds=60.0, volatility=atr_percentage / 100.0) if latest.tzinfo is not None else None
+
         analysis_result = AnalysisResult(
             trend=structure.trend, momentum=momentum_result.state, indicators=indicator_snapshot.values, candles=candle_data,
             supply_demand=supply_demand_result.zone, trend_score=component_scores["trend_score"], momentum_score=component_scores["momentum_score"],
@@ -146,6 +177,12 @@ class FullAnalysisEngine:
             smart_money_score=component_scores["smart_money_score"], smc_bias=smc_result.bias, smc_structure=smc_result.structure, order_block=smc_result.order_block,
             liquidity=smc_result.liquidity, fair_value_gap=smc_result.fair_value_gap, premium_discount=smc_result.premium_discount,
             reasons=momentum_result.reasons + price_action_result.reasons + [supply_demand_result.reason, candlestick_result.reason, elliott_result.reason, harmonic_result.reason, brooks_result.reason, wyckoff_result.reason, smc_result.reason],
+            market_regime=market_regime,
+            scenario=scenario.primary,
+            statistical_context=statistics.summary(),
+            conflict_state=conflict_state,
+            signal_decay=signal_state.decay if signal_state else "INVALID",
+            crisis_mode=signal_state.crisis_mode if signal_state else "NORMAL",
         )
 
         decision = self.decision_engine.decide(analysis_result)
@@ -204,4 +241,10 @@ class FullAnalysisEngine:
             fair_value_gap=smc_result.fair_value_gap, premium_discount=smc_result.premium_discount,
             reasons=analysis_result.reasons + decision.reasons + confidence_result.warnings + [risk_result.reason, f"ATR: {atr_value}", f"ATR Percentage: {atr_percentage}", f"Market Condition: {risk_result.market_condition}", f"Trade Grade: {trade_grade}"],
             indicators=indicator_snapshot.values,
+            market_regime=analysis_result.market_regime,
+            scenario=analysis_result.scenario,
+            statistical_context=analysis_result.statistical_context,
+            conflict_state=analysis_result.conflict_state,
+            signal_decay=analysis_result.signal_decay,
+            crisis_mode=analysis_result.crisis_mode,
         )
