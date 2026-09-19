@@ -28,7 +28,7 @@
 | Paper trading | PARTIAL | Production policy/configuration exists; no full lifecycle ledger | Partial | Decision/risk/persistence | RAILWAY | 20 | — |
 | Shadow trading | NOT_IMPLEMENTED | Missing | Missing | Live/paper comparison | RAILWAY | 20 | — |
 | Market replay | NOT_IMPLEMENTED | Missing | Missing | Historical candles | PC_WORKER | 20 | — |
-| Time Machine | NOT_IMPLEMENTED | Missing | Missing | Replay/counterfactual | PC_WORKER | 20 | — |
+| Time Machine | IMPLEMENTED_CURRENT | `analysis/time_machine.py` + `worker/executors.py::time_machine` | `tests/test_time_machine.py` | Replay + counterfactual | PC_WORKER | 20 | pending CI |
 | News/macro risk | EXTERNAL_DEPENDENCY | Readiness stage exists; no canonical real provider integration | Contract-only | External data provider | EXTERNAL + RAILWAY | 21 | — |
 | Telegram localization | VERIFIED_HISTORICAL | `services/telegram/i18n.py` | Existing | Telegram | RAILWAY | 12 | e571a972 |
 | Alerts/reports | PARTIAL | Existing signal/tracker/report surfaces | Existing | Telegram | RAILWAY | 22 | — |
@@ -43,4 +43,4 @@ Large historical, simulation, optimization, multi-symbol, multi-timeframe, corre
 | Paper trading | IMPLEMENTED_CURRENT | `services/paper_trading.py` | `tests/test_paper_trading.py` | Decision/risk/persistence | RAILWAY | 20 | pending CI |
 | Shadow trading | IMPLEMENTED_CURRENT | `services/paper_trading.py` comparison contract | `tests/test_paper_trading.py` | Live/paper decision streams | RAILWAY | 20 | pending CI |
 | Market replay | IMPLEMENTED_CURRENT | `worker/executors.py::market_replay` | `tests/test_market_replay_executor.py` | Historical candles/full analysis | PC_WORKER | 20 | pending CI |
-| Time Machine | NOT_IMPLEMENTED | Replay UI/counterfactual orchestration still missing | Missing | Replay + counterfactual | PC_WORKER | 20 | — |
+| Time Machine | IMPLEMENTED_CURRENT | `analysis/time_machine.py` + `worker/executors.py::time_machine` | `tests/test_time_machine.py` | Replay + counterfactual | PC_WORKER | 20 | pending CI |
