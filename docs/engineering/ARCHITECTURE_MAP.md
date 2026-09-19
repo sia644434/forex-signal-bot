@@ -29,6 +29,9 @@ MarketDataEngine owns candle quality/freshness gates. ProviderManager owns provi
 Analysis produces analytical inputs → DecisionEngine produces the decision → RiskEngine applies risk policy → PositionSizing/CurrencyConversion provide sizing where required.
 The dormant `ai/` package is not in canonical production scoring.
 
+## Portfolio / Heavy Research
+`analysis/portfolio_engine.py` owns multi-asset exposure, concentration, correlation, drawdown, and deterministic stress calculations. Large correlation, stress, sensitivity, and counterfactual batches are routed through `worker/` and never require Railway to become a compute server.
+
 ## Worker / Queue
 `worker/` provides the PC Worker runtime, authenticated HTTP boundary, dispatcher, durable queue, and heavy executors. The worker is an application-processing component, not a local coding/model orchestration layer.
 
