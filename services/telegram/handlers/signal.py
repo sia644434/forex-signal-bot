@@ -57,7 +57,14 @@ def _format_provider_diagnostics(exc: Exception) -> str:
         provider = str(item.get("provider") or "").strip()
         if not provider:
             continue
-        message = str(item.get("message") or item.get("error_type") or "unknown failure").strip()
+        message = str(item.get("message") or "").strip()
+        nested = item.get("details")
+        if isinstance(nested, dict):
+            reason = str(nested.get("reason") or nested.get("message") or "").strip()
+            if reason and reason not in message:
+                message = f"{message}: {reason}" if message else reason
+        if not message:
+            message = str(item.get("error_type") or "unknown failure").strip()
         latest[provider] = message[:180]
     if not latest:
         return ""
