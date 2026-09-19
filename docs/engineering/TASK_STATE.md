@@ -523,3 +523,13 @@ Implementation Status: IMPLEMENTED — pending exact-head CI verification
 - DecisionEngine now blocks stale/invalid signals, crisis/extreme conditions, strong conflicts, and NO_TRADE scenarios; ordinary conflicts downgrade executable BUY/SELL to WAIT.
 - Added focused regression tests.
 - No local execution success is claimed; exact-head CI remains required.
+
+## TASK-132
+Phase: Phase 20 — Paper / Shadow / Replay
+Title: Paper Trading, Shadow Comparison and Worker Market Replay Foundation
+Implementation Status: IMPLEMENTED — pending exact-head CI verification
+- Added isolated paper-trading ledger with open/close/PnL contracts.
+- Added explicit shadow-decision comparison contract.
+- Added PC Worker-owned market replay executor producing a trace of decision/signal/confidence over historical candles.
+- Added focused regression coverage and worker ownership coverage.
+- Live execution paths remain separate from paper/replay processing.
