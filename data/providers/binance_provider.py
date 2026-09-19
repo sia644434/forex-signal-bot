@@ -20,6 +20,42 @@ class BinanceProvider(MarketDataProvider):
         "H1": "1h", "H4": "4h", "D1": "1d", "W1": "1w",
     }
 
+    _INTERVAL_SECONDS: Final[dict[str, int]] = {
+        "M1": 60, "M5": 300, "M15": 900, "M30": 1800,
+        "H1": 3600, "H4": 14400, "D1": 86400, "W1": 604800,
+    }
+    MAX_STALENESS_INTERVALS: Final[float] = 2.0
+
+    @classmethod
+    def _timeframe_key(cls, timeframe: str) -> str:
+        normalized = timeframe.strip().upper().replace(" ", "")
+        aliases = {
+            "1MIN": "M1", "5MIN": "M5", "15MIN": "M15", "30MIN": "M30",
+            "1HR": "H1", "4HR": "H4", "1DAY": "D1", "D": "D1",
+            "1WEEK": "W1", "W": "W1",
+        }
+        key = aliases.get(normalized, normalized)
+        if key not in cls._INTERVAL_SECONDS:
+            raise ValueError(f"Unsupported Binance timeframe: {timeframe!r}")
+        return key
+
+    @classmethod
+    def _validate_market_sequence(cls, candles: list[Candle], timeframe: str, now: datetime) -> None:
+        key = cls._timeframe_key(timeframe)
+        interval_seconds = cls._INTERVAL_SECONDS[key]
+        for previous, current in zip(candles, candles[1:]):
+            delta = (current.timestamp - previous.timestamp).total_seconds()
+            if delta != interval_seconds:
+                raise ValueError(
+                    f"Binance candles are not contiguous for {key}: expected {interval_seconds}s, got {delta}s."
+                )
+        age = (now - candles[-1].timestamp).total_seconds()
+        max_age = interval_seconds * cls.MAX_STALENESS_INTERVALS
+        if age < 0 or age > max_age:
+            raise ValueError(
+                f"Latest Binance candle is stale for {key}: age={age:.1f}s, max={max_age:.1f}s."
+            )
+
     def __init__(self, client: BinanceClient | None = None) -> None:
         self.client = client if client is not None else BinanceClient()
 
