@@ -84,7 +84,8 @@ class TwelveDataProvider(MarketDataProvider):
         provider_symbol = self._provider_symbol(canonical)
         interval = self._interval(timeframe)
         try:
-            response = await self.client.get_time_series(provider_symbol, interval, limit)
+            crypto_exchange = "Binance" if get_market_type(canonical) == "crypto" else None
+            response = await self.client.get_time_series(provider_symbol, interval, limit, exchange=crypto_exchange)
         except Exception as error:
             raise ApplicationError("Failed to fetch Twelve Data candles.", {"provider": self.name, "symbol": canonical, "timeframe": interval}) from error
         values = response.get("values")
