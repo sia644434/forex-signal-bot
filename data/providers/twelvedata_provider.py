@@ -54,8 +54,11 @@ class TwelveDataProvider(MarketDataProvider):
             return cls._COMMODITY_SYMBOLS[canonical]
         if market == "forex" and len(canonical) == 6:
             return f"{canonical[:3]}/{canonical[3:]}"
-        if market == "crypto" and canonical.endswith("USDT"):
-            return f"{canonical[:-4]}/USD"
+        if market == "crypto":
+            if canonical.endswith("USDT"):
+                return f"{canonical[:-4]}/USDT"
+            if canonical.endswith("USDC"):
+                return f"{canonical[:-4]}/USDC"
         return canonical
 
     @staticmethod
