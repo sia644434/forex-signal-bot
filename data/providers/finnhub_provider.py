@@ -13,7 +13,7 @@ logger = setup_logger()
 class FinnhubProvider(MarketDataProvider):
     """Finnhub implementation for supported real-time candle asset classes."""
     name = "finnhub"
-    _TIMEFRAME_ALIASES: Final[dict[str, str]] = {"M1":"1","M5":"5","M15":"15","M30":"30","H1":"60","D1":"D","W1":"W","D":"D","W":"W","M":"M"}
+    _TIMEFRAME_ALIASES: Final[dict[str, str]] = {"M1":"1","M5":"5","M15":"15","M30":"30","H1":"60","D1":"D","W1":"W","D":"D","W":"W","M":"M","1M":"1","5M":"5","15M":"15","30M":"30","1H":"60","1D":"D","1W":"W"}
     _TIMEFRAME_MINUTES: Final[dict[str, int]] = {"1":1,"5":5,"15":15,"30":30,"60":60,"D":1440,"W":10080,"M":43200}
     _MARKET_ENDPOINTS: Final[dict[str, str]] = {"forex":"forex","stock":"stock","crypto":"crypto","index":"index"}
 
@@ -84,7 +84,9 @@ class FinnhubProvider(MarketDataProvider):
         if endpoint is None:
             raise ApplicationError("Finnhub does not support this market.", {"provider":self.name,"symbol":canonical_symbol,"market":market})
         try:
-            method = getattr(self.client, f"get_{endpoint}_candles")
+            method = getattr(self.client, f"get_{endpoint}_candles", None)
+            if method is None:
+                method = getattr(self.client, "get_candles")
             response = await method(canonical_symbol, resolution, start, end)
         except Exception as error:
             raise ApplicationError("Failed to fetch Finnhub candles.", {"provider":self.name,"symbol":canonical_symbol,"market":market,"timeframe":resolution,"limit":limit}) from error
