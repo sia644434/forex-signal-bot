@@ -80,7 +80,7 @@ class MultiTimeframeAnalysisEngine:
                 count += 1
         return count
 
-    def analyze(self, candles_by_timeframe: Mapping[str, list]) -> MultiTimeframeDecision | None:
+    def analyze(self, candles_by_timeframe: Mapping[str, list], symbol: str | None = None) -> MultiTimeframeDecision | None:
         missing = [tf for tf in self.TIMEFRAME_ORDER if not candles_by_timeframe.get(tf)]
         if missing:
             return None
@@ -144,7 +144,7 @@ class MultiTimeframeAnalysisEngine:
             return None
 
         return MultiTimeframeDecision(
-            symbol=getattr(setup, "symbol", "UNKNOWN"),
+            symbol=symbol or getattr(setup, "symbol", "UNKNOWN"),
             direction=direction,
             setup_timeframe="M15",
             setup_report=setup,
