@@ -137,7 +137,12 @@ class MultiTimeframeAnalysisEngine:
         else:
             aligned = alignment <= 40.0 and lower_score <= 48.0
 
-        if not (alignment >= 60.0 and lower_score >= 52.0) if direction == "BUY" else not (alignment <= 40.0 and lower_score <= 48.0):
+        directional_alignment_ok = (
+            alignment >= 60.0 and lower_score >= 52.0
+            if direction == "BUY"
+            else alignment <= 40.0 and lower_score <= 48.0
+        )
+        if not directional_alignment_ok:
             rejection_codes.append(f"directional_alignment={alignment:.1f},m5={lower_score:.1f}")
         if aligned_htf < 3:
             aligned = False
