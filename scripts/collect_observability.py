@@ -7,10 +7,10 @@ ROOT=Path(__file__).resolve().parents[1]; OUT=ROOT/"observability"/"latest"; RAW
 def run(cmd,env=None):
     p=subprocess.run(cmd,text=True,capture_output=True,env=env); return p.returncode,p.stdout,p.stderr
 def collect_railway():
-    token=os.environ.get("RAILWAY_API_TOKEN"); project=os.environ.get("RAILWAY_PROJECT_ID"); environment=os.environ.get("RAILWAY_ENVIRONMENT_ID"); service=os.environ.get("RAILWAY_SERVICE_ID")
+    token=os.environ.get("RAILWAY_TOKEN"); project=os.environ.get("RAILWAY_PROJECT_ID"); environment=os.environ.get("RAILWAY_ENVIRONMENT_ID"); service=os.environ.get("RAILWAY_SERVICE_ID")
     if not token or not project or not environment:
-        write_json(OUT/"railway-status.json",{"status":"not_configured","required":["RAILWAY_API_TOKEN","RAILWAY_PROJECT_ID","RAILWAY_ENVIRONMENT_ID"]}); return []
-    env=os.environ.copy(); env["RAILWAY_API_TOKEN"]=token
+        write_json(OUT/"railway-status.json",{"status":"not_configured","required":["RAILWAY_TOKEN","RAILWAY_PROJECT_ID","RAILWAY_ENVIRONMENT_ID"]}); return []
+    env=os.environ.copy(); env["RAILWAY_TOKEN"]=token
     cmd=["npx","-y","@railway/cli","logs","--json","--lines",os.environ.get("RAILWAY_LOG_LINES") or "500","--project",project,"--environment",environment]
     if service: cmd += ["--service",service]
     code,out,err=run(cmd,env)
