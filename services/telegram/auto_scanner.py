@@ -236,6 +236,21 @@ class ContinuousMarketScanner:
         return sent, eligible
 
     @staticmethod
+    def _diagnostic_stage(diagnostics: tuple[str, ...]) -> str:
+        """Return the first blocking pipeline stage for compact cycle tracing."""
+        if any(item.startswith("role_context=") for item in diagnostics):
+            return "HTF"
+        if any(item.startswith("execution_trigger=") for item in diagnostics):
+            return "M5"
+        if any(item.startswith("setup_quality=") for item in diagnostics):
+            return "SETUP"
+        if any(item.startswith(("confidence=", "rr=", "conflict_state=", "signal_decay=", "portfolio_risk_blocked=")) for item in diagnostics):
+            return "RISK"
+        if any(item.startswith("m15_signal=") for item in diagnostics):
+            return "M15"
+        return "UNKNOWN"
+
+    @staticmethod
     def _classify_diagnostics(diagnostics: tuple[str, ...]) -> str:
         """Map rejection diagnostics to stable cycle counters."""
         if not diagnostics:
@@ -277,8 +292,18 @@ class ContinuousMarketScanner:
             context = await self._context_for_symbol(market_data, symbol, m15)
             decision, diagnostics = self._engine.analyze_with_diagnostics(context, symbol=symbol)
             if decision is None:
+                stage = self._diagnostic_stage(diagnostics)
                 logger.info(
-                    "Automatic scanner rejected %s/M15: %s",
+                    "Automatic scanner trace: symbol=%s | M15=%s | HTF=%s | Setup=%s | M5=%s | Risk=%s",
+                    symbol,
+                    next((item.split("=", 1)[1] for item in diagnostics if item.startswith("setup_direction=")), "NONE"),
+                    "REJECT" if stage == "HTF" else "PASS",
+                    "REJECT" if stage == "SETUP" else "SKIP" if stage in {"M15", "HTF"} else "PASS",
+                    "WAIT" if stage == "M5" else "SKIP" if stage in {"M15", "HTF", "SETUP"} else "PASS",
+                    "REJECT" if stage == "RISK" else "SKIP" if stage != "UNKNOWN" else "PASS",
+                )
+                logger.info(
+                    "Automatic scanner rejection detail: symbol=%s | %s",
                     symbol,
                     "; ".join(diagnostics) if diagnostics else "unknown_reason",
                 )
