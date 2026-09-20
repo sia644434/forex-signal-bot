@@ -6,7 +6,7 @@ from uuid import uuid4
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from config.symbols import normalize_timeframe
-from profiles import build_execution_context, context_payload, get_profile, list_profiles
+from profiles import build_execution_context, context_payload, list_profiles
 from services.market_data.service import MarketDataService
 from services.telegram.scanner import _configured_scan_symbols, get_scanner_provider_manager
 from worker.contracts import JobRequest
@@ -33,7 +33,7 @@ def _save_selection(state, **changes) -> dict:
 
 
 def _profile_or_none(state, profile_id: str):
-    return next((p for p in __import__("profiles").list_profiles(state) if p.profile_id == profile_id), None)
+    return next((p for p in list_profiles(state) if p.profile_id == profile_id), None)
 
 
 def _symbols(profile, state) -> tuple[str, ...]:
@@ -198,7 +198,7 @@ async def handle_profile_backtest_callback(query, state, language: str, data: st
                     "high": float(candle.high),
                     "low": float(candle.low),
                     "close": float(candle.close),
-                    "volume": float(candle.volume) if candle.volume is not None else 0.0,
+                    "volume": float(getattr(candle, "volume", 0.0) or 0.0),
                 }
                 for candle in candles
             ]
