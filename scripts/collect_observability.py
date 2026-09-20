@@ -112,7 +112,9 @@ def collect_railway() -> list[Event]:
     base = railway_base_args(project, environment, service)
 
     def collect(kind: str, extra: list[str], filename: str) -> None:
-        command = base + ["logs", "--json", "--lines", lines, "--latest"] + extra
+        command = base + ["logs", "--json", "--lines", lines] + extra
+        if kind in {"runtime", "http"}:
+            command.append("--latest")
         code, output, error = run(command, env)
         if code:
             _write_raw(raw_dir / f"{filename}-error.txt", error[-4000:])
