@@ -159,3 +159,21 @@ def test_context_payload_overlays_canonical_profile_metadata():
     assert payload["profile_version"] == 4
     assert payload["experiment_id"] == "exp-7"
     assert payload["profile_snapshot"]["version"] == 4
+
+def test_profile_deletion_recovers_active_profile_and_clears_last_profile():
+    from profiles import delete_profile
+
+    state = TelegramUserState(user_id=1006)
+    first = create_profile(state, "One", ["scalping"])
+    second = create_profile(state, "Two", ["swing"])
+    set_active_profile(state, second.profile_id)
+
+    deleted = delete_profile(state, second.profile_id)
+    assert deleted.profile_id == second.profile_id
+    assert get_profile(state).profile_id == first.profile_id
+    assert state.settings["active_profile_id"] == first.profile_id
+
+    delete_profile(state, first.profile_id)
+    assert list_profiles(state) == []
+    assert "active_profile_id" not in state.settings
+
