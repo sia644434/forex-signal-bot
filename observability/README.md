@@ -1,8 +1,8 @@
 # Production Observability
 
-This directory is the durable, assistant-readable observability surface for the production trading platform.
+This directory contains the central, sanitized observability collector for the production trading platform.
 
-The central pipeline normalizes:
+The pipeline normalizes:
 - Application runtime logs emitted through the central JSON logger.
 - GitHub Actions workflow and job status.
 - Sanitized GitHub Actions job logs.
@@ -19,13 +19,17 @@ Railway integration is optional:
 
 No paid Railway plan is required by the observability pipeline itself.
 
-## Files
+## Storage model
 
-- `latest/system-status.json`: unified normalized view and recent errors/events.
-- `latest/railway-status.json`: Railway integration state and counts.
-- `latest/github-actions.json`: GitHub workflow/job telemetry.
-- `latest/incident-status.json`: centralized incident state.
-- `raw/`: sanitized high-volume Railway/GitHub data, uploaded as GitHub Actions artifacts instead of committed every cycle.
+Observability data is generated at runtime and **never committed back to `main`**.
+
+Each collector run produces:
+- `latest/*.json`: compact assistant-readable snapshots for that run.
+- `raw/`: sanitized high-volume Railway/GitHub data.
+
+Both are uploaded together as a GitHub Actions artifact named `observability-<run-id>` with a 14-day retention period. This keeps production telemetry available for inspection without creating generated commits, branch divergence, or recurring Sync Fork conflicts.
+
+GitHub Actions artifacts are the historical storage surface for these generated snapshots. The repository itself contains only the collector code, schema, redaction logic, documentation, and workflow configuration.
 
 ## Optional Railway configuration
 
