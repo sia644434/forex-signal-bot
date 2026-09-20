@@ -221,6 +221,10 @@ class AnalysisReport:
     # Signed effect around the neutral midpoint (50.0). Positive is bullish, negative is bearish.
     directional_contributions: dict[str, float] = field(default_factory=dict)
 
+    # Selected profile styles and their independent pre-combination decisions.
+    style_ids: list[str] = field(default_factory=list)
+    style_results: dict[str, dict[str, Any]] = field(default_factory=dict)
+
 
     
     # ==================================================
@@ -518,6 +522,8 @@ class AnalysisReport:
 
 
             "decision_bias": self.decision_bias,
+            "style_ids": list(self.style_ids),
+            "style_results": dict(self.style_results),
             "market_regime": self.market_regime,
             "scenario": self.scenario,
             "statistical_context": self.statistical_context,
