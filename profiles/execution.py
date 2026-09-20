@@ -21,6 +21,9 @@ class ProfileExecutionContext:
     risk_level: str
     schedule_seconds: int
     config_snapshot: dict[str, Any]
+    user_id: str | None = None
+    experiment_id: str | None = None
+    requested_capabilities: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -33,6 +36,9 @@ class ProfileExecutionContext:
             "risk_level": self.risk_level,
             "schedule_seconds": self.schedule_seconds,
             "config_snapshot": dict(self.config_snapshot),
+            "user_id": self.user_id,
+            "experiment_id": self.experiment_id,
+            "requested_capabilities": list(self.requested_capabilities),
         }
 
 
@@ -48,6 +54,9 @@ def build_execution_context(
     *,
     symbols: list[str] | tuple[str, ...] | None = None,
     timeframes: list[str] | tuple[str, ...] | None = None,
+    user_id: str | None = None,
+    experiment_id: str | None = None,
+    requested_capabilities: list[str] | tuple[str, ...] | None = None,
 ) -> ProfileExecutionContext:
     if mode not in {"LIVE", "BACKTEST", "REPLAY", "RESEARCH"}:
         raise ValueError(f"Unsupported execution mode: {mode}")
@@ -75,6 +84,9 @@ def build_execution_context(
         risk_level=profile.risk_level,
         schedule_seconds=profile.schedule_seconds,
         config_snapshot=snapshot,
+        user_id=str(user_id) if user_id is not None else None,
+        experiment_id=str(experiment_id) if experiment_id is not None else None,
+        requested_capabilities=tuple(dict.fromkeys(str(item) for item in (requested_capabilities or ()))),
     )
 
 
@@ -114,6 +126,12 @@ def context_from_payload(payload: dict[str, Any], mode: ExecutionMode) -> Profil
         }
     if not isinstance(snapshot, dict):
         raise ValueError("profile_snapshot must be a dictionary")
+    if str(snapshot.get("profile_id", profile_id)) != profile_id:
+        raise ValueError("profile_snapshot.profile_id does not match profile_id")
+    snapshot_version = int(snapshot.get("version", profile_version))
+    if snapshot_version != profile_version:
+        raise ValueError("profile_snapshot.version does not match profile_version")
+    requested_capabilities = tuple(dict.fromkeys(str(item) for item in payload.get("requested_capabilities", [])))
 
     return ProfileExecutionContext(
         mode=mode,
@@ -125,4 +143,7 @@ def context_from_payload(payload: dict[str, Any], mode: ExecutionMode) -> Profil
         risk_level=risk_level,
         schedule_seconds=schedule_seconds,
         config_snapshot=dict(snapshot),
+        user_id=str(payload.get("user_id")) if payload.get("user_id") is not None else None,
+        experiment_id=str(payload.get("experiment_id")) if payload.get("experiment_id") is not None else None,
+        requested_capabilities=requested_capabilities,
     )
