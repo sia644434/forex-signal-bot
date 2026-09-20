@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from math import isfinite
 from typing import Any
 
+from analysis.directional_contract import classify_direction, combined_structure_score, normalize_signed_score
+
 
 @dataclass(frozen=True)
 class ConfidenceResult:
@@ -80,9 +82,7 @@ class ConfidenceEngine:
     def normalize_signed_score(cls, score: float | None) -> float:
         if score is None:
             return 50.0
-        value = cls._finite(score, field_name="signed score")
-        value = max(-100.0, min(100.0, value))
-        return ((value + 100.0) / 200.0) * 100.0
+        return normalize_signed_score(score)
 
     @classmethod
     def normalize_confidence(cls, value: float | None) -> float:
@@ -95,12 +95,7 @@ class ConfidenceEngine:
 
     @classmethod
     def direction(cls, score: float | None) -> str:
-        score = cls.normalize(score)
-        if score >= cls.BULLISH_THRESHOLD:
-            return "bullish"
-        if score <= cls.BEARISH_THRESHOLD:
-            return "bearish"
-        return "neutral"
+        return classify_direction(cls.normalize(score))
 
     @classmethod
     def direction_strength(cls, score: float | None) -> float:
@@ -120,7 +115,16 @@ class ConfidenceEngine:
     def _collect_engines(self, analysis: Any) -> dict[str, float]:
         return {
             "smart_money": self._read_score(analysis, "smart_money_score"),
-            "structure": self._read_score(analysis, "structure_score"),
+            "structure": (
+                self.normalize_signed_score(
+                    combined_structure_score(
+                        self._get(analysis, "structure_score", 0.0),
+                        self._get(analysis, "trend_score", 0.0),
+                    )
+                )
+                if hasattr(analysis, "trend_score")
+                else self._read_score(analysis, "structure_score")
+            ),
             "price_action": self._read_score(analysis, "price_action_score"),
             "momentum": self._read_score(analysis, "momentum_score"),
             "supply_demand": self._read_score(analysis, "supply_demand_score"),
