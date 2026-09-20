@@ -190,6 +190,39 @@ class WorkerQueue:
         return records
 
     @_thread_safe
+    def pending(self, limit: int = 4) -> list[QueueRecord]:
+        if limit < 1:
+            raise ValueError("Pending limit must be positive")
+        rows = self._connection.execute(
+            "SELECT job_id FROM worker_jobs WHERE status = 'PENDING' ORDER BY priority DESC, rowid ASC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        records = []
+        for row in rows:
+            record = self.get(row["job_id"])
+            if record is not None:
+                records.append(record)
+        return records
+
+    @_thread_safe
+    def requeue(self, job_id: str, error: str, *, claim_token: str | None = None) -> QueueRecord:
+        if claim_token is None:
+            where = "job_id = ? AND status = 'RUNNING'"
+            params = (job_id,)
+        else:
+            where = "job_id = ? AND status = 'RUNNING' AND claim_token = ?"
+            params = (job_id, claim_token)
+        cursor = self._connection.execute(
+            f"UPDATE worker_jobs SET status = 'PENDING', error = ?, claimed_at = NULL, claim_token = NULL WHERE {where}",
+            (error, *params),
+        )
+        self._connection.commit()
+        record = self.get(job_id)
+        if record is None:
+            raise KeyError(job_id)
+        return record
+
+    @_thread_safe
     def finish(self, job_id: str, *, result: dict[str, Any] | None = None, claim_token: str | None = None) -> QueueRecord:
         return self._transition(job_id, "COMPLETED", result=result, error=None, claim_token=claim_token)
 
