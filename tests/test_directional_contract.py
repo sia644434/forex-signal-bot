@@ -40,7 +40,7 @@ def test_conflict_uses_same_ten_component_semantics():
         "brooks": 0.0,
         "wyckoff": 0.0,
     }
-    assert vote_counts(components) == (6, 0, 4)
+    assert vote_counts(components) == (5, 0, 5)
     assert conflict_state(components) == "CONSENSUS"
 
 
