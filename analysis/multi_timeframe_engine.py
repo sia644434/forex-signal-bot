@@ -356,12 +356,16 @@ class MultiTimeframeAnalysisEngine:
 
         role_reasons = self._role_reasons(reports, direction)
         reasons: list[str] = [
+            *setup_metadata,
             f"MTF role alignment (telemetry): {alignment:.1f}/100",
             f"Higher-timeframe directional alignment (telemetry): {aligned_htf}/4",
             *role_reasons,
             f"M15 setup quality: {setup_quality:.0f}/100",
         ]
-        rejection_codes: list[str] = list(setup_metadata)
+        rejection_codes: list[str] = [
+            f"m15_signal={raw_signal or 'NONE'}",
+            *setup_metadata,
+        ]
 
         higher_context_ok = self._higher_context_ok(reports, direction)
         trigger_ok = (
