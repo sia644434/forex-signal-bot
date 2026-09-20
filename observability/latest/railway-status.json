@@ -1,6 +1,0 @@
-{
-  "central_observability": "github_only",
-  "enabled": false,
-  "reason": "No Railway API/project token is configured.",
-  "status": "optional_not_configured"
-}\n
