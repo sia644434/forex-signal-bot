@@ -1,0 +1,57 @@
+name: Production Observability
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - Final Integration Gate
+      - Production Activation Gate
+      - Production Readiness
+      - Security Audit
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: production-observability
+  cancel-in-progress: true
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Collect Railway and GitHub telemetry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
+          RAILWAY_SERVICE_ID: ${{ vars.RAILWAY_SERVICE_ID }}
+          RAILWAY_LOG_LINES: ${{ vars.RAILWAY_LOG_LINES }}
+        run: python scripts/collect_observability.py
+      - name: Upload raw observability archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: observability-${{ github.run_id }}
+          path: observability/raw/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Commit latest assistant-readable snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add observability/latest/
+          if git diff --cached --quiet; then echo "No observability snapshot changes."; exit 0; fi
+          git commit -m "Update production observability snapshot"
+          git push
