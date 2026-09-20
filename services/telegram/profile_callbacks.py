@@ -55,6 +55,10 @@ def profile_detail_keyboard(profile, state, language: str):
             callback_data=f"profile_activate:{profile.profile_id}",
         )])
     rows.append([InlineKeyboardButton(
+        "🧪 بک‌تست پروفایل" if language == "fa" else "🧪 Profile backtest",
+        callback_data=f"bt_open:{profile.profile_id}",
+    )])
+    rows.append([InlineKeyboardButton(
         "🗑 حذف پروفایل" if language == "fa" else "🗑 Delete profile",
         callback_data=f"profile_delete:{profile.profile_id}",
     )])
