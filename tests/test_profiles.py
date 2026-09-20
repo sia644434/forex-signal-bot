@@ -97,3 +97,52 @@ def test_profile_update_versions_and_validates_styles():
     assert updated.styles[0].weight == 2.0
     assert updated.risk_level == "high"
     assert updated.schedule_seconds == 60
+
+
+
+def test_profile_execution_context_carries_worker_scope_and_capabilities():
+    from profiles import AnalysisProfile, ProfileStyle, context_from_payload
+
+    profile = AnalysisProfile("scope", "Scoped", [ProfileStyle("momentum")], version=3)
+    context = context_from_payload({
+        "profile_id": profile.profile_id,
+        "profile_version": profile.version,
+        "style_ids": ["momentum"],
+        "profile_snapshot": profile.to_dict(),
+        "user_id": "1005",
+        "experiment_id": "exp-1",
+        "requested_capabilities": ["profile_analysis", "replay"],
+    }, "BACKTEST")
+    assert context.user_id == "1005"
+    assert context.experiment_id == "exp-1"
+    assert context.requested_capabilities == ("profile_analysis", "replay")
+    assert context.to_dict()["profile_version"] == 3
+
+
+def test_profile_execution_context_rejects_snapshot_version_mismatch():
+    from profiles import context_from_payload
+
+    try:
+        context_from_payload({
+            "profile_id": "scope",
+            "profile_version": 3,
+            "style_ids": ["momentum"],
+            "profile_snapshot": {"profile_id": "scope", "version": 2},
+        }, "BACKTEST")
+    except ValueError as exc:
+        assert "version" in str(exc)
+    else:
+        raise AssertionError("mismatched profile snapshot version must fail closed")
+
+
+def test_analysis_report_exposes_independent_style_results():
+    from analysis.full_engine import FullAnalysisEngine
+
+    report = FullAnalysisEngine().analyze([100 + i for i in range(30)], style_ids=["price_action", "momentum"])
+    assert report.style_ids == ["price_action", "momentum"]
+    assert set(report.style_results) == {"price_action", "momentum"}
+    for result in report.style_results.values():
+        assert "signal" in result
+        assert "score" in result
+        assert "confidence" in result
+        assert "risk_management" in result
