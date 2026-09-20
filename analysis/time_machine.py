@@ -64,6 +64,7 @@ class TimeMachineEngine:
         start_index: int = 5,
         step: int = 1,
         counterfactual: dict[str, Any] | None = None,
+        style_ids: list[str] | tuple[str, ...] | None = None,
     ) -> dict[str, Any]:
         if not isinstance(candles, list) or len(candles) < 5:
             raise ValueError("at least five candles are required")
@@ -77,7 +78,7 @@ class TimeMachineEngine:
         steps: list[dict[str, Any]] = []
 
         for end in range(start_index, len(parsed) + 1, step):
-            report = self.analysis.analyze(parsed[:end])
+            report = self.analysis.analyze(parsed[:end], style_ids=style_ids)
             result = self.counterfactual.evaluate(
                 report.signal,
                 confidence=report.confidence,
@@ -101,6 +102,7 @@ class TimeMachineEngine:
             "step": step,
             "steps": len(steps),
             "trace": steps,
+            "style_ids": list(dict.fromkeys(str(item) for item in (style_ids or ()))),
         }
 
 
