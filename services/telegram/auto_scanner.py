@@ -384,26 +384,62 @@ class ContinuousMarketScanner:
                 )
                 return 0
 
-            # Refresh provider configuration before each automatic cycle so
-            # newly available configured providers are picked up without restart.
+            chat_ids = _chat_ids()
+            profile_groups: dict[str, tuple[tuple[int, ...], tuple[str, ...]]] = {}
+            for chat_id in chat_ids:
+                state = get_user_state(chat_id)
+                profile = get_profile(state)
+                if profile is None or not profile.enabled:
+                    continue
+                style_ids = tuple(item.style_id for item in profile.styles if item.enabled)
+                if not style_ids:
+                    continue
+                interval = max(60, int(profile.schedule_seconds))
+                if int(now.timestamp()) % interval >= 60:
+                    continue
+                current = profile_groups.get(profile.profile_id)
+                recipients = tuple(dict.fromkeys((current[0] if current else ()) + (chat_id,)))
+                profile_groups[profile.profile_id] = (recipients, style_ids)
+
+            if not profile_groups:
+                logger.info("Automatic scanner skipped: no enabled user profiles are due.")
+                return 0
+
             provider_manager = get_scanner_provider_manager(application)
             market_data = MarketDataService(provider_manager=provider_manager)
             semaphore = asyncio.Semaphore(4)
             logger.info(
-                "Automatic scanner cycle started: symbols=%d/%d, timeframes=%s, utc=%s",
-                len(symbols),
-                len(configured_symbols),
-                ",".join(TIMEFRAMES),
-                now.isoformat(),
+                "Automatic scanner cycle started: symbols=%d/%d profiles=%d timeframes=%s utc=%s",
+                len(symbols), len(configured_symbols), len(profile_groups),
+                ",".join(TIMEFRAMES), now.isoformat(),
             )
 
-            async def guarded(symbol: str) -> str:
+            async def guarded(
+                symbol: str,
+                profile_id: str,
+                recipient_ids: tuple[int, ...],
+                style_ids: tuple[str, ...],
+            ) -> str:
                 async with semaphore:
-                    return await self._scan_symbol(bot, market_data, symbol)
+                    return await self._scan_symbol(
+                        bot,
+                        market_data,
+                        symbol,
+                        style_ids=style_ids,
+                        recipient_ids=recipient_ids,
+                        profile_id=profile_id,
+                    )
 
-            results = await asyncio.gather(*(guarded(symbol) for symbol in symbols))
+            grouped_results: list[str] = []
+            for profile_id, (recipient_ids, style_ids) in profile_groups.items():
+                profile_results = await asyncio.gather(*(
+                    guarded(symbol, profile_id, recipient_ids, style_ids)
+                    for symbol in symbols
+                ))
+                grouped_results.extend(profile_results)
+
+            results = grouped_results
             summary = {outcome: results.count(outcome) for outcome in set(results)}
-            sent_count = summary.get(ScanOutcome.VALIDATED_SENT, 0)
 
             # Persist the completed M15 cycle only when at least one symbol
             # produced a non-data-failure outcome. This keeps a transient
