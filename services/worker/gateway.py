@@ -1,0 +1,76 @@
+from __future__ import annotations
+
+import hmac
+from typing import Any
+
+from worker.contracts import JobResult
+from worker.dispatcher import WorkerDispatcher
+
+
+class WorkerGateway:
+    """Authenticated pull gateway for a remote PC Worker."""
+
+    def __init__(self, dispatcher: WorkerDispatcher, token: str) -> None:
+        if not token:
+            raise ValueError("PC_WORKER_TOKEN must be configured for pull mode")
+        self.dispatcher = dispatcher
+        self.token = token
+
+    def authenticate(self, authorization: str | None) -> bool:
+        if not isinstance(authorization, str) or not authorization.startswith("Bearer "):
+            return False
+        presented = authorization[7:].strip()
+        return bool(presented) and hmac.compare_digest(presented, self.token)
+
+    def claim(self) -> dict[str, Any] | None:
+        record = self.dispatcher.claim_next()
+        if record is None:
+            return None
+        return {
+            "job_id": record.job_id,
+            "job_type": record.job_type,
+            "payload": record.payload,
+            "priority": record.priority,
+            "timeout_seconds": record.timeout_seconds,
+            "allow_cpu_fallback": record.allow_cpu_fallback,
+            "claim_token": record.claim_token,
+        }
+
+    def renew(self, payload: dict[str, Any]) -> dict[str, Any]:
+        job_id = payload.get("job_id")
+        claim_token = payload.get("claim_token")
+        if not isinstance(job_id, str) or not job_id.strip() or not isinstance(claim_token, str) or not claim_token.strip():
+            raise ValueError("job_id and claim_token are required")
+        return self.dispatcher.renew_remote_claim(job_id, claim_token)
+
+    def result(self, payload: dict[str, Any]) -> dict[str, Any]:
+        required = ("job_id", "job_type", "status", "claim_token")
+        if any(not isinstance(payload.get(key), str) or not payload[key].strip() for key in required):
+            raise ValueError("job_id, job_type, status and claim_token are required")
+
+        status = payload["status"]
+        if status not in {"COMPLETED", "FAILED", "TIMEOUT", "CANCELLED", "WORKER_OFFLINE"}:
+            status = "FAILED"
+            error = payload.get("error") or f"Remote worker returned unsupported status: {payload['status']}"
+        else:
+            error = payload.get("error")
+
+        result = JobResult(
+            job_id=payload["job_id"],
+            status=status,
+            job_type=payload["job_type"],
+            output=payload.get("output") if isinstance(payload.get("output"), dict) else {},
+            error=error if isinstance(error, str) else None,
+            worker_id=payload.get("worker_id") if isinstance(payload.get("worker_id"), str) else None,
+        )
+        return self.dispatcher.apply_remote_result(result, payload["claim_token"])
+
+    def health(self) -> dict[str, Any]:
+        return {
+            "status": "READY",
+            "mode": "pull",
+            "queue": self.dispatcher.health().get("queue", {}),
+        }
+
+
+__all__ = ["WorkerGateway"]
