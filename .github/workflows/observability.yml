@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 concurrency:
@@ -31,8 +31,6 @@ jobs:
       - name: Collect production telemetry
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Railway is optional. If these are absent, the collector continues
-          # with GitHub telemetry only.
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
@@ -42,18 +40,12 @@ jobs:
           RAILWAY_LOG_LINES: ${{ vars.RAILWAY_LOG_LINES }}
           RAILWAY_BUILD_LOG_LINES: ${{ vars.RAILWAY_BUILD_LOG_LINES }}
         run: PYTHONPATH=. python scripts/collect_observability.py
-      - name: Upload sanitized raw observability archive
+      - name: Upload observability snapshot and sanitized raw archive
         uses: actions/upload-artifact@v4
         with:
           name: observability-${{ github.run_id }}
-          path: observability/raw/
+          path: |
+            observability/latest/
+            observability/raw/
           if-no-files-found: ignore
           retention-days: 14
-      - name: Commit latest assistant-readable snapshot
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add observability/latest/
-          if git diff --cached --quiet; then echo "No observability snapshot changes."; exit 0; fi
-          git commit -m "Update production observability snapshot"
-          git push
