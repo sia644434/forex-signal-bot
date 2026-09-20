@@ -1,1 +1,8 @@
-{"status":"not_collected"}
+{
+  "required": [
+    "RAILWAY_TOKEN",
+    "RAILWAY_PROJECT_ID",
+    "RAILWAY_ENVIRONMENT_ID"
+  ],
+  "status": "not_configured"
+}\n
