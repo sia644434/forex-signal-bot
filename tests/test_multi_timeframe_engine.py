@@ -228,3 +228,56 @@ def test_multi_timeframe_does_not_treat_lower_timeframe_as_directional_vote():
     engine = MultiTimeframeAnalysisEngine(FakeEngine(reports))
     candles = {key: [key] for key in reports}
     assert engine.analyze(candles) is None
+
+
+def test_multi_timeframe_evaluates_contextual_m15_bias_before_raw_signal_gate():
+    reports = {
+        "W1": report(72),
+        "D1": report(68),
+        "H4": report(58),
+        "H1": report(67),
+        "M15": SimpleNamespace(**{**report(53.7).__dict__, "decision_bias": "bullish"}),
+        "M5": report(54),
+    }
+    engine = MultiTimeframeAnalysisEngine(FakeEngine(reports))
+    candles = {key: [key] for key in reports}
+    decision, diagnostics = engine.analyze_with_diagnostics(candles)
+    assert decision is not None
+    assert decision.direction == "BUY"
+    assert "setup_direction_source=decision_bias" in decision.reasons
+    assert decision.role_scores["macro"] == 70.4
+    assert decision.role_scores["context"] == 61.6
+
+
+def test_multi_timeframe_rejects_contextual_setup_when_higher_context_blocks_it():
+    reports = {
+        "W1": report(42),
+        "D1": report(35),
+        "H4": report(58),
+        "H1": report(67),
+        "M15": SimpleNamespace(**{**report(53.7).__dict__, "decision_bias": "bullish"}),
+        "M5": report(54),
+    }
+    engine = MultiTimeframeAnalysisEngine(FakeEngine(reports))
+    candles = {key: [key] for key in reports}
+    decision, diagnostics = engine.analyze_with_diagnostics(candles)
+    assert decision is None
+    assert any(item.startswith("role_context=blocked") for item in diagnostics)
+    assert "setup_direction=BUY" in diagnostics
+
+
+def test_multi_timeframe_waits_for_m5_after_contextual_m15_setup():
+    reports = {
+        "W1": report(72),
+        "D1": report(68),
+        "H4": report(58),
+        "H1": report(67),
+        "M15": SimpleNamespace(**{**report(53.7).__dict__, "decision_bias": "bullish"}),
+        "M5": report(50),
+    }
+    engine = MultiTimeframeAnalysisEngine(FakeEngine(reports))
+    candles = {key: [key] for key in reports}
+    decision, diagnostics = engine.analyze_with_diagnostics(candles)
+    assert decision is None
+    assert "setup_direction=BUY" in diagnostics
+    assert any(item.startswith("execution_trigger=50.0") for item in diagnostics)
