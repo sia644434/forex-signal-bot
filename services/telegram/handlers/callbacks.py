@@ -13,6 +13,7 @@ from services.market_data.service import get_market_data_service
 from core.errors import ApplicationError
 from config.symbols import get_all_symbols, get_symbols_by_market, is_supported_symbol, normalize_symbol
 from services.telegram.profile_callbacks import handle_profile_callback
+from services.telegram.profile_backtest_callbacks import handle_profile_backtest_callback
 
 
 ALLOWED_CALLBACKS = {
@@ -144,6 +145,8 @@ async def menu_callback_handler(update: Update, context: ContextTypes.DEFAULT_TY
     user = update.effective_user; state = get_user_state(user.id) if user else None
     language = state.language if state else "fa"
     if user: update_menu(user.id, data)
+    if state and await handle_profile_backtest_callback(query, state, language, data, context.application):
+        return
     if state and await handle_profile_callback(query, state, language, data):
         return
     if data == "home": await query.edit_message_text(t(language, "home"), reply_markup=main_menu_keyboard(language)); return
