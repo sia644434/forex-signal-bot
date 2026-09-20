@@ -54,6 +54,11 @@ class MultiTimeframeAnalysisEngine:
     M5_BUY_TRIGGER = 52.0
     M5_SELL_TRIGGER = 48.0
 
+    # A neutral/blocked M15 signal can still define a setup hypothesis from
+    # its directional bias. This is only a setup candidate; all higher-
+    # timeframe, execution, quality, risk and safety gates remain mandatory.
+    SETUP_BIAS_DIRECTIONS = {"bullish": "BUY", "bearish": "SELL"}
+
     def __init__(self, analysis_engine: FullAnalysisEngine | None = None) -> None:
         self.analysis_engine = analysis_engine or FullAnalysisEngine()
 
@@ -148,6 +153,29 @@ class MultiTimeframeAnalysisEngine:
             f"M15 setup score: {m15:.1f}/100",
             f"M5 execution trigger: {m5:.1f}/100",
         )
+
+    @classmethod
+    def _setup_direction(cls, report: AnalysisReport) -> tuple[str | None, str]:
+        """Resolve an M15 setup hypothesis without forcing a trade signal."""
+        signal = str(getattr(report, "signal", "")).upper()
+        if signal in cls.EXECUTABLE:
+            return ("BUY" if "BUY" in signal else "SELL", "signal")
+
+        bias = str(getattr(report, "decision_bias", "neutral")).lower().strip()
+        if bias not in cls.SETUP_BIAS_DIRECTIONS:
+            return None, "none"
+
+        decay = str(getattr(report, "signal_decay", "FRESH")).upper()
+        crisis = str(getattr(report, "crisis_mode", "NORMAL")).upper()
+        macro_risk = str(getattr(report, "macro_risk_level", "NORMAL")).upper()
+        if decay in {"STALE", "INVALID"} or crisis in {"CRISIS", "EXTREME"}:
+            return None, "blocked_safety_state"
+        if bool(getattr(report, "portfolio_risk_blocked", False)):
+            return None, "portfolio_risk"
+        if macro_risk == "CRISIS":
+            return None, "macro_crisis"
+
+        return cls.SETUP_BIAS_DIRECTIONS[bias], "decision_bias"
 
     @staticmethod
     def _m15_diagnostics(report: AnalysisReport, signal: str) -> tuple[str, ...]:
@@ -305,10 +333,18 @@ class MultiTimeframeAnalysisEngine:
             )
 
         setup = reports["M15"]
-        direction = str(setup.signal).upper()
-        if direction not in self.EXECUTABLE:
-            return None, self._m15_diagnostics(setup, direction)
-        direction = "BUY" if "BUY" in direction else "SELL"
+        raw_signal = str(setup.signal).upper()
+        direction, setup_source = self._setup_direction(setup)
+        if direction is None:
+            diagnostics = list(self._m15_diagnostics(setup, raw_signal))
+            diagnostics.insert(1, "setup_direction=NONE")
+            return None, tuple(diagnostics)
+
+        setup_metadata = [
+            f"setup_direction={direction}",
+            f"setup_direction_source={setup_source}",
+            f"m15_raw_signal={raw_signal or 'NONE'}",
+        ]
 
         alignment = self._alignment_score(reports)
         role_scores = self._role_scores(reports)
@@ -325,7 +361,7 @@ class MultiTimeframeAnalysisEngine:
             *role_reasons,
             f"M15 setup quality: {setup_quality:.0f}/100",
         ]
-        rejection_codes: list[str] = []
+        rejection_codes: list[str] = list(setup_metadata)
 
         higher_context_ok = self._higher_context_ok(reports, direction)
         trigger_ok = (
