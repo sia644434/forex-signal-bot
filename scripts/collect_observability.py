@@ -17,7 +17,23 @@ def collect_railway():
     if code:
         write_json(OUT/"railway-status.json",{"status":"error","error":err[-4000:]}); return []
     events=parse_json_lines(out,"railway","forex-signal-bot"); d=RAW/"railway"; d.mkdir(parents=True,exist_ok=True); (d/"runtime.jsonl").write_text("\\n".join(e.to_json() for e in events)+("\\n" if events else ""),encoding="utf-8")
-    write_json(OUT/"railway-status.json",{"status":"ok","event_count":len(events),"project_id":project,"environment_id":environment,"service_id":service}); return events
+    counts={"runtime":len(events)}
+    for kind,extra in [("http","--http"),("network","--network"),("dns","--dns")]:
+        cmd2=["npx","-y","@railway/cli","logs","--json","--lines",os.environ.get("RAILWAY_LOG_LINES") or "500","--project",project,"--environment",environment]
+        if service: cmd2 += ["--service",service]
+        cmd2 += [extra]
+        c2,o2,e2=run(cmd2,env)
+        if c2: (d/f"{kind}-error.txt").write_text(e2[-4000:],encoding="utf-8"); counts[kind]=0
+        else:
+            ev2=parse_json_lines(o2,"railway",kind); counts[kind]=len(ev2); (d/f"{kind}.jsonl").write_text("\\n".join(e.to_json() for e in ev2)+("\\n" if ev2 else ""),encoding="utf-8")
+    deployment=os.environ.get("RAILWAY_DEPLOYMENT_ID")
+    if deployment:
+        c3,o3,e3=run(["npx","-y","@railway/cli","logs",deployment,"--build","--json","--lines",os.environ.get("RAILWAY_BUILD_LOG_LINES") or "1000"],env)
+        if c3: (d/"build-error.txt").write_text(e3[-4000:],encoding="utf-8"); counts["build"]=0
+        else:
+            ev3=parse_json_lines(o3,"railway","build"); counts["build"]=len(ev3); (d/"build.jsonl").write_text("\\n".join(e.to_json() for e in ev3)+("\\n" if ev3 else ""),encoding="utf-8")
+            events.extend(ev3)
+    write_json(OUT/"railway-status.json",{"status":"ok","event_count":len(events),"counts":counts,"project_id":project,"environment_id":environment,"service_id":service,"deployment_id":deployment}); return events
 def collect_github():
     token=os.environ.get("GITHUB_TOKEN")
     if not token: return []
