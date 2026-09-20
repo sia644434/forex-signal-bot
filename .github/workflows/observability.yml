@@ -1,13 +1,13 @@
 name: Production Observability
 
 on:
+  push:
+    paths-ignore:
+      - "observability/latest/**"
+      - "observability/raw/**"
   schedule:
     - cron: "*/10 * * * *"
   workflow_dispatch:
-  workflow_run:
-    workflows:
-      - Final Integration Gate
-    types: [completed]
 
 permissions:
   contents: write
