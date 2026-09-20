@@ -26,6 +26,7 @@ from analysis.statistical_engine import StatisticalEngine
 from analysis.scenario_engine import ScenarioEngine
 from analysis.signal_state import evaluate_signal_state
 from analysis.portfolio_risk_guard import PortfolioExposure, PortfolioRiskGuard
+from analysis.directional_contract import combined_structure_score, conflict_state
 
 
 class FullAnalysisEngine:
@@ -161,17 +162,26 @@ class FullAnalysisEngine:
         for name, value in component_scores.items():
             self._require_finite(value, name)
 
-        directional_scores = [float(value) for key, value in component_scores.items() if key != "volatility_score"]
-        positive_votes = sum(value > 0 for value in directional_scores)
-        negative_votes = sum(value < 0 for value in directional_scores)
-        if positive_votes and negative_votes:
-            conflict_state = "STRONG_CONFLICT" if min(positive_votes, negative_votes) >= 3 else "CONFLICT"
-        elif max(positive_votes, negative_votes) >= 3:
-            conflict_state = "CONSENSUS"
-        elif positive_votes or negative_votes:
-            conflict_state = "WEAK_CONSENSUS"
-        else:
-            conflict_state = "INSUFFICIENT_EVIDENCE"
+        # Conflict uses the exact same ten directional components as
+        # ConfidenceEngine/DecisionEngine. Trend is context for structure, not
+        # an extra vote, so one market state cannot produce contradictory
+        # conflict and confidence semantics.
+        directional_components = {
+            "smart_money": component_scores["smart_money_score"],
+            "structure": combined_structure_score(
+                component_scores["structure_score"],
+                component_scores["trend_score"],
+            ),
+            "price_action": component_scores["price_action_score"],
+            "supply_demand": component_scores["supply_demand_score"],
+            "momentum": component_scores["momentum_score"],
+            "candlestick": component_scores["candlestick_score"],
+            "elliott": component_scores["elliott_score"],
+            "harmonic": component_scores["harmonic_score"],
+            "brooks": component_scores["brooks_score"],
+            "wyckoff": component_scores["wyckoff_score"],
+        }
+        conflict_state_value = conflict_state(directional_components)
 
         if structure.trend in {"bullish", "bearish"} and atr_percentage >= 3.0:
             market_regime = "HIGH_VOLATILITY"
@@ -219,7 +229,7 @@ class FullAnalysisEngine:
             market_regime=market_regime,
             scenario=scenario.primary,
             statistical_context=statistics.summary(),
-            conflict_state=conflict_state,
+            conflict_state=conflict_state_value,
             signal_decay=signal_state.decay if signal_state else "INVALID",
             macro_risk_level=macro_level,
             macro_events=macro_events,
