@@ -13,6 +13,7 @@ from sklearn.preprocessing import StandardScaler
 
 from analysis.portfolio_engine import PortfolioEngine
 from analysis.full_engine import FullAnalysisEngine
+from profiles import context_from_payload
 from data.models import Candle
 from datetime import datetime
 
@@ -92,9 +93,8 @@ def profile_backtest(payload: dict[str, Any]) -> dict[str, Any]:
     raw = payload.get("candles", payload.get("data"))
     if not isinstance(raw, list) or len(raw) < 60:
         raise ValueError("at least 60 candles are required for profile_backtest")
-    style_ids = payload.get("style_ids", [])
-    if not isinstance(style_ids, list) or not style_ids:
-        raise ValueError("style_ids must contain at least one selected analysis style")
+    context = context_from_payload(payload, "BACKTEST")
+    style_ids = list(context.style_ids)
     engine = FullAnalysisEngine()
     closes = []
     for item in raw:
@@ -113,7 +113,7 @@ def profile_backtest(payload: dict[str, Any]) -> dict[str, Any]:
     for index in range(warmup, len(closes) - 1):
         report = engine.analyze(
             closes[: index + 1],
-            style_ids=tuple(str(item) for item in style_ids),
+            style_ids=context.style_ids,
             signal_max_age_seconds=10**9,
         )
         signal = str(report.signal).upper()
@@ -139,9 +139,10 @@ def profile_backtest(payload: dict[str, Any]) -> dict[str, Any]:
     wins = sum(1 for item in trades if item["pnl"] > 0)
     total_return = equity - 1.0
     return {
-        "profile_id": payload.get("profile_id"),
-        "profile_version": payload.get("profile_version"),
-        "style_ids": [str(item) for item in style_ids],
+        "profile_id": context.profile_id,
+        "profile_version": context.profile_version,
+        "style_ids": list(context.style_ids),
+        "execution_context": context.to_dict(),
         "engine": "FullAnalysisEngine",
         "bars": len(closes),
         "warmup": warmup,
