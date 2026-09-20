@@ -775,3 +775,15 @@ Evidence:
 - Selected styles drive deterministic weights inside the shared FullAnalysisEngine/DecisionEngine path.
 - Live scanner resolves each enabled user's active profile and schedules profile-specific scans.
 - PC Worker exposes profile_backtest, which evaluates historical data through the same FullAnalysisEngine and carries profile/style metadata.
+
+
+## TASK-148 — Shared Execution Contract Completion
+Implementation Status: IMPLEMENTED_CURRENT — CI verification pending
+Evidence:
+- Added immutable ProfileExecutionContext covering LIVE, BACKTEST, REPLAY, and RESEARCH modes.
+- Execution captures profile_id/profile_version, enabled style IDs, symbols, timeframes, risk level, schedule, and an exact profile configuration snapshot.
+- PC Worker profile_backtest now validates and carries the execution context rather than accepting loose style metadata only.
+- Live scanner now resolves the active profile through the same execution-context contract.
+- Fixed profile-isolated scanner processed/notification keys so one user's profile cannot suppress another profile's scan or reuse another profile's notification state.
+- Fixed scanner sent-count accounting and per-profile M15 cycle state.
+- Hardened profile update validation and version increments.
