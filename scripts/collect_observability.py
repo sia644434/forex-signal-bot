@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]; OUT=ROOT/"observability"/"latest"; RAW
 def run(cmd,env=None):
     p=subprocess.run(cmd,text=True,capture_output=True,env=env); return p.returncode,p.stdout,p.stderr
 def collect_railway():
-    token=os.environ.get("RAILWAY_TOKEN"); project=os.environ.get("RAILWAY_PROJECT_ID"); environment=os.environ.get("RAILWAY_ENVIRONMENT_ID"); service=os.environ.get("RAILWAY_SERVICE_ID")
+    token=os.environ.get("RAILWAY_TOKEN") or os.environ.get("RAILWAY_API_TOKEN"); project=os.environ.get("RAILWAY_PROJECT_ID"); environment=os.environ.get("RAILWAY_ENVIRONMENT_ID"); service=os.environ.get("RAILWAY_SERVICE_ID")
     if not token or not project or not environment:
         write_json(OUT/"railway-status.json",{"status":"not_configured","required":["RAILWAY_TOKEN","RAILWAY_PROJECT_ID","RAILWAY_ENVIRONMENT_ID"]}); return []
     env=os.environ.copy(); env["RAILWAY_TOKEN"]=token
@@ -60,5 +60,12 @@ def collect_github():
             (d/f"{run_id}-jobs.error.txt").write_text(str(exc),encoding="utf-8")
     write_json(OUT/"github-actions.json",{"status":"ok","run_count":len(events),"runs":[e.to_dict() for e in events]}); return events
 def main():
-    OUT.mkdir(parents=True,exist_ok=True); railway=collect_railway(); github=collect_github(); events=railway+github; summary=build_summary(events,commit_sha=os.environ.get("GITHUB_SHA")); write_json(OUT/"system-status.json",summary); write_json(OUT/"incident-status.json",{"status":"incident" if summary["errors"] else "healthy","error_count":len(summary["errors"]),"latest_errors":summary["errors"][-20:]}); print(json.dumps({"events":len(events),"railway":len(railway),"github_actions":len(github),"errors":len(summary["errors"])})); return 0
+    OUT.mkdir(parents=True,exist_ok=True)
+    try:
+        railway=collect_railway(); github=collect_github(); events=railway+github; summary=build_summary(events,commit_sha=os.environ.get("GITHUB_SHA")); write_json(OUT/"system-status.json",summary); write_json(OUT/"incident-status.json",{"status":"incident" if summary["errors"] else "healthy","error_count":len(summary["errors"]),"latest_errors":summary["errors"][-20:]}); print(json.dumps({"events":len(events),"railway":len(railway),"github_actions":len(github),"errors":len(summary["errors"])})); return 0
+    except Exception as exc:
+        write_json(OUT/"system-status.json",{"status":"collector_error","error":str(exc),"commit_sha":os.environ.get("GITHUB_SHA")})
+        write_json(OUT/"incident-status.json",{"status":"collector_error","error_count":1,"latest_errors":[{"level":"CRITICAL","event":"collector_failure","message":str(exc)}]})
+        print(f"Observability collector error captured: {exc}")
+        return 0
 if __name__=="__main__": raise SystemExit(main())
