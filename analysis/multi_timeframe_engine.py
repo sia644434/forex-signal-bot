@@ -133,6 +133,35 @@ class MultiTimeframeAnalysisEngine:
         return macro_ok and context_ok
 
     @classmethod
+    def _higher_context_diagnostics(
+        cls,
+        reports: Mapping[str, AnalysisReport],
+        direction: str,
+    ) -> tuple[bool, tuple[str, ...]]:
+        """Return the exact higher-timeframe gate result and failed requirements."""
+        scores = {
+            timeframe: cls._direction_score(reports[timeframe])
+            for timeframe in ("W1", "D1", "H4", "H1")
+        }
+        if direction == "BUY":
+            checks = (
+                ("W1", scores["W1"] >= cls.BULLISH_THRESHOLD, f"W1={scores["W1"]:.1f}>=55.0"),
+                ("D1", scores["D1"] > 35.0, f"D1={scores["D1"]:.1f}>35.0"),
+                ("H4", scores["H4"] >= 50.0, f"H4={scores["H4"]:.1f}>=50.0"),
+                ("H1", scores["H1"] >= cls.BULLISH_THRESHOLD, f"H1={scores["H1"]:.1f}>=55.0"),
+            )
+        else:
+            checks = (
+                ("W1", scores["W1"] <= cls.BEARISH_THRESHOLD, f"W1={scores["W1"]:.1f}<=45.0"),
+                ("D1", scores["D1"] < 65.0, f"D1={scores["D1"]:.1f}<65.0"),
+                ("H4", scores["H4"] <= 50.0, f"H4={scores["H4"]:.1f}<=50.0"),
+                ("H1", scores["H1"] <= cls.BEARISH_THRESHOLD, f"H1={scores["H1"]:.1f}<=45.0"),
+            )
+        failed = tuple(f"{name}_failed" for name, ok, _ in checks if not ok)
+        detail = tuple(text for _, _, text in checks)
+        return not failed, detail + (f"failed={','.join(failed) if failed else 'none'}",)
+
+    @classmethod
     def _role_reasons(cls, reports: Mapping[str, AnalysisReport], direction: str) -> tuple[str, ...]:
         roles = cls._role_scores(reports)
         w1 = cls._direction_score(reports["W1"])
@@ -367,7 +396,7 @@ class MultiTimeframeAnalysisEngine:
         )
         rejection_codes.extend(setup_metadata)
 
-        higher_context_ok = self._higher_context_ok(reports, direction)
+        higher_context_ok, htf_diagnostics = self._higher_context_diagnostics(reports, direction)
         trigger_ok = (
             lower_score >= self.M5_BUY_TRIGGER
             if direction == "BUY"
@@ -376,7 +405,7 @@ class MultiTimeframeAnalysisEngine:
         aligned = higher_context_ok and trigger_ok
         if not higher_context_ok:
             rejection_codes.append(
-                f"role_context=blocked,macro={role_scores['macro']:.1f},context={role_scores['context']:.1f}"
+                f"role_context=blocked,direction={direction},macro={role_scores['macro']:.1f},context={role_scores['context']:.1f}," + ",".join(htf_diagnostics)
             )
             reasons.append("Macro/context roles do not support the M15 setup.")
         if not trigger_ok:
