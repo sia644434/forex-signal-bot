@@ -33,6 +33,7 @@ class WorkerProcessingService(BaseService):
         self._client = client
         self._heartbeat_max_age = heartbeat_max_age
         self._last_heartbeat: dict[str, Any] | None = None
+        self._heartbeat_task: asyncio.Task[None] | None = None
 
     @classmethod
     def from_settings(cls, settings: Settings | None = None) -> "WorkerProcessingService":
@@ -98,10 +99,31 @@ class WorkerProcessingService(BaseService):
         self._last_heartbeat = result
         return result
 
-    def start(self) -> None:
-        return None
+    async def start(self) -> None:
+        """Start authenticated worker monitoring and queued-job recovery."""
+        if not self.configured:
+            return
+        if self._heartbeat_task is None or self._heartbeat_task.done():
+            self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
+        await self.heartbeat()
+
+    async def _heartbeat_loop(self) -> None:
+        while True:
+            try:
+                result = await self.heartbeat()
+                if str(result.get("status", "")).upper() == "READY":
+                    await self.dispatcher.dispatch_pending()
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                pass
+            await asyncio.sleep(max(10, min(self._heartbeat_max_age // 2, 60)))
 
     async def stop(self) -> None:
+        if self._heartbeat_task is not None:
+            self._heartbeat_task.cancel()
+            await asyncio.gather(self._heartbeat_task, return_exceptions=True)
+            self._heartbeat_task = None
         await self.dispatcher.close_async(10.0)
 
     def _heartbeat_readiness(self) -> str:
