@@ -104,6 +104,25 @@ def update_profile(state, profile_id: str, **changes: Any) -> AnalysisProfile:
     return profile
 
 
+
+def delete_profile(state, profile_id: str) -> AnalysisProfile:
+    """Delete a profile and keep active-profile state consistent."""
+    profiles = _profiles(state)
+    profile = profiles.get(profile_id)
+    if profile is None:
+        raise KeyError(profile_id)
+
+    del profiles[profile_id]
+    _save(state, profiles)
+
+    if state.settings.get(_ACTIVE_PROFILE_KEY) == profile_id:
+        remaining = list(profiles.values())
+        if remaining:
+            state.settings[_ACTIVE_PROFILE_KEY] = remaining[0].profile_id
+        else:
+            state.settings.pop(_ACTIVE_PROFILE_KEY, None)
+    return profile
+
 def set_active_profile(state, profile_id: str) -> AnalysisProfile:
     profile = get_profile(state, profile_id)
     if profile is None:
