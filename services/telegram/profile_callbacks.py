@@ -89,7 +89,7 @@ async def handle_profile_callback(query, state, language: str, data: str) -> boo
     if data == "profile_confirm":
         selected = list(dict.fromkeys(state.settings.get("profile_style_selection", [])))
         if not selected:
-            await query.answer("حداقل یک سبک را انتخاب کنید." if language == "fa" else "Select at least one style.", show_alert=True)
+            await query.edit_message_text("⚠️ حداقل یک سبک را انتخاب کنید." if language == "fa" else "⚠️ Select at least one style.", reply_markup=style_keyboard(set(), language))
             return True
         profile = create_profile(state, "شخصی" if language == "fa" else "Custom", selected)
         state.settings.pop("profile_style_selection", None)
