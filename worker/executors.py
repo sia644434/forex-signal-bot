@@ -94,6 +94,9 @@ def profile_backtest(payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(raw, list) or len(raw) < 60:
         raise ValueError("at least 60 candles are required for profile_backtest")
     context = context_from_payload(payload, "BACKTEST")
+    requested_capabilities = set(context.requested_capabilities)
+    if requested_capabilities and "profile_analysis" not in requested_capabilities:
+        requested_capabilities.add("profile_analysis")
     style_ids = list(context.style_ids)
     engine = FullAnalysisEngine()
     closes = []
@@ -143,6 +146,9 @@ def profile_backtest(payload: dict[str, Any]) -> dict[str, Any]:
         "profile_version": context.profile_version,
         "style_ids": list(context.style_ids),
         "execution_context": context.to_dict(),
+        "user_id": context.user_id,
+        "experiment_id": context.experiment_id,
+        "requested_capabilities": sorted(requested_capabilities),
         "engine": "FullAnalysisEngine",
         "bars": len(closes),
         "warmup": warmup,
