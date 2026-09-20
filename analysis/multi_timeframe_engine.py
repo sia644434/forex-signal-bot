@@ -358,11 +358,14 @@ class MultiTimeframeAnalysisEngine:
         reports: dict[str, AnalysisReport] = {}
         for timeframe in self.TIMEFRAME_ORDER:
             candles = candles_by_timeframe[timeframe]
-            reports[timeframe] = self.analysis_engine.analyze(
-                candles,
-                signal_max_age_seconds=self._signal_age_budget(timeframe),
-                style_ids=style_ids,
-            )
+            analyze_kwargs = {
+                "signal_max_age_seconds": self._signal_age_budget(timeframe),
+            }
+            # Keep injected/test analysis engines backward-compatible while the
+            # production FullAnalysisEngine accepts profile style selection.
+            if style_ids is not None:
+                analyze_kwargs["style_ids"] = style_ids
+            reports[timeframe] = self.analysis_engine.analyze(candles, **analyze_kwargs)
 
         setup = reports["M15"]
         raw_signal = str(setup.signal).upper()
