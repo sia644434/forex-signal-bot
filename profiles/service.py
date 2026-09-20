@@ -65,13 +65,40 @@ def update_profile(state, profile_id: str, **changes: Any) -> AnalysisProfile:
     if profile_id not in profiles:
         raise KeyError(profile_id)
     profile = profiles[profile_id]
+
     for key, value in changes.items():
         if key == "styles":
-            value = [ProfileStyle(str(item)) if isinstance(item, str) else item for item in value]
+            normalized: list[ProfileStyle] = []
             for item in value:
+                if isinstance(item, str):
+                    item = ProfileStyle(item)
+                elif isinstance(item, dict):
+                    item = ProfileStyle(
+                        style_id=str(item["style_id"]),
+                        enabled=bool(item.get("enabled", True)),
+                        weight=float(item.get("weight", 1.0)),
+                    )
+                elif not isinstance(item, ProfileStyle):
+                    raise TypeError("profile styles must be strings, mappings, or ProfileStyle objects")
+                if item.weight < 0:
+                    raise ValueError("profile style weight must be non-negative")
                 get_analysis_style(item.style_id)
+                normalized.append(item)
+            if not normalized:
+                raise ValueError("A profile must contain at least one analysis style")
+            value = normalized
+        elif key == "risk_level":
+            value = str(value).lower()
+            if value not in {"low", "medium", "high"}:
+                raise ValueError("risk_level must be low, medium, or high")
+        elif key == "schedule_seconds":
+            value = max(60, int(value))
+        elif key in {"symbols", "timeframes"}:
+            value = [str(item) for item in value]
+
         if hasattr(profile, key):
             setattr(profile, key, value)
+
     profile.version += 1
     _save(state, profiles)
     return profile
