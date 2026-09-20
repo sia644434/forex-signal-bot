@@ -205,7 +205,15 @@ class ConfidenceEngine:
             uncertainty += 0.15
         elif volatility_score >= 1.0:
             uncertainty += 0.05
-        structure_score = self.normalize_signed_score(self._get(analysis, "structure_score", 0.0))
+        if hasattr(analysis, "trend_score"):
+            structure_score = self.normalize_signed_score(
+                combined_structure_score(
+                    self._get(analysis, "structure_score", 0.0),
+                    self._get(analysis, "trend_score", 0.0),
+                )
+            )
+        else:
+            structure_score = self.normalize_signed_score(self._get(analysis, "structure_score", 0.0))
         if 45.0 < structure_score < 55.0:
             uncertainty += 0.15
         momentum_score = self.normalize_signed_score(self._get(analysis, "momentum_score", 0.0))
