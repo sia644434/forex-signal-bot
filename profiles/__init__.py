@@ -1,9 +1,9 @@
 from .models import AnalysisProfile, ProfileStyle, PRESET_PROFILES, profile_from_preset
-from .service import create_profile, get_profile, list_profiles, set_active_profile, update_profile
+from .service import create_profile, delete_profile, get_profile, list_profiles, set_active_profile, update_profile
 
 __all__ = [
     "AnalysisProfile", "ProfileStyle", "PRESET_PROFILES", "profile_from_preset",
-    "create_profile", "get_profile", "list_profiles", "set_active_profile", "update_profile",
+    "create_profile", "delete_profile", "get_profile", "list_profiles", "set_active_profile", "update_profile",
     "ProfileExecutionContext", "build_execution_context", "context_from_payload", "context_payload", "profile_snapshot",
 ]
 
