@@ -787,3 +787,14 @@ Evidence:
 - Fixed profile-isolated scanner processed/notification keys so one user's profile cannot suppress another profile's scan or reuse another profile's notification state.
 - Fixed scanner sent-count accounting and per-profile M15 cycle state.
 - Hardened profile update validation and version increments.
+
+
+## TASK-149 — Profile Style Result Decomposition and Worker Scope Contract
+Implementation Status: IMPLEMENTED_CURRENT — exact-head CI pending
+Evidence:
+- Analysis reports now retain the selected style IDs and expose an independent deterministic result for each selected style before the combined profile decision.
+- Each style result records signal, bias, strength, score, confidence, agreement, weighted contribution breakdown, and a risk-plan summary.
+- ProfileExecutionContext now carries optional user_id, experiment_id, and requested_capabilities, and validates profile snapshot identity/version on queued historical workloads.
+- Added canonical context_payload() so Worker requests cannot accidentally replace the profile/version/snapshot metadata with conflicting values.
+- BACKTEST, REPLAY, RESEARCH, and Time Machine worker paths preserve the profile execution context when supplied.
+- Regression coverage added for independent style outputs, immutable scope metadata, snapshot mismatch rejection, and replay context propagation.
