@@ -71,3 +71,9 @@ The same FullAnalysisEngine style-weighting path is used by live analysis and th
 profiles/execution.py is the canonical boundary between user configuration and execution. It freezes profile identity/version, enabled styles, symbols, timeframes, risk, schedule, and a configuration snapshot for LIVE/BACKTEST/REPLAY/RESEARCH contexts.
 
 Live scanning and Worker historical evaluation both consume this contract. Scanner state and notification deduplication are profile-scoped; a profile's historical result retains its profile version and snapshot so later profile edits do not rewrite historical meaning.
+
+
+### Profile Style Decomposition
+For a profile with multiple selected styles, the shared analysis snapshot is evaluated once and then each selected style receives its own deterministic DecisionEngine result before the combined profile decision. This keeps style conflicts observable without creating separate market-data or indicator pipelines.
+
+Historical Worker jobs may carry user scope, profile ID/version, exact profile snapshot, experiment ID, and requested capabilities through the canonical `ProfileExecutionContext`/payload contract. Snapshot identity and version mismatches fail closed.
