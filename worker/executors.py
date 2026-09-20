@@ -87,6 +87,74 @@ def backtest(payload: dict[str, Any]) -> dict[str, Any]:
     return _backtest_slice(df, threshold=threshold, fee=fee)
 
 
+def profile_backtest(payload: dict[str, Any]) -> dict[str, Any]:
+    """Run historical evaluation through the same FullAnalysisEngine used by live analysis."""
+    raw = payload.get("candles", payload.get("data"))
+    if not isinstance(raw, list) or len(raw) < 60:
+        raise ValueError("at least 60 candles are required for profile_backtest")
+    style_ids = payload.get("style_ids", [])
+    if not isinstance(style_ids, list) or not style_ids:
+        raise ValueError("style_ids must contain at least one selected analysis style")
+    engine = FullAnalysisEngine()
+    closes = []
+    for item in raw:
+        if isinstance(item, dict):
+            value = item.get("close")
+        else:
+            value = item
+        numeric = float(value)
+        if not np.isfinite(numeric) or numeric <= 0:
+            raise ValueError("all backtest close prices must be finite and positive")
+        closes.append(numeric)
+
+    warmup = min(max(int(payload.get("warmup", 50)), 20), len(closes) - 2)
+    trades = []
+    equity = 1.0
+    for index in range(warmup, len(closes) - 1):
+        report = engine.analyze(
+            closes[: index + 1],
+            style_ids=tuple(str(item) for item in style_ids),
+            signal_max_age_seconds=10**9,
+        )
+        signal = str(report.signal).upper()
+        change = closes[index + 1] / closes[index] - 1.0
+        if signal == "BUY":
+            pnl = change
+        elif signal == "SELL":
+            pnl = -change
+        else:
+            continue
+        if not np.isfinite(pnl):
+            raise ValueError("backtest produced a non-finite return")
+        equity *= 1.0 + pnl
+        trades.append({
+            "index": index,
+            "signal": signal,
+            "pnl": float(pnl),
+            "equity": float(equity),
+            "score": float(report.score),
+            "confidence": float(report.confidence),
+        })
+
+    wins = sum(1 for item in trades if item["pnl"] > 0)
+    total_return = equity - 1.0
+    return {
+        "profile_id": payload.get("profile_id"),
+        "profile_version": payload.get("profile_version"),
+        "style_ids": [str(item) for item in style_ids],
+        "engine": "FullAnalysisEngine",
+        "bars": len(closes),
+        "warmup": warmup,
+        "trades": len(trades),
+        "wins": wins,
+        "losses": len(trades) - wins,
+        "win_rate": float(wins / len(trades)) if trades else 0.0,
+        "total_return": float(total_return),
+        "final_equity": float(equity),
+        "results": trades,
+    }
+
+
 def walk_forward(payload: dict[str, Any]) -> dict[str, Any]:
     df = _frame(payload)
     train = int(payload.get("train_size", max(20, len(df) // 2)))
@@ -536,7 +604,7 @@ def research_validation(payload: dict[str, Any]) -> dict[str, Any]:
 
 def register_real_executors(runtime) -> None:
     mapping = {
-        "backtest": backtest, "walk_forward": walk_forward, "monte_carlo": monte_carlo,
+        "backtest": backtest, "profile_backtest": profile_backtest, "walk_forward": walk_forward, "monte_carlo": monte_carlo,
         "feature_engineering": feature_engineering, "dataset_build": dataset_build,
         "random_forest_training": random_forest_training, "xgboost_training": xgboost_training,
         "lightgbm_training": lightgbm_training, "model_evaluation": model_evaluation,
