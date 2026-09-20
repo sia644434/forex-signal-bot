@@ -210,7 +210,7 @@ class DecisionEngine:
         trend_score = self._read_component(analysis, "trend_score")
         raw_components = {
             "smart_money": self._read_component(analysis, "smart_money_score"),
-            "structure": (structure_score + trend_score) / 2.0,
+            "structure": combined_structure_score(structure_score, trend_score),
             "price_action": self._read_component(analysis, "price_action_score"),
             "supply_demand": self._read_component(analysis, "supply_demand_score"),
             "indicators": self._read_component(analysis, "momentum_score"),
