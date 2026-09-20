@@ -13,7 +13,7 @@ from services.telegram.access import _allowed_user_ids
 from services.telegram.handlers.signal import _format_signal
 from services.telegram.auto_scan_state import AutoScannerStateStore
 from analysis.multi_timeframe_engine import MultiTimeframeAnalysisEngine
-from profiles import get_profile
+from profiles import get_profile, build_execution_context
 from core.logger import setup_logger
 
 logger = setup_logger()
@@ -393,9 +393,12 @@ class ContinuousMarketScanner:
                 profile = get_profile(state)
                 if profile is None or not profile.enabled:
                     continue
-                style_ids = tuple(item.style_id for item in profile.styles if item.enabled)
-                if not style_ids:
+                try:
+                    execution_context = build_execution_context(profile, "LIVE")
+                except ValueError:
+                    logger.warning("Automatic scanner skipped invalid profile: profile_id=%s", profile.profile_id)
                     continue
+                style_ids = execution_context.style_ids
                 interval = max(60, int(profile.schedule_seconds))
                 if int(now.timestamp()) % interval >= 60:
                     continue
