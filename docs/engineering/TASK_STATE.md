@@ -763,3 +763,15 @@ Evidence:
 - Twelve Data covers the configured multi-asset universe through the common OHLC time-series contract; commodity mappings include XAU/USD, XAG/USD, WTI/USD and BRENT/USD.
 - Exact-head Actions verification is pending. Runtime commodity/asset availability remains dependent on `TWELVEDATA_API_KEY` and provider plan/symbol entitlement.
 - No live production verification is claimed.
+
+## TASK-148
+Phase: Phase 12 — Analysis Profiles / Shared Engine
+Title: User-selectable analysis profiles with preset and customizable style selection
+Implementation Status: IMPLEMENTED_CURRENT — CI verification pending
+Evidence:
+- Analysis Style Registry defines preset and customizable styles.
+- Telegram exposes preset-first profile creation followed by multi-style customization.
+- Profiles are versioned and persisted per Telegram user.
+- Selected styles drive deterministic weights inside the shared FullAnalysisEngine/DecisionEngine path.
+- Live scanner resolves each enabled user's active profile and schedules profile-specific scans.
+- PC Worker exposes profile_backtest, which evaluates historical data through the same FullAnalysisEngine and carries profile/style metadata.
