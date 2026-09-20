@@ -1,6 +1,341 @@
 {
-  "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+  "commit_sha": "796a36044f3a6be24bf58f4ff26d04781a4bec81",
   "errors": [
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Test => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572172",
+        "run_id": 35505572172,
+        "workflow": "Test"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:38:13Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "ERROR",
+      "message": "test => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572172/job/106064689901",
+        "job": "test",
+        "job_id": 106064689901,
+        "run_id": 35505572172,
+        "workflow": "Test"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:38:12Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production E2E Contract Gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572108",
+        "run_id": 35505572108,
+        "workflow": "Production E2E Contract Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:55Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "ERROR",
+      "message": "production-e2e-contract => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572108/job/106064689733",
+        "job": "production-e2e-contract",
+        "job_id": 106064689733,
+        "run_id": 35505572108,
+        "workflow": "Production E2E Contract Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:54Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production Activation Gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572086",
+        "run_id": 35505572086,
+        "workflow": "Production Activation Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:53Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "ERROR",
+      "message": "activation-gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572086/job/106064689846",
+        "job": "activation-gate",
+        "job_id": 106064689846,
+        "run_id": 35505572086,
+        "workflow": "Production Activation Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:52Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Final Integration Gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572079",
+        "run_id": 35505572079,
+        "workflow": "Final Integration Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:54Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "ERROR",
+      "message": "final-gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572079/job/106064689751",
+        "job": "final-gate",
+        "job_id": 106064689751,
+        "run_id": 35505572079,
+        "workflow": "Final Integration Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:53Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production Readiness => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572046",
+        "run_id": 35505572046,
+        "workflow": "Production Readiness"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:55Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "ERROR",
+      "message": "readiness => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572046/job/106064689616",
+        "job": "readiness",
+        "job_id": 106064689616,
+        "run_id": 35505572046,
+        "workflow": "Production Readiness"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:55Z"
+    },
+    {
+      "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Test => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567181",
+        "run_id": 35505567181,
+        "workflow": "Test"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:45Z"
+    },
+    {
+      "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "ERROR",
+      "message": "test => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567181/job/106064677118",
+        "job": "test",
+        "job_id": 106064677118,
+        "run_id": 35505567181,
+        "workflow": "Test"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:44Z"
+    },
+    {
+      "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Final Integration Gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567164",
+        "run_id": 35505567164,
+        "workflow": "Final Integration Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:49Z"
+    },
+    {
+      "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "ERROR",
+      "message": "final-gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567164/job/106064676960",
+        "job": "final-gate",
+        "job_id": 106064676960,
+        "run_id": 35505567164,
+        "workflow": "Final Integration Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:49Z"
+    },
+    {
+      "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production Activation Gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567162",
+        "run_id": 35505567162,
+        "workflow": "Production Activation Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:57Z"
+    },
+    {
+      "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "ERROR",
+      "message": "activation-gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567162/job/106064676961",
+        "job": "activation-gate",
+        "job_id": 106064676961,
+        "run_id": 35505567162,
+        "workflow": "Production Activation Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:56Z"
+    },
+    {
+      "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production Readiness => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567146",
+        "run_id": 35505567146,
+        "workflow": "Production Readiness"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:40Z"
+    },
+    {
+      "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "ERROR",
+      "message": "readiness => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567146/job/106064677056",
+        "job": "readiness",
+        "job_id": 106064677056,
+        "run_id": 35505567146,
+        "workflow": "Production Readiness"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:39Z"
+    },
+    {
+      "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production E2E Contract Gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567145",
+        "run_id": 35505567145,
+        "workflow": "Production E2E Contract Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:48Z"
+    },
+    {
+      "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "ERROR",
+      "message": "production-e2e-contract => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567145/job/106064676989",
+        "job": "production-e2e-contract",
+        "job_id": 106064676989,
+        "run_id": 35505567145,
+        "workflow": "Production E2E Contract Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:47Z"
+    },
+    {
+      "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Final Integration Gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558904",
+        "run_id": 35505558904,
+        "workflow": "Final Integration Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:36Z"
+    },
     {
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
       "environment": "production",
@@ -17,6 +352,21 @@
       "service": "actions",
       "source": "github",
       "timestamp": "2026-09-20T10:37:35Z"
+    },
+    {
+      "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production E2E Contract Gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558897",
+        "run_id": 35505558897,
+        "workflow": "Production E2E Contract Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:38Z"
     },
     {
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
@@ -38,6 +388,21 @@
     {
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
       "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production Activation Gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558882",
+        "run_id": 35505558882,
+        "workflow": "Production Activation Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:39Z"
+    },
+    {
+      "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
+      "environment": "production",
       "event": "workflow_job",
       "level": "ERROR",
       "message": "activation-gate => completed/failure",
@@ -55,6 +420,21 @@
     {
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
       "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production Readiness => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558881",
+        "run_id": 35505558881,
+        "workflow": "Production Readiness"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:28Z"
+    },
+    {
+      "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
+      "environment": "production",
       "event": "workflow_job",
       "level": "ERROR",
       "message": "readiness => completed/failure",
@@ -68,34 +448,273 @@
       "service": "actions",
       "source": "github",
       "timestamp": "2026-09-20T10:37:28Z"
+    }
+  ],
+  "event_count": 59,
+  "generated_at": "2026-09-20T10:38:55.452897Z",
+  "latest_events": [
+    {
+      "commit_sha": "796a36044f3a6be24bf58f4ff26d04781a4bec81",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "WARN",
+      "message": "production-e2e-contract => in_progress/None",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505642883/job/106064875882",
+        "job": "production-e2e-contract",
+        "job_id": 106064875882,
+        "run_id": 35505642883,
+        "workflow": "Production E2E Contract Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:38:39Z"
     },
     {
-      "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
+      "commit_sha": "796a36044f3a6be24bf58f4ff26d04781a4bec81",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "WARN",
+      "message": "Production Activation Gate => in_progress/None",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505642878",
+        "run_id": 35505642878,
+        "workflow": "Production Activation Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:38:39Z"
+    },
+    {
+      "commit_sha": "796a36044f3a6be24bf58f4ff26d04781a4bec81",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "WARN",
+      "message": "activation-gate => in_progress/None",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505642878/job/106064875881",
+        "job": "activation-gate",
+        "job_id": 106064875881,
+        "run_id": 35505642878,
+        "workflow": "Production Activation Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:38:38Z"
+    },
+    {
+      "commit_sha": "796a36044f3a6be24bf58f4ff26d04781a4bec81",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "WARN",
+      "message": "Final Integration Gate => in_progress/None",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505642875",
+        "run_id": 35505642875,
+        "workflow": "Final Integration Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:38:39Z"
+    },
+    {
+      "commit_sha": "796a36044f3a6be24bf58f4ff26d04781a4bec81",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "WARN",
+      "message": "final-gate => in_progress/None",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505642875/job/106064875770",
+        "job": "final-gate",
+        "job_id": 106064875770,
+        "run_id": 35505642875,
+        "workflow": "Final Integration Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:38:38Z"
+    },
+    {
+      "commit_sha": "796a36044f3a6be24bf58f4ff26d04781a4bec81",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "WARN",
+      "message": "Production Readiness => in_progress/None",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505642868",
+        "run_id": 35505642868,
+        "workflow": "Production Readiness"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:38:38Z"
+    },
+    {
+      "commit_sha": "796a36044f3a6be24bf58f4ff26d04781a4bec81",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "WARN",
+      "message": "readiness => in_progress/None",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505642868/job/106064875829",
+        "job": "readiness",
+        "job_id": 106064875829,
+        "run_id": 35505642868,
+        "workflow": "Production Readiness"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:38:37Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Test => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572172",
+        "run_id": 35505572172,
+        "workflow": "Test"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:38:13Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
       "environment": "production",
       "event": "workflow_job",
       "level": "ERROR",
       "message": "test => completed/failure",
       "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558864/job/106064654386",
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572172/job/106064689901",
         "job": "test",
-        "job_id": 106064654386,
-        "run_id": 35505558864,
+        "job_id": 106064689901,
+        "run_id": 35505572172,
         "workflow": "Test"
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:37:41Z"
-    }
-  ],
-  "event_count": 59,
-  "generated_at": "2026-09-20T10:37:53.644647Z",
-  "latest_events": [
+      "timestamp": "2026-09-20T10:38:12Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "INFO",
+      "message": "Production Activation Validation => completed/success",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572118",
+        "run_id": 35505572118,
+        "workflow": "Production Activation Validation"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:48Z"
+    },
     {
       "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
       "environment": "production",
       "event": "workflow_job",
-      "level": "WARN",
-      "message": "dependency-audit => in_progress/None",
+      "level": "INFO",
+      "message": "activation-validation => completed/success",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572118/job/106064689888",
+        "job": "activation-validation",
+        "job_id": 106064689888,
+        "run_id": 35505572118,
+        "workflow": "Production Activation Validation"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:47Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "INFO",
+      "message": "Production Observability => completed/success",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572117",
+        "run_id": 35505572117,
+        "workflow": "Production Observability"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:58Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "INFO",
+      "message": "collect => completed/success",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572117/job/106064707967",
+        "job": "collect",
+        "job_id": 106064707967,
+        "run_id": 35505572117,
+        "workflow": "Production Observability"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:58Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production E2E Contract Gate => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572108",
+        "run_id": 35505572108,
+        "workflow": "Production E2E Contract Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:55Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "ERROR",
+      "message": "production-e2e-contract => completed/failure",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572108/job/106064689733",
+        "job": "production-e2e-contract",
+        "job_id": 106064689733,
+        "run_id": 35505572108,
+        "workflow": "Production E2E Contract Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:54Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "INFO",
+      "message": "Security Audit => completed/success",
+      "metadata": {
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572106",
+        "run_id": 35505572106,
+        "workflow": "Security Audit"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T10:37:35Z"
+    },
+    {
+      "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
+      "environment": "production",
+      "event": "workflow_job",
+      "level": "INFO",
+      "message": "dependency-audit => completed/success",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572106/job/106064689631",
         "job": "dependency-audit",
@@ -105,14 +724,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:37:05Z"
+      "timestamp": "2026-09-20T10:37:34Z"
     },
     {
       "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Production Activation Gate => in_progress/None",
+      "level": "ERROR",
+      "message": "Production Activation Gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572086",
         "run_id": 35505572086,
@@ -120,14 +739,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:37:06Z"
+      "timestamp": "2026-09-20T10:37:53Z"
     },
     {
       "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
       "environment": "production",
       "event": "workflow_job",
-      "level": "WARN",
-      "message": "activation-gate => in_progress/None",
+      "level": "ERROR",
+      "message": "activation-gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572086/job/106064689846",
         "job": "activation-gate",
@@ -137,14 +756,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:37:05Z"
+      "timestamp": "2026-09-20T10:37:52Z"
     },
     {
       "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Final Integration Gate => in_progress/None",
+      "level": "ERROR",
+      "message": "Final Integration Gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572079",
         "run_id": 35505572079,
@@ -152,14 +771,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:37:06Z"
+      "timestamp": "2026-09-20T10:37:54Z"
     },
     {
       "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
       "environment": "production",
       "event": "workflow_job",
-      "level": "WARN",
-      "message": "final-gate => in_progress/None",
+      "level": "ERROR",
+      "message": "final-gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572079/job/106064689751",
         "job": "final-gate",
@@ -169,14 +788,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:37:05Z"
+      "timestamp": "2026-09-20T10:37:53Z"
     },
     {
       "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Production Readiness => in_progress/None",
+      "level": "ERROR",
+      "message": "Production Readiness => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572046",
         "run_id": 35505572046,
@@ -184,14 +803,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:37:05Z"
+      "timestamp": "2026-09-20T10:37:55Z"
     },
     {
       "commit_sha": "0d56bc0eaa766fd80976b6846a515d9230084217",
       "environment": "production",
       "event": "workflow_job",
-      "level": "WARN",
-      "message": "readiness => in_progress/None",
+      "level": "ERROR",
+      "message": "readiness => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505572046/job/106064689616",
         "job": "readiness",
@@ -201,14 +820,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:37:05Z"
+      "timestamp": "2026-09-20T10:37:55Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Test => in_progress/None",
+      "level": "ERROR",
+      "message": "Test => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567181",
         "run_id": 35505567181,
@@ -216,14 +835,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:59Z"
+      "timestamp": "2026-09-20T10:37:45Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_job",
-      "level": "WARN",
-      "message": "test => in_progress/None",
+      "level": "ERROR",
+      "message": "test => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567181/job/106064677118",
         "job": "test",
@@ -233,14 +852,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:59Z"
+      "timestamp": "2026-09-20T10:37:44Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Final Integration Gate => in_progress/None",
+      "level": "ERROR",
+      "message": "Final Integration Gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567164",
         "run_id": 35505567164,
@@ -248,14 +867,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:59Z"
+      "timestamp": "2026-09-20T10:37:49Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_job",
-      "level": "WARN",
-      "message": "final-gate => in_progress/None",
+      "level": "ERROR",
+      "message": "final-gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567164/job/106064676960",
         "job": "final-gate",
@@ -265,14 +884,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:58Z"
+      "timestamp": "2026-09-20T10:37:49Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Production Activation Gate => in_progress/None",
+      "level": "ERROR",
+      "message": "Production Activation Gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567162",
         "run_id": 35505567162,
@@ -280,14 +899,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:59Z"
+      "timestamp": "2026-09-20T10:37:57Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_job",
-      "level": "WARN",
-      "message": "activation-gate => in_progress/None",
+      "level": "ERROR",
+      "message": "activation-gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567162/job/106064676961",
         "job": "activation-gate",
@@ -297,14 +916,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:59Z"
+      "timestamp": "2026-09-20T10:37:56Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Security Audit => in_progress/None",
+      "level": "INFO",
+      "message": "Security Audit => completed/success",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567158",
         "run_id": 35505567158,
@@ -312,7 +931,7 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:59Z"
+      "timestamp": "2026-09-20T10:37:27Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
@@ -335,8 +954,8 @@
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Production Activation Validation => in_progress/None",
+      "level": "INFO",
+      "message": "Production Activation Validation => completed/success",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567155",
         "run_id": 35505567155,
@@ -344,7 +963,7 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:59Z"
+      "timestamp": "2026-09-20T10:37:28Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
@@ -382,8 +1001,8 @@
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Production Readiness => in_progress/None",
+      "level": "ERROR",
+      "message": "Production Readiness => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567146",
         "run_id": 35505567146,
@@ -391,14 +1010,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:59Z"
+      "timestamp": "2026-09-20T10:37:40Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_job",
-      "level": "WARN",
-      "message": "readiness => in_progress/None",
+      "level": "ERROR",
+      "message": "readiness => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567146/job/106064677056",
         "job": "readiness",
@@ -408,14 +1027,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:59Z"
+      "timestamp": "2026-09-20T10:37:39Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Production E2E Contract Gate => in_progress/None",
+      "level": "ERROR",
+      "message": "Production E2E Contract Gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567145",
         "run_id": 35505567145,
@@ -423,14 +1042,14 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:59Z"
+      "timestamp": "2026-09-20T10:37:48Z"
     },
     {
       "commit_sha": "f768e78a83a1fb2b73744864fca1d8c12d71e34d",
       "environment": "production",
       "event": "workflow_job",
-      "level": "WARN",
-      "message": "production-e2e-contract => in_progress/None",
+      "level": "ERROR",
+      "message": "production-e2e-contract => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505567145/job/106064676989",
         "job": "production-e2e-contract",
@@ -440,7 +1059,7 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:58Z"
+      "timestamp": "2026-09-20T10:37:47Z"
     },
     {
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
@@ -478,8 +1097,8 @@
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Final Integration Gate => in_progress/None",
+      "level": "ERROR",
+      "message": "Final Integration Gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558904",
         "run_id": 35505558904,
@@ -487,7 +1106,7 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:47Z"
+      "timestamp": "2026-09-20T10:37:36Z"
     },
     {
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
@@ -510,8 +1129,8 @@
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Production E2E Contract Gate => in_progress/None",
+      "level": "ERROR",
+      "message": "Production E2E Contract Gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558897",
         "run_id": 35505558897,
@@ -519,7 +1138,7 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:48Z"
+      "timestamp": "2026-09-20T10:37:38Z"
     },
     {
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
@@ -574,8 +1193,8 @@
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Production Activation Gate => in_progress/None",
+      "level": "ERROR",
+      "message": "Production Activation Gate => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558882",
         "run_id": 35505558882,
@@ -583,7 +1202,7 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:48Z"
+      "timestamp": "2026-09-20T10:37:39Z"
     },
     {
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
@@ -606,8 +1225,8 @@
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
       "environment": "production",
       "event": "workflow_run",
-      "level": "WARN",
-      "message": "Production Readiness => in_progress/None",
+      "level": "ERROR",
+      "message": "Production Readiness => completed/failure",
       "metadata": {
         "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558881",
         "run_id": 35505558881,
@@ -615,7 +1234,7 @@
       },
       "service": "actions",
       "source": "github",
-      "timestamp": "2026-09-20T10:36:47Z"
+      "timestamp": "2026-09-20T10:37:28Z"
     },
     {
       "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
@@ -633,268 +1252,12 @@
       "service": "actions",
       "source": "github",
       "timestamp": "2026-09-20T10:37:28Z"
-    },
-    {
-      "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
-      "environment": "production",
-      "event": "workflow_run",
-      "level": "WARN",
-      "message": "Production Observability => completed/cancelled",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558866",
-        "run_id": 35505558866,
-        "workflow": "Production Observability"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T10:37:12Z"
-    },
-    {
-      "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
-      "environment": "production",
-      "event": "workflow_job",
-      "level": "WARN",
-      "message": "collect => completed/cancelled",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558866/job/106064654620",
-        "job": "collect",
-        "job_id": 106064654620,
-        "run_id": 35505558866,
-        "workflow": "Production Observability"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T10:37:12Z"
-    },
-    {
-      "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
-      "environment": "production",
-      "event": "workflow_run",
-      "level": "WARN",
-      "message": "Test => in_progress/None",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558864",
-        "run_id": 35505558864,
-        "workflow": "Test"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T10:36:47Z"
-    },
-    {
-      "commit_sha": "6eef91fb96ef64cb5013caf777d5f5dda5d9f231",
-      "environment": "production",
-      "event": "workflow_job",
-      "level": "ERROR",
-      "message": "test => completed/failure",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35505558864/job/106064654386",
-        "job": "test",
-        "job_id": 106064654386,
-        "run_id": 35505558864,
-        "workflow": "Test"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T10:37:41Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_run",
-      "level": "INFO",
-      "message": "Test => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654774",
-        "run_id": 35503654774,
-        "workflow": "Test"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:57:01Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_job",
-      "level": "INFO",
-      "message": "test => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654774/job/106059694767",
-        "job": "test",
-        "job_id": 106059694767,
-        "run_id": 35503654774,
-        "workflow": "Test"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:57:00Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_run",
-      "level": "INFO",
-      "message": "Production Observability => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654769",
-        "run_id": 35503654769,
-        "workflow": "Production Observability"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:56:42Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_job",
-      "level": "INFO",
-      "message": "collect => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654769/job/106059694941",
-        "job": "collect",
-        "job_id": 106059694941,
-        "run_id": 35503654769,
-        "workflow": "Production Observability"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:56:41Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_run",
-      "level": "INFO",
-      "message": "Security Audit => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654761",
-        "run_id": 35503654761,
-        "workflow": "Security Audit"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:56:29Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_job",
-      "level": "INFO",
-      "message": "dependency-audit => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654761/job/106059694723",
-        "job": "dependency-audit",
-        "job_id": 106059694723,
-        "run_id": 35503654761,
-        "workflow": "Security Audit"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:56:29Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_run",
-      "level": "INFO",
-      "message": "Final Integration Gate => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654752",
-        "run_id": 35503654752,
-        "workflow": "Final Integration Gate"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:57:24Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_job",
-      "level": "INFO",
-      "message": "final-gate => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654752/job/106059694728",
-        "job": "final-gate",
-        "job_id": 106059694728,
-        "run_id": 35503654752,
-        "workflow": "Final Integration Gate"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:57:24Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_run",
-      "level": "INFO",
-      "message": "Production E2E Contract Gate => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654740",
-        "run_id": 35503654740,
-        "workflow": "Production E2E Contract Gate"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:56:52Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_job",
-      "level": "INFO",
-      "message": "production-e2e-contract => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654740/job/106059694665",
-        "job": "production-e2e-contract",
-        "job_id": 106059694665,
-        "run_id": 35503654740,
-        "workflow": "Production E2E Contract Gate"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:56:51Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_run",
-      "level": "INFO",
-      "message": "Production Activation Validation => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654738",
-        "run_id": 35503654738,
-        "workflow": "Production Activation Validation"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:57:11Z"
-    },
-    {
-      "commit_sha": "1a654c673d1d4828f78d7d82cabf5926a306e6a5",
-      "environment": "production",
-      "event": "workflow_job",
-      "level": "INFO",
-      "message": "activation-validation => completed/success",
-      "metadata": {
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35503654738/job/106059694704",
-        "job": "activation-validation",
-        "job_id": 106059694704,
-        "run_id": 35503654738,
-        "workflow": "Production Activation Validation"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T09:57:10Z"
     }
   ],
   "levels": {
-    "ERROR": 5,
-    "INFO": 18,
-    "WARN": 36
+    "ERROR": 28,
+    "INFO": 14,
+    "WARN": 17
   },
   "sources": {
     "github": 59
