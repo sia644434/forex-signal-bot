@@ -7,6 +7,8 @@ They are not profitability claims or rankings.
 from dataclasses import dataclass
 from typing import Dict, Tuple
 
+from analysis.decision_engine import DecisionEngine
+
 
 @dataclass(frozen=True)
 class AnalysisStyle:
@@ -52,3 +54,47 @@ def get_analysis_style(style_id: str) -> AnalysisStyle:
 
 def list_preset_styles() -> Tuple[AnalysisStyle, ...]:
     return tuple(item for item in _STYLE_DEFINITIONS if item.category == "preset")
+
+
+_COMPONENT_ALIASES = {
+    "trend": "structure",
+    "market_structure": "structure",
+    "momentum": "indicators",
+    "price_action": "price_action",
+    "support_resistance": "structure",
+    "supply_demand": "supply_demand",
+    "candlestick": "candlestick",
+    "elliott": "elliott",
+    "harmonic": "harmonic",
+    "brooks": "brooks",
+    "wyckoff": "wyckoff",
+    "smc": "smart_money",
+    "multi_timeframe": "structure",
+}
+
+
+def resolve_style_weights(style_ids: list[str] | tuple[str, ...] | None) -> dict[str, float]:
+    """Return deterministic DecisionEngine weights for one or more selected styles.
+
+    The base weights remain authoritative. Selected style components receive
+    emphasis; non-selected components remain available at reduced weight.
+    This makes style selection affect the shared analysis engine without
+    creating separate live/backtest engines.
+    """
+    if not style_ids:
+        return dict(DecisionEngine.DEFAULT_WEIGHTS)
+    unique_ids = list(dict.fromkeys(str(item) for item in style_ids))
+    for style_id in unique_ids:
+        get_analysis_style(style_id)
+
+    selected_components = {
+        _COMPONENT_ALIASES.get(component)
+        for style_id in unique_ids
+        for component in get_analysis_style(style_id).component_ids
+    }
+    selected_components.discard(None)
+    weights = dict(DecisionEngine.DEFAULT_WEIGHTS)
+    for name in weights:
+        weights[name] *= 1.75 if name in selected_components else 0.55
+    total = sum(weights.values())
+    return {name: value / total for name, value in weights.items()}
