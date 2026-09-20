@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-import logging
 import signal
 import time
 
+from core.logger import setup_logger
 from config.settings import Settings
 from .executors import register_real_executors
 from .handlers import register_default_handlers
 from .runtime import WorkerRuntime
 from .server import WorkerHTTPServer
 
+
+logger = setup_logger()
 settings = Settings.load()
-logging.basicConfig(level=settings.log_level)
 
 
 def main() -> None:
@@ -21,7 +22,12 @@ def main() -> None:
 
     server = WorkerHTTPServer(runtime)
     server.start()
-    logging.info("PC Worker %s ready on %s:%s", runtime.worker_id, server.host, server.port)
+    logger.info(
+        "PC Worker %s ready on %s:%s",
+        runtime.worker_id,
+        server.host,
+        server.port,
+    )
     stop = False
 
     def shutdown(*_args):
