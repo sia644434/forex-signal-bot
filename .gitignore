@@ -13,6 +13,9 @@ env/
 .vscode/
 
 *.log
+logs/
+
+observability/raw/
 
 .pytest_cache/
 .mypy_cache/
