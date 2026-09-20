@@ -186,6 +186,7 @@ class ContinuousMarketScanner:
         candle_key: str,
         direction: str,
         chat_id: int,
+        profile_id: str,
     ) -> str:
         return (
             f"sent:{symbol}:{timeframe}:{candle_key}:{direction}:"
@@ -208,6 +209,7 @@ class ContinuousMarketScanner:
                     candle_key,
                     decision.direction,
                     chat_id,
+                    profile_id,
                 )
                 if self._state.get(notification_key) == "sent":
                     sent += 1
@@ -285,7 +287,7 @@ class ContinuousMarketScanner:
             latest = m15[-1].timestamp
             if not isinstance(latest, datetime):
                 raise RuntimeError(f"Invalid M15 timestamp for {symbol}.")
-            key = f"processed:{symbol}:M15"
+            key = f"processed:{profile_id}:{symbol}:M15"
             latest_key = latest.astimezone(timezone.utc).isoformat()
             if self._state.get(key) == latest_key:
                 return ScanOutcome.ALREADY_PROCESSED
@@ -448,6 +450,7 @@ class ContinuousMarketScanner:
             data_failed = summary.get(ScanOutcome.DATA_FAILED, 0)
             if data_failed < len(symbols):
                 self._state.put(cycle_state_key, cycle_bucket)
+            sent_count = sum(1 for outcome in results if outcome == ScanOutcome.VALIDATED_SENT)
             logger.info(
                 "Automatic scanner cycle summary: symbols=%d data_failed=%d already_processed=%d "
                 "m15_no_trade=%d m15_neutral=%d m15_directional=%d "
