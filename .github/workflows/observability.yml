@@ -28,9 +28,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Collect Railway and GitHub telemetry
+      - name: Collect production telemetry
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Railway is optional. If these are absent, the collector continues
+          # with GitHub telemetry only.
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
@@ -40,7 +42,7 @@ jobs:
           RAILWAY_LOG_LINES: ${{ vars.RAILWAY_LOG_LINES }}
           RAILWAY_BUILD_LOG_LINES: ${{ vars.RAILWAY_BUILD_LOG_LINES }}
         run: PYTHONPATH=. python scripts/collect_observability.py
-      - name: Upload raw observability archive
+      - name: Upload sanitized raw observability archive
         uses: actions/upload-artifact@v4
         with:
           name: observability-${{ github.run_id }}
