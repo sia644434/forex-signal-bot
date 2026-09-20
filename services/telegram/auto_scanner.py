@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import os
 from typing import Any
 
@@ -116,6 +116,30 @@ class ContinuousMarketScanner:
             if get_market_type(symbol) in {"crypto", "forex", "commodity"}
         )
 
+    @staticmethod
+    def _closed_candles(candles: list[Any], timeframe: str, now: datetime | None = None) -> list[Any]:
+        """Return only fully closed candles; never analyze a forming bar."""
+        if not candles:
+            return []
+        durations = {
+            "5m": timedelta(minutes=5),
+            "15m": timedelta(minutes=15),
+            "1h": timedelta(hours=1),
+            "4h": timedelta(hours=4),
+            "1d": timedelta(days=1),
+            "1w": timedelta(days=7),
+        }
+        duration = durations[normalize_timeframe(timeframe)]
+        reference = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+        closed = []
+        for candle in candles:
+            timestamp = getattr(candle, "timestamp", None)
+            if not isinstance(timestamp, datetime) or timestamp.tzinfo is None:
+                continue
+            if timestamp.astimezone(timezone.utc) + duration <= reference:
+                closed.append(candle)
+        return closed
+
     async def _fetch_timeframe(
         self,
         market_data,
@@ -135,8 +159,9 @@ class ContinuousMarketScanner:
                 return cached[1]
 
         candles = await market_data.get_candles_list(symbol=symbol, timeframe=normalized, limit=DEFAULT_CANDLE_LIMIT)
+        candles = self._closed_candles(candles, normalized)
         if not candles:
-            raise RuntimeError(f"No candles returned for {symbol}/{normalized}.")
+            raise RuntimeError(f"No closed candles returned for {symbol}/{normalized}.")
         latest = getattr(candles[-1], "timestamp", None)
         if not isinstance(latest, datetime) or latest.tzinfo is None:
             raise RuntimeError(f"Invalid latest candle timestamp for {symbol}/{normalized}.")
