@@ -281,3 +281,25 @@ def test_multi_timeframe_waits_for_m5_after_contextual_m15_setup():
     assert decision is None
     assert "setup_direction=BUY" in diagnostics
     assert any(item.startswith("execution_trigger=50.0") for item in diagnostics)
+
+
+def test_multi_timeframe_reports_exact_failed_higher_timeframe_gate():
+    reports = {
+        "W1": report(55),
+        "D1": report(60),
+        "H4": report(56),
+        "H1": report(54),
+        "M15": SimpleNamespace(**{**report(53.7).__dict__, "decision_bias": "bullish"}),
+        "M5": report(54),
+    }
+    engine = MultiTimeframeAnalysisEngine(FakeEngine(reports))
+    candles = {key: [key] for key in reports}
+    decision, diagnostics = engine.analyze_with_diagnostics(candles)
+    assert decision is None
+    blocked = next(item for item in diagnostics if item.startswith("role_context=blocked"))
+    assert "direction=BUY" in blocked
+    assert "W1=55.0>=55.0" in blocked
+    assert "D1=60.0>35.0" in blocked
+    assert "H4=56.0>=50.0" in blocked
+    assert "H1=54.0>=55.0" in blocked
+    assert "failed=H1_failed" in blocked
