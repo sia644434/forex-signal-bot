@@ -1,36 +1,5 @@
 {
-  "error_count": 2,
-  "latest_errors": [
-    {
-      "environment": "production",
-      "event": "workflow_run",
-      "level": "ERROR",
-      "message": ".github/workflows/observability.yml => completed/failure",
-      "metadata": {
-        "head_sha": "2af9d603653e7505a8995598aedd9ebe8cc1bba6",
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35500108085",
-        "run_id": 35500108085,
-        "workflow": ".github/workflows/observability.yml"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T08:38:29Z"
-    },
-    {
-      "environment": "production",
-      "event": "workflow_run",
-      "level": "ERROR",
-      "message": ".github/workflows/observability.yml => completed/failure",
-      "metadata": {
-        "head_sha": "41ea242aeaa9b7ba6bb81bd72c4524a4d41936d8",
-        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35500097441",
-        "run_id": 35500097441,
-        "workflow": ".github/workflows/observability.yml"
-      },
-      "service": "actions",
-      "source": "github",
-      "timestamp": "2026-09-20T08:38:14Z"
-    }
-  ],
-  "status": "incident"
+  "error_count": 0,
+  "latest_errors": [],
+  "status": "healthy"
 }\n
