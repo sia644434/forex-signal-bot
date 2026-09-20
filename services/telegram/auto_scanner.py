@@ -370,13 +370,8 @@ class ContinuousMarketScanner:
             # failures from intentionally stale Friday candles; crypto remains
             # continuously monitored because it trades 24/7.
             cycle_bucket = self._cycle_bucket(now)
-            cycle_state_key = "cycle:last_m15"
-            if self._state.get(cycle_state_key) == cycle_bucket:
-                logger.info(
-                    "Automatic scanner cycle skipped: M15 bucket already processed: bucket=%s",
-                    cycle_bucket,
-                )
-                return 0
+            cycle_state_prefix = "cycle:last_m15:"
+
 
             configured_symbols = _configured_scan_symbols()
             symbols = self._eligible_symbols_for_session(configured_symbols, now)
@@ -437,11 +432,22 @@ class ContinuousMarketScanner:
 
             grouped_results: list[str] = []
             for profile_id, (recipient_ids, style_ids) in profile_groups.items():
+                cycle_state_key = f"{cycle_state_prefix}{profile_id}"
+                if self._state.get(cycle_state_key) == cycle_bucket:
+                    logger.info(
+                        "Automatic scanner profile cycle skipped: profile_id=%s bucket=%s",
+                        profile_id,
+                        cycle_bucket,
+                    )
+                    continue
                 profile_results = await asyncio.gather(*(
                     guarded(symbol, profile_id, recipient_ids, style_ids)
                     for symbol in symbols
                 ))
                 grouped_results.extend(profile_results)
+                profile_data_failed = profile_results.count(ScanOutcome.DATA_FAILED)
+                if profile_data_failed < len(symbols):
+                    self._state.put(cycle_state_key, cycle_bucket)
 
             results = grouped_results
             summary = {outcome: results.count(outcome) for outcome in set(results)}
@@ -451,8 +457,6 @@ class ContinuousMarketScanner:
             # provider outage retryable while preventing duplicate full fetches
             # during the same 15-minute candle window.
             data_failed = summary.get(ScanOutcome.DATA_FAILED, 0)
-            if data_failed < len(symbols):
-                self._state.put(cycle_state_key, cycle_bucket)
             sent_count = sum(1 for outcome in results if outcome == ScanOutcome.VALIDATED_SENT)
             logger.info(
                 "Automatic scanner cycle summary: symbols=%d data_failed=%d already_processed=%d "
