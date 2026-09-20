@@ -34,3 +34,9 @@ Historical CI evidence is tied to 7e978faa. New commits add product capabilities
 Focused TASK-129 tests were added in tests/test_advanced_intelligence_contracts.py.
 No local execution or unverified production behavior is claimed.
 Railway remains deferred until the capability roadmap and final regression are complete.
+
+## Current Exact-Head Verification — 2026-09-20
+- Verified HEAD: `7ee70ad23a7b5c0008298e37f3286d1be4869853`.
+- Full pytest suite: **951 passed**.
+- Required workflows: Test, Production Readiness, Production Activation Gate, Production E2E Contract Gate, Production Activation Validation, Security Audit, Production Observability, Final Integration Gate — all **success** on the same HEAD.
+- Profile style decomposition, snapshot validation, Worker scope metadata, replay context propagation, and public ProfileStyle exports are covered by the verified test run.
