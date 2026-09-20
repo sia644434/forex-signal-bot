@@ -24,3 +24,22 @@ def test_profile_activation_is_persistent_in_user_settings():
     assert state.settings["active_profile_id"] == second.profile_id
     assert get_profile(state).profile_id == second.profile_id
     assert len(list_profiles(state)) == 2
+
+
+def test_style_selection_changes_shared_engine_weights():
+    from analysis.decision_engine import DecisionEngine
+    from analysis.styles import resolve_style_weights
+    base = resolve_style_weights(None)
+    scalping = resolve_style_weights(["scalping"])
+    assert scalping != base
+    assert abs(sum(scalping.values()) - 1.0) < 1e-9
+    assert scalping["indicators"] > base["indicators"]
+    assert set(scalping) == set(DecisionEngine.DEFAULT_WEIGHTS)
+
+
+def test_multiple_styles_produce_deterministic_combination():
+    from analysis.styles import resolve_style_weights
+    first = resolve_style_weights(["price_action", "momentum"])
+    second = resolve_style_weights(["price_action", "momentum"])
+    reversed_order = resolve_style_weights(["momentum", "price_action"])
+    assert first == second == reversed_order
