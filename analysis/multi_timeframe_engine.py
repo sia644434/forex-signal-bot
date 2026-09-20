@@ -339,14 +339,16 @@ class MultiTimeframeAnalysisEngine:
         self,
         candles_by_timeframe: Mapping[str, list],
         symbol: str | None = None,
+        style_ids: list[str] | tuple[str, ...] | None = None,
     ) -> MultiTimeframeDecision | None:
-        decision, _ = self.analyze_with_diagnostics(candles_by_timeframe, symbol=symbol)
+        decision, _ = self.analyze_with_diagnostics(candles_by_timeframe, symbol=symbol, style_ids=style_ids)
         return decision
 
     def analyze_with_diagnostics(
         self,
         candles_by_timeframe: Mapping[str, list],
         symbol: str | None = None,
+        style_ids: list[str] | tuple[str, ...] | None = None,
     ) -> tuple[MultiTimeframeDecision | None, tuple[str, ...]]:
         """Return the decision plus concise rejection diagnostics for observability."""
         missing = [tf for tf in self.TIMEFRAME_ORDER if not candles_by_timeframe.get(tf)]
@@ -359,6 +361,7 @@ class MultiTimeframeAnalysisEngine:
             reports[timeframe] = self.analysis_engine.analyze(
                 candles,
                 signal_max_age_seconds=self._signal_age_budget(timeframe),
+                style_ids=style_ids,
             )
 
         setup = reports["M15"]
