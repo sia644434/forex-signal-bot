@@ -381,6 +381,15 @@ class ContinuousMarketScanner:
             cycle_bucket = self._cycle_bucket(now)
             cycle_state_prefix = "cycle:last_m15:"
 
+            # Legacy global cycle state predates profile-aware scheduling.
+            # If that cycle is already complete, short-circuit before any
+            # symbol/provider discovery exactly as the legacy contract expects.
+            if self._state.get("cycle:last_m15") == cycle_bucket:
+                logger.info(
+                    "Automatic scanner cycle skipped: legacy cycle bucket already completed: %s",
+                    cycle_bucket,
+                )
+                return 0
 
             configured_symbols = _configured_scan_symbols()
             symbols = self._eligible_symbols_for_session(configured_symbols, now)
