@@ -5,3 +5,5 @@ __all__ = [
     "AnalysisProfile", "PRESET_PROFILES", "profile_from_preset",
     "create_profile", "get_profile", "list_profiles", "set_active_profile", "update_profile",
 ]
+
+from .execution import ProfileExecutionContext, build_execution_context, context_from_payload, profile_snapshot
