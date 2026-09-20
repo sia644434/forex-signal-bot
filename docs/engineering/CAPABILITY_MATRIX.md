@@ -98,3 +98,8 @@ The implemented roadmap through TASK-147 has passed exact-head CI on `151ea57b8e
 | Index real candles | IMPLEMENTED_CURRENT | Finnhub index candles + Alpha Vantage INDEX_DATA | tests/test_multi_asset_providers.py | Provider symbol coverage/plan dependent |
 | Gold/Silver/WTI/BRENT real price data | PARTIAL | Alpha Vantage commodity endpoints | OHLC safety regression | Current endpoints do not provide canonical OHLC for all configured commodities; no fabricated candles allowed |
 | Multi-asset failover | IMPLEMENTED_CURRENT | ProviderManager capability-aware fallback | Existing provider-manager tests + new routing tests | Runtime credentials determine active path |
+
+| Analysis style registry | IMPLEMENTED_CURRENT | analysis/styles/registry.py | tests/test_profiles.py | Style configuration | RAILWAY | 12+ | pending CI |
+| User analysis profiles | IMPLEMENTED_CURRENT | profiles/ + Telegram profile callbacks | tests/test_profiles.py | Durable Telegram user state | RAILWAY | 12+ | pending CI |
+| Profile-aware live scanning | IMPLEMENTED_CURRENT | services/telegram/auto_scanner.py + MultiTimeframeAnalysisEngine | Focused | Market data/profile state | RAILWAY | 12+ | pending CI |
+| Profile backtest using shared engine | IMPLEMENTED_CURRENT | worker/executors.py::profile_backtest | Focused | Historical candles/profile snapshot | PC_WORKER | 12+ | pending CI |
