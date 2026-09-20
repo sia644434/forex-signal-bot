@@ -32,6 +32,7 @@ class ScanOutcome:
     M15_NO_TRADE = "m15_no_trade"
     M15_NEUTRAL = "m15_neutral"
     M15_DIRECTIONAL = "m15_directional"
+    EXECUTION_WAIT = "execution_wait"
     DIRECTIONAL_ALIGNMENT_REJECTED = "directional_alignment_rejected"
     HTF_ALIGNMENT_REJECTED = "htf_alignment_rejected"
     SETUP_QUALITY_REJECTED = "setup_quality_rejected"
@@ -240,6 +241,10 @@ class ContinuousMarketScanner:
         if not diagnostics:
             return ScanOutcome.VALIDATION_FAILED
         joined = "|".join(diagnostics)
+        if any(item.startswith("role_context=") for item in diagnostics):
+            return ScanOutcome.HTF_ALIGNMENT_REJECTED
+        if any(item.startswith("execution_trigger=") for item in diagnostics):
+            return ScanOutcome.EXECUTION_WAIT
         if any(item.startswith("directional_alignment=") for item in diagnostics):
             return ScanOutcome.DIRECTIONAL_ALIGNMENT_REJECTED
         if any(item.startswith("htf_alignment=") for item in diagnostics):
@@ -277,7 +282,24 @@ class ContinuousMarketScanner:
                     symbol,
                     "; ".join(diagnostics) if diagnostics else "unknown_reason",
                 )
-                if diagnostics and diagnostics[0].startswith("m15_signal="):
+                # Stage-specific diagnostics take precedence over the raw
+                # M15 signal. A contextual setup may start from NO_TRADE/WAIT
+                # and still be evaluated by macro/context/execution gates.
+                if any(
+                    item.startswith((
+                        "role_context=",
+                        "execution_trigger=",
+                        "setup_quality=",
+                        "confidence=",
+                        "rr=",
+                        "conflict_state=",
+                        "signal_decay=",
+                        "portfolio_risk_blocked=",
+                    ))
+                    for item in diagnostics
+                ):
+                    outcome = self._classify_diagnostics(diagnostics)
+                elif diagnostics and diagnostics[0].startswith("m15_signal="):
                     signal = diagnostics[0].split("=", 1)[1].upper()
                     outcome = (
                         ScanOutcome.M15_NO_TRADE
@@ -368,7 +390,7 @@ class ContinuousMarketScanner:
                 "Automatic scanner cycle summary: symbols=%d data_failed=%d already_processed=%d "
                 "m15_no_trade=%d m15_neutral=%d m15_directional=%d "
                 "directional_alignment_rejected=%d htf_alignment_rejected=%d "
-                "setup_quality_rejected=%d confidence_rejected=%d rr_rejected=%d "
+                "execution_wait=%d setup_quality_rejected=%d confidence_rejected=%d rr_rejected=%d "
                 "conflict_rejected=%d freshness_rejected=%d portfolio_risk_rejected=%d "
                 "validated_sent=%d validated_no_recipient=%d validated_delivery_pending=%d validation_failed=%d",
                 len(symbols),
@@ -379,6 +401,7 @@ class ContinuousMarketScanner:
                 summary.get(ScanOutcome.M15_DIRECTIONAL, 0),
                 summary.get(ScanOutcome.DIRECTIONAL_ALIGNMENT_REJECTED, 0),
                 summary.get(ScanOutcome.HTF_ALIGNMENT_REJECTED, 0),
+                summary.get(ScanOutcome.EXECUTION_WAIT, 0),
                 summary.get(ScanOutcome.SETUP_QUALITY_REJECTED, 0),
                 summary.get(ScanOutcome.CONFIDENCE_REJECTED, 0),
                 summary.get(ScanOutcome.RR_REJECTED, 0),
