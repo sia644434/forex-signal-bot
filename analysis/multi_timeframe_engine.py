@@ -17,6 +17,8 @@ class MultiTimeframeDecision:
     alignment_score: float
     lower_timeframe_score: float
     reasons: tuple[str, ...]
+    role_scores: Mapping[str, float] = None
+    market_story: tuple[str, ...] = ()
 
     @property
     def executable(self) -> bool:
@@ -35,8 +37,22 @@ class MultiTimeframeAnalysisEngine:
         "M15": 15,
         "M5": 5,
     }
-    WEIGHTS = {"W1": 5.0, "D1": 15.0, "H4": 25.0, "H1": 20.0, "M15": 25.0, "M5": 10.0}
+    # Each timeframe has a job; they are not six independent votes.
+    ROLES = {
+        "macro": ("W1", "D1"),
+        "context": ("H4", "H1"),
+        "setup": ("M15",),
+        "execution": ("M5",),
+    }
+    ROLE_WEIGHTS = {
+        "macro": {"W1": 0.60, "D1": 0.40},
+        "context": {"H4": 0.60, "H1": 0.40},
+    }
     EXECUTABLE = {"BUY", "SELL", "STRONG_BUY", "STRONG_SELL"}
+    BULLISH_THRESHOLD = 55.0
+    BEARISH_THRESHOLD = 45.0
+    M5_BUY_TRIGGER = 52.0
+    M5_SELL_TRIGGER = 48.0
 
     def __init__(self, analysis_engine: FullAnalysisEngine | None = None) -> None:
         self.analysis_engine = analysis_engine or FullAnalysisEngine()
@@ -55,16 +71,83 @@ class MultiTimeframeAnalysisEngine:
         return max(0.0, min(100.0, score))
 
     @classmethod
-    def _alignment_score(cls, reports: Mapping[str, AnalysisReport]) -> float:
+    def _role_score(cls, reports: Mapping[str, AnalysisReport], role: str) -> float:
+        timeframes = cls.ROLES[role]
+        weights = cls.ROLE_WEIGHTS.get(role, {})
+        if len(timeframes) == 1:
+            return round(cls._direction_score(reports[timeframes[0]]), 2)
         total = 0.0
         weight = 0.0
-        for timeframe, report in reports.items():
-            w = cls.WEIGHTS.get(timeframe, 0.0)
-            if w <= 0:
+        for timeframe in timeframes:
+            report = reports.get(timeframe)
+            if report is None:
                 continue
+            w = float(weights.get(timeframe, 1.0))
             total += cls._direction_score(report) * w
             weight += w
         return round(total / weight, 2) if weight else 50.0
+
+    @classmethod
+    def _role_scores(cls, reports: Mapping[str, AnalysisReport]) -> dict[str, float]:
+        return {
+            role: cls._role_score(reports, role)
+            for role in ("macro", "context", "setup", "execution")
+        }
+
+    @classmethod
+    def _alignment_score(cls, reports: Mapping[str, AnalysisReport]) -> float:
+        # Compatibility/telemetry score only. It is deliberately not used as
+        # the trade gate because MTF responsibilities are asymmetric.
+        roles = cls._role_scores(reports)
+        return round(
+            roles["macro"] * 0.30
+            + roles["context"] * 0.30
+            + roles["setup"] * 0.25
+            + roles["execution"] * 0.15,
+            2,
+        )
+
+    @classmethod
+    def _higher_context_ok(cls, reports: Mapping[str, AnalysisReport], direction: str) -> bool:
+        w1 = cls._direction_score(reports["W1"])
+        d1 = cls._direction_score(reports["D1"])
+        h4 = cls._direction_score(reports["H4"])
+        h1 = cls._direction_score(reports["H1"])
+
+        if direction == "BUY":
+            # W1 is the macro anchor. D1 may be a normal correction and need
+            # not be bullish, but it must not be decisively bearish. H4/H1
+            # define the actionable location/context and both must support the
+            # long thesis without requiring identical readings.
+            macro_ok = w1 >= cls.BULLISH_THRESHOLD and d1 > 35.0
+            context_ok = h4 >= 50.0 and h1 >= cls.BULLISH_THRESHOLD
+        else:
+            macro_ok = w1 <= cls.BEARISH_THRESHOLD and d1 < 65.0
+            context_ok = h4 <= 50.0 and h1 <= cls.BEARISH_THRESHOLD
+
+        return macro_ok and context_ok
+
+    @classmethod
+    def _role_reasons(cls, reports: Mapping[str, AnalysisReport], direction: str) -> tuple[str, ...]:
+        roles = cls._role_scores(reports)
+        w1 = cls._direction_score(reports["W1"])
+        d1 = cls._direction_score(reports["D1"])
+        h4 = cls._direction_score(reports["H4"])
+        h1 = cls._direction_score(reports["H1"])
+        m15 = roles["setup"]
+        m5 = roles["execution"]
+        if direction == "BUY":
+            macro_text = "W1 bullish with D1 non-bearish correction" if w1 >= cls.BULLISH_THRESHOLD and d1 > 35 else "macro context not bullish"
+            context_text = "H4 location supportive and H1 bullish" if h4 >= 50 and h1 >= cls.BULLISH_THRESHOLD else "H4/H1 context not supportive"
+        else:
+            macro_text = "W1 bearish with D1 non-bullish correction" if w1 <= cls.BEARISH_THRESHOLD and d1 < 65 else "macro context not bearish"
+            context_text = "H4 location supportive and H1 bearish" if h4 <= 50 and h1 <= cls.BEARISH_THRESHOLD else "H4/H1 context not supportive"
+        return (
+            f"Macro regime: {macro_text} (W1={w1:.1f}, D1={d1:.1f}, role={roles['macro']:.1f})",
+            f"Setup context: {context_text} (H4={h4:.1f}, H1={h1:.1f}, role={roles['context']:.1f})",
+            f"M15 setup score: {m15:.1f}/100",
+            f"M5 execution trigger: {m5:.1f}/100",
+        )
 
     @staticmethod
     def _m15_diagnostics(report: AnalysisReport, signal: str) -> tuple[str, ...]:
@@ -185,15 +268,13 @@ class MultiTimeframeAnalysisEngine:
 
     @classmethod
     def _aligned_higher_timeframes(cls, reports: Mapping[str, AnalysisReport], direction: str) -> int:
+        # Retained as an observability metric; role gates below are authoritative.
         count = 0
         for timeframe in ("W1", "D1", "H4", "H1"):
-            report = reports.get(timeframe)
-            if report is None:
-                continue
-            score = cls._direction_score(report)
-            if direction == "BUY" and score >= 55:
+            score = cls._direction_score(reports[timeframe])
+            if direction == "BUY" and score >= cls.BULLISH_THRESHOLD:
                 count += 1
-            elif direction == "SELL" and score <= 45:
+            elif direction == "SELL" and score <= cls.BEARISH_THRESHOLD:
                 count += 1
         return count
 
@@ -230,36 +311,39 @@ class MultiTimeframeAnalysisEngine:
         direction = "BUY" if "BUY" in direction else "SELL"
 
         alignment = self._alignment_score(reports)
+        role_scores = self._role_scores(reports)
         aligned_htf = self._aligned_higher_timeframes(reports, direction)
-        lower_score = self._direction_score(reports["M5"])
+        lower_score = role_scores["execution"]
         setup_quality = float(setup.trade_quality or 0.0)
         confidence = float(setup.confidence or 0.0)
         rr = setup.risk_reward
 
+        role_reasons = self._role_reasons(reports, direction)
         reasons: list[str] = [
-            f"HTF alignment score: {alignment:.1f}/100",
-            f"Higher-timeframe directional alignment: {aligned_htf}/4",
-            f"M5 confirmation score: {lower_score:.1f}/100",
+            f"MTF role alignment (telemetry): {alignment:.1f}/100",
+            f"Higher-timeframe directional alignment (telemetry): {aligned_htf}/4",
+            *role_reasons,
             f"M15 setup quality: {setup_quality:.0f}/100",
         ]
         rejection_codes: list[str] = []
 
-        if direction == "BUY":
-            aligned = alignment >= 60.0 and lower_score >= 52.0
-        else:
-            aligned = alignment <= 40.0 and lower_score <= 48.0
-
-        directional_alignment_ok = (
-            alignment >= 60.0 and lower_score >= 52.0
+        higher_context_ok = self._higher_context_ok(reports, direction)
+        trigger_ok = (
+            lower_score >= self.M5_BUY_TRIGGER
             if direction == "BUY"
-            else alignment <= 40.0 and lower_score <= 48.0
+            else lower_score <= self.M5_SELL_TRIGGER
         )
-        if not directional_alignment_ok:
-            rejection_codes.append(f"directional_alignment={alignment:.1f},m5={lower_score:.1f}")
-        if aligned_htf < 3:
-            aligned = False
-            rejection_codes.append(f"htf_alignment={aligned_htf}/4")
-            reasons.append("Higher-timeframe context is not sufficiently aligned.")
+        aligned = higher_context_ok and trigger_ok
+        if not higher_context_ok:
+            rejection_codes.append(
+                f"role_context=blocked,macro={role_scores['macro']:.1f},context={role_scores['context']:.1f}"
+            )
+            reasons.append("Macro/context roles do not support the M15 setup.")
+        if not trigger_ok:
+            rejection_codes.append(
+                f"execution_trigger={lower_score:.1f},required={'52.0' if direction == 'BUY' else '48.0'}"
+            )
+            reasons.append("M5 execution trigger is not confirmed; waiting is required.")
         if setup_quality < 70.0:
             aligned = False
             rejection_codes.append(f"setup_quality={setup_quality:.0f}<70")
@@ -297,6 +381,8 @@ class MultiTimeframeAnalysisEngine:
             alignment_score=alignment,
             lower_timeframe_score=lower_score,
             reasons=tuple(reasons),
+            role_scores=role_scores,
+            market_story=role_reasons,
         ), ()
 
 
