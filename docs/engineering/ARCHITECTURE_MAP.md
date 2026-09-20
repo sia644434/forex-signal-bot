@@ -65,3 +65,9 @@ Canonical flow:
 Telegram User → AnalysisProfile → selected styles → FullAnalysisEngine → DecisionEngine → RiskEngine
 
 The same FullAnalysisEngine style-weighting path is used by live analysis and the PC Worker profile_backtest executor. Backtest payloads carry profile_id, profile_version, and style_ids so historical results remain tied to the exact profile configuration used. Live scanning groups recipients by active profile and never sends a decision generated for a different profile.
+
+
+### Profile Execution Context
+profiles/execution.py is the canonical boundary between user configuration and execution. It freezes profile identity/version, enabled styles, symbols, timeframes, risk, schedule, and a configuration snapshot for LIVE/BACKTEST/REPLAY/RESEARCH contexts.
+
+Live scanning and Worker historical evaluation both consume this contract. Scanner state and notification deduplication are profile-scoped; a profile's historical result retains its profile version and snapshot so later profile edits do not rewrite historical meaning.
