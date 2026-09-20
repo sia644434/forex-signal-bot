@@ -21,7 +21,8 @@ def _redact_text(value: str) -> str:
     value = _BEARER.sub(r"\1[REDACTED]", value)
     value = _AUTHORIZATION.sub(r"\1[REDACTED]", value)
     value = _TELEGRAM_BOT_URL.sub(r"\1[REDACTED]", value)
-    return _KEY_VALUE_SECRET.sub(r"\1[REDACTED]", _TELEGRAM_BOT_TOKEN.sub("[REDACTED]", value))(r"\1[REDACTED]", value)
+    value = _TELEGRAM_BOT_TOKEN.sub("[REDACTED]", value)
+    return _KEY_VALUE_SECRET.sub(r"\1[REDACTED]", value)
 
 
 def redact_value(value: Any) -> Any:
