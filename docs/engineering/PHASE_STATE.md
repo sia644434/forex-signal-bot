@@ -190,3 +190,12 @@ Current HEAD: b83ff1480e842c61d798ef4aa4e356deed4bdd51
 - Advanced intelligence, portfolio/correlation/stress, opportunity/heatmap, paper/shadow/replay/Time Machine, strategy/research lifecycle, macro/news adapters, portfolio-aware alerting, and tracker lifecycle auditing are implemented with focused regression coverage.
 - Known limitation retained intentionally: NewsAPI/FRED are real data adapters but are not a canonical economic-release calendar; FRED observation dates are not release timestamps. This remains an external provider-capability limitation, not synthetic calendar behavior.
 - Final unresolved phase dependency is deployment verification against the current Railway deployment, including live health and restart/recovery evidence.
+
+
+## Current Development Closure — 2026-09-20
+The current profile execution frontier is verified at `7ee70ad23a7b5c0008298e37f3286d1be4869853`.
+- User-selectable multi-style profiles are integrated into live analysis and historical execution context.
+- Independent style results are exposed before combination.
+- Backtest/replay/research/Time Machine paths preserve profile metadata when supplied.
+- Exact-head CI is green across all required workflows.
+- Railway remains the final external deployment verification boundary and is not represented as verified by this code-only CI result.
