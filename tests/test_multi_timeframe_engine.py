@@ -179,3 +179,52 @@ def test_multi_timeframe_diagnostics_explain_non_executable_m15():
     decision, diagnostics = engine.analyze_with_diagnostics(candles)
     assert decision is None
     assert diagnostics[0] == "m15_signal=NO_TRADE"
+
+
+def test_multi_timeframe_allows_daily_correction_when_weekly_macro_context_holds():
+    reports = {
+        "W1": report(72),
+        "D1": report(42),
+        "H4": report(58),
+        "H1": report(67),
+        "M15": report(78, "BUY", quality=85, confidence=0.82, rr=2.4),
+        "M5": report(66),
+    }
+    engine = MultiTimeframeAnalysisEngine(FakeEngine(reports))
+    candles = {key: [key] for key in reports}
+    result = engine.analyze(candles)
+    assert result is not None
+    assert result.direction == "BUY"
+    assert result.role_scores["macro"] == 60.0
+    assert result.role_scores["context"] == 61.6
+    assert "D1 non-bearish correction" in result.market_story[0]
+
+
+def test_multi_timeframe_waits_when_m5_trigger_is_not_confirmed():
+    reports = {
+        "W1": report(72),
+        "D1": report(68),
+        "H4": report(58),
+        "H1": report(67),
+        "M15": report(78, "BUY", quality=85, confidence=0.82, rr=2.4),
+        "M5": report(50),
+    }
+    engine = MultiTimeframeAnalysisEngine(FakeEngine(reports))
+    candles = {key: [key] for key in reports}
+    decision, diagnostics = engine.analyze_with_diagnostics(candles)
+    assert decision is None
+    assert any(item.startswith("execution_trigger=50.0") for item in diagnostics)
+
+
+def test_multi_timeframe_does_not_treat_lower_timeframe_as_directional_vote():
+    reports = {
+        "W1": report(72),
+        "D1": report(68),
+        "H4": report(58),
+        "H1": report(67),
+        "M15": report(78, "BUY", quality=85, confidence=0.82, rr=2.4),
+        "M5": report(44),
+    }
+    engine = MultiTimeframeAnalysisEngine(FakeEngine(reports))
+    candles = {key: [key] for key in reports}
+    assert engine.analyze(candles) is None
