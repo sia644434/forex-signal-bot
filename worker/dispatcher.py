@@ -101,6 +101,9 @@ class WorkerDispatcher:
 
         if result.status == "COMPLETED":
             self._queue.finish(request.job_id, result=result.output, claim_token=claim_token)
+        elif result.status == "WORKER_OFFLINE":
+            # Keep the durable job pending so a later heartbeat can retry it.
+            self._queue.requeue(request.job_id, error=result.error or "PC worker offline", claim_token=claim_token)
         elif result.status == "TIMEOUT":
             self._queue.timeout(request.job_id, result.error or "Worker job timeout", claim_token=claim_token)
         elif result.status == "CANCELLED":
@@ -108,6 +111,29 @@ class WorkerDispatcher:
         elif result.status == "FAILED":
             self._queue.fail(request.job_id, result.error or "Worker job failed", claim_token=claim_token)
         return result
+
+    async def dispatch_pending(self, limit: int = 4) -> int:
+        """Schedule durable pending jobs once the PC Worker is reachable."""
+        if self._queue is None or self._submit is None:
+            return 0
+        if limit < 1:
+            raise ValueError("Pending dispatch limit must be positive")
+        records = self._queue.pending(limit)
+        scheduled = 0
+        for record in records:
+            request = JobRequest(
+                job_id=record.job_id,
+                job_type=record.job_type,
+                payload=record.payload,
+                priority=record.priority,
+                timeout_seconds=record.timeout_seconds,
+                allow_cpu_fallback=record.allow_cpu_fallback,
+            )
+            task = asyncio.create_task(self.submit(request))
+            self._active_submissions.add(task)
+            task.add_done_callback(self._active_submissions.discard)
+            scheduled += 1
+        return scheduled
 
     async def close_async(self, timeout_seconds: float = 10.0) -> None:
         if timeout_seconds <= 0:
