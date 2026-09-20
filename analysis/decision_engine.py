@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from math import isfinite
 from typing import Any
 
+from analysis.directional_contract import classify_direction, combined_structure_score
+
 
 @dataclass(frozen=True)
 class DecisionResult:
@@ -123,11 +125,7 @@ class DecisionEngine:
 
     @staticmethod
     def _direction_from_score(score: float) -> str:
-        if score > 55.0:
-            return "bullish"
-        if score < 45.0:
-            return "bearish"
-        return "neutral"
+        return classify_direction(score)
 
     def _apply_component(self, total: float, analysis_score: float, weight: float, reasons: list[str], name: str, bullish_reason: str, bearish_reason: str, neutral_reason: str | None = None) -> float:
         component_score = self.normalize_signed_component(analysis_score)
@@ -155,9 +153,7 @@ class DecisionEngine:
     def _apply_structure(self, total: float, analysis: Any, reasons: list[str]) -> float:
         structure_score = self._read_component(analysis, "structure_score")
         trend_score = self._read_component(analysis, "trend_score")
-        combined_score = structure_score + trend_score
-        if not isfinite(combined_score): raise ValueError("Market Structure score became non-finite.")
-        combined_score /= 2.0
+        combined_score = combined_structure_score(structure_score, trend_score)
         return self._apply_component(total, combined_score, self.weights["structure"], reasons, "Market Structure", "Market structure favors buyers", "Market structure favors sellers", "Market structure is balanced")
 
     def _apply_price_action(self, total: float, analysis: Any, reasons: list[str]) -> float:
@@ -192,7 +188,7 @@ class DecisionEngine:
         trend_score = self._read_component(analysis, "trend_score")
         raw_components = {
             "smart_money": self._read_component(analysis, "smart_money_score"),
-            "structure": (structure_score + trend_score) / 2.0,
+            "structure": combined_structure_score(structure_score, trend_score),
             "price_action": self._read_component(analysis, "price_action_score"),
             "supply_demand": self._read_component(analysis, "supply_demand_score"),
             "indicators": self._read_component(analysis, "momentum_score"),
@@ -225,7 +221,7 @@ class DecisionEngine:
             "wyckoff": self._read_component(analysis, "wyckoff_score"),
         }
         return {
-            name: round((self._clamp(float(raw), -100.0, 100.0) / 2.0) * self.weights[name], 4)
+            name: round((self.normalize_signed_component(raw) - 50.0) * self.weights[name], 4)
             for name, raw in raw_components.items()
         }
 
