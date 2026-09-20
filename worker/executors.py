@@ -396,6 +396,7 @@ def counterfactual_batch(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def market_replay(payload: dict[str, Any]) -> dict[str, Any]:
+    context = context_from_payload(payload, "REPLAY") if payload.get("profile_id") else None
     raw = payload.get("candles")
     if not isinstance(raw, list) or len(raw) < 5:
         raise ValueError("at least five candles are required")
@@ -419,10 +420,14 @@ def market_replay(payload: dict[str, Any]) -> dict[str, Any]:
         ))
     engine = FullAnalysisEngine()
     trace = []
+    style_ids = list(context.style_ids) if context else list(payload.get("style_ids", []))
     for index in range(5, len(candles) + 1):
-        report = engine.analyze(candles[:index])
+        report = engine.analyze(candles[:index], style_ids=style_ids or None)
         trace.append({"index": index - 1, "signal": report.signal, "score": report.score, "confidence": report.confidence})
-    return {"candles": len(candles), "steps": len(trace), "trace": trace}
+    result = {"candles": len(candles), "steps": len(trace), "trace": trace, "style_ids": style_ids}
+    if context:
+        result["execution_context"] = context.to_dict()
+    return result
 
 
 def time_machine(payload: dict[str, Any]) -> dict[str, Any]:
@@ -430,13 +435,18 @@ def time_machine(payload: dict[str, Any]) -> dict[str, Any]:
     candles = payload.get("candles")
     if not isinstance(candles, list):
         raise ValueError("candles list is required")
+    context = context_from_payload(payload, "REPLAY") if payload.get("profile_id") else None
     engine = TimeMachineEngine()
-    return engine.run(
+    result = engine.run(
         candles,
         start_index=int(payload.get("start_index", 5)),
         step=int(payload.get("step", 1)),
         counterfactual=payload.get("counterfactual"),
+        style_ids=list(context.style_ids) if context else payload.get("style_ids"),
     )
+    if context:
+        result["execution_context"] = context.to_dict()
+    return result
 
 
 def strategy_evaluation(payload: dict[str, Any]) -> dict[str, Any]:
@@ -575,6 +585,7 @@ def robustness_analysis(payload: dict[str, Any]) -> dict[str, Any]:
 
 def research_validation(payload: dict[str, Any]) -> dict[str, Any]:
     from analysis.research_engine import ResearchValidationEngine
+    context = context_from_payload(payload, "RESEARCH") if payload.get("profile_id") else None
     prices = payload.get("prices", payload.get("close"))
     if not isinstance(prices, list):
         raise ValueError("prices list is required")
@@ -607,6 +618,8 @@ def research_validation(payload: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(rows, list):
             raise ValueError("temporal_rows must be a list")
         result["leakage"] = engine.temporal_leakage_check(rows)
+    if context:
+        result["execution_context"] = context.to_dict()
     return result
 
 def register_real_executors(runtime) -> None:
