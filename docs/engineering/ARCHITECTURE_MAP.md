@@ -57,3 +57,11 @@ When concrete evidence reopens a phase, audit the full phase surface and depende
 
 ## Paper / Replay Boundaries
 `services/paper_trading.py` is an isolated paper ledger and shadow comparison boundary; it does not authorize live orders. Historical market replay is a PC Worker workload and returns traceable decision observations. Time Machine orchestration remains separate until replay, counterfactuals, and persistent scenario selection are connected end-to-end.
+
+## Analysis Profiles / Shared Execution Contract
+User configuration is represented as AnalysisProfile objects containing versioned style selections, symbols, timeframes, risk level, and schedule. Presets are convenience configurations; Customize exposes the canonical Style Registry and permits multiple styles per profile.
+
+Canonical flow:
+Telegram User → AnalysisProfile → selected styles → FullAnalysisEngine → DecisionEngine → RiskEngine
+
+The same FullAnalysisEngine style-weighting path is used by live analysis and the PC Worker profile_backtest executor. Backtest payloads carry profile_id, profile_version, and style_ids so historical results remain tied to the exact profile configuration used. Live scanning groups recipients by active profile and never sends a decision generated for a different profile.
