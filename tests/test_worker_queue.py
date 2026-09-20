@@ -281,3 +281,18 @@ def test_queue_metrics_can_be_read_from_a_health_thread():
     assert metrics["pending"] == 1
     assert metrics["total"] == 1
     queue.close()
+
+
+def test_pending_returns_priority_order_and_requeue_preserves_job():
+    queue = WorkerQueue()
+    queue.enqueue(JobRequest("low", "backtest", priority=10))
+    queue.enqueue(JobRequest("high", "backtest", priority=90))
+    pending = queue.pending(2)
+    assert [item.job_id for item in pending] == ["high", "low"]
+    claimed = queue.claim("high")
+    assert claimed is not None and claimed.claim_token
+    requeued = queue.requeue("high", "PC worker offline", claim_token=claimed.claim_token)
+    assert requeued.status == "PENDING"
+    assert requeued.error == "PC worker offline"
+    assert requeued.claim_token is None
+    queue.close()
