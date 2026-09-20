@@ -112,3 +112,13 @@ The implemented roadmap through TASK-147 has passed exact-head CI on `151ea57b8e
 | Versioned profile snapshot for historical work | IMPLEMENTED_CURRENT | ProfileExecutionContext + profile_snapshot | CI pending |
 | Profile-isolated live scanner state | IMPLEMENTED_CURRENT | auto_scanner profile-scoped keys/cycles | CI pending |
 | Profile-aware Worker backtest context | IMPLEMENTED_CURRENT | worker/executors.py::profile_backtest | CI pending |
+
+
+### Profile Execution Completion
+| Capability | Status | Implementation | Verification |
+|---|---|---|---|
+| Independent per-style result before combination | IMPLEMENTED_CURRENT | `analysis/full_engine.py` + `analysis/report.py` | `tests/test_profiles.py` |
+| Version-locked profile snapshot validation | IMPLEMENTED_CURRENT | `profiles/execution.py::context_from_payload` | `tests/test_profiles.py` |
+| Worker user/profile/experiment scope | IMPLEMENTED_CURRENT | `ProfileExecutionContext` + `context_payload` | `tests/test_profiles.py`, replay executor tests |
+| Profile-aware replay / Time Machine | IMPLEMENTED_CURRENT | `worker/executors.py`, `analysis/time_machine.py` | replay executor tests |
+| Profile-aware research context | IMPLEMENTED_CURRENT | `worker/executors.py::research_validation` | CI verification |
