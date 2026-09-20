@@ -27,6 +27,7 @@ from analysis.scenario_engine import ScenarioEngine
 from analysis.signal_state import evaluate_signal_state
 from analysis.portfolio_risk_guard import PortfolioExposure, PortfolioRiskGuard
 from analysis.directional_contract import combined_structure_score, conflict_state
+from analysis.styles import resolve_style_weights
 
 
 class FullAnalysisEngine:
@@ -120,6 +121,7 @@ class FullAnalysisEngine:
         portfolio_max_symbol_weight: float = 0.35,
         portfolio_max_gross_exposure: float = 1.0,
         signal_max_age_seconds: float = 60.0,
+        style_ids: list[str] | tuple[str, ...] | None = None,
     ) -> AnalysisReport:
         if signal_max_age_seconds <= 0 or not math.isfinite(float(signal_max_age_seconds)):
             raise ValueError("signal_max_age_seconds must be finite and positive.")
@@ -238,7 +240,8 @@ class FullAnalysisEngine:
             portfolio_risk_flags=portfolio_flags,
         )
 
-        decision = self.decision_engine.decide(analysis_result)
+        decision_engine = self.decision_engine if not style_ids else DecisionEngine(weights=resolve_style_weights(style_ids))
+        decision = decision_engine.decide(analysis_result)
 
         # Persist the exact final decision into the shared analysis contract
         # before confidence evaluation. This prevents ConfidenceEngine from
