@@ -242,3 +242,10 @@ Railway remains deferred until required capabilities and final regression/securi
 - Preserved fail-closed behavior: stale or unavailable data never produces a synthetic signal.
 - Added regression coverage for weekend closure when no candles are available.
 - Exact-head CI verification remains pending.
+
+
+## 2026-09-20 — Profile execution completion
+- Added independent per-style decision/risk summaries to profile-aware analysis reports before the combined decision.
+- Extended immutable profile execution context with optional user scope, experiment ID, requested capabilities, and snapshot identity/version validation.
+- Added canonical Worker payload construction and propagated profile context through backtest, replay, Time Machine, and research workloads.
+- Added regression coverage for style decomposition and historical execution metadata.
