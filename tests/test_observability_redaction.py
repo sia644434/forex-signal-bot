@@ -16,3 +16,10 @@ def test_redacts_secret_key_value():
     redacted = redact_value(raw)
     assert "secret-value" not in redacted
     assert "[REDACTED]" in redacted
+
+
+def test_redacts_raw_telegram_bot_token():
+    raw = "123456789:ABCdefghijklmnopqrstuvwxyz_12345"
+    redacted = redact_value(raw)
+    assert raw not in redacted
+    assert redacted == "[REDACTED]"
