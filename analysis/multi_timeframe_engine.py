@@ -362,10 +362,10 @@ class MultiTimeframeAnalysisEngine:
             *role_reasons,
             f"M15 setup quality: {setup_quality:.0f}/100",
         ]
-        rejection_codes: list[str] = [
-            f"m15_signal={raw_signal or 'NONE'}",
-            *setup_metadata,
-        ]
+        rejection_codes: list[str] = list(
+            self._m15_diagnostics(setup, raw_signal)
+        )
+        rejection_codes.extend(setup_metadata)
 
         higher_context_ok = self._higher_context_ok(reports, direction)
         trigger_ok = (
