@@ -9,7 +9,7 @@ _SECRET_KEY = re.compile(
 )
 _BEARER = re.compile(r"(bearer\s+)[A-Za-z0-9._~+/=-]+", re.IGNORECASE)
 _AUTHORIZATION = re.compile(r"(authorization\s*:\s*)([^\s,;]+)", re.IGNORECASE)
-_KEY_VALUE_SECRET = re.compile(
+_TELEGRAM_BOT_URL = re.compile(r"(api\\.telegram\\.org/bot)[A-Za-z0-9_-]+:[A-Za-z0-9_-]+", re.IGNORECASE)\n_KEY_VALUE_SECRET = re.compile(
     r"((?:token|secret|password|api[_-]?key|access[_-]?token|refresh[_-]?token)\s*[=:]\s*)([^\s,;]+)",
     re.IGNORECASE,
 )
