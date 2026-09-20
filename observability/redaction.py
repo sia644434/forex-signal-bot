@@ -10,6 +10,7 @@ _SECRET_KEY = re.compile(
 _BEARER = re.compile(r"(bearer\s+)[A-Za-z0-9._~+/=-]+", re.IGNORECASE)
 _AUTHORIZATION = re.compile(r"(authorization\s*:\s*)([^\s,;]+)", re.IGNORECASE)
 _TELEGRAM_BOT_URL = re.compile(r"(api[.]telegram[.]org/bot)[A-Za-z0-9_-]+:[A-Za-z0-9_-]+", re.IGNORECASE)
+_TELEGRAM_BOT_TOKEN = re.compile(r"\b\d{5,}:[A-Za-z0-9_-]{20,}\b")
 _KEY_VALUE_SECRET = re.compile(
     r"((?:token|secret|password|api[_-]?key|access[_-]?token|refresh[_-]?token)\s*[=:]\s*)([^\s,;]+)",
     re.IGNORECASE,
@@ -20,7 +21,7 @@ def _redact_text(value: str) -> str:
     value = _BEARER.sub(r"\1[REDACTED]", value)
     value = _AUTHORIZATION.sub(r"\1[REDACTED]", value)
     value = _TELEGRAM_BOT_URL.sub(r"\1[REDACTED]", value)
-    return _KEY_VALUE_SECRET.sub(r"\1[REDACTED]", value)
+    return _KEY_VALUE_SECRET.sub(r"\1[REDACTED]", _TELEGRAM_BOT_TOKEN.sub("[REDACTED]", value))(r"\1[REDACTED]", value)
 
 
 def redact_value(value: Any) -> Any:
