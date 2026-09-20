@@ -5,7 +5,7 @@ from typing import Any
 
 
 HEAVY_JOB_TYPES = {
-    "backtest", "walk_forward", "monte_carlo", "hyperparameter_optimization",
+    "backtest", "profile_backtest", "walk_forward", "monte_carlo", "hyperparameter_optimization",
     "feature_engineering", "multitimeframe_analysis", "heavy_market_scan",
     "ml_training", "xgboost_training", "lightgbm_training", "random_forest_training",
     "timeseries_training", "ensemble_training", "candle_batch_analysis", "dataset_build",
