@@ -103,3 +103,12 @@ The implemented roadmap through TASK-147 has passed exact-head CI on `151ea57b8e
 | User analysis profiles | IMPLEMENTED_CURRENT | profiles/ + Telegram profile callbacks | tests/test_profiles.py | Durable Telegram user state | RAILWAY | 12+ | pending CI |
 | Profile-aware live scanning | IMPLEMENTED_CURRENT | services/telegram/auto_scanner.py + MultiTimeframeAnalysisEngine | Focused | Market data/profile state | RAILWAY | 12+ | pending CI |
 | Profile backtest using shared engine | IMPLEMENTED_CURRENT | worker/executors.py::profile_backtest | Focused | Historical candles/profile snapshot | PC_WORKER | 12+ | pending CI |
+
+
+### Analysis Profile Execution Contract
+| Capability | Status | Implementation | Verification |
+|---|---|---|---|
+| Immutable profile execution context | IMPLEMENTED_CURRENT | profiles/execution.py | tests/test_profiles.py |
+| Versioned profile snapshot for historical work | IMPLEMENTED_CURRENT | ProfileExecutionContext + profile_snapshot | CI pending |
+| Profile-isolated live scanner state | IMPLEMENTED_CURRENT | auto_scanner profile-scoped keys/cycles | CI pending |
+| Profile-aware Worker backtest context | IMPLEMENTED_CURRENT | worker/executors.py::profile_backtest | CI pending |
