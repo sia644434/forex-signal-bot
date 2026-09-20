@@ -12,6 +12,15 @@ def test_redaction_removes_secret_values():
     assert data["nested"]["ok"] == "yes"
 
 
+def test_redaction_masks_bearer_and_key_value_secrets():
+    data = redact_value(
+        "Authorization: Bearer super-secret-token token=another-secret api_key=third-secret"
+    )
+    assert "super-secret-token" not in data
+    assert "another-secret" not in data
+    assert "third-secret" not in data
+
+
 def test_parse_structured_railway_logs_and_build_summary():
     events = parse_json_lines(
         '{"timestamp":"2026-09-20T08:00:00Z","level":"error","message":"boom","event":"scanner_failure"}',
