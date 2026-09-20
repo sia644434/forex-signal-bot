@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from core.logger import setup_logger
+from core.logger import JsonFormatter, setup_logger
 from utils.logger import get_logger
 
 
@@ -60,14 +60,18 @@ def test_file_logging_is_opt_in(monkeypatch: pytest.MonkeyPatch, tmp_path: Path)
     assert (Path("logs") / "app.log").exists()
 
 
-def test_log_output_redacts_bearer_tokens(monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
-    monkeypatch.delenv("LOG_TO_FILE", raising=False)
-    monkeypatch.setenv("LOG_LEVEL", "INFO")
-    _reset_root_logger()
-    setup_logger()
+def test_log_output_redacts_bearer_tokens() -> None:
+    record = logging.LogRecord(
+        name="security-test",
+        level=logging.INFO,
+        pathname=__file__,
+        lineno=1,
+        msg="Authorization: Bearer %s",
+        args=("super-secret-token",),
+        exc_info=None,
+    )
 
-    with caplog.at_level(logging.INFO):
-        logging.getLogger("security-test").info("Authorization: Bearer super-secret-token")
+    rendered = JsonFormatter().format(record)
 
-    assert "super-secret-token" not in caplog.text
-    assert "[REDACTED]" in caplog.text
+    assert "super-secret-token" not in rendered
+    assert "[REDACTED]" in rendered
