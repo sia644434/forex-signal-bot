@@ -255,6 +255,50 @@ class FullAnalysisEngine:
         confidence_result = self.confidence_engine.evaluate(analysis_result)
         risk_result = self.risk_engine.calculate(signal=decision.signal, current_price=closes[-1], atr=atr_value, confidence=confidence_result.confidence, score=decision.score)
 
+        style_results: dict[str, dict[str, object]] = {}
+        selected_style_ids = tuple(dict.fromkeys(str(item) for item in (style_ids or ())))
+        if selected_style_ids:
+            # Expose each selected style independently before the combined
+            # decision. All styles consume the same validated analysis snapshot;
+            # only their deterministic DecisionEngine weights differ.
+            for selected_style in selected_style_ids:
+                style_decision = DecisionEngine(weights=resolve_style_weights([selected_style])).decide(analysis_result)
+                style_analysis = replace(
+                    analysis_result,
+                    decision_score=style_decision.score,
+                    total_score=style_decision.score,
+                    final_direction=style_decision.bias,
+                )
+                style_confidence = self.confidence_engine.evaluate(style_analysis)
+                style_risk = self.risk_engine.calculate(
+                    signal=style_decision.signal,
+                    current_price=closes[-1],
+                    atr=atr_value,
+                    confidence=style_confidence.confidence,
+                    score=style_decision.score,
+                )
+                style_results[selected_style] = {
+                    "style_id": selected_style,
+                    "signal": style_decision.signal,
+                    "bias": style_decision.bias,
+                    "strength": style_decision.strength,
+                    "score": style_decision.score,
+                    "confidence": style_confidence.confidence,
+                    "agreement": style_confidence.agreement,
+                    "warnings": list(style_confidence.warnings),
+                    "decision_contributions": dict(style_decision.component_contributions),
+                    "directional_contributions": dict(style_decision.directional_contributions),
+                    "risk_management": {
+                        "entry": style_risk.entry_price,
+                        "stop_loss": style_risk.stop_loss,
+                        "take_profit": style_risk.take_profit,
+                        "risk_reward": style_risk.risk_reward,
+                        "risk_level": style_risk.risk_level,
+                        "trade_quality": style_risk.trade_quality,
+                        "trade_grade": style_risk.trade_grade,
+                    },
+                }
+
         confidence_value = self._require_finite(confidence_result.confidence, "confidence")
         decision_score = self._require_finite(decision.score, "decision score")
         # RiskResult intentionally uses None for a NO-TRADE plan. Validate every
@@ -314,6 +358,8 @@ class FullAnalysisEngine:
             component_scores={name: float(value) for name, value in component_scores.items()},
             decision_contributions={name: float(value) for name, value in decision.component_contributions.items()},
             directional_contributions={name: float(value) for name, value in decision.directional_contributions.items()},
+            style_ids=list(selected_style_ids),
+            style_results=style_results,
             market_regime=analysis_result.market_regime,
             scenario=analysis_result.scenario,
             statistical_context=analysis_result.statistical_context,
