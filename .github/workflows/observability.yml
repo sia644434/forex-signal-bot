@@ -36,7 +36,7 @@ jobs:
           RAILWAY_ENVIRONMENT_ID: ${{ vars.RAILWAY_ENVIRONMENT_ID }}
           RAILWAY_SERVICE_ID: ${{ vars.RAILWAY_SERVICE_ID }}
           RAILWAY_LOG_LINES: ${{ vars.RAILWAY_LOG_LINES }}
-        run: python scripts/collect_observability.py
+        run: PYTHONPATH=. python scripts/collect_observability.py
       - name: Upload raw observability archive
         uses: actions/upload-artifact@v4
         with:
