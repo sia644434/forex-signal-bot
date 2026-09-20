@@ -7,9 +7,6 @@ on:
   workflow_run:
     workflows:
       - Final Integration Gate
-      - Production Activation Gate
-      - Production Readiness
-      - Security Audit
     types: [completed]
 
 permissions:
