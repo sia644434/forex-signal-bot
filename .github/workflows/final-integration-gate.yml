@@ -1,4 +1,5 @@
 name: Final Integration Gate
+# CI trigger: validate the latest main commit after integration changes.
 
 on:
   pull_request:
