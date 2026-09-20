@@ -43,3 +43,38 @@ def test_multiple_styles_produce_deterministic_combination():
     second = resolve_style_weights(["price_action", "momentum"])
     reversed_order = resolve_style_weights(["momentum", "price_action"])
     assert first == second == reversed_order
+
+
+def test_profile_execution_context_captures_versioned_snapshot():
+    from profiles import build_execution_context
+
+    state = TelegramUserState(user_id=1003)
+    profile = create_profile(
+        state,
+        "Context",
+        ["price_action", "momentum"],
+        symbols=["EURUSD", "BTCUSDT"],
+        timeframes=["M15", "H1"],
+        risk_level="medium",
+        schedule_seconds=900,
+    )
+    context = build_execution_context(profile, "BACKTEST")
+    assert context.profile_id == profile.profile_id
+    assert context.profile_version == 1
+    assert context.style_ids == ("price_action", "momentum")
+    assert context.symbols == ("EURUSD", "BTCUSDT")
+    assert context.timeframes == ("M15", "H1")
+    assert context.config_snapshot["version"] == 1
+    assert context.to_dict()["mode"] == "BACKTEST"
+
+
+def test_profile_execution_context_rejects_empty_styles():
+    from profiles import AnalysisProfile, build_execution_context
+
+    profile = AnalysisProfile("empty", "Empty")
+    try:
+        build_execution_context(profile, "LIVE")
+    except ValueError as exc:
+        assert "enabled style" in str(exc)
+    else:
+        raise AssertionError("empty profile must not produce an execution context")
