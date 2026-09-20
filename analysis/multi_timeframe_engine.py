@@ -145,17 +145,17 @@ class MultiTimeframeAnalysisEngine:
         }
         if direction == "BUY":
             checks = (
-                ("W1", scores["W1"] >= cls.BULLISH_THRESHOLD, f"W1={scores["W1"]:.1f}>=55.0"),
-                ("D1", scores["D1"] > 35.0, f"D1={scores["D1"]:.1f}>35.0"),
-                ("H4", scores["H4"] >= 50.0, f"H4={scores["H4"]:.1f}>=50.0"),
-                ("H1", scores["H1"] >= cls.BULLISH_THRESHOLD, f"H1={scores["H1"]:.1f}>=55.0"),
+                ("W1", scores['W1'] >= cls.BULLISH_THRESHOLD, f"W1={scores['W1']:.1f}>=55.0"),
+                ("D1", scores['D1'] > 35.0, f"D1={scores['D1']:.1f}>35.0"),
+                ("H4", scores['H4'] >= 50.0, f"H4={scores['H4']:.1f}>=50.0"),
+                ("H1", scores['H1'] >= cls.BULLISH_THRESHOLD, f"H1={scores['H1']:.1f}>=55.0"),
             )
         else:
             checks = (
-                ("W1", scores["W1"] <= cls.BEARISH_THRESHOLD, f"W1={scores["W1"]:.1f}<=45.0"),
-                ("D1", scores["D1"] < 65.0, f"D1={scores["D1"]:.1f}<65.0"),
-                ("H4", scores["H4"] <= 50.0, f"H4={scores["H4"]:.1f}<=50.0"),
-                ("H1", scores["H1"] <= cls.BEARISH_THRESHOLD, f"H1={scores["H1"]:.1f}<=45.0"),
+                ("W1", scores['W1'] <= cls.BEARISH_THRESHOLD, f"W1={scores['W1']:.1f}<=45.0"),
+                ("D1", scores['D1'] < 65.0, f"D1={scores['D1']:.1f}<65.0"),
+                ("H4", scores['H4'] <= 50.0, f"H4={scores['H4']:.1f}<=50.0"),
+                ("H1", scores['H1'] <= cls.BEARISH_THRESHOLD, f"H1={scores['H1']:.1f}<=45.0"),
             )
         failed = tuple(f"{name}_failed" for name, ok, _ in checks if not ok)
         detail = tuple(text for _, _, text in checks)
