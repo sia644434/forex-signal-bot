@@ -146,3 +146,16 @@ def test_analysis_report_exposes_independent_style_results():
         assert "score" in result
         assert "confidence" in result
         assert "risk_management" in result
+
+
+
+def test_context_payload_overlays_canonical_profile_metadata():
+    from profiles import AnalysisProfile, ProfileStyle, build_execution_context, context_payload
+
+    profile = AnalysisProfile("payload", "Payload", [ProfileStyle("momentum")], version=4)
+    context = build_execution_context(profile, "BACKTEST", user_id="7", experiment_id="exp-7", requested_capabilities=["profile_analysis"])
+    payload = context_payload(context, {"candles": [100, 101], "profile_id": "wrong"})
+    assert payload["profile_id"] == "payload"
+    assert payload["profile_version"] == 4
+    assert payload["experiment_id"] == "exp-7"
+    assert payload["profile_snapshot"]["version"] == 4
