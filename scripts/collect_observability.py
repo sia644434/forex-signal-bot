@@ -8,6 +8,7 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
+from observability.redaction import redact_value
 from observability.report import build_summary, parse_json_lines, write_json
 from observability.schema import Event
 
@@ -54,19 +55,40 @@ def discover_latest_deployment(
     return str(deployments[0].get("id")) if deployments and deployments[0].get("id") else None
 
 
+def _write_raw(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(redact_value(text), encoding="utf-8")
+
+
 def collect_railway() -> list[Event]:
     token = os.environ.get("RAILWAY_TOKEN") or os.environ.get("RAILWAY_API_TOKEN")
     project = os.environ.get("RAILWAY_PROJECT_ID")
     environment = os.environ.get("RAILWAY_ENVIRONMENT_ID")
     service = os.environ.get("RAILWAY_SERVICE_ID")
 
-    if not token or not project or not environment:
+    # Railway telemetry is optional. The central pipeline remains healthy when
+    # no Railway token is available; Railway's own dashboard/CLI remains the
+    # authoritative UI for Railway logs in that mode.
+    if not token:
         write_json(
             OUT / "railway-status.json",
             {
-                "status": "not_configured",
-                "required": [
-                    "RAILWAY_TOKEN",
+                "status": "optional_not_configured",
+                "enabled": False,
+                "reason": "No Railway API/project token is configured.",
+                "central_observability": "github_only",
+            },
+        )
+        return []
+
+    if not project or not environment:
+        write_json(
+            OUT / "railway-status.json",
+            {
+                "status": "misconfigured",
+                "enabled": False,
+                "reason": "Railway token exists but project/environment IDs are missing.",
+                "required_when_enabled": [
                     "RAILWAY_PROJECT_ID",
                     "RAILWAY_ENVIRONMENT_ID",
                 ],
@@ -90,21 +112,17 @@ def collect_railway() -> list[Event]:
     base = railway_base_args(project, environment, service)
 
     def collect(kind: str, extra: list[str], filename: str) -> None:
-        nonlocal events
         command = base + ["logs", "--json", "--lines", lines, "--latest"] + extra
         code, output, error = run(command, env)
         if code:
-            (raw_dir / f"{filename}-error.txt").write_text(
-                error[-4000:], encoding="utf-8"
-            )
+            _write_raw(raw_dir / f"{filename}-error.txt", error[-4000:])
             counts[kind] = 0
             return
         parsed = parse_json_lines(output, "railway", kind)
         counts[kind] = len(parsed)
-        (raw_dir / f"{filename}.jsonl").write_text(
-            "\n".join(event.to_json() for event in parsed)
-            + ("\n" if parsed else ""),
-            encoding="utf-8",
+        _write_raw(
+            raw_dir / f"{filename}.jsonl",
+            "\n".join(event.to_json() for event in parsed) + ("\n" if parsed else ""),
         )
         events.extend(parsed)
 
@@ -124,17 +142,15 @@ def collect_railway() -> list[Event]:
         ]
         code, output, error = run(command, env)
         if code:
-            (raw_dir / "build-error.txt").write_text(
-                error[-4000:], encoding="utf-8"
-            )
+            _write_raw(raw_dir / "build-error.txt", error[-4000:])
             counts["build"] = 0
         else:
             parsed = parse_json_lines(output, "railway", "build")
             counts["build"] = len(parsed)
-            (raw_dir / "build.jsonl").write_text(
+            _write_raw(
+                raw_dir / "build.jsonl",
                 "\n".join(event.to_json() for event in parsed)
                 + ("\n" if parsed else ""),
-                encoding="utf-8",
             )
             events.extend(parsed)
     else:
@@ -144,6 +160,7 @@ def collect_railway() -> list[Event]:
         OUT / "railway-status.json",
         {
             "status": "ok",
+            "enabled": True,
             "event_count": len(events),
             "counts": counts,
             "project_id": project,
@@ -255,9 +272,7 @@ def collect_github() -> list[Event]:
                 try:
                     with urllib.request.urlopen(log_request, timeout=30) as response:
                         raw = response.read().decode("utf-8", "replace")
-                    (raw_dir / f"{run_id}-{job_id}.log").write_text(
-                        raw, encoding="utf-8"
-                    )
+                    _write_raw(raw_dir / f"{run_id}-{job_id}.log", raw)
 
                     for line in raw.splitlines():
                         stripped = line.strip()
@@ -302,13 +317,12 @@ def collect_github() -> list[Event]:
                                 )
                             )
                 except urllib.error.HTTPError as exc:
-                    (raw_dir / f"{run_id}-{job_id}.error.txt").write_text(
-                        f"HTTP {exc.code}: {exc.reason}", encoding="utf-8"
+                    _write_raw(
+                        raw_dir / f"{run_id}-{job_id}.error.txt",
+                        f"HTTP {exc.code}: {exc.reason}",
                     )
         except Exception as exc:
-            (raw_dir / f"{run_id}-jobs.error.txt").write_text(
-                str(exc), encoding="utf-8"
-            )
+            _write_raw(raw_dir / f"{run_id}-jobs.error.txt", str(exc))
 
     write_json(
         OUT / "github-actions.json",
@@ -328,9 +342,7 @@ def main() -> int:
         railway = collect_railway()
         github = collect_github()
         events = railway + github
-        summary = build_summary(
-            events, commit_sha=os.environ.get("GITHUB_SHA")
-        )
+        summary = build_summary(events, commit_sha=os.environ.get("GITHUB_SHA"))
         write_json(OUT / "system-status.json", summary)
         write_json(
             OUT / "incident-status.json",
