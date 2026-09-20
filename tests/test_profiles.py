@@ -78,3 +78,22 @@ def test_profile_execution_context_rejects_empty_styles():
         assert "enabled style" in str(exc)
     else:
         raise AssertionError("empty profile must not produce an execution context")
+
+
+def test_profile_update_versions_and_validates_styles():
+    from profiles import update_profile
+
+    state = TelegramUserState(user_id=1004)
+    profile = create_profile(state, "Editable", ["scalping"])
+    updated = update_profile(
+        state,
+        profile.profile_id,
+        styles=[{"style_id": "price_action", "weight": 2.0}, "momentum"],
+        risk_level="high",
+        schedule_seconds=30,
+    )
+    assert updated.version == 2
+    assert [item.style_id for item in updated.styles] == ["price_action", "momentum"]
+    assert updated.styles[0].weight == 2.0
+    assert updated.risk_level == "high"
+    assert updated.schedule_seconds == 60
