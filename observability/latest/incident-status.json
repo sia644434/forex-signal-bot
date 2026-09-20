@@ -1,5 +1,141 @@
 {
-  "error_count": 0,
-  "latest_errors": [],
-  "status": "healthy"
+  "error_count": 9,
+  "latest_errors": [
+    {
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Final Integration Gate => completed/failure",
+      "metadata": {
+        "head_sha": "ef03d489dd22e96f0ecbba1d96872f37b08a7347",
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35500514879",
+        "run_id": 35500514879,
+        "workflow": "Final Integration Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T08:48:48Z"
+    },
+    {
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Test => completed/failure",
+      "metadata": {
+        "head_sha": "ef03d489dd22e96f0ecbba1d96872f37b08a7347",
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35500514844",
+        "run_id": 35500514844,
+        "workflow": "Test"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T08:48:35Z"
+    },
+    {
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production E2E Contract Gate => completed/failure",
+      "metadata": {
+        "head_sha": "ef03d489dd22e96f0ecbba1d96872f37b08a7347",
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35500514836",
+        "run_id": 35500514836,
+        "workflow": "Production E2E Contract Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T08:48:29Z"
+    },
+    {
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production Activation Gate => completed/failure",
+      "metadata": {
+        "head_sha": "ef03d489dd22e96f0ecbba1d96872f37b08a7347",
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35500514834",
+        "run_id": 35500514834,
+        "workflow": "Production Activation Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T08:48:41Z"
+    },
+    {
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production Readiness => completed/failure",
+      "metadata": {
+        "head_sha": "ef03d489dd22e96f0ecbba1d96872f37b08a7347",
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35500514828",
+        "run_id": 35500514828,
+        "workflow": "Production Readiness"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T08:48:41Z"
+    },
+    {
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production Activation Gate => completed/failure",
+      "metadata": {
+        "head_sha": "0dc8a3a99f69cae6cd1213b35f15b8e61f7a76a4",
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35500510605",
+        "run_id": 35500510605,
+        "workflow": "Production Activation Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T08:48:36Z"
+    },
+    {
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Test => completed/failure",
+      "metadata": {
+        "head_sha": "0dc8a3a99f69cae6cd1213b35f15b8e61f7a76a4",
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35500510516",
+        "run_id": 35500510516,
+        "workflow": "Test"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T08:48:21Z"
+    },
+    {
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production E2E Contract Gate => completed/failure",
+      "metadata": {
+        "head_sha": "0dc8a3a99f69cae6cd1213b35f15b8e61f7a76a4",
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35500510419",
+        "run_id": 35500510419,
+        "workflow": "Production E2E Contract Gate"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T08:48:34Z"
+    },
+    {
+      "environment": "production",
+      "event": "workflow_run",
+      "level": "ERROR",
+      "message": "Production Readiness => completed/failure",
+      "metadata": {
+        "head_sha": "0dc8a3a99f69cae6cd1213b35f15b8e61f7a76a4",
+        "html_url": "https://github.com/siasoltoon/forex-signal-bot/actions/runs/35500510413",
+        "run_id": 35500510413,
+        "workflow": "Production Readiness"
+      },
+      "service": "actions",
+      "source": "github",
+      "timestamp": "2026-09-20T08:48:33Z"
+    }
+  ],
+  "status": "incident"
 }\n
