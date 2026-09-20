@@ -90,6 +90,27 @@ def build_execution_context(
     )
 
 
+def context_payload(context: ProfileExecutionContext, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Attach immutable profile execution metadata to a Worker job payload."""
+    if not isinstance(context, ProfileExecutionContext):
+        raise TypeError("context must be a ProfileExecutionContext")
+    result = dict(payload or {})
+    result.update({
+        "profile_id": context.profile_id,
+        "profile_version": context.profile_version,
+        "style_ids": list(context.style_ids),
+        "symbols": list(context.symbols),
+        "timeframes": list(context.timeframes),
+        "risk_level": context.risk_level,
+        "schedule_seconds": context.schedule_seconds,
+        "profile_snapshot": dict(context.config_snapshot),
+        "user_id": context.user_id,
+        "experiment_id": context.experiment_id,
+        "requested_capabilities": list(context.requested_capabilities),
+    })
+    return result
+
+
 def context_from_payload(payload: dict[str, Any], mode: ExecutionMode) -> ProfileExecutionContext:
     """Build a validated immutable context from a queued Worker payload."""
 
