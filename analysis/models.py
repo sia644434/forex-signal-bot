@@ -224,6 +224,10 @@ class AnalysisResult:
 
     total_score: float = 0.0
 
+    # Exact final score produced by DecisionEngine; kept separate from the
+    # pre-decision aggregate for the ConfidenceEngine contract.
+    decision_score: float = 50.0
+
     final_direction: str = "neutral"
 
     market_regime: str = "UNCERTAIN"
