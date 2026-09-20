@@ -186,14 +186,23 @@ class ContinuousMarketScanner:
         candle_key: str,
         direction: str,
         chat_id: int,
-        profile_id: str,
+        profile_id: str = "",
     ) -> str:
         return (
             f"sent:{symbol}:{timeframe}:{candle_key}:{direction}:"
             f"{chat_id}:{profile_id}"
         )
 
-    async def _notify(self, bot, decision, candle_key: str, recipient_ids: tuple[int, ...], profile_id: str) -> tuple[int, int]:
+    async def _notify(
+        self,
+        bot,
+        decision,
+        candle_key: str,
+        recipient_ids: tuple[int, ...] | None = None,
+        profile_id: str = "",
+    ) -> tuple[int, int]:
+        if recipient_ids is None:
+            recipient_ids = _chat_ids()
         sent = 0
         eligible = 0
         for chat_id in recipient_ids:
@@ -433,7 +442,14 @@ class ContinuousMarketScanner:
             grouped_results: list[str] = []
             for profile_id, (recipient_ids, style_ids) in profile_groups.items():
                 cycle_state_key = f"{cycle_state_prefix}{profile_id}"
-                if self._state.get(cycle_state_key) == cycle_bucket:
+                # Read the pre-profile legacy key as well so an already
+                # completed cycle from older state cannot trigger duplicate
+                # provider fetches after the profile-aware rollout.
+                legacy_cycle_completed = self._state.get("cycle:last_m15") == cycle_bucket
+                if (
+                    self._state.get(cycle_state_key) == cycle_bucket
+                    or legacy_cycle_completed
+                ):
                     logger.info(
                         "Automatic scanner profile cycle skipped: profile_id=%s bucket=%s",
                         profile_id,
