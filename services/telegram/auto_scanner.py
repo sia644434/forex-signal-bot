@@ -13,6 +13,7 @@ from services.telegram.access import _allowed_user_ids
 from services.telegram.handlers.signal import _format_signal
 from services.telegram.auto_scan_state import AutoScannerStateStore
 from analysis.multi_timeframe_engine import MultiTimeframeAnalysisEngine
+from profiles import get_profile
 from core.logger import setup_logger
 
 logger = setup_logger()
@@ -188,13 +189,13 @@ class ContinuousMarketScanner:
     ) -> str:
         return (
             f"sent:{symbol}:{timeframe}:{candle_key}:{direction}:"
-            f"{chat_id}"
+            f"{chat_id}:{profile_id}"
         )
 
-    async def _notify(self, bot, decision, candle_key: str) -> tuple[int, int]:
+    async def _notify(self, bot, decision, candle_key: str, recipient_ids: tuple[int, ...], profile_id: str) -> tuple[int, int]:
         sent = 0
         eligible = 0
-        for chat_id in _chat_ids():
+        for chat_id in recipient_ids:
             try:
                 state = get_user_state(chat_id)
                 if not bool(state.settings.get("notifications_enabled", True)):
@@ -278,7 +279,7 @@ class ContinuousMarketScanner:
             return ScanOutcome.PORTFOLIO_RISK_REJECTED
         return ScanOutcome.VALIDATION_FAILED
 
-    async def _scan_symbol(self, bot, market_data, symbol: str) -> str:
+    async def _scan_symbol(self, bot, market_data, symbol: str, *, style_ids: tuple[str, ...], recipient_ids: tuple[int, ...], profile_id: str) -> str:
         try:
             m15 = await self._fetch_timeframe(market_data, symbol, "M15", force=True)
             latest = m15[-1].timestamp
@@ -290,7 +291,7 @@ class ContinuousMarketScanner:
                 return ScanOutcome.ALREADY_PROCESSED
 
             context = await self._context_for_symbol(market_data, symbol, m15)
-            decision, diagnostics = self._engine.analyze_with_diagnostics(context, symbol=symbol)
+            decision, diagnostics = self._engine.analyze_with_diagnostics(context, symbol=symbol, style_ids=style_ids)
             if decision is None:
                 stage = self._diagnostic_stage(diagnostics)
                 logger.info(
@@ -338,7 +339,7 @@ class ContinuousMarketScanner:
                 self._state.put(key, latest_key)
                 return outcome
 
-            sent, eligible = await self._notify(bot, decision, latest_key)
+            sent, eligible = await self._notify(bot, decision, latest_key, recipient_ids, profile_id)
             if eligible == 0:
                 self._state.put(key, latest_key)
                 return ScanOutcome.VALIDATED_NO_RECIPIENT
