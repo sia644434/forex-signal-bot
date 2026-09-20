@@ -59,8 +59,13 @@ def combined_structure_score(structure_score: float, trend_score: float) -> floa
     structure = float(structure_score)
     trend = float(trend_score)
     if not isfinite(structure) or not isfinite(trend):
-        raise ValueError("structure and trend scores must be numeric and finite")
-    return (structure * 0.70) + (trend * 0.30)
+        raise ValueError("Market Structure score became non-finite")
+    if abs(structure) > 100.0 or abs(trend) > 100.0:
+        raise ValueError("Market Structure score became non-finite")
+    combined = (structure * 0.70) + (trend * 0.30)
+    if not isfinite(combined):
+        raise ValueError("Market Structure score became non-finite")
+    return combined
 
 
 def component_directions(components: Mapping[str, float]) -> dict[str, DirectionalEvidence]:
